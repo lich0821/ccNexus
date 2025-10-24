@@ -1,0 +1,30 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "ccNexus",
+  "outputfilename": "ccNexus",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run dev",
+  "frontend:dev:serverUrl": "http://localhost:34115",
+  "debounceMS": 100,
+  "devServer": "localhost:34115",
+  "appargs": "",
+  "runNonNativeBuildScript": false,
+  "preBuildHooks": {
+    "before:build": ""
+  },
+  "postBuildHooks": {
+    "after:build": ""
+  },
+  "author": {
+    "name": "lich0821",
+    "email": "your.email@example.com"
+  },
+  "info": {
+    "companyName": "ccNexus",
+    "productName": "ccNexus",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024",
+    "comments": "A smart API endpoint rotation proxy for Claude Code"
+  }
+}

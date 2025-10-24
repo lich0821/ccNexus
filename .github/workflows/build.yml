@@ -1,0 +1,132 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: amd64
+          - os: macos-latest
+            platform: darwin
+            arch: amd64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+          - os: windows-latest
+            platform: windows
+            arch: amd64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Wails (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install Wails (macOS)
+        if: matrix.platform == 'darwin'
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+
+      - name: Install Wails (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          go install github.com/wailsapp/wails/v2/cmd/wails@latest
+        shell: pwsh
+
+      - name: Build application (Linux/macOS)
+        if: matrix.platform != 'windows'
+        run: |
+          export PATH=$PATH:$(go env GOPATH)/bin
+          wails build -platform ${{ matrix.platform }}/${{ matrix.arch }}
+
+      - name: Build application (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          $env:PATH += ";$(go env GOPATH)\bin"
+          wails build -platform ${{ matrix.platform }}/${{ matrix.arch }}
+        shell: pwsh
+
+      - name: Package application (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          cd build/bin
+          tar -czf ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
+          mv ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ../../
+
+      - name: Package application (macOS)
+        if: matrix.platform == 'darwin'
+        run: |
+          cd build/bin
+          if [ -d "ccNexus.app" ]; then
+            zip -r ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.zip "ccNexus.app"
+          else
+            tar -czf ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
+          fi
+          mv ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.* ../../
+
+      - name: Package application (Windows)
+        if: matrix.platform == 'windows'
+        run: |
+          cd build/bin
+          Compress-Archive -Path ccNexus.exe -DestinationPath ../../ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.zip
+        shell: pwsh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ccNexus-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            ccNexus-*.tar.gz
+            ccNexus-*.zip
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

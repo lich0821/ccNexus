@@ -1,0 +1,42 @@
+.*
+!.gitignore
+!.github/
+
+# Build artifacts
+build/
+dist/
+*.exe
+*.app
+*.dmg
+*.deb
+*.rpm
+
+# Go
+*.o
+*.a
+*.so
+*.dylib
+*.test
+*.out
+go.sum
+
+# Config
+config.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+package-lock.json
+
+# Logs
+*.log
