@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a365d;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2d3748;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4299e1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3182ce;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="centerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f6ad55;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ed8936;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)"/>
+
+  <!-- Connection lines (hexagon network) -->
+  <g stroke="#4299e1" stroke-width="3" opacity="0.6" fill="none">
+    <!-- Lines from center to outer nodes -->
+    <line x1="256" y1="256" x2="256" y2="120"/>
+    <line x1="256" y1="256" x2="374" y2="180"/>
+    <line x1="256" y1="256" x2="374" y2="332"/>
+    <line x1="256" y1="256" x2="256" y2="392"/>
+    <line x1="256" y1="256" x2="138" y2="332"/>
+    <line x1="256" y1="256" x2="138" y2="180"/>
+
+    <!-- Hexagon outer ring -->
+    <line x1="256" y1="120" x2="374" y2="180"/>
+    <line x1="374" y1="180" x2="374" y2="332"/>
+    <line x1="374" y1="332" x2="256" y2="392"/>
+    <line x1="256" y1="392" x2="138" y2="332"/>
+    <line x1="138" y1="332" x2="138" y2="180"/>
+    <line x1="138" y1="180" x2="256" y2="120"/>
+  </g>
+
+  <!-- Outer nodes (6 nodes in hexagon) -->
+  <g filter="url(#glow)">
+    <circle cx="256" cy="120" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+    <circle cx="374" cy="180" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+    <circle cx="374" cy="332" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+    <circle cx="256" cy="392" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+    <circle cx="138" cy="332" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+    <circle cx="138" cy="180" r="20" fill="url(#nodeGradient)" stroke="#63b3ed" stroke-width="2"/>
+  </g>
+
+  <!-- Center node (larger, golden) -->
+  <g filter="url(#glow)">
+    <circle cx="256" cy="256" r="35" fill="url(#centerGradient)" stroke="#fbd38d" stroke-width="3"/>
+  </g>
+
+  <!-- Rotation arrows (indicating proxy rotation) -->
+  <g stroke="#f6ad55" stroke-width="4" fill="none" opacity="0.8" stroke-linecap="round">
+    <!-- Circular arrow path -->
+    <path d="M 256 180 A 76 76 0 1 1 180 256" />
+    <!-- Arrow head -->
+    <path d="M 180 256 L 170 246 M 180 256 L 190 246" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Text "cc" in center (optional, subtle) -->
+  <text x="256" y="270" font-family="Arial, sans-serif" font-size="32" font-weight="bold"
+        fill="#ffffff" text-anchor="middle" opacity="0.9">cc</text>
+</svg>

@@ -3,7 +3,10 @@
 !.github/
 
 # Build artifacts
-build/
+build/*
+!build/appicon.png
+!build/appicon.svg
+
 dist/
 *.exe
 *.app
