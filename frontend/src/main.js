@@ -2,15 +2,20 @@ import './style.css'
 
 let currentEditIndex = -1;
 let endpointStats = {};
+let logPanelExpanded = true;
 
 // Load data on startup
 window.addEventListener('DOMContentLoaded', () => {
     initApp();
     loadConfig();
     loadStats();
+    loadLogs();
 
     // Refresh stats every 5 seconds
     setInterval(loadStats, 5000);
+
+    // Refresh logs every 2 seconds
+    setInterval(loadLogs, 2000);
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
@@ -91,6 +96,35 @@ function initApp() {
                 </div>
                 <div id="endpointList" class="endpoint-list">
                     <div class="loading">Loading endpoints...</div>
+                </div>
+            </div>
+
+            <!-- Logs Panel -->
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h2 style="margin: 0;">📋 Logs</h2>
+                        <select id="logLevel" class="log-level-select" onchange="window.changeLogLevel()">
+                            <option value="0">🔍 DEBUG+</option>
+                            <option value="1" selected>ℹ️ INFO+</option>
+                            <option value="2">⚠️ WARN+</option>
+                            <option value="3">❌ ERROR</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary btn-sm" onclick="window.copyLogs()">
+                            📋 Copy
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.toggleLogPanel()">
+                            <span id="logToggleIcon">▼</span> <span id="logToggleText">Collapse</span>
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.clearLogs()">
+                            🗑️ Clear
+                        </button>
+                    </div>
+                </div>
+                <div id="logPanel" class="log-panel">
+                    <textarea id="logContent" class="log-textarea" readonly></textarea>
                 </div>
             </div>
         </div>
@@ -511,5 +545,108 @@ window.openGitHub = function() {
 window.openArticle = function() {
     if (window.go && window.go.main && window.go.main.App) {
         window.go.main.App.OpenURL('https://mp.weixin.qq.com/s/MqUVgWbkcVUNPnZQC--CZQ');
+    }
+}
+
+// Log panel functions
+async function loadLogs() {
+    try {
+        if (!window.go || !window.go.main || !window.go.main.App) {
+            return;
+        }
+
+        const level = parseInt(document.getElementById('logLevel').value);
+        const logsStr = await window.go.main.App.GetLogsByLevel(level);
+        const logs = JSON.parse(logsStr);
+
+        renderLogs(logs);
+    } catch (error) {
+        console.error('Failed to load logs:', error);
+    }
+}
+
+function renderLogs(logs) {
+    const textarea = document.getElementById('logContent');
+
+    if (logs.length === 0) {
+        textarea.value = '';
+        return;
+    }
+
+    // Show last 100 logs
+    const recentLogs = logs.slice(-100);
+
+    // Format logs as plain text with date and 24-hour time
+    const logText = recentLogs.map(log => {
+        const date = new Date(log.timestamp);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        const timeStr = `${year}${month}${day} ${hours}:${minutes}:${seconds}`;
+
+        return `${timeStr} ${log.icon} ${log.levelStr.padEnd(5)} ${log.message}`;
+    }).join('\n');
+
+    textarea.value = logText;
+
+    // Auto-scroll to bottom
+    textarea.scrollTop = textarea.scrollHeight;
+}
+
+window.toggleLogPanel = function() {
+    const panel = document.getElementById('logPanel');
+    const icon = document.getElementById('logToggleIcon');
+    const text = document.getElementById('logToggleText');
+
+    logPanelExpanded = !logPanelExpanded;
+
+    if (logPanelExpanded) {
+        panel.style.display = 'block';
+        icon.textContent = '▼';
+        text.textContent = 'Collapse';
+    } else {
+        panel.style.display = 'none';
+        icon.textContent = '▶';
+        text.textContent = 'Expand';
+    }
+}
+
+window.changeLogLevel = async function() {
+    const level = parseInt(document.getElementById('logLevel').value);
+    try {
+        // Set both display and record level
+        await window.go.main.App.SetLogLevel(level);
+        // Reload logs with new filter
+        loadLogs();
+    } catch (error) {
+        console.error('Failed to change log level:', error);
+        alert('Failed to change log level: ' + error);
+    }
+}
+
+window.copyLogs = function() {
+    const textarea = document.getElementById('logContent');
+    textarea.select();
+    document.execCommand('copy');
+
+    // Visual feedback
+    const btn = event.target.closest('button');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '✅ Copied!';
+    setTimeout(() => {
+        btn.innerHTML = originalText;
+    }, 1500);
+}
+
+window.clearLogs = async function() {
+    try {
+        await window.go.main.App.ClearLogs();
+        loadLogs();
+    } catch (error) {
+        console.error('Failed to clear logs:', error);
+        alert('Failed to clear logs: ' + error);
     }
 }

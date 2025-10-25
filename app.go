@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -28,25 +28,32 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	logger.Debug("Application starting...")
+
 	// Get config path
 	configPath, err := config.GetConfigPath()
 	if err != nil {
-		log.Printf("⚠️  Failed to get config path: %v", err)
+		logger.Warn("Failed to get config path: %v, using default", err)
 		configPath = "config.json"
 	}
 	a.configPath = configPath
+	logger.Debug("Config path: %s", configPath)
 
 	// Load configuration
 	cfg, err := config.Load(configPath)
 	if err != nil {
-		log.Printf("⚠️  Failed to load config: %v, using default", err)
+		logger.Warn("Failed to load config: %v, using default", err)
 		cfg = config.DefaultConfig()
 	}
 	a.config = cfg
 
+	// Restore log level from config
+	logger.GetLogger().SetMinLevel(logger.LogLevel(cfg.GetLogLevel()))
+	logger.Debug("Log level restored: %d", cfg.GetLogLevel())
+
 	// Save default config if it doesn't exist
 	if err := cfg.Save(configPath); err != nil {
-		log.Printf("⚠️  Failed to save config: %v", err)
+		logger.Warn("Failed to save config: %v", err)
 	}
 
 	// Create proxy
@@ -55,11 +62,11 @@ func (a *App) startup(ctx context.Context) {
 	// Start proxy in background
 	go func() {
 		if err := a.proxy.Start(); err != nil {
-			log.Printf("❌ Proxy server error: %v", err)
+			logger.Error("Proxy server error: %v", err)
 		}
 	}()
 
-	log.Println("✅ Application started")
+	logger.Info("Application started successfully")
 }
 
 // shutdown is called when the app is closing
@@ -67,7 +74,7 @@ func (a *App) shutdown(ctx context.Context) {
 	if a.proxy != nil {
 		a.proxy.Stop()
 	}
-	log.Println("👋 Application stopped")
+	logger.Info("Application stopped")
 }
 
 // GetConfig returns the current configuration
@@ -134,6 +141,8 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey string) error {
 		return err
 	}
 
+	logger.Info("Endpoint added: %s (%s)", name, apiUrl)
+
 	return a.config.Save(a.configPath)
 }
 
@@ -163,6 +172,9 @@ func (a *App) RemoveEndpoint(index int) error {
 		return nil
 	}
 
+	// Save endpoint name before removal for logging
+	removedName := endpoints[index].Name
+
 	// Remove the endpoint
 	endpoints = append(endpoints[:index], endpoints[index+1:]...)
 	a.config.UpdateEndpoints(endpoints)
@@ -178,6 +190,8 @@ func (a *App) RemoveEndpoint(index int) error {
 		return err
 	}
 
+	logger.Info("Endpoint removed: %s", removedName)
+
 	return a.config.Save(a.configPath)
 }
 
@@ -188,6 +202,9 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
 	if index < 0 || index >= len(endpoints) {
 		return fmt.Errorf("invalid endpoint index: %d", index)
 	}
+
+	// Save old name for logging
+	oldName := endpoints[index].Name
 
 	// Preserve the Enabled status
 	enabled := endpoints[index].Enabled
@@ -207,6 +224,12 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
 
 	if err := a.proxy.UpdateConfig(a.config); err != nil {
 		return err
+	}
+
+	if oldName != name {
+		logger.Info("Endpoint updated: %s → %s (%s)", oldName, name, apiUrl)
+	} else {
+		logger.Info("Endpoint updated: %s (%s)", name, apiUrl)
 	}
 
 	return a.config.Save(a.configPath)
@@ -236,11 +259,18 @@ func (a *App) ToggleEndpoint(index int, enabled bool) error {
 		return fmt.Errorf("invalid endpoint index: %d", index)
 	}
 
+	endpointName := endpoints[index].Name
 	endpoints[index].Enabled = enabled
 	a.config.UpdateEndpoints(endpoints)
 
 	if err := a.proxy.UpdateConfig(a.config); err != nil {
 		return err
+	}
+
+	if enabled {
+		logger.Info("Endpoint enabled: %s", endpointName)
+	} else {
+		logger.Info("Endpoint disabled: %s", endpointName)
 	}
 
 	return a.config.Save(a.configPath)
@@ -249,4 +279,41 @@ func (a *App) ToggleEndpoint(index int, enabled bool) error {
 // OpenURL opens a URL in the default browser
 func (a *App) OpenURL(url string) {
 	runtime.BrowserOpenURL(a.ctx, url)
+}
+
+// GetLogs returns all log entries
+func (a *App) GetLogs() string {
+	logs := logger.GetLogger().GetLogs()
+	data, _ := json.Marshal(logs)
+	return string(data)
+}
+
+// GetLogsByLevel returns logs filtered by level
+func (a *App) GetLogsByLevel(level int) string {
+	logs := logger.GetLogger().GetLogsByLevel(logger.LogLevel(level))
+	data, _ := json.Marshal(logs)
+	return string(data)
+}
+
+// ClearLogs clears all log entries
+func (a *App) ClearLogs() {
+	logger.GetLogger().Clear()
+}
+
+// SetLogLevel sets the minimum log level to record
+func (a *App) SetLogLevel(level int) {
+	logger.GetLogger().SetMinLevel(logger.LogLevel(level))
+
+	// Save to config
+	a.config.UpdateLogLevel(level)
+	if err := a.config.Save(a.configPath); err != nil {
+		logger.Warn("Failed to save log level to config: %v", err)
+	} else {
+		logger.Debug("Log level saved to config: %d", level)
+	}
+}
+
+// GetLogLevel returns the current minimum log level
+func (a *App) GetLogLevel() int {
+	return int(logger.GetLogger().GetMinLevel())
 }

@@ -7,13 +7,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/logger"
 )
 
 // SSEEvent represents a Server-Sent Event
@@ -145,8 +145,9 @@ func (p *Proxy) Start() error {
 		Handler: mux,
 	}
 
-	log.Printf("🚀 ccNexus starting on port %d", port)
-	log.Printf("🔑 Configured %d endpoints", len(p.config.GetEndpoints()))
+	logger.Info("ccNexus starting on port %d", port)
+	logger.Info("Configured %d endpoints", len(p.config.GetEndpoints()))
+	logger.Debug("Server listening on http://localhost:%d", port)
 
 	return p.server.ListenAndServe()
 }
@@ -202,8 +203,9 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
-	log.Printf("🔄 [SWITCH] %s (#%d) → %s (#%d)",
+	logger.Info("[SWITCH] %s (#%d) → %s (#%d)",
 		oldEndpoint.Name, oldIndex+1, newEndpoint.Name, p.currentIndex+1)
+	logger.Debug("Rotating from endpoint %s to %s due to error", oldEndpoint.Name, newEndpoint.Name)
 
 	return newEndpoint
 }
@@ -216,10 +218,12 @@ func shouldRetry(statusCode int) bool {
 
 // handleProxy handles the main proxy logic
 func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
+	logger.Debug("Received %s request to %s", r.Method, r.URL.Path)
+
 	// Read request body
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("❌ [ERROR] Failed to read request body: %v", err)
+		logger.Error("Failed to read request body: %v", err)
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
@@ -227,11 +231,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
-		log.Printf("❌ [ERROR] No enabled endpoints available")
+		logger.Error("No enabled endpoints available")
 		http.Error(w, "No enabled endpoints configured", http.StatusServiceUnavailable)
 		return
 	}
 
+	logger.Debug("Using %d enabled endpoints for request", len(endpoints))
 	maxRetries := len(endpoints)
 
 	// Try each endpoint
@@ -240,7 +245,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Check if endpoint is empty (shouldn't happen, but safe check)
 		if endpoint.Name == "" {
-			log.Printf("❌ [ERROR] Got empty endpoint, no enabled endpoints available")
+			logger.Error("Got empty endpoint, no enabled endpoints available")
 			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
 			return
 		}
@@ -254,9 +259,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			targetURL += "?" + r.URL.RawQuery
 		}
 
+		logger.Debug("[%s] Forwarding request to %s", endpoint.Name, targetURL)
+
 		proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewReader(bodyBytes))
 		if err != nil {
-			log.Printf("❌ [ERROR] [%s] Failed to create request: %v", endpoint.Name, err)
+			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
@@ -280,7 +287,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		resp, err := client.Do(proxyReq)
 		if err != nil {
-			log.Printf("❌ [ERROR] [%s] Request failed: %v", endpoint.Name, err)
+			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
@@ -290,7 +297,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		respBody, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			log.Printf("❌ [ERROR] [%s] Failed to read response: %v", endpoint.Name, err)
+			logger.Error("[%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
@@ -312,8 +319,28 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Check if we should retry
 		if shouldRetry(resp.StatusCode) {
-			log.Printf("⚠️  [%s] Non-200 response: %d %s, rotating to next endpoint",
-				endpoint.Name, resp.StatusCode, http.StatusText(resp.StatusCode))
+			// Try to extract error message from response body
+			var errorMsg string
+			if len(finalBody) > 0 && len(finalBody) < 1000 {
+				// Try to parse as JSON error
+				var errResp map[string]interface{}
+				if err := json.Unmarshal(finalBody, &errResp); err == nil {
+					if errData, ok := errResp["error"]; ok {
+						if errMap, ok := errData.(map[string]interface{}); ok {
+							if msg, ok := errMap["message"].(string); ok {
+								errorMsg = msg
+							}
+						}
+					}
+				}
+			}
+
+			if errorMsg != "" {
+				logger.Warn("[%s] HTTP %d %s: %s", endpoint.Name, resp.StatusCode, http.StatusText(resp.StatusCode), errorMsg)
+			} else {
+				logger.Warn("[%s] HTTP %d %s", endpoint.Name, resp.StatusCode, http.StatusText(resp.StatusCode))
+			}
+
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 
@@ -325,6 +352,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Success - extract token usage and return response
 		if resp.StatusCode == http.StatusOK && len(finalBody) > 0 {
+			logger.Debug("[%s] Request successful, status: %d", endpoint.Name, resp.StatusCode)
+
 			// Check if this is a streaming response
 			isStreaming := resp.Header.Get("Content-Type") == "text/event-stream"
 
@@ -334,6 +363,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 				if inputTokens > 0 || outputTokens > 0 {
 					p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+					logger.Debug("[%s] Tokens used - Input: %d, Output: %d", endpoint.Name, inputTokens, outputTokens)
 				}
 			} else {
 				// Standard JSON response
@@ -341,6 +371,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				if err := json.Unmarshal(finalBody, &apiResp); err == nil {
 					if apiResp.Usage.InputTokens > 0 || apiResp.Usage.OutputTokens > 0 {
 						p.stats.RecordTokens(endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
+						logger.Debug("[%s] Tokens used - Input: %d, Output: %d", endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
 					}
 				}
 			}
@@ -361,7 +392,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All endpoints failed
-	log.Printf("❌ [CRITICAL] All %d endpoints failed after retries", maxRetries)
+	logger.Error("All %d endpoints failed after retries", maxRetries)
 	http.Error(w, "All endpoints unavailable", http.StatusServiceUnavailable)
 }
 
@@ -421,6 +452,6 @@ func (p *Proxy) UpdateConfig(cfg *config.Config) error {
 	p.config = cfg
 	p.currentIndex = 0 // Reset to first endpoint
 
-	log.Printf("✅ Configuration updated: %d endpoints", len(cfg.GetEndpoints()))
+	logger.Debug("Proxy configuration reloaded: %d total endpoints, %d enabled", len(cfg.GetEndpoints()), len(p.getEnabledEndpoints()))
 	return nil
 }

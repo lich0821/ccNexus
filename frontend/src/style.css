@@ -348,3 +348,72 @@ body {
     font-size: 18px;
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
+
+/* Log Panel Styles */
+.log-level-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: white;
+    transition: border-color 0.2s;
+}
+
+.log-level-select:hover {
+    border-color: #667eea;
+}
+
+.log-level-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+
+.log-panel {
+    background: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.log-textarea {
+    width: 100%;
+    height: 300px;
+    padding: 12px;
+    border: none;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    border-radius: 8px;
+}
+
+.log-textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Scrollbar styling for textarea */
+.log-textarea::-webkit-scrollbar {
+    width: 10px;
+}
+
+.log-textarea::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+.log-textarea::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 5px;
+}
+
+.log-textarea::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}

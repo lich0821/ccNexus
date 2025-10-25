@@ -20,13 +20,15 @@ type Endpoint struct {
 type Config struct {
 	Port      int        `json:"port"`
 	Endpoints []Endpoint `json:"endpoints"`
+	LogLevel  int        `json:"logLevel"` // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
 	mu        sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() *Config {
 	return &Config{
-		Port: 3000,
+		Port:     3000,
+		LogLevel: 1, // Default to INFO level
 		Endpoints: []Endpoint{
 			{
 				Name:    "Claude Official",
@@ -80,6 +82,13 @@ func (c *Config) GetPort() int {
 	return c.Port
 }
 
+// GetLogLevel returns the configured log level (thread-safe)
+func (c *Config) GetLogLevel() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.LogLevel
+}
+
 // UpdateEndpoints updates the endpoints (thread-safe)
 func (c *Config) UpdateEndpoints(endpoints []Endpoint) {
 	c.mu.Lock()
@@ -92,6 +101,13 @@ func (c *Config) UpdatePort(port int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Port = port
+}
+
+// UpdateLogLevel updates the log level (thread-safe)
+func (c *Config) UpdateLogLevel(level int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.LogLevel = level
 }
 
 // GetConfigPath returns the default config file path

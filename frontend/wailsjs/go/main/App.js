@@ -6,8 +6,24 @@ export function AddEndpoint(arg1, arg2, arg3) {
   return window['go']['main']['App']['AddEndpoint'](arg1, arg2, arg3);
 }
 
+export function ClearLogs() {
+  return window['go']['main']['App']['ClearLogs']();
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
+}
+
+export function GetLogLevel() {
+  return window['go']['main']['App']['GetLogLevel']();
+}
+
+export function GetLogs() {
+  return window['go']['main']['App']['GetLogs']();
+}
+
+export function GetLogsByLevel(arg1) {
+  return window['go']['main']['App']['GetLogsByLevel'](arg1);
 }
 
 export function GetStats() {
@@ -20,6 +36,10 @@ export function OpenURL(arg1) {
 
 export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
+}
+
+export function SetLogLevel(arg1) {
+  return window['go']['main']['App']['SetLogLevel'](arg1);
 }
 
 export function ToggleEndpoint(arg1, arg2) {
