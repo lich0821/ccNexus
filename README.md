@@ -23,10 +23,11 @@
 - 🎯 **Endpoint Management** - Enable/disable endpoints with toggle switches
 - 🔐 **Secure API Key Display** - Shows only last 4 characters of API keys
 - 🚦 **Smart Load Balancing** - Distributes requests only to enabled endpoints
+- 📋 **Comprehensive Logging** - Multi-level logging (DEBUG/INFO/WARN/ERROR) with real-time viewing
 - 🖥️ **Desktop GUI** - Beautiful cross-platform interface built with Wails
 - 🚀 **Single Binary** - No dependencies, just download and run
 - 🔧 **Easy Configuration** - Manage endpoints through GUI or config file
-- 💾 **Persistent Config** - Automatically saves configuration
+- 💾 **Persistent Config** - Automatically saves configuration and preferences
 - 🔒 **Local First** - All data stays on your machine
 
 ## 🚀 Quick Start
@@ -93,31 +94,32 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
-## 🎉 What's New in v0.2.0
+## 🎉 What's New in v0.4.0
 
-### 🔐 Enhanced Security
-- **Masked API Keys**: API keys now show only the last 4 characters (e.g., `****ABCD`)
-- Better protection when sharing screenshots or during presentations
+### 📋 Comprehensive Logging System
+- **Multi-Level Logging**: DEBUG, INFO, WARN, and ERROR levels for detailed monitoring
+- **Real-time Log Viewer**: Built-in log panel with dark theme and auto-refresh
+- **Dynamic Log Filtering**: Filter logs by level in real-time
+- **Persistent Log Level**: Log level preference saved across restarts
+- **Copy & Clear**: Easy log management with copy and clear functions
+- **Detailed Error Messages**: HTTP status codes and error details in logs
 
-### 📊 Advanced Statistics
-- **Per-Endpoint Request Tracking**: See request count and error rate for each endpoint
-- **Token Usage Monitoring**: Track input and output tokens consumed by each endpoint
-- **Real-time Updates**: Statistics refresh every 5 seconds automatically
-
-### 🎯 Endpoint Control
-- **Toggle Switches**: Enable/disable endpoints with a single click
-- **Visual Status Indicators**: Quickly identify active (✅) and disabled (❌) endpoints
-- **Zero Downtime**: Disable problematic endpoints without stopping the proxy
+### 🔍 Enhanced Configuration Logging
+- **Specific Change Tracking**: Clear logs for each configuration change
+  - Endpoint added/removed/updated
+  - Endpoint enabled/disabled
+  - Configuration reloaded
+- **Better Debugging**: Detailed DEBUG logs for request forwarding and token usage
 
 ### 💡 Usage Example
 
-View detailed statistics for each endpoint:
+Monitor your proxy in real-time with detailed logs:
 ```
-📊 Requests: 1,234 | Errors: 5
-🎯 Tokens: 45,678 (In: 12,345, Out: 33,333)
+20250115 14:23:45 ℹ️ INFO  Endpoint enabled: Claude Official
+20250115 14:24:12 ℹ️ INFO  [SWITCH] Claude Official (#1) → Backup API (#2)
+20250115 14:24:13 ⚠️ WARN  [Backup API] HTTP 429 Too Many Requests
+20250115 14:24:15 🔍 DEBUG [Claude Official] Tokens used - Input: 1234, Output: 5678
 ```
-
-Disable expensive or rate-limited endpoints temporarily while keeping others active.
 
 ## 🔧 Configuration File
 
@@ -130,6 +132,7 @@ Example:
 ```json
 {
   "port": 3000,
+  "logLevel": 1,
   "endpoints": [
     {
       "name": "Claude Official 1",
@@ -146,6 +149,15 @@ Example:
   ]
 }
 ```
+
+**Configuration Fields:**
+- `port`: Proxy server port (default: 3000)
+- `logLevel`: Logging level - 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR (default: 1)
+- `endpoints`: Array of API endpoints
+  - `name`: Friendly name for the endpoint
+  - `apiUrl`: API server address
+  - `apiKey`: API authentication key
+  - `enabled`: Whether the endpoint is active
 
 ## 🛠️ Development
 
@@ -196,8 +208,10 @@ ccNexus/
 │   ├── proxy/             # Proxy core logic
 │   │   ├── proxy.go       # HTTP proxy with retry
 │   │   └── stats.go       # Statistics tracking
-│   └── config/            # Configuration management
-│       └── config.go      # Config structure
+│   ├── config/            # Configuration management
+│   │   └── config.go      # Config structure
+│   └── logger/            # Logging system
+│       └── logger.go      # Multi-level logger
 ├── frontend/              # Frontend UI
 │   ├── index.html
 │   └── src/
@@ -237,9 +251,23 @@ netstat -ano | findstr :3000
 ### Q: How to view detailed logs?
 
 **A**:
-- **macOS**: Run app from terminal to see logs
-- **Windows**: Check log files in app directory
-- **Linux**: Use `./ccNexus 2>&1 | tee ccNexus.log`
+- **Built-in Log Panel**: Use the Logs section in the application UI
+  - Select log level: DEBUG, INFO, WARN, or ERROR
+  - Auto-refreshes every 2 seconds
+  - Copy logs with one click
+  - Shows last 100 log entries
+- **Console Output**:
+  - **macOS/Linux**: Run app from terminal to see real-time logs
+  - **Windows**: Logs are displayed in the built-in log panel
+  - **Advanced**: Use `./ccNexus 2>&1 | tee ccNexus.log` to save logs to file
+
+### Q: What do the log levels mean?
+
+**A**:
+- **DEBUG** (🔍): Detailed information for debugging (request URLs, token counts, etc.)
+- **INFO** (ℹ️): General information (endpoint switches, configuration changes)
+- **WARN** (⚠️): Warning messages (HTTP errors, retry attempts)
+- **ERROR** (❌): Error messages (critical failures, connection issues)
 
 ## 🤝 Contributing
 
