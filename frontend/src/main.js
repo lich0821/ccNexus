@@ -1,6 +1,7 @@
 import './style.css'
 
 let currentEditIndex = -1;
+let endpointStats = {};
 
 // Load data on startup
 window.addEventListener('DOMContentLoaded', () => {
@@ -144,6 +145,14 @@ async function loadStats() {
         const stats = JSON.parse(statsStr);
 
         document.getElementById('totalRequests').textContent = stats.totalRequests;
+
+        // Save endpoint stats globally
+        endpointStats = stats.endpoints || {};
+
+        // Trigger re-render if config is already loaded
+        const configStr = await window.go.main.App.GetConfig();
+        const config = JSON.parse(configStr);
+        renderEndpoints(config.endpoints);
     } catch (error) {
         console.error('Failed to load stats:', error);
     }
@@ -167,23 +176,53 @@ function renderEndpoints(endpoints) {
 
     // Create endpoint items
     endpoints.forEach((ep, index) => {
+        const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+        const totalTokens = stats.inputTokens + stats.outputTokens;
+
+        // Format tokens in K (thousands) or M (millions)
+        const formatTokens = (tokens) => {
+            if (tokens === 0) return '0';
+            if (tokens >= 1000000) {
+                // >= 1M, show in M
+                const m = tokens / 1000000;
+                return m.toFixed(1) + 'M';
+            } else if (tokens >= 1000) {
+                // >= 1K, show in K
+                const k = tokens / 1000;
+                return k.toFixed(1) + 'K';
+            } else {
+                // < 1K, show original value
+                return tokens.toString();
+            }
+        };
+
+        const enabled = ep.enabled !== undefined ? ep.enabled : true;
         const item = document.createElement('div');
         item.className = 'endpoint-item';
         item.innerHTML = `
             <div class="endpoint-info">
-                <h3>${ep.name}</h3>
+                <h3>${ep.name} ${enabled ? '✅' : '❌'}</h3>
                 <p>🌐 ${ep.apiUrl}</p>
                 <p>🔑 ${maskApiKey(ep.apiKey)}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">📊 Requests: ${stats.requests} | Errors: ${stats.errors}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 Tokens: ${formatTokens(totalTokens)} (In: ${formatTokens(stats.inputTokens)}, Out: ${formatTokens(stats.outputTokens)})</p>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
-                <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
+            <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                <label class="toggle-switch">
+                    <input type="checkbox" data-index="${index}" ${enabled ? 'checked' : ''}>
+                    <span class="toggle-slider"></span>
+                </label>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
+                    <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
+                </div>
             </div>
         `;
 
         // Add event listeners
         const editBtn = item.querySelector('[data-action="edit"]');
         const deleteBtn = item.querySelector('[data-action="delete"]');
+        const toggleSwitch = item.querySelector('input[type="checkbox"]');
 
         editBtn.addEventListener('click', () => {
             const idx = parseInt(editBtn.getAttribute('data-index'));
@@ -193,14 +232,27 @@ function renderEndpoints(endpoints) {
             const idx = parseInt(deleteBtn.getAttribute('data-index'));
             window.deleteEndpoint(idx);
         });
+        toggleSwitch.addEventListener('change', async (e) => {
+            const idx = parseInt(e.target.getAttribute('data-index'));
+            const newEnabled = e.target.checked;
+            try {
+                await window.go.main.App.ToggleEndpoint(idx, newEnabled);
+                loadConfig();
+            } catch (error) {
+                console.error('Failed to toggle endpoint:', error);
+                alert('Failed to toggle endpoint: ' + error);
+                // Revert checkbox state on error
+                e.target.checked = !newEnabled;
+            }
+        });
 
         container.appendChild(item);
     });
 }
 
 function maskApiKey(key) {
-    if (key.length <= 8) return '***';
-    return key.substring(0, 8) + '***';
+    if (key.length <= 4) return '***';
+    return '****' + key.substring(key.length - 4);
 }
 
 window.showAddEndpointModal = function() {

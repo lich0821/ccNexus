@@ -118,9 +118,10 @@ func (a *App) GetStats() string {
 func (a *App) AddEndpoint(name, apiUrl, apiKey string) error {
 	endpoints := a.config.GetEndpoints()
 	endpoints = append(endpoints, config.Endpoint{
-		Name:   name,
-		APIUrl: apiUrl,
-		APIKey: apiKey,
+		Name:    name,
+		APIUrl:  apiUrl,
+		APIKey:  apiKey,
+		Enabled: true,
 	})
 
 	a.config.UpdateEndpoints(endpoints)
@@ -188,10 +189,14 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
 		return fmt.Errorf("invalid endpoint index: %d", index)
 	}
 
+	// Preserve the Enabled status
+	enabled := endpoints[index].Enabled
+
 	endpoints[index] = config.Endpoint{
-		Name:   name,
-		APIUrl: apiUrl,
-		APIKey: apiKey,
+		Name:    name,
+		APIUrl:  apiUrl,
+		APIKey:  apiKey,
+		Enabled: enabled,
 	}
 
 	a.config.UpdateEndpoints(endpoints)
@@ -221,4 +226,22 @@ func (a *App) UpdatePort(port int) error {
 
 	// Note: Changing port requires restart
 	return nil
+}
+
+// ToggleEndpoint toggles the enabled state of an endpoint
+func (a *App) ToggleEndpoint(index int, enabled bool) error {
+	endpoints := a.config.GetEndpoints()
+
+	if index < 0 || index >= len(endpoints) {
+		return fmt.Errorf("invalid endpoint index: %d", index)
+	}
+
+	endpoints[index].Enabled = enabled
+	a.config.UpdateEndpoints(endpoints)
+
+	if err := a.proxy.UpdateConfig(a.config); err != nil {
+		return err
+	}
+
+	return a.config.Save(a.configPath)
 }

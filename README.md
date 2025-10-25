@@ -19,6 +19,10 @@
 - 🌐 **Multi-Provider Support** - Use official Claude API and third-party providers
 - 🔁 **Smart Retry** - Retries on any non-200 response
 - 📊 **Real-time Statistics** - Monitor requests, errors, and endpoint usage
+- 💰 **Token Usage Tracking** - Track input/output tokens for each endpoint
+- 🎯 **Endpoint Management** - Enable/disable endpoints with toggle switches
+- 🔐 **Secure API Key Display** - Shows only last 4 characters of API keys
+- 🚦 **Smart Load Balancing** - Distributes requests only to enabled endpoints
 - 🖥️ **Desktop GUI** - Beautiful cross-platform interface built with Wails
 - 🚀 **Single Binary** - No dependencies, just download and run
 - 🔧 **Easy Configuration** - Manage endpoints through GUI or config file
@@ -89,6 +93,32 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
+## 🎉 What's New in v0.2.0
+
+### 🔐 Enhanced Security
+- **Masked API Keys**: API keys now show only the last 4 characters (e.g., `****ABCD`)
+- Better protection when sharing screenshots or during presentations
+
+### 📊 Advanced Statistics
+- **Per-Endpoint Request Tracking**: See request count and error rate for each endpoint
+- **Token Usage Monitoring**: Track input and output tokens consumed by each endpoint
+- **Real-time Updates**: Statistics refresh every 5 seconds automatically
+
+### 🎯 Endpoint Control
+- **Toggle Switches**: Enable/disable endpoints with a single click
+- **Visual Status Indicators**: Quickly identify active (✅) and disabled (❌) endpoints
+- **Zero Downtime**: Disable problematic endpoints without stopping the proxy
+
+### 💡 Usage Example
+
+View detailed statistics for each endpoint:
+```
+📊 Requests: 1,234 | Errors: 5
+🎯 Tokens: 45,678 (In: 12,345, Out: 33,333)
+```
+
+Disable expensive or rate-limited endpoints temporarily while keeping others active.
+
 ## 🔧 Configuration File
 
 Configuration is stored at:
@@ -104,12 +134,14 @@ Example:
     {
       "name": "Claude Official 1",
       "apiUrl": "api.anthropic.com",
-      "apiKey": "sk-ant-api03-your-key-1"
+      "apiKey": "sk-ant-api03-your-key-1",
+      "enabled": true
     },
     {
       "name": "Third Party Provider",
       "apiUrl": "api.example.com",
-      "apiKey": "your-key-2"
+      "apiKey": "your-key-2",
+      "enabled": true
     }
   ]
 }

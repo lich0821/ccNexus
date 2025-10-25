@@ -18,6 +18,10 @@ export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }
 
+export function ToggleEndpoint(arg1, arg2) {
+  return window['go']['main']['App']['ToggleEndpoint'](arg1, arg2);
+}
+
 export function UpdateConfig(arg1) {
   return window['go']['main']['App']['UpdateConfig'](arg1);
 }

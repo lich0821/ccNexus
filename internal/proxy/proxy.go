@@ -1,16 +1,117 @@
 package proxy
 
 import (
+	"bufio"
 	"bytes"
+	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/yourusername/claude-proxy/internal/config"
 )
+
+// SSEEvent represents a Server-Sent Event
+type SSEEvent struct {
+	Event string
+	Data  string
+}
+
+// parseSSEResponse parses Server-Sent Events and extracts token usage
+func parseSSEResponse(data []byte) (int, int) {
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	var inputTokens, outputTokens int
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		if strings.HasPrefix(line, "event:") {
+			continue
+		}
+
+		if strings.HasPrefix(line, "data: ") {
+			jsonData := strings.TrimPrefix(line, "data: ")
+
+			// Parse the JSON data
+			var event map[string]interface{}
+			if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
+				continue
+			}
+
+			eventType, _ := event["type"].(string)
+
+			// Check if this is a message_start event with usage info
+			if eventType == "message_start" {
+				if message, ok := event["message"].(map[string]interface{}); ok {
+					if usage, ok := message["usage"].(map[string]interface{}); ok {
+						// Try to get input_tokens
+						if input, ok := usage["input_tokens"].(float64); ok {
+							inputTokens = int(input)
+						}
+
+						// Also check cache_read_input_tokens
+						if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
+							inputTokens += int(cacheRead)
+						}
+
+						// Also check cache_creation_input_tokens
+						if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
+							inputTokens += int(cacheCreate)
+						}
+
+						// Get output_tokens from message_start (usually 0, will be updated in message_delta)
+						if output, ok := usage["output_tokens"].(float64); ok {
+							outputTokens = int(output)
+						}
+					}
+				}
+			}
+
+			// Check for message_delta events (which contain the actual output token count)
+			if eventType == "message_delta" {
+				// Check event.usage first (common format)
+				if usage, ok := event["usage"].(map[string]interface{}); ok {
+					if output, ok := usage["output_tokens"].(float64); ok {
+						outputTokens = int(output)
+					}
+				}
+				// Also check delta.usage (alternative structure)
+				if delta, ok := event["delta"].(map[string]interface{}); ok {
+					if usage, ok := delta["usage"].(map[string]interface{}); ok {
+						if output, ok := usage["output_tokens"].(float64); ok {
+							outputTokens = int(output)
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return inputTokens, outputTokens
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+// Usage represents token usage information from API response
+type Usage struct {
+	InputTokens  int `json:"input_tokens"`
+	OutputTokens int `json:"output_tokens"`
+}
+
+// APIResponse represents the structure of API responses to extract usage
+type APIResponse struct {
+	Usage Usage `json:"usage"`
+}
 
 // Proxy represents the proxy server
 type Proxy struct {
@@ -58,13 +159,31 @@ func (p *Proxy) Stop() error {
 	return nil
 }
 
+// getEnabledEndpoints returns only the enabled endpoints
+func (p *Proxy) getEnabledEndpoints() []config.Endpoint {
+	allEndpoints := p.config.GetEndpoints()
+	enabled := make([]config.Endpoint, 0)
+	for _, ep := range allEndpoints {
+		if ep.Enabled {
+			enabled = append(enabled, ep)
+		}
+	}
+	return enabled
+}
+
 // getCurrentEndpoint returns the current endpoint (thread-safe)
 func (p *Proxy) getCurrentEndpoint() config.Endpoint {
 	p.mu.RLock()
 	defer p.mu.RUnlock()
 
-	endpoints := p.config.GetEndpoints()
-	return endpoints[p.currentIndex]
+	endpoints := p.getEnabledEndpoints()
+	if len(endpoints) == 0 {
+		// Return empty endpoint if no enabled endpoints
+		return config.Endpoint{}
+	}
+	// Make sure currentIndex is within bounds
+	index := p.currentIndex % len(endpoints)
+	return endpoints[index]
 }
 
 // rotateEndpoint switches to the next endpoint (thread-safe)
@@ -72,12 +191,19 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	endpoints := p.config.GetEndpoints()
+	endpoints := p.getEnabledEndpoints()
+	if len(endpoints) == 0 {
+		// Return empty endpoint if no enabled endpoints
+		return config.Endpoint{}
+	}
+
 	oldIndex := p.currentIndex
+	oldEndpoint := endpoints[oldIndex]
 	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
-	log.Printf("🔄 Rotating endpoint: #%d -> #%d (%s)", oldIndex+1, p.currentIndex+1, newEndpoint.Name)
+	log.Printf("🔄 [SWITCH] %s (#%d) → %s (#%d)",
+		oldEndpoint.Name, oldIndex+1, newEndpoint.Name, p.currentIndex+1)
 
 	return newEndpoint
 }
@@ -93,17 +219,31 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	// Read request body
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
+		log.Printf("❌ [ERROR] Failed to read request body: %v", err)
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	endpoints := p.config.GetEndpoints()
+	endpoints := p.getEnabledEndpoints()
+	if len(endpoints) == 0 {
+		log.Printf("❌ [ERROR] No enabled endpoints available")
+		http.Error(w, "No enabled endpoints configured", http.StatusServiceUnavailable)
+		return
+	}
+
 	maxRetries := len(endpoints)
 
 	// Try each endpoint
 	for retry := 0; retry < maxRetries; retry++ {
 		endpoint := p.getCurrentEndpoint()
+
+		// Check if endpoint is empty (shouldn't happen, but safe check)
+		if endpoint.Name == "" {
+			log.Printf("❌ [ERROR] Got empty endpoint, no enabled endpoints available")
+			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
+			return
+		}
 
 		// Record request
 		p.stats.RecordRequest(endpoint.Name)
@@ -116,7 +256,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewReader(bodyBytes))
 		if err != nil {
-			log.Printf("❌ Failed to create request: %v", err)
+			log.Printf("❌ [ERROR] [%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
@@ -134,15 +274,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		proxyReq.Header.Set("Host", endpoint.APIUrl)
 
 		// Send request
-		log.Printf("📤 [%s #%d] %s %s", endpoint.Name, p.currentIndex+1, r.Method, r.URL.Path)
-
 		client := &http.Client{
 			Timeout: 120 * time.Second,
 		}
 
 		resp, err := client.Do(proxyReq)
 		if err != nil {
-			log.Printf("❌ Request failed: %v", err)
+			log.Printf("❌ [ERROR] [%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
@@ -152,27 +290,61 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		respBody, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
-			log.Printf("❌ Failed to read response: %v", err)
+			log.Printf("❌ [ERROR] [%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 			continue
 		}
 
+		// Handle gzip compressed response
+		var finalBody []byte = respBody
+		if len(respBody) > 1 && respBody[0] == 0x1f && respBody[1] == 0x8b {
+			// This is gzip compressed
+			gzReader, err := gzip.NewReader(bytes.NewReader(respBody))
+			if err == nil {
+				decompressed, err := io.ReadAll(gzReader)
+				gzReader.Close()
+				if err == nil {
+					finalBody = decompressed
+				}
+			}
+		}
+
 		// Check if we should retry
 		if shouldRetry(resp.StatusCode) {
-			log.Printf("⚠️  Non-200 response (%d), rotating endpoint", resp.StatusCode)
+			log.Printf("⚠️  [%s] Non-200 response: %d %s, rotating to next endpoint",
+				endpoint.Name, resp.StatusCode, http.StatusText(resp.StatusCode))
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 
 			// If this is not the last retry, continue to next endpoint
 			if retry < maxRetries-1 {
-				log.Printf("🔁 Retrying request (%d/%d)", retry+1, maxRetries)
 				continue
 			}
 		}
 
-		// Success or last retry - return response
-		log.Printf("📥 [%s #%d] %d %d bytes", endpoint.Name, p.currentIndex+1, resp.StatusCode, len(respBody))
+		// Success - extract token usage and return response
+		if resp.StatusCode == http.StatusOK && len(finalBody) > 0 {
+			// Check if this is a streaming response
+			isStreaming := resp.Header.Get("Content-Type") == "text/event-stream"
+
+			if isStreaming {
+				// Parse Server-Sent Events
+				inputTokens, outputTokens := parseSSEResponse(finalBody)
+
+				if inputTokens > 0 || outputTokens > 0 {
+					p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+				}
+			} else {
+				// Standard JSON response
+				var apiResp APIResponse
+				if err := json.Unmarshal(finalBody, &apiResp); err == nil {
+					if apiResp.Usage.InputTokens > 0 || apiResp.Usage.OutputTokens > 0 {
+						p.stats.RecordTokens(endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
+					}
+				}
+			}
+		}
 
 		// Copy response headers
 		for key, values := range resp.Header {
@@ -183,11 +355,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		w.WriteHeader(resp.StatusCode)
 		w.Write(respBody)
+
+		// Keep endpoint for cache efficiency (only rotate on errors)
 		return
 	}
 
 	// All endpoints failed
-	log.Printf("❌ All endpoints failed after %d retries", maxRetries)
+	log.Printf("❌ [CRITICAL] All %d endpoints failed after retries", maxRetries)
 	http.Error(w, "All endpoints unavailable", http.StatusServiceUnavailable)
 }
 

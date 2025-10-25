@@ -10,9 +10,10 @@ import (
 
 // Endpoint represents a single API endpoint configuration
 type Endpoint struct {
-	Name   string `json:"name"`
-	APIUrl string `json:"apiUrl"`
-	APIKey string `json:"apiKey"`
+	Name    string `json:"name"`
+	APIUrl  string `json:"apiUrl"`
+	APIKey  string `json:"apiKey"`
+	Enabled bool   `json:"enabled"`
 }
 
 // Config represents the application configuration
@@ -28,9 +29,10 @@ func DefaultConfig() *Config {
 		Port: 3000,
 		Endpoints: []Endpoint{
 			{
-				Name:   "Claude Official",
-				APIUrl: "api.anthropic.com",
-				APIKey: "your-api-key-here",
+				Name:    "Claude Official",
+				APIUrl:  "api.anthropic.com",
+				APIKey:  "your-api-key-here",
+				Enabled: true,
 			},
 		},
 	}

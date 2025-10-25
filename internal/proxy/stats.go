@@ -7,9 +7,11 @@ import (
 
 // EndpointStats represents statistics for a single endpoint
 type EndpointStats struct {
-	Requests int       `json:"requests"`
-	Errors   int       `json:"errors"`
-	LastUsed time.Time `json:"lastUsed"`
+	Requests     int       `json:"requests"`
+	Errors       int       `json:"errors"`
+	InputTokens  int       `json:"inputTokens"`
+	OutputTokens int       `json:"outputTokens"`
+	LastUsed     time.Time `json:"lastUsed"`
 }
 
 // Stats represents overall proxy statistics
@@ -54,6 +56,20 @@ func (s *Stats) RecordError(endpointName string) {
 	s.EndpointStats[endpointName].Errors++
 }
 
+// RecordTokens records token usage for an endpoint
+func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.EndpointStats[endpointName]; !exists {
+		s.EndpointStats[endpointName] = &EndpointStats{}
+	}
+
+	stats := s.EndpointStats[endpointName]
+	stats.InputTokens += inputTokens
+	stats.OutputTokens += outputTokens
+}
+
 // GetStats returns a copy of current statistics (thread-safe)
 func (s *Stats) GetStats() (int, map[string]*EndpointStats) {
 	s.mu.RLock()
@@ -63,9 +79,11 @@ func (s *Stats) GetStats() (int, map[string]*EndpointStats) {
 	statsCopy := make(map[string]*EndpointStats)
 	for name, stats := range s.EndpointStats {
 		statsCopy[name] = &EndpointStats{
-			Requests: stats.Requests,
-			Errors:   stats.Errors,
-			LastUsed: stats.LastUsed,
+			Requests:     stats.Requests,
+			Errors:       stats.Errors,
+			InputTokens:  stats.InputTokens,
+			OutputTokens: stats.OutputTokens,
+			LastUsed:     stats.LastUsed,
 		}
 	}
 

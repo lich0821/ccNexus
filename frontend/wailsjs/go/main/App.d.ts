@@ -9,6 +9,8 @@ export function GetStats():Promise<string>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
+export function ToggleEndpoint(arg1:number,arg2:boolean):Promise<void>;
+
 export function UpdateConfig(arg1:string):Promise<void>;
 
 export function UpdateEndpoint(arg1:number,arg2:string,arg3:string,arg4:string):Promise<void>;
