@@ -14,6 +14,10 @@ export function GetStats() {
   return window['go']['main']['App']['GetStats']();
 }
 
+export function OpenURL(arg1) {
+  return window['go']['main']['App']['OpenURL'](arg1);
+}
+
 export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }

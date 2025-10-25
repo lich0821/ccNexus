@@ -26,25 +26,28 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
 		Bind: []interface{}{
 			app,
 		},
-		// 开发模式下也显示窗口
-		StartHidden: false,
+		Frameless:     false,
+		Fullscreen:    false,
+		MinWidth:      800,
+		MinHeight:     600,
+		DisableResize: true,
 		Mac: &mac.Options{
 			TitleBar: &mac.TitleBar{
-				TitlebarAppearsTransparent: true,
+				TitlebarAppearsTransparent: false,
 				HideTitle:                  false,
 				HideTitleBar:               false,
 				FullSizeContent:            false,
 				UseToolbar:                 false,
-				HideToolbarSeparator:       true,
+				HideToolbarSeparator:       false,
 			},
-			WebviewIsTransparent: true,
-			WindowIsTranslucent:  true,
+			WebviewIsTransparent: false,
+			WindowIsTranslucent:  false,
 			About: &mac.AboutInfo{
 				Title:   "ccNexus",
 				Message: "© 2024 ccNexus\n\nA smart API endpoint rotation proxy for Claude Code",

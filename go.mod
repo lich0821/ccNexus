@@ -1,4 +1,4 @@
-module github.com/yourusername/claude-proxy
+module github.com/lich0821/ccNexus
 
 go 1.22.0
 

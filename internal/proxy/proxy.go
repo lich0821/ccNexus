@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yourusername/claude-proxy/internal/config"
+	"github.com/lich0821/ccNexus/internal/config"
 )
 
 // SSEEvent represents a Server-Sent Event
@@ -115,11 +115,11 @@ type APIResponse struct {
 
 // Proxy represents the proxy server
 type Proxy struct {
-	config           *config.Config
-	stats            *Stats
-	currentIndex     int
-	mu               sync.RWMutex
-	server           *http.Server
+	config       *config.Config
+	stats        *Stats
+	currentIndex int
+	mu           sync.RWMutex
+	server       *http.Server
 }
 
 // New creates a new Proxy instance

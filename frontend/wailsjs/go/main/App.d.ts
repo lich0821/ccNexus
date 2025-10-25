@@ -7,6 +7,8 @@ export function GetConfig():Promise<string>;
 
 export function GetStats():Promise<string>;
 
+export function OpenURL(arg1:string):Promise<void>;
+
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function ToggleEndpoint(arg1:number,arg2:boolean):Promise<void>;

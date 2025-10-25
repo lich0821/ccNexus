@@ -6,16 +6,16 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
-	"github.com/yourusername/claude-proxy/internal/config"
-	"github.com/yourusername/claude-proxy/internal/proxy"
 )
 
 // App struct
 type App struct {
-	ctx    context.Context
-	config *config.Config
-	proxy  *proxy.Proxy
+	ctx        context.Context
+	config     *config.Config
+	proxy      *proxy.Proxy
 	configPath string
 }
 
@@ -244,4 +244,9 @@ func (a *App) ToggleEndpoint(index int, enabled bool) error {
 	}
 
 	return a.config.Save(a.configPath)
+}
+
+// OpenURL opens a URL in the default browser
+func (a *App) OpenURL(url string) {
+	runtime.BrowserOpenURL(a.ctx, url)
 }
