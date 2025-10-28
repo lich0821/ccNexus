@@ -14,6 +14,7 @@ import (
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/transformer"
 )
 
 // SSEEvent represents a Server-Sent Event
@@ -147,7 +148,6 @@ func (p *Proxy) Start() error {
 
 	logger.Info("ccNexus starting on port %d", port)
 	logger.Info("Configured %d endpoints", len(p.config.GetEndpoints()))
-	logger.Debug("Server listening on http://localhost:%d", port)
 
 	return p.server.ListenAndServe()
 }
@@ -205,7 +205,6 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	newEndpoint := endpoints[p.currentIndex]
 	logger.Info("[SWITCH] %s (#%d) → %s (#%d)",
 		oldEndpoint.Name, oldIndex+1, newEndpoint.Name, p.currentIndex+1)
-	logger.Debug("Rotating from endpoint %s to %s due to error", oldEndpoint.Name, newEndpoint.Name)
 
 	return newEndpoint
 }
@@ -218,8 +217,6 @@ func shouldRetry(statusCode int) bool {
 
 // handleProxy handles the main proxy logic
 func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
-	logger.Debug("Received %s request to %s", r.Method, r.URL.Path)
-
 	// Read request body
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -236,7 +233,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Debug("Using %d enabled endpoints for request", len(endpoints))
 	maxRetries := len(endpoints)
 
 	// Try each endpoint
@@ -253,15 +249,94 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		// Record request
 		p.stats.RecordRequest(endpoint.Name)
 
+		// Get transformer for this endpoint
+		transformerName := endpoint.Transformer
+		if transformerName == "" {
+			transformerName = "claude"
+		}
+
+		// Disable debug file logging for Claude transformer
+		if transformerName == "claude" {
+			logger.GetLogger().DisableDebugFile()
+			defer logger.GetLogger().EnableDebugFile()
+		}
+
+		var trans transformer.Transformer
+		var err error
+
+		// For OpenAI and Gemini transformers, create instance with model name
+		if transformerName == "openai" {
+			if endpoint.Model == "" {
+				logger.Error("[%s] OpenAI transformer requires model field", endpoint.Name)
+				p.stats.RecordError(endpoint.Name)
+				p.rotateEndpoint()
+				continue
+			}
+			trans = transformer.NewOpenAITransformer(endpoint.Model)
+		} else if transformerName == "gemini" {
+			if endpoint.Model == "" {
+				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
+				p.stats.RecordError(endpoint.Name)
+				p.rotateEndpoint()
+				continue
+			}
+			trans = transformer.NewGeminiTransformer(endpoint.Model)
+		} else {
+			// Get registered transformer
+			trans, err = transformer.Get(transformerName)
+			if err != nil {
+				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
+				p.stats.RecordError(endpoint.Name)
+				p.rotateEndpoint()
+				continue
+			}
+		}
+
+		// Transform request from Claude format to target API format
+		transformedBody, err := trans.TransformRequest(bodyBytes)
+		if err != nil {
+			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
+			p.stats.RecordError(endpoint.Name)
+			p.rotateEndpoint()
+			continue
+		}
+
+		logger.Debug("[%s] Using transformer: %s", endpoint.Name, transformerName)
+
+		// Parse the transformed request to check if thinking is enabled
+		var thinkingEnabled bool
+		if transformerName == "openai" {
+			var openaiReq map[string]interface{}
+			if err := json.Unmarshal(transformedBody, &openaiReq); err == nil {
+				if enableThinking, ok := openaiReq["enable_thinking"].(bool); ok {
+					thinkingEnabled = enableThinking
+				}
+			}
+		}
+
 		// Create new request
-		targetURL := fmt.Sprintf("https://%s%s", endpoint.APIUrl, r.URL.Path)
+		targetPath := r.URL.Path
+		if transformerName == "openai" && targetPath == "/v1/messages" {
+			targetPath = "/v1/chat/completions"
+		} else if transformerName == "gemini" && targetPath == "/v1/messages" {
+			var geminiReq struct {
+				Stream bool `json:"stream"`
+			}
+			json.Unmarshal(transformedBody, &geminiReq)
+
+			if geminiReq.Stream {
+				targetPath = fmt.Sprintf("/v1beta/models/%s:streamGenerateContent", endpoint.Model)
+			} else {
+				targetPath = fmt.Sprintf("/v1beta/models/%s:generateContent", endpoint.Model)
+			}
+		}
+
+		targetURL := fmt.Sprintf("https://%s%s", endpoint.APIUrl, targetPath)
 		if r.URL.RawQuery != "" {
 			targetURL += "?" + r.URL.RawQuery
 		}
 
-		logger.Debug("[%s] Forwarding request to %s", endpoint.Name, targetURL)
-
-		proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewReader(bodyBytes))
+		proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewReader(transformedBody))
 		if err != nil {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
@@ -276,9 +351,19 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Override with endpoint's API key
-		proxyReq.Header.Set("x-api-key", endpoint.APIKey)
+		// Set authentication header based on transformer type
+		if transformerName == "openai" {
+			proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
+		} else if transformerName == "gemini" {
+			q := proxyReq.URL.Query()
+			q.Set("key", endpoint.APIKey)
+			proxyReq.URL.RawQuery = q.Encode()
+		} else {
+			proxyReq.Header.Set("x-api-key", endpoint.APIKey)
+		}
+
 		proxyReq.Header.Set("Host", endpoint.APIUrl)
+		proxyReq.Header.Set("Content-Type", "application/json")
 
 		// Send request
 		client := &http.Client{
@@ -293,7 +378,151 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Read response body
+		// Parse request to check if streaming was requested
+		var claudeReq struct {
+			Stream bool `json:"stream"`
+		}
+		json.Unmarshal(bodyBytes, &claudeReq)
+
+		// Check if this is a streaming response
+		contentType := resp.Header.Get("Content-Type")
+		isStreaming := contentType == "text/event-stream" ||
+			(claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
+
+		// Handle streaming responses differently
+		if resp.StatusCode == http.StatusOK && isStreaming {
+			// Copy response headers
+			for key, values := range resp.Header {
+				for _, value := range values {
+					w.Header().Add(key, value)
+				}
+			}
+			w.WriteHeader(resp.StatusCode)
+
+			// Get flusher
+			flusher, ok := w.(http.Flusher)
+			if !ok {
+				logger.Error("[%s] ResponseWriter does not support flushing", endpoint.Name)
+				resp.Body.Close()
+				return
+			}
+
+			// Create a stream context for this specific stream
+			var streamCtx *transformer.StreamContext
+			if transformerName == "openai" || transformerName == "gemini" {
+				streamCtx = transformer.NewStreamContext()
+				if transformerName == "openai" {
+					streamCtx.EnableThinking = thinkingEnabled
+				}
+			}
+
+			// Stream and transform SSE events in real-time
+			scanner := bufio.NewScanner(resp.Body)
+			var inputTokens, outputTokens int
+			var buffer bytes.Buffer
+			eventCount := 0
+			streamDone := false
+
+			for scanner.Scan() && !streamDone {
+				line := scanner.Text()
+				buffer.WriteString(line + "\n")
+
+				// Check for [DONE] marker to stop reading immediately
+				if strings.Contains(line, "data: [DONE]") {
+					streamDone = true
+				}
+
+				// When we hit an empty line, we have a complete event
+				if line == "" {
+					eventCount++
+					// Transform the buffered event
+					eventData := buffer.Bytes()
+
+					var transformedEvent []byte
+					var err error
+
+					// Transform based on transformer type
+					if transformerName == "openai" {
+						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					} else if transformerName == "gemini" {
+						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					} else {
+						transformedEvent, err = trans.TransformResponse(eventData, true)
+					}
+
+					if err != nil {
+						logger.Error("[%s] Failed to transform SSE event #%d: %v", endpoint.Name, eventCount, err)
+						logger.Error("[%s] Original event data:\n%s", endpoint.Name, string(eventData))
+						buffer.Reset()
+						continue
+					}
+
+					// Write transformed event
+					_, writeErr := w.Write(transformedEvent)
+					if writeErr != nil {
+						logger.Error("[%s] Failed to write event #%d to client: %v", endpoint.Name, eventCount, writeErr)
+						streamDone = true
+						break
+					}
+					flusher.Flush()
+
+					// Parse token usage
+					scanner2 := bufio.NewScanner(bytes.NewReader(transformedEvent))
+					for scanner2.Scan() {
+						eventLine := scanner2.Text()
+						if strings.HasPrefix(eventLine, "data: ") {
+							jsonData := strings.TrimPrefix(eventLine, "data: ")
+							var event map[string]interface{}
+							if err := json.Unmarshal([]byte(jsonData), &event); err == nil {
+								eventType, _ := event["type"].(string)
+								if eventType == "message_start" {
+									if message, ok := event["message"].(map[string]interface{}); ok {
+										if usage, ok := message["usage"].(map[string]interface{}); ok {
+											if input, ok := usage["input_tokens"].(float64); ok {
+												inputTokens = int(input)
+											}
+										}
+									}
+								}
+								if eventType == "message_delta" {
+									if usage, ok := event["usage"].(map[string]interface{}); ok {
+										if output, ok := usage["output_tokens"].(float64); ok {
+											outputTokens = int(output)
+										}
+									}
+									if delta, ok := event["delta"].(map[string]interface{}); ok {
+										if stopReason, ok := delta["stop_reason"].(string); ok && stopReason != "" {
+											if stopReason != "tool_use" {
+												// Don't set streamDone here, wait for message_stop event
+											}
+										}
+									}
+								}
+								if eventType == "message_stop" {
+									streamDone = true
+								}
+							}
+						}
+					}
+
+					buffer.Reset()
+
+					if streamDone {
+						break
+					}
+				}
+			}
+
+			resp.Body.Close()
+
+			if inputTokens > 0 || outputTokens > 0 {
+				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+			}
+
+			return
+		}
+
+		// For non-streaming responses, read the full body
 		respBody, err := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if err != nil {
@@ -319,10 +548,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Check if we should retry
 		if shouldRetry(resp.StatusCode) {
-			// Try to extract error message from response body
 			var errorMsg string
 			if len(finalBody) > 0 && len(finalBody) < 1000 {
-				// Try to parse as JSON error
 				var errResp map[string]interface{}
 				if err := json.Unmarshal(finalBody, &errResp); err == nil {
 					if errData, ok := errResp["error"]; ok {
@@ -344,40 +571,44 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			p.stats.RecordError(endpoint.Name)
 			p.rotateEndpoint()
 
-			// If this is not the last retry, continue to next endpoint
 			if retry < maxRetries-1 {
 				continue
 			}
 		}
 
-		// Success - extract token usage and return response
+		// Success - handle non-streaming response
 		if resp.StatusCode == http.StatusOK && len(finalBody) > 0 {
-			logger.Debug("[%s] Request successful, status: %d", endpoint.Name, resp.StatusCode)
+			// Transform response
+			transformedResp, err := trans.TransformResponse(finalBody, false)
+			if err != nil {
+				logger.Error("[%s] Failed to transform response: %v", endpoint.Name, err)
+				p.stats.RecordError(endpoint.Name)
+				p.rotateEndpoint()
+				continue
+			}
 
-			// Check if this is a streaming response
-			isStreaming := resp.Header.Get("Content-Type") == "text/event-stream"
-
-			if isStreaming {
-				// Parse Server-Sent Events
-				inputTokens, outputTokens := parseSSEResponse(finalBody)
-
-				if inputTokens > 0 || outputTokens > 0 {
-					p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
-					logger.Debug("[%s] Tokens used - Input: %d, Output: %d", endpoint.Name, inputTokens, outputTokens)
-				}
-			} else {
-				// Standard JSON response
-				var apiResp APIResponse
-				if err := json.Unmarshal(finalBody, &apiResp); err == nil {
-					if apiResp.Usage.InputTokens > 0 || apiResp.Usage.OutputTokens > 0 {
-						p.stats.RecordTokens(endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
-						logger.Debug("[%s] Tokens used - Input: %d, Output: %d", endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
-					}
+			// Copy response headers
+			for key, values := range resp.Header {
+				for _, value := range values {
+					w.Header().Add(key, value)
 				}
 			}
+
+			w.WriteHeader(resp.StatusCode)
+			w.Write(transformedResp)
+
+			// Extract token usage
+			var apiResp APIResponse
+			if err := json.Unmarshal(transformedResp, &apiResp); err == nil {
+				if apiResp.Usage.InputTokens > 0 || apiResp.Usage.OutputTokens > 0 {
+					p.stats.RecordTokens(endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
+				}
+			}
+
+			return
 		}
 
-		// Copy response headers
+		// Copy response headers for error responses
 		for key, values := range resp.Header {
 			for _, value := range values {
 				w.Header().Add(key, value)
@@ -387,7 +618,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(resp.StatusCode)
 		w.Write(respBody)
 
-		// Keep endpoint for cache efficiency (only rotate on errors)
 		return
 	}
 
@@ -450,8 +680,7 @@ func (p *Proxy) UpdateConfig(cfg *config.Config) error {
 	defer p.mu.Unlock()
 
 	p.config = cfg
-	p.currentIndex = 0 // Reset to first endpoint
+	p.currentIndex = 0
 
-	logger.Debug("Proxy configuration reloaded: %d total endpoints, %d enabled", len(cfg.GetEndpoints()), len(p.getEnabledEndpoints()))
 	return nil
 }

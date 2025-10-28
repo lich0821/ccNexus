@@ -10,10 +10,12 @@ import (
 
 // Endpoint represents a single API endpoint configuration
 type Endpoint struct {
-	Name    string `json:"name"`
-	APIUrl  string `json:"apiUrl"`
-	APIKey  string `json:"apiKey"`
-	Enabled bool   `json:"enabled"`
+	Name        string `json:"name"`
+	APIUrl      string `json:"apiUrl"`
+	APIKey      string `json:"apiKey"`
+	Enabled     bool   `json:"enabled"`
+	Transformer string `json:"transformer,omitempty"` // Transformer type: claude, openai, gemini, deepseek
+	Model       string `json:"model,omitempty"`       // Target model name for non-Claude APIs
 }
 
 // Config represents the application configuration
@@ -31,10 +33,11 @@ func DefaultConfig() *Config {
 		LogLevel: 1, // Default to INFO level
 		Endpoints: []Endpoint{
 			{
-				Name:    "Claude Official",
-				APIUrl:  "api.anthropic.com",
-				APIKey:  "your-api-key-here",
-				Enabled: true,
+				Name:        "Claude Official",
+				APIUrl:      "api.anthropic.com",
+				APIKey:      "your-api-key-here",
+				Enabled:     true,
+				Transformer: "claude",
 			},
 		},
 	}
@@ -59,6 +62,16 @@ func (c *Config) Validate() error {
 		}
 		if ep.APIKey == "" {
 			return fmt.Errorf("endpoint %d: apiKey is required", i+1)
+		}
+
+		// Default to claude transformer if not specified
+		if ep.Transformer == "" {
+			c.Endpoints[i].Transformer = "claude"
+		}
+
+		// Non-Claude transformers require model field
+		if ep.Transformer != "claude" && ep.Model == "" {
+			return fmt.Errorf("endpoint %d (%s): model is required for transformer '%s'", i+1, ep.Name, ep.Transformer)
 		}
 	}
 

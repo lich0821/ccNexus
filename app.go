@@ -28,6 +28,11 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
+	// Initialize debug log file
+	if err := logger.GetLogger().SetDebugFile("debug.log"); err != nil {
+		logger.Warn("Failed to initialize debug log file: %v", err)
+	}
+
 	logger.Debug("Application starting...")
 
 	// Get config path
@@ -75,6 +80,9 @@ func (a *App) shutdown(ctx context.Context) {
 		a.proxy.Stop()
 	}
 	logger.Info("Application stopped")
+
+	// Close debug log file
+	logger.GetLogger().CloseDebugFile()
 }
 
 // GetConfig returns the current configuration
@@ -122,13 +130,20 @@ func (a *App) GetStats() string {
 }
 
 // AddEndpoint adds a new endpoint
-func (a *App) AddEndpoint(name, apiUrl, apiKey string) error {
+func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model string) error {
+	// Default to claude if transformer not specified
+	if transformer == "" {
+		transformer = "claude"
+	}
+
 	endpoints := a.config.GetEndpoints()
 	endpoints = append(endpoints, config.Endpoint{
-		Name:    name,
-		APIUrl:  apiUrl,
-		APIKey:  apiKey,
-		Enabled: true,
+		Name:        name,
+		APIUrl:      apiUrl,
+		APIKey:      apiKey,
+		Enabled:     true,
+		Transformer: transformer,
+		Model:       model,
 	})
 
 	a.config.UpdateEndpoints(endpoints)
@@ -141,7 +156,11 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey string) error {
 		return err
 	}
 
-	logger.Info("Endpoint added: %s (%s)", name, apiUrl)
+	if model != "" {
+		logger.Info("Endpoint added: %s (%s) [%s/%s]", name, apiUrl, transformer, model)
+	} else {
+		logger.Info("Endpoint added: %s (%s) [%s]", name, apiUrl, transformer)
+	}
 
 	return a.config.Save(a.configPath)
 }
@@ -196,7 +215,7 @@ func (a *App) RemoveEndpoint(index int) error {
 }
 
 // UpdateEndpoint updates an endpoint by index
-func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
+func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model string) error {
 	endpoints := a.config.GetEndpoints()
 
 	if index < 0 || index >= len(endpoints) {
@@ -209,11 +228,18 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
 	// Preserve the Enabled status
 	enabled := endpoints[index].Enabled
 
+	// Default to claude if transformer not specified
+	if transformer == "" {
+		transformer = "claude"
+	}
+
 	endpoints[index] = config.Endpoint{
-		Name:    name,
-		APIUrl:  apiUrl,
-		APIKey:  apiKey,
-		Enabled: enabled,
+		Name:        name,
+		APIUrl:      apiUrl,
+		APIKey:      apiKey,
+		Enabled:     enabled,
+		Transformer: transformer,
+		Model:       model,
 	}
 
 	a.config.UpdateEndpoints(endpoints)
@@ -227,9 +253,17 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey string) error {
 	}
 
 	if oldName != name {
-		logger.Info("Endpoint updated: %s → %s (%s)", oldName, name, apiUrl)
+		if model != "" {
+			logger.Info("Endpoint updated: %s → %s (%s) [%s/%s]", oldName, name, apiUrl, transformer, model)
+		} else {
+			logger.Info("Endpoint updated: %s → %s (%s) [%s]", oldName, name, apiUrl, transformer)
+		}
 	} else {
-		logger.Info("Endpoint updated: %s (%s)", name, apiUrl)
+		if model != "" {
+			logger.Info("Endpoint updated: %s (%s) [%s/%s]", name, apiUrl, transformer, model)
+		} else {
+			logger.Info("Endpoint updated: %s (%s) [%s]", name, apiUrl, transformer)
+		}
 	}
 
 	return a.config.Save(a.configPath)

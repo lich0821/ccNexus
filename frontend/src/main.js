@@ -147,6 +147,24 @@ function initApp() {
                     <label>API Key</label>
                     <input type="password" id="endpointKey" placeholder="sk-ant-api03-...">
                 </div>
+                <div class="form-group">
+                    <label>Transformer</label>
+                    <select id="endpointTransformer" onchange="window.handleTransformerChange()">
+                        <option value="claude">Claude (Default)</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                    <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                        Select the API format for this endpoint
+                    </p>
+                </div>
+                <div class="form-group" id="modelFieldGroup" style="display: none;">
+                    <label>Model</label>
+                    <input type="text" id="endpointModel" placeholder="e.g., gpt-4-turbo">
+                    <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                        Required for non-Claude transformers
+                    </p>
+                </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeModal()">Cancel</button>
                     <button class="btn btn-primary" onclick="window.saveEndpoint()">Save</button>
@@ -359,6 +377,9 @@ function renderEndpoints(endpoints) {
         };
 
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
+        const transformer = ep.transformer || 'claude';
+        const model = ep.model || '';
+
         const item = document.createElement('div');
         item.className = 'endpoint-item';
         item.innerHTML = `
@@ -366,7 +387,8 @@ function renderEndpoints(endpoints) {
                 <h3>${ep.name} ${enabled ? '✅' : '❌'}</h3>
                 <p>🌐 ${ep.apiUrl}</p>
                 <p>🔑 ${maskApiKey(ep.apiKey)}</p>
-                <p style="color: #666; font-size: 14px; margin-top: 5px;">📊 Requests: ${stats.requests} | Errors: ${stats.errors}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 Transformer: ${transformer}${model ? ` (${model})` : ''}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 Requests: ${stats.requests} | Errors: ${stats.errors}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 Tokens: ${formatTokens(totalTokens)} (In: ${formatTokens(stats.inputTokens)}, Out: ${formatTokens(stats.outputTokens)})</p>
             </div>
             <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
@@ -423,7 +445,21 @@ window.showAddEndpointModal = function() {
     document.getElementById('endpointName').value = '';
     document.getElementById('endpointUrl').value = '';
     document.getElementById('endpointKey').value = '';
+    document.getElementById('endpointTransformer').value = 'claude';
+    document.getElementById('endpointModel').value = '';
+    document.getElementById('modelFieldGroup').style.display = 'none';
     document.getElementById('endpointModal').classList.add('active');
+}
+
+window.handleTransformerChange = function() {
+    const transformer = document.getElementById('endpointTransformer').value;
+    const modelFieldGroup = document.getElementById('modelFieldGroup');
+
+    if (transformer === 'claude') {
+        modelFieldGroup.style.display = 'none';
+    } else {
+        modelFieldGroup.style.display = 'block';
+    }
 }
 
 window.editEndpoint = async function(index) {
@@ -436,6 +472,12 @@ window.editEndpoint = async function(index) {
     document.getElementById('endpointName').value = ep.name;
     document.getElementById('endpointUrl').value = ep.apiUrl;
     document.getElementById('endpointKey').value = ep.apiKey;
+    document.getElementById('endpointTransformer').value = ep.transformer || 'claude';
+    document.getElementById('endpointModel').value = ep.model || '';
+
+    // Show/hide model field based on transformer
+    window.handleTransformerChange();
+
     document.getElementById('endpointModal').classList.add('active');
 }
 
@@ -443,17 +485,25 @@ window.saveEndpoint = async function() {
     const name = document.getElementById('endpointName').value.trim();
     const url = document.getElementById('endpointUrl').value.trim();
     const key = document.getElementById('endpointKey').value.trim();
+    const transformer = document.getElementById('endpointTransformer').value;
+    const model = document.getElementById('endpointModel').value.trim();
 
     if (!name || !url || !key) {
-        alert('Please fill in all fields');
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    // Validate model field for non-Claude transformers
+    if (transformer !== 'claude' && !model) {
+        alert('Model field is required for ' + transformer + ' transformer');
         return;
     }
 
     try {
         if (currentEditIndex === -1) {
-            await window.go.main.App.AddEndpoint(name, url, key);
+            await window.go.main.App.AddEndpoint(name, url, key, transformer, model);
         } else {
-            await window.go.main.App.UpdateEndpoint(currentEditIndex, name, url, key);
+            await window.go.main.App.UpdateEndpoint(currentEditIndex, name, url, key, transformer, model);
         }
 
         window.closeModal();
@@ -573,8 +623,8 @@ function renderLogs(logs) {
         return;
     }
 
-    // Show last 100 logs
-    const recentLogs = logs.slice(-100);
+    // Show all logs (no limit)
+    const recentLogs = logs;
 
     // Format logs as plain text with date and 24-hour time
     const logText = recentLogs.map(log => {

@@ -17,6 +17,7 @@
 
 - 🔄 **Automatic Endpoint Rotation** - Seamlessly switches between endpoints on errors
 - 🌐 **Multi-Provider Support** - Use official Claude API and third-party providers
+- 🔀 **Multi-Format Transformer** - Support Claude, OpenAI, and Gemini API formats
 - 🔁 **Smart Retry** - Retries on any non-200 response
 - 📊 **Real-time Statistics** - Monitor requests, errors, and endpoint usage
 - 💰 **Token Usage Tracking** - Track input/output tokens for each endpoint
@@ -73,6 +74,8 @@ chmod +x ccNexus
    - Name: A friendly name (e.g., "Claude Official")
    - API URL: The API server address (e.g., `api.anthropic.com`)
    - API Key: Your API key
+   - Transformer: Select API format (Claude/OpenAI/Gemini)
+   - Model: Required for OpenAI and Gemini (e.g., `gpt-4-turbo`, `gemini-pro`)
 3. **Save**: Click "Save" to add the endpoint
 
 ### Configure Claude Code
@@ -94,31 +97,49 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
-## 🎉 What's New in v0.4.0
+## 🎉 What's New in v0.5.0
 
-### 📋 Comprehensive Logging System
-- **Multi-Level Logging**: DEBUG, INFO, WARN, and ERROR levels for detailed monitoring
-- **Real-time Log Viewer**: Built-in log panel with dark theme and auto-refresh
-- **Dynamic Log Filtering**: Filter logs by level in real-time
-- **Persistent Log Level**: Log level preference saved across restarts
-- **Copy & Clear**: Easy log management with copy and clear functions
-- **Detailed Error Messages**: HTTP status codes and error details in logs
-
-### 🔍 Enhanced Configuration Logging
-- **Specific Change Tracking**: Clear logs for each configuration change
-  - Endpoint added/removed/updated
-  - Endpoint enabled/disabled
-  - Configuration reloaded
-- **Better Debugging**: Detailed DEBUG logs for request forwarding and token usage
+### 🔀 Multi-Format API Transformer Support
+- **OpenAI API Format**: Full support for OpenAI-compatible APIs
+  - Request/response transformation between Claude and OpenAI formats
+  - Tool calling support with proper format conversion
+  - Streaming response handling with thinking blocks
+  - Model specification for different OpenAI-compatible endpoints
+- **Google Gemini API Format**: Native support for Google's Gemini API
+  - Complete request/response transformation
+  - Function calling (tools) support
+  - Streaming response handling
+  - Model specification for different Gemini models
+- **Flexible Configuration**: Easy switching between API formats through GUI
+  - Select transformer type (Claude/OpenAI/Gemini) per endpoint
+  - Automatic model field display for non-Claude transformers
+  - Seamless integration with existing endpoint management
 
 ### 💡 Usage Example
 
-Monitor your proxy in real-time with detailed logs:
-```
-20250115 14:23:45 ℹ️ INFO  Endpoint enabled: Claude Official
-20250115 14:24:12 ℹ️ INFO  [SWITCH] Claude Official (#1) → Backup API (#2)
-20250115 14:24:13 ⚠️ WARN  [Backup API] HTTP 429 Too Many Requests
-20250115 14:24:15 🔍 DEBUG [Claude Official] Tokens used - Input: 1234, Output: 5678
+Configure multiple API providers with different formats:
+```json
+{
+  "endpoints": [
+    {
+      "name": "Claude Official",
+      "transformer": "claude",
+      "apiUrl": "api.anthropic.com"
+    },
+    {
+      "name": "OpenAI GPT-4",
+      "transformer": "openai",
+      "model": "gpt-4-turbo",
+      "apiUrl": "api.openai.com"
+    },
+    {
+      "name": "Google Gemini",
+      "transformer": "gemini",
+      "model": "gemini-pro",
+      "apiUrl": "generativelanguage.googleapis.com"
+    }
+  ]
+}
 ```
 
 ## 🔧 Configuration File
@@ -138,12 +159,23 @@ Example:
       "name": "Claude Official 1",
       "apiUrl": "api.anthropic.com",
       "apiKey": "sk-ant-api03-your-key-1",
+      "transformer": "claude",
       "enabled": true
     },
     {
-      "name": "Third Party Provider",
-      "apiUrl": "api.example.com",
-      "apiKey": "your-key-2",
+      "name": "OpenAI Compatible",
+      "apiUrl": "api.openai.com",
+      "apiKey": "sk-your-openai-key",
+      "transformer": "openai",
+      "model": "gpt-4-turbo",
+      "enabled": true
+    },
+    {
+      "name": "Google Gemini",
+      "apiUrl": "generativelanguage.googleapis.com",
+      "apiKey": "your-gemini-key",
+      "transformer": "gemini",
+      "model": "gemini-pro",
       "enabled": true
     }
   ]
@@ -157,6 +189,8 @@ Example:
   - `name`: Friendly name for the endpoint
   - `apiUrl`: API server address
   - `apiKey`: API authentication key
+  - `transformer`: API format - "claude" (default), "openai", or "gemini"
+  - `model`: Model name (required for OpenAI and Gemini transformers)
   - `enabled`: Whether the endpoint is active
 
 ## 🛠️ Development
@@ -210,6 +244,13 @@ ccNexus/
 │   │   └── stats.go       # Statistics tracking
 │   ├── config/            # Configuration management
 │   │   └── config.go      # Config structure
+│   ├── transformer/       # API format transformers
+│   │   ├── transformer.go # Transformer interface
+│   │   ├── claude.go      # Claude API format
+│   │   ├── openai.go      # OpenAI API format
+│   │   ├── gemini.go      # Gemini API format
+│   │   ├── types.go       # Common types
+│   │   └── registry.go    # Transformer registry
 │   └── logger/            # Logging system
 │       └── logger.go      # Multi-level logger
 ├── frontend/              # Frontend UI
