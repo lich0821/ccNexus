@@ -37,14 +37,34 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
+          cache: true
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Cache Wails CLI
+        id: cache-wails
+        uses: actions/cache@v4
+        with:
+          path: ~/go/bin/wails
+          key: ${{ runner.os }}-wails-${{ hashFiles('go.mod') }}
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.ref_type }}" == "tag" ]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=dev-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
 
       - name: Install Wails (Linux)
-        if: matrix.platform == 'linux'
+        if: matrix.platform == 'linux' && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
@@ -60,13 +80,27 @@ jobs:
           pkg-config --modversion webkit2gtk-4.0 || true
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      - name: Install Linux dependencies (cached)
+        if: matrix.platform == 'linux' && steps.cache-wails.outputs.cache-hit == 'true'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          # Create webkit2gtk-4.0.pc symlink to webkit2gtk-4.1.pc in all pkg-config paths
+          for pcdir in $(pkg-config --variable pc_path pkg-config | tr ':' ' '); do
+            if [ -f "$pcdir/webkit2gtk-4.1.pc" ]; then
+              echo "Creating symlink in $pcdir"
+              sudo ln -sf "$pcdir/webkit2gtk-4.1.pc" "$pcdir/webkit2gtk-4.0.pc"
+            fi
+          done
+          pkg-config --exists webkit2gtk-4.0 && echo "✓ webkit2gtk-4.0 found" || echo "✗ webkit2gtk-4.0 NOT found"
+
       - name: Install Wails (macOS)
-        if: matrix.platform == 'darwin'
+        if: matrix.platform == 'darwin' && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Install Wails (Windows)
-        if: matrix.platform == 'windows'
+        if: matrix.platform == 'windows' && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           go install github.com/wailsapp/wails/v2/cmd/wails@latest
         shell: pwsh
@@ -103,31 +137,31 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           cd build/bin
-          tar -czf ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
-          mv ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ../../
+          tar -czf ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
+          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ../../
 
       - name: Package application (macOS)
         if: matrix.platform == 'darwin'
         run: |
           cd build/bin
           if [ -d "ccNexus.app" ]; then
-            zip -r ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.zip "ccNexus.app"
+            zip -r ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.zip "ccNexus.app"
           else
-            tar -czf ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
+            tar -czf ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
           fi
-          mv ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.* ../../
+          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.* ../../
 
       - name: Package application (Windows)
         if: matrix.platform == 'windows'
         run: |
           cd build/bin
-          Compress-Archive -Path ccNexus.exe -DestinationPath ../../ccNexus-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          Compress-Archive -Path ccNexus.exe -DestinationPath ../../ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.zip
         shell: pwsh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ccNexus-${{ matrix.platform }}-${{ matrix.arch }}
+          name: ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
             ccNexus-*.tar.gz
             ccNexus-*.zip
