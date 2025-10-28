@@ -391,15 +391,13 @@ function renderEndpoints(endpoints) {
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 Requests: ${stats.requests} | Errors: ${stats.errors}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 Tokens: ${formatTokens(totalTokens)} (In: ${formatTokens(stats.inputTokens)}, Out: ${formatTokens(stats.outputTokens)})</p>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+            <div class="endpoint-actions">
                 <label class="toggle-switch">
                     <input type="checkbox" data-index="${index}" ${enabled ? 'checked' : ''}>
                     <span class="toggle-slider"></span>
                 </label>
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
-                    <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
-                </div>
+                <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
+                <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
             </div>
         `;
 

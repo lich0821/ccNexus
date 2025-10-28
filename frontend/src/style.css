@@ -108,12 +108,37 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 20px;
     transition: transform 0.2s;
 }
 
 .endpoint-item:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.endpoint-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.endpoint-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    min-width: 60px;
+    flex-shrink: 0;
+}
+
+.endpoint-actions .toggle-switch {
+    width: 50px;
+    height: 24px;
+}
+
+.endpoint-actions .btn {
+    width: 100%;
 }
 
 .endpoint-info h3 {

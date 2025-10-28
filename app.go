@@ -4,12 +4,24 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+// normalizeAPIUrl ensures the API URL has the correct format
+// Removes http:// or https:// prefix if present
+func normalizeAPIUrl(apiUrl string) string {
+	// Remove http:// or https:// prefix
+	apiUrl = strings.TrimPrefix(apiUrl, "https://")
+	apiUrl = strings.TrimPrefix(apiUrl, "http://")
+	// Remove trailing slash
+	apiUrl = strings.TrimSuffix(apiUrl, "/")
+	return apiUrl
+}
 
 // App struct
 type App struct {
@@ -128,6 +140,9 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model string) error
 		transformer = "claude"
 	}
 
+	// Normalize API URL (remove http/https prefix if present)
+	apiUrl = normalizeAPIUrl(apiUrl)
+
 	endpoints := a.config.GetEndpoints()
 	endpoints = append(endpoints, config.Endpoint{
 		Name:        name,
@@ -224,6 +239,9 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 	if transformer == "" {
 		transformer = "claude"
 	}
+
+	// Normalize API URL (remove http/https prefix if present)
+	apiUrl = normalizeAPIUrl(apiUrl)
 
 	endpoints[index] = config.Endpoint{
 		Name:        name,

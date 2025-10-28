@@ -103,6 +103,17 @@ func min(a, b int) int {
 	return b
 }
 
+// normalizeAPIUrl ensures the API URL has the correct format
+// Removes http:// or https:// prefix if present, as we'll add https:// when making requests
+func normalizeAPIUrl(apiUrl string) string {
+	// Remove http:// or https:// prefix
+	apiUrl = strings.TrimPrefix(apiUrl, "https://")
+	apiUrl = strings.TrimPrefix(apiUrl, "http://")
+	// Remove trailing slash
+	apiUrl = strings.TrimSuffix(apiUrl, "/")
+	return apiUrl
+}
+
 // Usage represents token usage information from API response
 type Usage struct {
 	InputTokens  int `json:"input_tokens"`
@@ -325,7 +336,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		targetURL := fmt.Sprintf("https://%s%s", endpoint.APIUrl, targetPath)
+		// Normalize API URL (remove http/https prefix if present)
+		normalizedAPIUrl := normalizeAPIUrl(endpoint.APIUrl)
+
+		targetURL := fmt.Sprintf("https://%s%s", normalizedAPIUrl, targetPath)
 		if r.URL.RawQuery != "" {
 			targetURL += "?" + r.URL.RawQuery
 		}
@@ -356,7 +370,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			proxyReq.Header.Set("x-api-key", endpoint.APIKey)
 		}
 
-		proxyReq.Header.Set("Host", endpoint.APIUrl)
+		proxyReq.Header.Set("Host", normalizedAPIUrl)
 		proxyReq.Header.Set("Content-Type", "application/json")
 
 		// Send request
@@ -474,6 +488,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 										if usage, ok := message["usage"].(map[string]interface{}); ok {
 											if input, ok := usage["input_tokens"].(float64); ok {
 												inputTokens = int(input)
+											}
+											// Also check cache_read_input_tokens
+											if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
+												inputTokens += int(cacheRead)
+											}
+											// Also check cache_creation_input_tokens
+											if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
+												inputTokens += int(cacheCreate)
 											}
 										}
 									}
