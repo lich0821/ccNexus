@@ -28,11 +28,6 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	// Initialize debug log file
-	if err := logger.GetLogger().SetDebugFile("debug.log"); err != nil {
-		logger.Warn("Failed to initialize debug log file: %v", err)
-	}
-
 	logger.Debug("Application starting...")
 
 	// Get config path
@@ -80,9 +75,6 @@ func (a *App) shutdown(ctx context.Context) {
 		a.proxy.Stop()
 	}
 	logger.Info("Application stopped")
-
-	// Close debug log file
-	logger.GetLogger().CloseDebugFile()
 }
 
 // GetConfig returns the current configuration

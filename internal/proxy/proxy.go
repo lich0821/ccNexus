@@ -255,12 +255,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			transformerName = "claude"
 		}
 
-		// Disable debug file logging for Claude transformer
-		if transformerName == "claude" {
-			logger.GetLogger().DisableDebugFile()
-			defer logger.GetLogger().EnableDebugFile()
-		}
-
 		var trans transformer.Transformer
 		var err error
 
