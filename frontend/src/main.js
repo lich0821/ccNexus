@@ -380,15 +380,22 @@ function renderEndpoints(endpoints) {
     // Clear container first
     container.innerHTML = '';
 
-    // Sort endpoints by success rate and request count
+    // Sort endpoints by enabled status, success rate and request count
     const sortedEndpoints = endpoints.map((ep, index) => {
         const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
-        return { endpoint: ep, originalIndex: index, stats: stats };
+        const enabled = ep.enabled !== undefined ? ep.enabled : true;
+        return { endpoint: ep, originalIndex: index, stats: stats, enabled: enabled };
     }).sort((a, b) => {
+        // Primary sort: by enabled status (enabled first)
+        if (a.enabled !== b.enabled) {
+            return a.enabled ? -1 : 1;
+        }
+
+        // Within same enabled group, sort by performance
         const statsA = a.stats;
         const statsB = b.stats;
 
-        // Special handling: requests = 0 goes to the end
+        // Special handling: requests = 0 goes to the end of each group
         if (statsA.requests === 0 && statsB.requests === 0) {
             return 0; // Keep original order
         }
@@ -403,12 +410,12 @@ function renderEndpoints(endpoints) {
         const successRateA = (statsA.requests - statsA.errors) / statsA.requests;
         const successRateB = (statsB.requests - statsB.errors) / statsB.requests;
 
-        // Primary sort: by success rate (descending)
+        // Secondary sort: by success rate (descending)
         if (successRateA !== successRateB) {
             return successRateB - successRateA;
         }
 
-        // Secondary sort: by request count (descending)
+        // Tertiary sort: by request count (descending)
         return statsB.requests - statsA.requests;
     });
 
