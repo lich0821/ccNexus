@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"os"
 	"sync"
 	"time"
 )
@@ -62,6 +63,8 @@ type Logger struct {
 	maxSize      int
 	minLevel     LogLevel // Minimum level to record
 	consoleLevel LogLevel // Minimum level to print to console
+	debugFile    *os.File // Debug log file (only in debug mode)
+	debugMu      sync.Mutex
 }
 
 var (
@@ -184,4 +187,51 @@ func Warn(format string, args ...interface{}) {
 
 func Error(format string, args ...interface{}) {
 	GetLogger().Log(ERROR, format, args...)
+}
+
+// EnableDebugFile enables debug file logging (only in debug mode)
+func (l *Logger) EnableDebugFile(filepath string) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.debugFile != nil {
+		l.debugFile.Close()
+	}
+
+	f, err := os.OpenFile(filepath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	l.debugFile = f
+	return nil
+}
+
+// DebugLog writes to debug.log file (bypasses log level)
+func (l *Logger) DebugLog(format string, args ...interface{}) {
+	l.debugMu.Lock()
+	defer l.debugMu.Unlock()
+
+	if l.debugFile == nil {
+		return
+	}
+
+	message := fmt.Sprintf(format, args...)
+	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
+	fmt.Fprintf(l.debugFile, "[%s] %s\n", timestamp, message)
+}
+
+// Close closes the debug log file
+func (l *Logger) Close() {
+	l.debugMu.Lock()
+	defer l.debugMu.Unlock()
+
+	if l.debugFile != nil {
+		l.debugFile.Close()
+		l.debugFile = nil
+	}
+}
+
+// DebugLog writes to debug.log file (convenience function)
+func DebugLog(format string, args ...interface{}) {
+	GetLogger().DebugLog(format, args...)
 }

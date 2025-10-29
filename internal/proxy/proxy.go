@@ -244,14 +244,20 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error("Failed to read request body: %v", err)
+		logger.DebugLog("Failed to read request body: %v", err)
 		http.Error(w, "Failed to read request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
+	logger.DebugLog("=== Proxy Request ===")
+	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
+	logger.DebugLog("Request Body: %s", string(bodyBytes))
+
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
 		logger.Error("No enabled endpoints available")
+		logger.DebugLog("No enabled endpoints available")
 		http.Error(w, "No enabled endpoints configured", http.StatusServiceUnavailable)
 		return
 	}
@@ -273,6 +279,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		// Check if endpoint is empty (shouldn't happen, but safe check)
 		if endpoint.Name == "" {
 			logger.Error("Got empty endpoint, no enabled endpoints available")
+			logger.DebugLog("Got empty endpoint, no enabled endpoints available")
 			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
 			return
 		}
@@ -293,6 +300,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if transformerName == "openai" {
 			if endpoint.Model == "" {
 				logger.Error("[%s] OpenAI transformer requires model field", endpoint.Name)
+				logger.DebugLog("[%s] OpenAI transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
@@ -304,6 +312,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		} else if transformerName == "gemini" {
 			if endpoint.Model == "" {
 				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
+				logger.DebugLog("[%s] Gemini transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
@@ -326,6 +335,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			trans, err = transformer.Get(transformerName)
 			if err != nil {
 				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
+				logger.DebugLog("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
 				p.stats.RecordError(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
@@ -348,6 +358,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.Debug("[%s] Using transformer: %s", endpoint.Name, transformerName)
+		logger.DebugLog("[%s] Transformer: %s", endpoint.Name, transformerName)
+		logger.DebugLog("[%s] Transformed Request: %s", endpoint.Name, string(transformedBody))
 
 		// Parse the transformed request to check if thinking is enabled
 		var thinkingEnabled bool
@@ -388,6 +400,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		proxyReq, err := http.NewRequest(r.Method, targetURL, bytes.NewReader(transformedBody))
 		if err != nil {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
+			logger.DebugLog("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
@@ -425,6 +438,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		resp, err := client.Do(proxyReq)
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
+			logger.DebugLog("[%s] Request Error: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
@@ -432,6 +446,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 			continue
 		}
+
+		logger.DebugLog("[%s] Response Status: %d", endpoint.Name, resp.StatusCode)
 
 		// Parse request to check if streaming was requested
 		var claudeReq struct {
@@ -458,6 +474,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			flusher, ok := w.(http.Flusher)
 			if !ok {
 				logger.Error("[%s] ResponseWriter does not support flushing", endpoint.Name)
+				logger.DebugLog("[%s] ResponseWriter does not support flushing", endpoint.Name)
 				resp.Body.Close()
 				return
 			}
@@ -493,6 +510,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					// Transform the buffered event
 					eventData := buffer.Bytes()
 
+					logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount, string(eventData))
+
 					var transformedEvent []byte
 					var err error
 
@@ -508,14 +527,18 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					if err != nil {
 						logger.Error("[%s] Failed to transform SSE event #%d: %v", endpoint.Name, eventCount, err)
 						logger.Error("[%s] Original event data:\n%s", endpoint.Name, string(eventData))
+						logger.DebugLog("[%s] SSE Transform Error #%d: %v", endpoint.Name, eventCount, err)
 						buffer.Reset()
 						continue
 					}
+
+					logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
 
 					// Write transformed event
 					_, writeErr := w.Write(transformedEvent)
 					if writeErr != nil {
 						logger.Error("[%s] Failed to write event #%d to client: %v", endpoint.Name, eventCount, writeErr)
+						logger.DebugLog("[%s] Write Error #%d: %v", endpoint.Name, eventCount, writeErr)
 						streamDone = true
 						break
 					}
@@ -590,6 +613,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		resp.Body.Close()
 		if err != nil {
 			logger.Error("[%s] Failed to read response: %v", endpoint.Name, err)
+			logger.DebugLog("[%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
@@ -628,6 +652,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
+			logger.DebugLog("[%s] Error Response Body: %s", endpoint.Name, string(finalBody))
+
 			if errorMsg != "" {
 				logger.Warn("[%s] HTTP %d %s: %s", endpoint.Name, resp.StatusCode, http.StatusText(resp.StatusCode), errorMsg)
 			} else {
@@ -647,10 +673,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Success - handle non-streaming response
 		if resp.StatusCode == http.StatusOK && len(finalBody) > 0 {
+			logger.DebugLog("[%s] Response Body (Original): %s", endpoint.Name, string(finalBody))
+
 			// Transform response
 			transformedResp, err := trans.TransformResponse(finalBody, false)
 			if err != nil {
 				logger.Error("[%s] Failed to transform response: %v", endpoint.Name, err)
+				logger.DebugLog("[%s] Transform Error: %v", endpoint.Name, err)
 				p.stats.RecordError(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
@@ -658,6 +687,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
+
+			logger.DebugLog("[%s] Response Body (Transformed): %s", endpoint.Name, string(transformedResp))
 
 			// Copy response headers
 			for key, values := range resp.Header {
@@ -695,6 +726,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 	// All endpoints failed
 	logger.Error("All %d endpoints failed after retries", maxRetries)
+	logger.DebugLog("All %d endpoints failed after retries", maxRetries)
 	http.Error(w, "All endpoints unavailable", http.StatusServiceUnavailable)
 }
 

@@ -61,7 +61,17 @@ func NewApp() *App {
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 
-	logger.Debug("Application starting...")
+	logger.Info("Application starting...")
+
+	// Enable debug file logging in dev mode
+	env := runtime.Environment(ctx)
+	if env.BuildType == "dev" {
+		if err := logger.GetLogger().EnableDebugFile("debug.log"); err != nil {
+			logger.Warn("Failed to enable debug file: %v", err)
+		} else {
+			logger.Info("Debug file logging enabled: debug.log")
+		}
+	}
 
 	// Get config path
 	configPath, err := config.GetConfigPath()
@@ -84,9 +94,11 @@ func (a *App) startup(ctx context.Context) {
 	}
 	a.config = cfg
 
-	// Restore log level from config
-	logger.GetLogger().SetMinLevel(logger.LogLevel(cfg.GetLogLevel()))
-	logger.Debug("Log level restored: %d", cfg.GetLogLevel())
+	// Restore log level from config if it was previously set
+	if cfg.GetLogLevel() >= 0 {
+		logger.GetLogger().SetMinLevel(logger.LogLevel(cfg.GetLogLevel()))
+		logger.Debug("Log level restored from config: %d", cfg.GetLogLevel())
+	}
 
 	// Create proxy
 	a.proxy = proxy.New(cfg)
@@ -111,6 +123,7 @@ func (a *App) shutdown(ctx context.Context) {
 		a.proxy.Stop()
 	}
 	logger.Info("Application stopped")
+	logger.GetLogger().Close()
 }
 
 // GetConfig returns the current configuration
