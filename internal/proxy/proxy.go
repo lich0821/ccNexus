@@ -312,8 +312,17 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			trans = transformer.NewGeminiTransformer(endpoint.Model)
+		} else if transformerName == "claude" {
+			// For Claude transformer, create instance with optional model
+			if endpoint.Model != "" {
+				trans = transformer.NewClaudeTransformerWithModel(endpoint.Model)
+				logger.Debug("[%s] Using Claude transformer with model override: %s", endpoint.Name, endpoint.Model)
+			} else {
+				trans = transformer.NewClaudeTransformer()
+				logger.Debug("[%s] Using Claude transformer with model passthrough", endpoint.Name)
+			}
 		} else {
-			// Get registered transformer
+			// Get registered transformer for other types
 			trans, err = transformer.Get(transformerName)
 			if err != nil {
 				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)

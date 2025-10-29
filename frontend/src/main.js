@@ -136,20 +136,20 @@ function initApp() {
                     <h2 id="modalTitle">Add Endpoint</h2>
                 </div>
                 <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="endpointName" placeholder="e.g., Claude Official">
+                    <label>Name <span class="required" style="color: #ff4444;">*</span></label>
+                    <input type="text" id="endpointName" placeholder="e.g., Claude Official" required>
                 </div>
                 <div class="form-group">
-                    <label>API URL</label>
-                    <input type="text" id="endpointUrl" placeholder="e.g., api.anthropic.com">
+                    <label>API URL <span class="required" style="color: #ff4444;">*</span></label>
+                    <input type="text" id="endpointUrl" placeholder="e.g., api.anthropic.com" required>
                 </div>
                 <div class="form-group">
-                    <label>API Key</label>
-                    <input type="password" id="endpointKey" placeholder="sk-ant-api03-...">
+                    <label>API Key <span class="required" style="color: #ff4444;">*</span></label>
+                    <input type="password" id="endpointKey" placeholder="sk-ant-api03-..." required>
                 </div>
                 <div class="form-group">
-                    <label>Transformer</label>
-                    <select id="endpointTransformer" onchange="window.handleTransformerChange()">
+                    <label>Transformer <span class="required" style="color: #ff4444;">*</span></label>
+                    <select id="endpointTransformer" onchange="window.handleTransformerChange()" required>
                         <option value="claude">Claude (Default)</option>
                         <option value="openai">OpenAI</option>
                         <option value="gemini">Gemini</option>
@@ -158,11 +158,11 @@ function initApp() {
                         Select the API format for this endpoint
                     </p>
                 </div>
-                <div class="form-group" id="modelFieldGroup" style="display: none;">
-                    <label>Model</label>
-                    <input type="text" id="endpointModel" placeholder="e.g., gpt-4-turbo">
-                    <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                        Required for non-Claude transformers
+                <div class="form-group" id="modelFieldGroup" style="display: block;">
+                    <label>Model <span class="required" id="modelRequired" style="display: none; color: #ff4444;">*</span></label>
+                    <input type="text" id="endpointModel" placeholder="e.g., claude-3-5-sonnet-20241022">
+                    <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
+                        Optional for Claude (to override default), required for OpenAI/Gemini
                     </p>
                 </div>
                 <div class="modal-footer">
@@ -476,18 +476,28 @@ window.showAddEndpointModal = function() {
     document.getElementById('endpointKey').value = '';
     document.getElementById('endpointTransformer').value = 'claude';
     document.getElementById('endpointModel').value = '';
-    document.getElementById('modelFieldGroup').style.display = 'none';
+    window.handleTransformerChange(); // Update model field visibility and hints
     document.getElementById('endpointModal').classList.add('active');
 }
 
 window.handleTransformerChange = function() {
     const transformer = document.getElementById('endpointTransformer').value;
-    const modelFieldGroup = document.getElementById('modelFieldGroup');
+    const modelRequired = document.getElementById('modelRequired');
+    const modelInput = document.getElementById('endpointModel');
+    const modelHelpText = document.getElementById('modelHelpText');
 
     if (transformer === 'claude') {
-        modelFieldGroup.style.display = 'none';
-    } else {
-        modelFieldGroup.style.display = 'block';
+        modelRequired.style.display = 'none';
+        modelInput.placeholder = 'e.g., claude-3-5-sonnet-20241022';
+        modelHelpText.textContent = 'Optional: Override the model specified in requests';
+    } else if (transformer === 'openai') {
+        modelRequired.style.display = 'inline';
+        modelInput.placeholder = 'e.g., gpt-4-turbo';
+        modelHelpText.textContent = 'Required: Specify the OpenAI model to use';
+    } else if (transformer === 'gemini') {
+        modelRequired.style.display = 'inline';
+        modelInput.placeholder = 'e.g., gemini-pro';
+        modelHelpText.textContent = 'Required: Specify the Gemini model to use';
     }
 }
 
