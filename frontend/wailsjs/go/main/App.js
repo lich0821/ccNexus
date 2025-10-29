@@ -42,6 +42,10 @@ export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
 }
 
+export function TestEndpoint(arg1) {
+  return window['go']['main']['App']['TestEndpoint'](arg1);
+}
+
 export function ToggleEndpoint(arg1, arg2) {
   return window['go']['main']['App']['ToggleEndpoint'](arg1, arg2);
 }

@@ -3,6 +3,9 @@ import './style.css'
 let currentEditIndex = -1;
 let endpointStats = {};
 let logPanelExpanded = true;
+let currentTestButton = null;
+let currentTestButtonOriginalText = '';
+let currentTestIndex = -1;
 
 // Load data on startup
 window.addEventListener('DOMContentLoaded', () => {
@@ -230,6 +233,23 @@ function initApp() {
                 </div>
             </div>
         </div>
+
+        <!-- Test Result Modal -->
+        <div id="testResultModal" class="modal">
+            <div class="modal-content" style="max-width: 600px;">
+                <div class="modal-header">
+                    <h2 id="testResultTitle">🧪 Endpoint Test Result</h2>
+                </div>
+                <div style="padding: 20px 0;">
+                    <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
+                        <!-- Test result will be inserted here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="window.closeTestResultModal()">Close</button>
+                </div>
+            </div>
+        </div>
     `;
 
     // Close modals on background click
@@ -248,6 +268,12 @@ function initApp() {
     document.getElementById('welcomeModal').addEventListener('click', (e) => {
         if (e.target.id === 'welcomeModal') {
             window.closeWelcomeModal();
+        }
+    });
+
+    document.getElementById('testResultModal').addEventListener('click', (e) => {
+        if (e.target.id === 'testResultModal') {
+            window.closeTestResultModal();
         }
     });
 }
@@ -427,16 +453,29 @@ function renderEndpoints(endpoints) {
                     <input type="checkbox" data-index="${index}" ${enabled ? 'checked' : ''}>
                     <span class="toggle-slider"></span>
                 </label>
+                <button class="btn btn-secondary" data-action="test" data-index="${index}">Test</button>
                 <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
                 <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
             </div>
         `;
 
         // Add event listeners
+        const testBtn = item.querySelector('[data-action="test"]');
         const editBtn = item.querySelector('[data-action="edit"]');
         const deleteBtn = item.querySelector('[data-action="delete"]');
         const toggleSwitch = item.querySelector('input[type="checkbox"]');
 
+        // Restore test button state if this endpoint is being tested
+        if (currentTestIndex === index) {
+            testBtn.disabled = true;
+            testBtn.innerHTML = '⏳';
+            currentTestButton = testBtn; // Update reference to new button
+        }
+
+        testBtn.addEventListener('click', () => {
+            const idx = parseInt(testBtn.getAttribute('data-index'));
+            window.testEndpoint(idx, testBtn);
+        });
         editBtn.addEventListener('click', () => {
             const idx = parseInt(editBtn.getAttribute('data-index'));
             window.editEndpoint(idx);
@@ -737,5 +776,87 @@ window.clearLogs = async function() {
     } catch (error) {
         console.error('Failed to clear logs:', error);
         alert('Failed to clear logs: ' + error);
+    }
+}
+
+// Test endpoint function
+window.testEndpoint = async function(index, buttonElement) {
+    // Save button reference, original text, and index
+    currentTestButton = buttonElement;
+    currentTestButtonOriginalText = buttonElement.innerHTML;
+    currentTestIndex = index;
+
+    try {
+        // Change button to loading state
+        buttonElement.disabled = true;
+        buttonElement.innerHTML = '⏳';
+
+        // Call backend to test endpoint
+        const resultStr = await window.go.main.App.TestEndpoint(index);
+        const result = JSON.parse(resultStr);
+
+        // Display result in modal
+        const resultContent = document.getElementById('testResultContent');
+        const resultTitle = document.getElementById('testResultTitle');
+
+        if (result.success) {
+            resultTitle.innerHTML = '✅ Test Successful';
+            resultContent.innerHTML = `
+                <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 15px;">
+                    <strong style="color: #155724;">Connection successful!</strong>
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)}</div>
+            `;
+        } else {
+            resultTitle.innerHTML = '❌ Test Failed';
+            resultContent.innerHTML = `
+                <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
+                    <strong style="color: #721c24;">Connection failed</strong>
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;"><strong>Error:</strong><br>${escapeHtml(result.message)}</div>
+            `;
+        }
+
+        // Show modal
+        document.getElementById('testResultModal').classList.add('active');
+
+    } catch (error) {
+        console.error('Test failed:', error);
+
+        // Display error in modal
+        const resultContent = document.getElementById('testResultContent');
+        const resultTitle = document.getElementById('testResultTitle');
+
+        resultTitle.innerHTML = '❌ Test Failed';
+        resultContent.innerHTML = `
+            <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
+                <strong style="color: #721c24;">Test error</strong>
+            </div>
+            <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line;">${escapeHtml(error.toString())}</div>
+        `;
+
+        document.getElementById('testResultModal').classList.add('active');
+    }
+    // Note: Button state will be restored when modal is closed
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Close test result modal
+window.closeTestResultModal = function() {
+    document.getElementById('testResultModal').classList.remove('active');
+
+    // Restore test button state
+    if (currentTestButton) {
+        currentTestButton.disabled = false;
+        currentTestButton.innerHTML = currentTestButtonOriginalText;
+        currentTestButton = null;
+        currentTestButtonOriginalText = '';
+        currentTestIndex = -1;
     }
 }

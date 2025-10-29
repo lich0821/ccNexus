@@ -1,15 +1,25 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"strings"
+	"time"
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+)
+
+// Test endpoint constants
+const (
+	testMessage   = "你是什么模型?"
+	testMaxTokens = 16
 )
 
 // normalizeAPIUrl ensures the API URL has the correct format
@@ -363,4 +373,237 @@ func (a *App) SetLogLevel(level int) {
 // GetLogLevel returns the current minimum log level
 func (a *App) GetLogLevel() int {
 	return int(logger.GetLogger().GetMinLevel())
+}
+
+// TestEndpoint tests an endpoint by sending a simple request
+func (a *App) TestEndpoint(index int) string {
+	endpoints := a.config.GetEndpoints()
+
+	if index < 0 || index >= len(endpoints) {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Invalid endpoint index: %d", index),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	endpoint := endpoints[index]
+	logger.Info("Testing endpoint: %s (%s)", endpoint.Name, endpoint.APIUrl)
+
+	// Build test request based on transformer type
+	var requestBody []byte
+	var err error
+	var apiPath string
+
+	transformer := endpoint.Transformer
+	if transformer == "" {
+		transformer = "claude"
+	}
+
+	switch transformer {
+	case "claude":
+		// Claude API format
+		apiPath = "/v1/messages"
+		model := endpoint.Model
+		if model == "" {
+			model = "claude-sonnet-4-5-20250929"
+		}
+		requestBody, err = json.Marshal(map[string]interface{}{
+			"model":      model,
+			"max_tokens": testMaxTokens,
+			"messages": []map[string]string{
+				{
+					"role":    "user",
+					"content": testMessage,
+				},
+			},
+		})
+
+	case "openai":
+		// OpenAI API format
+		apiPath = "/v1/chat/completions"
+		model := endpoint.Model
+		if model == "" {
+			model = "gpt-4-turbo"
+		}
+		requestBody, err = json.Marshal(map[string]interface{}{
+			"model":      model,
+			"max_tokens": testMaxTokens,
+			"messages": []map[string]interface{}{
+				{
+					"role":    "user",
+					"content": testMessage,
+				},
+			},
+		})
+
+	case "gemini":
+		// Gemini API format
+		model := endpoint.Model
+		if model == "" {
+			model = "gemini-pro"
+		}
+		apiPath = "/v1beta/models/" + model + ":generateContent"
+		requestBody, err = json.Marshal(map[string]interface{}{
+			"contents": []map[string]interface{}{
+				{
+					"parts": []map[string]string{
+						{"text": testMessage},
+					},
+				},
+			},
+			"generationConfig": map[string]int{
+				"maxOutputTokens": testMaxTokens,
+			},
+		})
+
+	default:
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Unsupported transformer: %s", transformer),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Failed to build request: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Build full URL
+	url := fmt.Sprintf("https://%s%s", endpoint.APIUrl, apiPath)
+
+	// Create HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewReader(requestBody))
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Failed to create request: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Set headers based on transformer
+	req.Header.Set("Content-Type", "application/json")
+	switch transformer {
+	case "claude":
+		req.Header.Set("x-api-key", endpoint.APIKey)
+		req.Header.Set("anthropic-version", "2023-06-01")
+	case "openai":
+		req.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
+	case "gemini":
+		// Gemini uses API key in query parameter
+		q := req.URL.Query()
+		q.Add("key", endpoint.APIKey)
+		req.URL.RawQuery = q.Encode()
+	}
+
+	// Send request with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Request failed: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		logger.Warn("Test failed for %s: %v", endpoint.Name, err)
+		return string(data)
+	}
+	defer resp.Body.Close()
+
+	// Read response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Failed to read response: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Check status code
+	if resp.StatusCode != http.StatusOK {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(respBody)),
+		}
+		data, _ := json.Marshal(result)
+		logger.Warn("Test failed for %s: HTTP %d", endpoint.Name, resp.StatusCode)
+		return string(data)
+	}
+
+	// Parse response to extract content
+	var responseData map[string]interface{}
+	if err := json.Unmarshal(respBody, &responseData); err != nil {
+		// If we can't parse JSON, just return the raw response
+		result := map[string]interface{}{
+			"success": true,
+			"message": string(respBody),
+		}
+		data, _ := json.Marshal(result)
+		logger.Info("Test successful for %s", endpoint.Name)
+		return string(data)
+	}
+
+	// Extract message based on transformer type
+	var message string
+	switch transformer {
+	case "claude":
+		if content, ok := responseData["content"].([]interface{}); ok && len(content) > 0 {
+			if textBlock, ok := content[0].(map[string]interface{}); ok {
+				if text, ok := textBlock["text"].(string); ok {
+					message = text
+				}
+			}
+		}
+	case "openai":
+		if choices, ok := responseData["choices"].([]interface{}); ok && len(choices) > 0 {
+			if choice, ok := choices[0].(map[string]interface{}); ok {
+				if msg, ok := choice["message"].(map[string]interface{}); ok {
+					if content, ok := msg["content"].(string); ok {
+						message = content
+					}
+				}
+			}
+		}
+	case "gemini":
+		if candidates, ok := responseData["candidates"].([]interface{}); ok && len(candidates) > 0 {
+			if candidate, ok := candidates[0].(map[string]interface{}); ok {
+				if content, ok := candidate["content"].(map[string]interface{}); ok {
+					if parts, ok := content["parts"].([]interface{}); ok && len(parts) > 0 {
+						if part, ok := parts[0].(map[string]interface{}); ok {
+							if text, ok := part["text"].(string); ok {
+								message = text
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// If we couldn't extract a message, return the full response
+	if message == "" {
+		message = string(respBody)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"message": message,
+	}
+	data, _ := json.Marshal(result)
+	logger.Info("Test successful for %s", endpoint.Name)
+	return string(data)
 }

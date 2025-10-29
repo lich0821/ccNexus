@@ -21,6 +21,8 @@ export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
 
+export function TestEndpoint(arg1:number):Promise<string>;
+
 export function ToggleEndpoint(arg1:number,arg2:boolean):Promise<void>;
 
 export function UpdateConfig(arg1:string):Promise<void>;
