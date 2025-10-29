@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,6 +16,16 @@ import (
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
+
+//go:embed wails.json
+var wailsJSON []byte
+
+// WailsInfo represents the info section from wails.json
+type WailsInfo struct {
+	Info struct {
+		ProductVersion string `json:"productVersion"`
+	} `json:"info"`
+}
 
 // Test endpoint constants
 const (
@@ -106,6 +117,16 @@ func (a *App) shutdown(ctx context.Context) {
 func (a *App) GetConfig() string {
 	data, _ := json.Marshal(a.config)
 	return string(data)
+}
+
+// GetVersion returns the application version from wails.json
+func (a *App) GetVersion() string {
+	var info WailsInfo
+	if err := json.Unmarshal(wailsJSON, &info); err != nil {
+		logger.Warn("Failed to parse wails.json for version: %v", err)
+		return "unknown"
+	}
+	return info.Info.ProductVersion
 }
 
 // UpdateConfig updates the configuration

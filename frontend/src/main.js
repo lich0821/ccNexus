@@ -648,8 +648,16 @@ window.closePortModal = function() {
 }
 
 // Welcome modal functions
-window.showWelcomeModal = function() {
+window.showWelcomeModal = async function() {
     document.getElementById('welcomeModal').classList.add('active');
+
+    // Load and display version number
+    try {
+        const version = await window.go.main.App.GetVersion();
+        document.querySelector('#welcomeModal .modal-header h2').textContent = `👋 Welcome to ccNexus v${version}`;
+    } catch (error) {
+        console.error('Failed to load version:', error);
+    }
 }
 
 window.closeWelcomeModal = function() {

@@ -15,6 +15,8 @@ export function GetLogsByLevel(arg1:number):Promise<string>;
 
 export function GetStats():Promise<string>;
 
+export function GetVersion():Promise<string>;
+
 export function OpenURL(arg1:string):Promise<void>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;

@@ -17,13 +17,13 @@
     "after:build": ""
   },
   "author": {
-    "name": "lich0821",
-    "email": "your.email@example.com"
+    "name": "Chuck",
+    "email": "e8cn@foxmail.com"
   },
   "info": {
     "companyName": "ccNexus",
     "productName": "ccNexus",
-    "productVersion": "0.5.0",
+    "productVersion": "0.5.3",
     "copyright": "Copyright © 2024",
     "comments": "A smart API endpoint rotation proxy for Claude Code"
   }
