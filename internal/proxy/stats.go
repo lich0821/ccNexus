@@ -1,6 +1,9 @@
 package proxy
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -16,9 +19,10 @@ type EndpointStats struct {
 
 // Stats represents overall proxy statistics
 type Stats struct {
-	TotalRequests  int                      `json:"totalRequests"`
+	TotalRequests  int                       `json:"totalRequests"`
 	EndpointStats  map[string]*EndpointStats `json:"endpointStats"`
 	mu             sync.RWMutex
+	statsPath      string // Path to stats file
 }
 
 // NewStats creates a new Stats instance
@@ -26,6 +30,13 @@ func NewStats() *Stats {
 	return &Stats{
 		EndpointStats: make(map[string]*EndpointStats),
 	}
+}
+
+// SetStatsPath sets the path for stats persistence
+func (s *Stats) SetStatsPath(path string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.statsPath = path
 }
 
 // RecordRequest records a request for an endpoint
@@ -42,6 +53,9 @@ func (s *Stats) RecordRequest(endpointName string) {
 	stats := s.EndpointStats[endpointName]
 	stats.Requests++
 	stats.LastUsed = time.Now()
+
+	// Auto-save after recording
+	go s.saveAsync()
 }
 
 // RecordError records an error for an endpoint
@@ -54,6 +68,9 @@ func (s *Stats) RecordError(endpointName string) {
 	}
 
 	s.EndpointStats[endpointName].Errors++
+
+	// Auto-save after recording
+	go s.saveAsync()
 }
 
 // RecordTokens records token usage for an endpoint
@@ -68,6 +85,9 @@ func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int)
 	stats := s.EndpointStats[endpointName]
 	stats.InputTokens += inputTokens
 	stats.OutputTokens += outputTokens
+
+	// Auto-save after recording
+	go s.saveAsync()
 }
 
 // GetStats returns a copy of current statistics (thread-safe)
@@ -97,4 +117,91 @@ func (s *Stats) Reset() {
 
 	s.TotalRequests = 0
 	s.EndpointStats = make(map[string]*EndpointStats)
+
+	// Save empty stats
+	go s.saveAsync()
+}
+
+// Save saves statistics to file
+func (s *Stats) Save() error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.statsPath == "" {
+		return nil // No path set, skip saving
+	}
+
+	// Ensure directory exists
+	dir := filepath.Dir(s.statsPath)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	// Marshal to JSON
+	data, err := json.MarshalIndent(s, "", "  ")
+	if err != nil {
+		return err
+	}
+
+	// Write to file
+	return os.WriteFile(s.statsPath, data, 0644)
+}
+
+// saveAsync saves statistics asynchronously (non-blocking)
+func (s *Stats) saveAsync() {
+	if err := s.Save(); err != nil {
+		// Log error but don't block
+		// Note: We can't use logger here to avoid circular dependency
+		// The error will be silent, but stats will retry on next update
+	}
+}
+
+// Load loads statistics from file
+func (s *Stats) Load() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.statsPath == "" {
+		return nil // No path set, skip loading
+	}
+
+	// Read file
+	data, err := os.ReadFile(s.statsPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// File doesn't exist, start with empty stats
+			return nil
+		}
+		return err
+	}
+
+	// Unmarshal JSON
+	var loaded Stats
+	if err := json.Unmarshal(data, &loaded); err != nil {
+		return err
+	}
+
+	// Copy loaded data
+	s.TotalRequests = loaded.TotalRequests
+	s.EndpointStats = loaded.EndpointStats
+	if s.EndpointStats == nil {
+		s.EndpointStats = make(map[string]*EndpointStats)
+	}
+
+	return nil
+}
+
+// GetStatsPath returns the stats file path
+func GetStatsPath() (string, error) {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	configDir := filepath.Join(homeDir, ".ccNexus")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		return "", err
+	}
+
+	return filepath.Join(configDir, "stats.json"), nil
 }

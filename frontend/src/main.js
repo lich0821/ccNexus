@@ -354,9 +354,40 @@ function renderEndpoints(endpoints) {
     // Clear container first
     container.innerHTML = '';
 
-    // Create endpoint items
-    endpoints.forEach((ep, index) => {
+    // Sort endpoints by success rate and request count
+    const sortedEndpoints = endpoints.map((ep, index) => {
         const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+        return { endpoint: ep, originalIndex: index, stats: stats };
+    }).sort((a, b) => {
+        const statsA = a.stats;
+        const statsB = b.stats;
+
+        // Special handling: requests = 0 goes to the end
+        if (statsA.requests === 0 && statsB.requests === 0) {
+            return 0; // Keep original order
+        }
+        if (statsA.requests === 0) {
+            return 1; // A goes after B
+        }
+        if (statsB.requests === 0) {
+            return -1; // B goes after A
+        }
+
+        // Calculate success rate
+        const successRateA = (statsA.requests - statsA.errors) / statsA.requests;
+        const successRateB = (statsB.requests - statsB.errors) / statsB.requests;
+
+        // Primary sort: by success rate (descending)
+        if (successRateA !== successRateB) {
+            return successRateB - successRateA;
+        }
+
+        // Secondary sort: by request count (descending)
+        return statsB.requests - statsA.requests;
+    });
+
+    // Create endpoint items
+    sortedEndpoints.forEach(({ endpoint: ep, originalIndex: index, stats }) => {
         const totalTokens = stats.inputTokens + stats.outputTokens;
 
         // Format tokens in K (thousands) or M (millions)

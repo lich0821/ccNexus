@@ -136,9 +136,21 @@ type Proxy struct {
 
 // New creates a new Proxy instance
 func New(cfg *config.Config) *Proxy {
+	stats := NewStats()
+
+	// Set stats path and load existing stats
+	statsPath, err := GetStatsPath()
+	if err == nil {
+		stats.SetStatsPath(statsPath)
+		if err := stats.Load(); err != nil {
+			// Log error but continue with empty stats
+			// Note: We can't use logger here as it may not be initialized yet
+		}
+	}
+
 	return &Proxy{
 		config:       cfg,
-		stats:        NewStats(),
+		stats:        stats,
 		currentIndex: 0,
 	}
 }
@@ -244,7 +256,15 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxRetries := len(endpoints)
+	// Determine max retries based on number of endpoints
+	// If only 1 endpoint, allow 1 retry (total 2 attempts)
+	// If multiple endpoints, try each one once
+	var maxRetries int
+	if len(endpoints) == 1 {
+		maxRetries = 2 // Try the same endpoint twice
+	} else {
+		maxRetries = len(endpoints)
+	}
 
 	// Try each endpoint
 	for retry := 0; retry < maxRetries; retry++ {
@@ -274,7 +294,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if endpoint.Model == "" {
 				logger.Error("[%s] OpenAI transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
-				p.rotateEndpoint()
+				// Only rotate if there are multiple endpoints
+				if len(endpoints) > 1 {
+					p.rotateEndpoint()
+				}
 				continue
 			}
 			trans = transformer.NewOpenAITransformer(endpoint.Model)
@@ -282,7 +305,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if endpoint.Model == "" {
 				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
-				p.rotateEndpoint()
+				// Only rotate if there are multiple endpoints
+				if len(endpoints) > 1 {
+					p.rotateEndpoint()
+				}
 				continue
 			}
 			trans = transformer.NewGeminiTransformer(endpoint.Model)
@@ -292,7 +318,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
 				p.stats.RecordError(endpoint.Name)
-				p.rotateEndpoint()
+				// Only rotate if there are multiple endpoints
+				if len(endpoints) > 1 {
+					p.rotateEndpoint()
+				}
 				continue
 			}
 		}
@@ -302,7 +331,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
-			p.rotateEndpoint()
+			// Only rotate if there are multiple endpoints
+			if len(endpoints) > 1 {
+				p.rotateEndpoint()
+			}
 			continue
 		}
 
@@ -348,7 +380,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
-			p.rotateEndpoint()
+			// Only rotate if there are multiple endpoints
+			if len(endpoints) > 1 {
+				p.rotateEndpoint()
+			}
 			continue
 		}
 
@@ -382,7 +417,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
-			p.rotateEndpoint()
+			// Only rotate if there are multiple endpoints
+			if len(endpoints) > 1 {
+				p.rotateEndpoint()
+			}
 			continue
 		}
 
@@ -544,7 +582,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
-			p.rotateEndpoint()
+			// Only rotate if there are multiple endpoints
+			if len(endpoints) > 1 {
+				p.rotateEndpoint()
+			}
 			continue
 		}
 
@@ -585,7 +626,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 
 			p.stats.RecordError(endpoint.Name)
-			p.rotateEndpoint()
+			// Only rotate if there are multiple endpoints
+			if len(endpoints) > 1 {
+				p.rotateEndpoint()
+			}
 
 			if retry < maxRetries-1 {
 				continue
@@ -599,7 +643,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				logger.Error("[%s] Failed to transform response: %v", endpoint.Name, err)
 				p.stats.RecordError(endpoint.Name)
-				p.rotateEndpoint()
+				// Only rotate if there are multiple endpoints
+				if len(endpoints) > 1 {
+					p.rotateEndpoint()
+				}
 				continue
 			}
 

@@ -56,17 +56,16 @@ func (a *App) startup(ctx context.Context) {
 	if err != nil {
 		logger.Warn("Failed to load config: %v, using default", err)
 		cfg = config.DefaultConfig()
+		// Save default config only if it doesn't exist
+		if err := cfg.Save(configPath); err != nil {
+			logger.Warn("Failed to save config: %v", err)
+		}
 	}
 	a.config = cfg
 
 	// Restore log level from config
 	logger.GetLogger().SetMinLevel(logger.LogLevel(cfg.GetLogLevel()))
 	logger.Debug("Log level restored: %d", cfg.GetLogLevel())
-
-	// Save default config if it doesn't exist
-	if err := cfg.Save(configPath); err != nil {
-		logger.Warn("Failed to save config: %v", err)
-	}
 
 	// Create proxy
 	a.proxy = proxy.New(cfg)
@@ -84,6 +83,10 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called when the app is closing
 func (a *App) shutdown(ctx context.Context) {
 	if a.proxy != nil {
+		// Save stats before stopping
+		if err := a.proxy.GetStats().Save(); err != nil {
+			logger.Warn("Failed to save stats on shutdown: %v", err)
+		}
 		a.proxy.Stop()
 	}
 	logger.Info("Application stopped")
