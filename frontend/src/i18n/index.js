@@ -1,5 +1,5 @@
-import en from './en.js';
-import zhCN from './zh-CN.js';
+import en from './en';
+import zhCN from './zh-CN';
 
 const translations = {
     'en': en,
