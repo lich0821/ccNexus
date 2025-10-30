@@ -424,7 +424,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			q.Set("key", endpoint.APIKey)
 			proxyReq.URL.RawQuery = q.Encode()
 		} else {
+			// Set both x-api-key and Authorization headers for compatibility
+			// Some services use x-api-key (e.g., Anthropic Claude), others use Bearer token
 			proxyReq.Header.Set("x-api-key", endpoint.APIKey)
+			proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
 		}
 
 		proxyReq.Header.Set("Host", normalizedAPIUrl)
