@@ -409,8 +409,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		// Copy headers
+		// Copy headers (except Host and authentication headers)
 		for key, values := range r.Header {
+			if key == "Host" {
+				continue
+			}
 			for _, value := range values {
 				proxyReq.Header.Add(key, value)
 			}
@@ -430,8 +433,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
 		}
 
+		// Set Host to target API (required for proper routing)
 		proxyReq.Header.Set("Host", normalizedAPIUrl)
-		proxyReq.Header.Set("Content-Type", "application/json")
 
 		// Send request
 		client := &http.Client{
