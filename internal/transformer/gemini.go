@@ -371,7 +371,7 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 						"stop_reason": "end_turn",
 					},
 					"usage": map[string]interface{}{
-						"output_tokens": ctx.TotalOutputTokens,
+						"output_tokens": ctx.OutputTokens,
 					},
 				}
 				messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
@@ -473,8 +473,6 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 						result.WriteString("event: content_block_delta\n")
 						result.WriteString("data: " + string(deltaJSON) + "\n")
 						result.WriteString("\n")
-
-						ctx.TotalOutputTokens++
 					}
 				}
 
@@ -578,7 +576,7 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 						"stop_reason": claudeStopReason,
 					},
 					"usage": map[string]interface{}{
-						"output_tokens": ctx.TotalOutputTokens,
+						"output_tokens": ctx.OutputTokens,
 					},
 				}
 				messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
@@ -599,7 +597,8 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 
 		// Update usage metadata
 		if chunk.UsageMetadata != nil {
-			ctx.TotalOutputTokens = chunk.UsageMetadata.CandidatesTokenCount
+			ctx.InputTokens = chunk.UsageMetadata.PromptTokenCount
+			ctx.OutputTokens = chunk.UsageMetadata.CandidatesTokenCount
 		}
 	}
 

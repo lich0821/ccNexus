@@ -600,6 +600,15 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 								}
 								if eventType == "message_delta" {
 									if usage, ok := event["usage"].(map[string]interface{}); ok {
+										if input, ok := usage["input_tokens"].(float64); ok {
+											inputTokens = int(input)
+										}
+										if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
+											inputTokens += int(cacheRead)
+										}
+										if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
+											inputTokens += int(cacheCreate)
+										}
 										if output, ok := usage["output_tokens"].(float64); ok {
 											outputTokens = int(output)
 										}

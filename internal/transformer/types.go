@@ -38,9 +38,15 @@ type OpenAIRequest struct {
 	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
 	Temperature         float64         `json:"temperature,omitempty"`
 	Stream              bool            `json:"stream,omitempty"`
+	StreamOptions       *StreamOptions  `json:"stream_options,omitempty"`
 	EnableThinking      bool            `json:"enable_thinking,omitempty"` // For models that support reasoning/thinking
 	Tools               []OpenAITool    `json:"tools,omitempty"`
 	ToolChoice          interface{}     `json:"tool_choice,omitempty"`
+}
+
+// StreamOptions represents OpenAI stream options
+type StreamOptions struct {
+	IncludeUsage bool `json:"include_usage"`
 }
 
 // OpenAIResponse represents an OpenAI API response
@@ -81,6 +87,11 @@ type OpenAIStreamChunk struct {
 		} `json:"delta"`
 		FinishReason *string `json:"finish_reason"`
 	} `json:"choices"`
+	Usage *struct {
+		PromptTokens     int `json:"prompt_tokens"`
+		CompletionTokens int `json:"completion_tokens"`
+		TotalTokens      int `json:"total_tokens"`
+	} `json:"usage,omitempty"`
 }
 
 // Claude API structures
@@ -172,7 +183,8 @@ type StreamContext struct {
 	ToolBlockPending     bool // Track if tool_use block is pending (waiting for first arguments)
 	MessageID            string
 	ModelName            string
-	TotalOutputTokens    int
+	InputTokens          int
+	OutputTokens         int
 	ContentIndex         int
 	ThinkingIndex        int   // Index for thinking content block
 	ToolIndex            int   // Current tool_use content block index (from OpenAI)
@@ -193,7 +205,8 @@ func NewStreamContext() *StreamContext {
 		ToolBlockPending:     false,
 		MessageID:            "",
 		ModelName:            "",
-		TotalOutputTokens:    0,
+		InputTokens:          0,
+		OutputTokens:         0,
 		ContentIndex:         0,
 		ThinkingIndex:        0,
 		ToolIndex:            0,

@@ -201,11 +201,18 @@ func (t *OpenAITransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 
 	// Create OpenAI request
 	openaiReq := OpenAIRequest{
-		Model:              t.model,
-		Messages:           openaiMessages,
+		Model:               t.model,
+		Messages:            openaiMessages,
 		MaxCompletionTokens: req.MaxTokens,
-		Temperature:        req.Temperature,
-		Stream:             req.Stream,
+		Temperature:         req.Temperature,
+		Stream:              req.Stream,
+	}
+
+	// Enable usage tracking for streaming requests
+	if req.Stream {
+		openaiReq.StreamOptions = &StreamOptions{
+			IncludeUsage: true,
+		}
 	}
 
 	// Convert tools to OpenAI format
@@ -411,7 +418,7 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 							"stop_reason": "end_turn",
 						},
 						"usage": map[string]interface{}{
-							"output_tokens": ctx.TotalOutputTokens,
+							"output_tokens": ctx.OutputTokens,
 						},
 					}
 					messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
@@ -434,7 +441,8 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 				ctx.ContentBlockStarted = false
 				ctx.MessageID = ""
 				ctx.ModelName = ""
-				ctx.TotalOutputTokens = 0
+				ctx.InputTokens = 0
+				ctx.OutputTokens = 0
 				ctx.ContentIndex = 0
 				ctx.FinishReasonSent = false
 
@@ -458,37 +466,30 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 				ctx.ModelName = chunk.Model
 			}
 
+			// Extract usage data if present
+			if chunk.Usage != nil {
+				ctx.InputTokens = chunk.Usage.PromptTokens
+				ctx.OutputTokens = chunk.Usage.CompletionTokens
+			}
+
 			// Send message_start on first chunk (even without ID/model)
 			if !ctx.MessageStartSent {
 				// Send message_start event
-				startEvent := ClaudeStreamEvent{
-					Type: "message_start",
-					Message: struct {
-						ID      string `json:"id"`
-						Type    string `json:"type"`
-						Role    string `json:"role"`
-						Content []struct {
-							Type string `json:"type"`
-							Text string `json:"text"`
-						} `json:"content"`
-						Model      string `json:"model"`
-						StopReason string `json:"stop_reason"`
-						Usage      struct {
-							InputTokens  int `json:"input_tokens"`
-							OutputTokens int `json:"output_tokens"`
-						} `json:"usage"`
-					}{
-						ID:   ctx.MessageID,
-						Type: "message",
-						Role: "assistant",
-						Content: []struct {
-							Type string `json:"type"`
-							Text string `json:"text"`
-						}{},
-						Model: ctx.ModelName,
+				messageStart := map[string]interface{}{
+					"type": "message_start",
+					"message": map[string]interface{}{
+						"id":      ctx.MessageID,
+						"type":    "message",
+						"role":    "assistant",
+						"content": []interface{}{},
+						"model":   ctx.ModelName,
+						"usage": map[string]interface{}{
+							"input_tokens":  ctx.InputTokens,
+							"output_tokens": 0,
+						},
 					},
 				}
-				startJSON, _ := json.Marshal(startEvent)
+				startJSON, _ := json.Marshal(messageStart)
 				result.WriteString("event: message_start\n")
 				result.WriteString("data: " + string(startJSON) + "\n")
 				result.WriteString("\n")
@@ -596,8 +597,6 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 					result.WriteString("event: content_block_delta\n")
 					result.WriteString("data: " + string(deltaJSON) + "\n")
 					result.WriteString("\n")
-
-					ctx.TotalOutputTokens++ // Rough estimation
 				}
 
 				// Handle tool calls in streaming
@@ -795,7 +794,7 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 							"stop_reason": claudeStopReason,
 						},
 						"usage": map[string]interface{}{
-							"output_tokens": ctx.TotalOutputTokens,
+							"output_tokens": ctx.OutputTokens,
 						},
 					}
 					messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
@@ -818,7 +817,8 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 					ctx.ToolBlockStarted = false
 					ctx.MessageID = ""
 					ctx.ModelName = ""
-					ctx.TotalOutputTokens = 0
+					ctx.InputTokens = 0
+					ctx.OutputTokens = 0
 					ctx.ContentIndex = 0
 					ctx.FinishReasonSent = false
 				}
