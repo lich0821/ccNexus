@@ -201,11 +201,11 @@ func (t *OpenAITransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 
 	// Create OpenAI request
 	openaiReq := OpenAIRequest{
-		Model:       t.model,
-		Messages:    openaiMessages,
-		MaxTokens:   req.MaxTokens,
-		Temperature: req.Temperature,
-		Stream:      req.Stream,
+		Model:              t.model,
+		Messages:           openaiMessages,
+		MaxCompletionTokens: req.MaxTokens,
+		Temperature:        req.Temperature,
+		Stream:             req.Stream,
 	}
 
 	// Convert tools to OpenAI format
@@ -395,9 +395,9 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 				// Before sending message_stop, ensure we've sent content_block_stop and message_delta
 				if ctx.ContentBlockStarted && !ctx.FinishReasonSent {
 					// Send content_block_stop
-					blockStopEvent := ClaudeStreamEvent{
-						Type:  "content_block_stop",
-						Index: ctx.ContentIndex,
+					blockStopEvent := map[string]interface{}{
+						"type":  "content_block_stop",
+						"index": ctx.ContentIndex,
 					}
 					blockStopJSON, _ := json.Marshal(blockStopEvent)
 					result.WriteString("event: content_block_stop\n")
@@ -405,27 +405,18 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 					result.WriteString("\n")
 
 					// Send message_delta with usage
-					messageDeltaEvent := ClaudeStreamEvent{
-						Type: "message_delta",
-						Delta: struct {
-							Type string `json:"type"`
-							Text string `json:"text"`
-						}{
-							Type: "text",
-							Text: "",
+					messageDeltaEvent := map[string]interface{}{
+						"type": "message_delta",
+						"delta": map[string]interface{}{
+							"stop_reason": "end_turn",
 						},
-						Usage: struct {
-							OutputTokens int `json:"output_tokens"`
-						}{
-							OutputTokens: ctx.TotalOutputTokens,
+						"usage": map[string]interface{}{
+							"output_tokens": ctx.TotalOutputTokens,
 						},
 					}
 					messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
 					result.WriteString("event: message_delta\n")
 					result.WriteString("data: " + string(messageDeltaJSON) + "\n")
-					result.WriteString("\n")
-
-					// Add empty event separator
 					result.WriteString("\n")
 				}
 
@@ -467,8 +458,8 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 				ctx.ModelName = chunk.Model
 			}
 
-			// Send message_start immediately on first chunk
-			if !ctx.MessageStartSent && ctx.MessageID != "" {
+			// Send message_start on first chunk (even without ID/model)
+			if !ctx.MessageStartSent {
 				// Send message_start event
 				startEvent := ClaudeStreamEvent{
 					Type: "message_start",

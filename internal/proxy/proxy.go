@@ -503,12 +503,34 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			for scanner.Scan() && !streamDone {
 				line := scanner.Text()
-				buffer.WriteString(line + "\n")
 
 				// Check for [DONE] marker to stop reading immediately
 				if strings.Contains(line, "data: [DONE]") {
 					streamDone = true
+					buffer.WriteString(line + "\n")
+					// Process the [DONE] event immediately
+					eventData := buffer.Bytes()
+					logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount+1, string(eventData))
+
+					var transformedEvent []byte
+					var err error
+					if transformerName == "openai" {
+						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					} else if transformerName == "gemini" {
+						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					} else {
+						transformedEvent, err = trans.TransformResponse(eventData, true)
+					}
+
+					if err == nil {
+						logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount+1, string(transformedEvent))
+						w.Write(transformedEvent)
+						flusher.Flush()
+					}
+					break
 				}
+
+				buffer.WriteString(line + "\n")
 
 				// When we hit an empty line, we have a complete event
 				if line == "" {

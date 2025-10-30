@@ -33,14 +33,14 @@ type OpenAIMessage struct {
 
 // OpenAIRequest represents an OpenAI API request
 type OpenAIRequest struct {
-	Model          string          `json:"model"`
-	Messages       []OpenAIMessage `json:"messages"`
-	MaxTokens      int             `json:"max_tokens,omitempty"`
-	Temperature    float64         `json:"temperature,omitempty"`
-	Stream         bool            `json:"stream,omitempty"`
-	EnableThinking bool            `json:"enable_thinking,omitempty"` // For models that support reasoning/thinking
-	Tools          []OpenAITool    `json:"tools,omitempty"`
-	ToolChoice     interface{}     `json:"tool_choice,omitempty"`
+	Model               string          `json:"model"`
+	Messages            []OpenAIMessage `json:"messages"`
+	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
+	Temperature         float64         `json:"temperature,omitempty"`
+	Stream              bool            `json:"stream,omitempty"`
+	EnableThinking      bool            `json:"enable_thinking,omitempty"` // For models that support reasoning/thinking
+	Tools               []OpenAITool    `json:"tools,omitempty"`
+	ToolChoice          interface{}     `json:"tool_choice,omitempty"`
 }
 
 // OpenAIResponse represents an OpenAI API response
