@@ -8,12 +8,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
+	"github.com/lich0821/ccNexus/internal/tray"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -50,16 +53,22 @@ type App struct {
 	config     *config.Config
 	proxy      *proxy.Proxy
 	configPath string
+	ctxMutex   sync.RWMutex
+	trayIcon   []byte
 }
 
 // NewApp creates a new App application struct
-func NewApp() *App {
-	return &App{}
+func NewApp(trayIcon []byte) *App {
+	return &App{
+		trayIcon: trayIcon,
+	}
 }
 
 // startup is called when the app starts
 func (a *App) startup(ctx context.Context) {
+	a.ctxMutex.Lock()
 	a.ctx = ctx
+	a.ctxMutex.Unlock()
 
 	logger.Info("Application starting...")
 
@@ -103,12 +112,19 @@ func (a *App) startup(ctx context.Context) {
 	// Create proxy
 	a.proxy = proxy.New(cfg)
 
+	// Initialize system tray first
+	a.initTray()
+
 	// Start proxy in background
 	go func() {
 		if err := a.proxy.Start(); err != nil {
 			logger.Error("Proxy server error: %v", err)
 		}
 	}()
+
+	// Wait for tray to initialize, then show window
+	time.Sleep(300 * time.Millisecond)
+	runtime.WindowShow(ctx)
 
 	logger.Info("Application started successfully")
 }
@@ -124,6 +140,55 @@ func (a *App) shutdown(ctx context.Context) {
 	}
 	logger.Info("Application stopped")
 	logger.GetLogger().Close()
+}
+
+// initTray initializes the system tray
+func (a *App) initTray() {
+	tray.Setup(a.trayIcon, a.ShowWindow, a.HideWindow, a.Quit)
+}
+
+// ShowWindow shows the application window
+func (a *App) ShowWindow() {
+	a.ctxMutex.RLock()
+	ctx := a.ctx
+	a.ctxMutex.RUnlock()
+
+	if ctx != nil {
+		runtime.WindowShow(ctx)
+	}
+}
+
+// HideWindow hides the application window
+func (a *App) HideWindow() {
+	a.ctxMutex.RLock()
+	ctx := a.ctx
+	a.ctxMutex.RUnlock()
+
+	if ctx != nil {
+		runtime.WindowHide(ctx)
+	}
+}
+
+// beforeClose is called when the window is about to close
+func (a *App) beforeClose(ctx context.Context) bool {
+	runtime.WindowHide(ctx)
+	return true // Return true to prevent window close (just hide it)
+}
+
+// Quit quits the application
+func (a *App) Quit() {
+	logger.Info("Quitting application...")
+
+	// Save stats and cleanup
+	if a.proxy != nil {
+		if err := a.proxy.GetStats().Save(); err != nil {
+			logger.Warn("Failed to save stats: %v", err)
+		}
+		a.proxy.Stop()
+	}
+	logger.GetLogger().Close()
+
+	os.Exit(0)
 }
 
 // GetConfig returns the current configuration

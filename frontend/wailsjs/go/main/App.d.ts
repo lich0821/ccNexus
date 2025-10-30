@@ -17,11 +17,17 @@ export function GetStats():Promise<string>;
 
 export function GetVersion():Promise<string>;
 
+export function HideWindow():Promise<void>;
+
 export function OpenURL(arg1:string):Promise<void>;
+
+export function Quit():Promise<void>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
+
+export function ShowWindow():Promise<void>;
 
 export function TestEndpoint(arg1:number):Promise<string>;
 

@@ -14,21 +14,24 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-func main() {
-	// Create an instance of the app structure
-	app := NewApp()
+//go:embed build/appicon.png
+var trayIcon []byte
 
-	// Create application with options
+func main() {
+	app := NewApp(trayIcon)
+
 	err := wails.Run(&options.App{
-		Title:  "ccNexus",
-		Width:  1024,
-		Height: 768,
+		Title:       "ccNexus",
+		Width:       1024,
+		Height:      768,
+		StartHidden: false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 255, G: 255, B: 255, A: 255},
 		OnStartup:        app.startup,
 		OnShutdown:       app.shutdown,
+		OnBeforeClose:    app.beforeClose,
 		Bind: []interface{}{
 			app,
 		},

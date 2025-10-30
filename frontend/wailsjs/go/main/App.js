@@ -34,8 +34,16 @@ export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
 
+export function HideWindow() {
+  return window['go']['main']['App']['HideWindow']();
+}
+
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
+}
+
+export function Quit() {
+  return window['go']['main']['App']['Quit']();
 }
 
 export function RemoveEndpoint(arg1) {
@@ -44,6 +52,10 @@ export function RemoveEndpoint(arg1) {
 
 export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
+}
+
+export function ShowWindow() {
+  return window['go']['main']['App']['ShowWindow']();
 }
 
 export function TestEndpoint(arg1) {

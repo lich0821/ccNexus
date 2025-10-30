@@ -22,6 +22,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
+
+    // Handle Cmd/Ctrl+W to hide window
+    window.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
+            e.preventDefault();
+            window.runtime.WindowHide();
+        }
+    });
 });
 
 function initApp() {
