@@ -97,51 +97,6 @@ Claude Code → 代理 (localhost:3000) → 端点 #1 (非 200 响应)
 4. **自动重试**：遇到非 200 响应时切换端点并重试
 5. **轮询机制**：循环使用所有端点
 
-## 🎉 v0.5.0 新特性
-
-### 🔀 多格式 API 转换器支持
-- **OpenAI API 格式**：完整支持 OpenAI 兼容的 API
-  - Claude 和 OpenAI 格式之间的请求 / 响应转换
-  - 工具调用支持，正确的格式转换
-  - 流式响应处理，支持思考块（thinking blocks）
-  - 为不同的 OpenAI 兼容端点指定模型
-- **Google Gemini API 格式**：原生支持 Google 的 Gemini API
-  - 完整的请求 / 响应转换
-  - 函数调用（工具）支持
-  - 流式响应处理
-  - 为不同的 Gemini 模型指定模型名称
-- **灵活配置**：通过 GUI 轻松切换 API 格式
-  - 为每个端点选择转换器类型（Claude/OpenAI/Gemini）
-  - 非 Claude 转换器自动显示模型字段
-  - 与现有端点管理无缝集成
-
-### 💡 使用示例
-
-配置多个不同格式的 API 提供商：
-```json
-{
-  "endpoints": [
-    {
-      "name": "Claude Official",
-      "transformer": "claude",
-      "apiUrl": "api.anthropic.com"
-    },
-    {
-      "name": "OpenAI GPT-4",
-      "transformer": "openai",
-      "model": "gpt-4-turbo",
-      "apiUrl": "api.openai.com"
-    },
-    {
-      "name": "Google Gemini",
-      "transformer": "gemini",
-      "model": "gemini-pro",
-      "apiUrl": "generativelanguage.googleapis.com"
-    }
-  ]
-}
-```
-
 ## 🔧 配置文件
 
 配置文件位置：

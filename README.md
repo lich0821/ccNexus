@@ -97,51 +97,6 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
-## 🎉 What's New in v0.5.0
-
-### 🔀 Multi-Format API Transformer Support
-- **OpenAI API Format**: Full support for OpenAI-compatible APIs
-  - Request/response transformation between Claude and OpenAI formats
-  - Tool calling support with proper format conversion
-  - Streaming response handling with thinking blocks
-  - Model specification for different OpenAI-compatible endpoints
-- **Google Gemini API Format**: Native support for Google's Gemini API
-  - Complete request/response transformation
-  - Function calling (tools) support
-  - Streaming response handling
-  - Model specification for different Gemini models
-- **Flexible Configuration**: Easy switching between API formats through GUI
-  - Select transformer type (Claude/OpenAI/Gemini) per endpoint
-  - Automatic model field display for non-Claude transformers
-  - Seamless integration with existing endpoint management
-
-### 💡 Usage Example
-
-Configure multiple API providers with different formats:
-```json
-{
-  "endpoints": [
-    {
-      "name": "Claude Official",
-      "transformer": "claude",
-      "apiUrl": "api.anthropic.com"
-    },
-    {
-      "name": "OpenAI GPT-4",
-      "transformer": "openai",
-      "model": "gpt-4-turbo",
-      "apiUrl": "api.openai.com"
-    },
-    {
-      "name": "Google Gemini",
-      "transformer": "gemini",
-      "model": "gemini-pro",
-      "apiUrl": "generativelanguage.googleapis.com"
-    }
-  ]
-}
-```
-
 ## 🔧 Configuration File
 
 Configuration is stored at:
