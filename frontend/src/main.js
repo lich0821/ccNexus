@@ -1,4 +1,5 @@
 import './style.css'
+import { setLanguage, t } from './i18n/index.js'
 
 let currentEditIndex = -1;
 let endpointStats = {};
@@ -8,7 +9,11 @@ let currentTestButtonOriginalText = '';
 let currentTestIndex = -1;
 
 // Load data on startup
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
+    // Initialize language
+    const lang = await window.go.main.App.GetLanguage();
+    setLanguage(lang);
+
     initApp();
     loadConfig();
     loadStats();
@@ -38,12 +43,12 @@ function initApp() {
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
-                    <h1>🚀 ccNexus</h1>
-                    <p>Smart API endpoint rotation proxy for Claude Code</p>
+                    <h1>🚀 ${t('app.title')}</h1>
+                    <p>${t('header.title')}</p>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
-                    <div class="port-display" onclick="window.showEditPortModal()" title="Click to edit port">
-                        <span style="color: #666; font-size: 14px;">Proxy Port: </span>
+                    <div class="port-display" onclick="window.showEditPortModal()" title="${t('header.port')}">
+                        <span style="color: #666; font-size: 14px;">${t('header.port')}: </span>
                         <span class="port-number" id="proxyPort">3000</span>
                     </div>
                     <div style="display: flex; gap: 10px;">
@@ -55,6 +60,15 @@ function initApp() {
                         <button class="header-link" onclick="window.showWelcomeModal()" title="About ccNexus">
                             📖
                         </button>
+                        <div class="lang-switcher">
+                            <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor">
+                                <path d="M757.205333 473.173333c5.333333 0 10.453333 2.090667 14.250667 5.717334a19.029333 19.029333 0 0 1 5.888 13.738666v58.154667h141.184c11.093333 0 20.138667 8.704 20.138667 19.413333v232.704a19.797333 19.797333 0 0 1-20.138667 19.413334h-141.184v96.981333a19.754667 19.754667 0 0 1-20.138667 19.370667H716.8a20.565333 20.565333 0 0 1-14.250667-5.674667 19.029333 19.029333 0 0 1-5.888-13.696v-96.981333h-141.141333a20.565333 20.565333 0 0 1-14.250667-5.674667 19.029333 19.029333 0 0 1-5.930666-13.738667v-232.704c0-5.12 2.133333-10.112 5.930666-13.738666a20.565333 20.565333 0 0 1 14.250667-5.674667h141.141333v-58.154667c0-5.162667 2.133333-10.112 5.888-13.738666a20.565333 20.565333 0 0 1 14.250667-5.674667h40.362667zM192.597333 628.394667c22.272 0 40.32 17.365333 40.32 38.826666v38.741334c0 40.618667 32.512 74.368 74.624 77.397333l6.058667 0.213333h80.64c21.930667 0.469333 39.424 17.706667 39.424 38.784 0 21.077333-17.493333 38.314667-39.424 38.784H313.6c-89.088 0-161.28-69.461333-161.28-155.178666v-38.741334c0-21.461333 18.005333-38.826667 40.277333-38.826666z m504.106667 0h-80.64v116.394666h80.64v-116.394666z m161.28 0h-80.64v116.394666h80.64v-116.394666zM320.170667 85.333333c8.234667 0 15.658667 4.778667 18.773333 12.202667H338.773333l161.322667 387.84c2.517333 5.973333 1.706667 12.8-2.005333 18.090667a20.394667 20.394667 0 0 1-16.725334 8.533333h-43.52a20.181333 20.181333 0 0 1-18.688-12.202667L375.850667 395.648H210.901333l-43.264 104.149333A20.181333 20.181333 0 0 1 148.906667 512H105.514667a20.394667 20.394667 0 0 1-16.725334-8.533333 18.773333 18.773333 0 0 1-2.005333-18.090667l161.28-387.84A20.181333 20.181333 0 0 1 266.88 85.333333h53.290667zM716.8 162.901333c42.794667 0 83.84 16.341333 114.090667 45.44a152.234667 152.234667 0 0 1 47.232 109.738667v38.741333c-0.469333 21.077333-18.389333 37.930667-40.32 37.930667s-39.808-16.853333-40.32-37.930667v-38.741333c0-20.608-8.490667-40.32-23.637334-54.869333a82.304 82.304 0 0 0-57.045333-22.741334h-80.64c-21.888-0.469333-39.424-17.706667-39.424-38.784 0-21.077333 17.493333-38.314667 39.424-38.784h80.64z m-423.424 34.304L243.2 318.037333h100.48L293.418667 197.205333z"/>
+                            </svg>
+                            <div class="lang-menu">
+                                <div class="lang-item" onclick="window.changeLanguage('en')">English</div>
+                                <div class="lang-item" onclick="window.changeLanguage('zh-CN')">简体中文</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -63,35 +77,35 @@ function initApp() {
         <div class="container">
             <!-- Statistics -->
             <div class="card">
-                <h2>📊 Statistics</h2>
+                <h2>📊 ${t('statistics.title')}</h2>
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <div class="label">Endpoints</div>
+                        <div class="label">${t('statistics.endpoints')}</div>
                         <div class="value">
                             <span id="activeEndpoints">0</span>
                             <span style="font-size: 20px; opacity: 0.7;"> / </span>
                             <span id="totalEndpoints" style="font-size: 20px; opacity: 0.7;">0</span>
                         </div>
-                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">Active / Total</div>
+                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${t('statistics.activeTotal')}</div>
                     </div>
                     <div class="stat-box">
-                        <div class="label">Total Requests</div>
+                        <div class="label">${t('statistics.totalRequests')}</div>
                         <div class="value">
                             <span id="totalRequests">0</span>
                         </div>
                         <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                            <span id="successRequests">0</span> success /
-                            <span id="failedRequests">0</span> failed
+                            <span id="successRequests">0</span> ${t('statistics.success')} /
+                            <span id="failedRequests">0</span> ${t('statistics.failed')}
                         </div>
                     </div>
                     <div class="stat-box">
-                        <div class="label">Total Tokens</div>
+                        <div class="label">${t('statistics.totalTokens')}</div>
                         <div class="value">
                             <span id="totalTokens">0</span>
                         </div>
                         <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                            In: <span id="totalInputTokens">0</span> /
-                            Out: <span id="totalOutputTokens">0</span>
+                            ${t('statistics.in')}: <span id="totalInputTokens">0</span> /
+                            ${t('statistics.out')}: <span id="totalOutputTokens">0</span>
                         </div>
                     </div>
                 </div>
@@ -100,13 +114,13 @@ function initApp() {
             <!-- Endpoints -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2 style="margin: 0;">🔗 Endpoints</h2>
+                    <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
                     <button class="btn btn-primary" onclick="window.showAddEndpointModal()">
-                        ➕ Add Endpoint
+                        ➕ ${t('header.addEndpoint')}
                     </button>
                 </div>
                 <div id="endpointList" class="endpoint-list">
-                    <div class="loading">Loading endpoints...</div>
+                    <div class="loading">${t('endpoints.title')}...</div>
                 </div>
             </div>
 
@@ -114,23 +128,23 @@ function initApp() {
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
-                        <h2 style="margin: 0;">📋 Logs</h2>
+                        <h2 style="margin: 0;">📋 ${t('logs.title')}</h2>
                         <select id="logLevel" class="log-level-select" onchange="window.changeLogLevel()">
-                            <option value="0">🔍 DEBUG+</option>
-                            <option value="1" selected>ℹ️ INFO+</option>
-                            <option value="2">⚠️ WARN+</option>
-                            <option value="3">❌ ERROR</option>
+                            <option value="0">🔍 ${t('logs.levels.0')}+</option>
+                            <option value="1" selected>ℹ️ ${t('logs.levels.1')}+</option>
+                            <option value="2">⚠️ ${t('logs.levels.2')}+</option>
+                            <option value="3">❌ ${t('logs.levels.3')}</option>
                         </select>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary btn-sm" onclick="window.copyLogs()">
-                            📋 Copy
+                            📋 ${t('logs.copy')}
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="window.toggleLogPanel()">
-                            <span id="logToggleIcon">▼</span> <span id="logToggleText">Collapse</span>
+                            <span id="logToggleIcon">▼</span> <span id="logToggleText">${t('logs.collapse')}</span>
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="window.clearLogs()">
-                            🗑️ Clear
+                            🗑️ ${t('logs.clear')}
                         </button>
                     </div>
                 </div>
@@ -144,41 +158,41 @@ function initApp() {
         <div id="endpointModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalTitle">Add Endpoint</h2>
+                    <h2 id="modalTitle">${t('modal.addEndpoint')}</h2>
                 </div>
                 <div class="form-group">
-                    <label>Name <span class="required" style="color: #ff4444;">*</span></label>
+                    <label>${t('modal.name')} <span class="required" style="color: #ff4444;">*</span></label>
                     <input type="text" id="endpointName" placeholder="e.g., Claude Official" required>
                 </div>
                 <div class="form-group">
-                    <label>API URL <span class="required" style="color: #ff4444;">*</span></label>
+                    <label>${t('modal.apiUrl')} <span class="required" style="color: #ff4444;">*</span></label>
                     <input type="text" id="endpointUrl" placeholder="e.g., api.anthropic.com" required>
                 </div>
                 <div class="form-group">
-                    <label>API Key <span class="required" style="color: #ff4444;">*</span></label>
+                    <label>${t('modal.apiKey')} <span class="required" style="color: #ff4444;">*</span></label>
                     <input type="password" id="endpointKey" placeholder="sk-ant-api03-..." required>
                 </div>
                 <div class="form-group">
-                    <label>Transformer <span class="required" style="color: #ff4444;">*</span></label>
+                    <label>${t('modal.transformer')} <span class="required" style="color: #ff4444;">*</span></label>
                     <select id="endpointTransformer" onchange="window.handleTransformerChange()" required>
                         <option value="claude">Claude (Default)</option>
                         <option value="openai">OpenAI</option>
                         <option value="gemini">Gemini</option>
                     </select>
                     <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                        Select the API format for this endpoint
+                        ${t('modal.transformerHelp')}
                     </p>
                 </div>
                 <div class="form-group" id="modelFieldGroup" style="display: block;">
-                    <label>Model <span class="required" id="modelRequired" style="display: none; color: #ff4444;">*</span></label>
+                    <label>${t('modal.model')} <span class="required" id="modelRequired" style="display: none; color: #ff4444;">*</span></label>
                     <input type="text" id="endpointModel" placeholder="e.g., claude-3-5-sonnet-20241022">
                     <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
-                        Optional for Claude (to override default), required for OpenAI/Gemini
+                        ${t('modal.modelHelp')}
                     </p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.closeModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="window.saveEndpoint()">Save</button>
+                    <button class="btn btn-secondary" onclick="window.closeModal()">${t('modal.cancel')}</button>
+                    <button class="btn btn-primary" onclick="window.saveEndpoint()">${t('modal.save')}</button>
                 </div>
             </div>
         </div>
@@ -187,18 +201,18 @@ function initApp() {
         <div id="portModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>Edit Proxy Port</h2>
+                    <h2>${t('modal.changePort')}</h2>
                 </div>
                 <div class="form-group">
-                    <label>Port (1-65535)</label>
+                    <label>${t('modal.port')} (1-65535)</label>
                     <input type="number" id="portInput" min="1" max="65535" placeholder="3000">
                 </div>
                 <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                    ⚠️ Note: Changing the port requires restarting the application.
+                    ⚠️ ${t('modal.portNote')}
                 </p>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.closePortModal()">Cancel</button>
-                    <button class="btn btn-primary" onclick="window.savePort()">Save</button>
+                    <button class="btn btn-secondary" onclick="window.closePortModal()">${t('modal.cancel')}</button>
+                    <button class="btn btn-primary" onclick="window.savePort()">${t('modal.save')}</button>
                 </div>
             </div>
         </div>
@@ -207,12 +221,11 @@ function initApp() {
         <div id="welcomeModal" class="modal">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h2>👋 Welcome to ccNexus!</h2>
+                    <h2>👋 ${t('welcome.title')}</h2>
                 </div>
                 <div style="padding: 20px 0;">
                     <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
-                        ccNexus is a smart API endpoint rotation proxy for Claude Code.
-                        It helps you manage multiple API endpoints with automatic failover and load balancing.
+                        ${t('welcome.message')}
                     </p>
 
                     <div style="text-align: center; margin: 30px 0;">
@@ -232,12 +245,12 @@ function initApp() {
                     <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
                         <label style="display: flex; align-items: center; justify-content: center; cursor: pointer;">
                             <input type="checkbox" id="dontShowAgain" style="margin-right: 8px;">
-                            <span style="font-size: 14px; color: #666;">Don't show this again</span>
+                            <span style="font-size: 14px; color: #666;">${t('welcome.dontShow')}</span>
                         </label>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="window.closeWelcomeModal()">Get Started</button>
+                    <button class="btn btn-primary" onclick="window.closeWelcomeModal()">${t('welcome.getStarted')}</button>
                 </div>
             </div>
         </div>
@@ -246,7 +259,7 @@ function initApp() {
         <div id="testResultModal" class="modal">
             <div class="modal-content" style="max-width: 600px;">
                 <div class="modal-header">
-                    <h2 id="testResultTitle">🧪 Endpoint Test Result</h2>
+                    <h2 id="testResultTitle">🧪 ${t('test.title')}</h2>
                 </div>
                 <div style="padding: 20px 0;">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
@@ -254,7 +267,7 @@ function initApp() {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="window.closeTestResultModal()">Close</button>
+                    <button class="btn btn-primary" onclick="window.closeTestResultModal()">${t('modal.close')}</button>
                 </div>
             </div>
         </div>
@@ -378,8 +391,7 @@ function renderEndpoints(endpoints) {
     if (endpoints.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>No endpoints configured</p>
-                <p>Click "Add Endpoint" to get started</p>
+                <p>${t('endpoints.noEndpoints')}</p>
             </div>
         `;
         return;
@@ -459,18 +471,18 @@ function renderEndpoints(endpoints) {
                 <h3>${ep.name} ${enabled ? '✅' : '❌'}</h3>
                 <p>🌐 ${ep.apiUrl}</p>
                 <p>🔑 ${maskApiKey(ep.apiKey)}</p>
-                <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 Transformer: ${transformer}${model ? ` (${model})` : ''}</p>
-                <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 Requests: ${stats.requests} | Errors: ${stats.errors}</p>
-                <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 Tokens: ${formatTokens(totalTokens)} (In: ${formatTokens(stats.inputTokens)}, Out: ${formatTokens(stats.outputTokens)})</p>
+                <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 ${t('endpoints.transformer')}: ${transformer}${model ? ` (${model})` : ''}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 ${t('endpoints.requests')}: ${stats.requests} | ${t('endpoints.errors')}: ${stats.errors}</p>
+                <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 ${t('endpoints.tokens')}: ${formatTokens(totalTokens)} (${t('statistics.in')}: ${formatTokens(stats.inputTokens)}, ${t('statistics.out')}: ${formatTokens(stats.outputTokens)})</p>
             </div>
             <div class="endpoint-actions">
                 <label class="toggle-switch">
                     <input type="checkbox" data-index="${index}" ${enabled ? 'checked' : ''}>
                     <span class="toggle-slider"></span>
                 </label>
-                <button class="btn btn-secondary" data-action="test" data-index="${index}">Test</button>
-                <button class="btn btn-secondary" data-action="edit" data-index="${index}">Edit</button>
-                <button class="btn btn-danger" data-action="delete" data-index="${index}">Delete</button>
+                <button class="btn btn-secondary" data-action="test" data-index="${index}">${t('endpoints.test')}</button>
+                <button class="btn btn-secondary" data-action="edit" data-index="${index}">${t('endpoints.edit')}</button>
+                <button class="btn btn-danger" data-action="delete" data-index="${index}">${t('endpoints.delete')}</button>
             </div>
         `;
 
@@ -524,7 +536,7 @@ function maskApiKey(key) {
 
 window.showAddEndpointModal = function() {
     currentEditIndex = -1;
-    document.getElementById('modalTitle').textContent = 'Add Endpoint';
+    document.getElementById('modalTitle').textContent = t('modal.addEndpoint');
     document.getElementById('endpointName').value = '';
     document.getElementById('endpointUrl').value = '';
     document.getElementById('endpointKey').value = '';
@@ -543,15 +555,15 @@ window.handleTransformerChange = function() {
     if (transformer === 'claude') {
         modelRequired.style.display = 'none';
         modelInput.placeholder = 'e.g., claude-3-5-sonnet-20241022';
-        modelHelpText.textContent = 'Optional: Override the model specified in requests';
+        modelHelpText.textContent = t('modal.modelHelpClaude');
     } else if (transformer === 'openai') {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gpt-4-turbo';
-        modelHelpText.textContent = 'Required: Specify the OpenAI model to use';
+        modelHelpText.textContent = t('modal.modelHelpOpenAI');
     } else if (transformer === 'gemini') {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gemini-pro';
-        modelHelpText.textContent = 'Required: Specify the Gemini model to use';
+        modelHelpText.textContent = t('modal.modelHelpGemini');
     }
 }
 
@@ -561,7 +573,7 @@ window.editEndpoint = async function(index) {
     const config = JSON.parse(configStr);
     const ep = config.endpoints[index];
 
-    document.getElementById('modalTitle').textContent = 'Edit Endpoint';
+    document.getElementById('modalTitle').textContent = t('modal.editEndpoint');
     document.getElementById('endpointName').value = ep.name;
     document.getElementById('endpointUrl').value = ep.apiUrl;
     document.getElementById('endpointKey').value = ep.apiKey;
@@ -757,11 +769,11 @@ window.toggleLogPanel = function() {
     if (logPanelExpanded) {
         panel.style.display = 'block';
         icon.textContent = '▼';
-        text.textContent = 'Collapse';
+        text.textContent = t('logs.collapse');
     } else {
         panel.style.display = 'none';
         icon.textContent = '▶';
-        text.textContent = 'Expand';
+        text.textContent = t('logs.expand');
     }
 }
 
@@ -883,3 +895,16 @@ window.closeTestResultModal = function() {
         currentTestIndex = -1;
     }
 }
+
+// Change language
+window.changeLanguage = async function(lang) {
+    try {
+        await window.go.main.App.SetLanguage(lang);
+        setLanguage(lang);
+        // Reload the page to apply new language
+        location.reload();
+    } catch (error) {
+        console.error('Failed to change language:', error);
+    }
+}
+

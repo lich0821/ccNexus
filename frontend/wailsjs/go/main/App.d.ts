@@ -7,6 +7,8 @@ export function ClearLogs():Promise<void>;
 
 export function GetConfig():Promise<string>;
 
+export function GetLanguage():Promise<string>;
+
 export function GetLogLevel():Promise<number>;
 
 export function GetLogs():Promise<string>;
@@ -14,6 +16,8 @@ export function GetLogs():Promise<string>;
 export function GetLogsByLevel(arg1:number):Promise<string>;
 
 export function GetStats():Promise<string>;
+
+export function GetSystemLanguage():Promise<string>;
 
 export function GetVersion():Promise<string>;
 
@@ -24,6 +28,8 @@ export function OpenURL(arg1:string):Promise<void>;
 export function Quit():Promise<void>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;
+
+export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
 

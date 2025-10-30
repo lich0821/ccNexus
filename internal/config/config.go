@@ -23,6 +23,7 @@ type Config struct {
 	Port      int        `json:"port"`
 	Endpoints []Endpoint `json:"endpoints"`
 	LogLevel  int        `json:"logLevel"` // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language  string     `json:"language"`  // UI language: en, zh-CN
 	mu        sync.RWMutex
 }
 
@@ -30,7 +31,8 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Port:     3000,
-		LogLevel: 1, // Default to INFO level
+		LogLevel: 1,  // Default to INFO level
+		Language: "", // Empty means auto-detect
 		Endpoints: []Endpoint{
 			{
 				Name:        "Claude Official",
@@ -121,6 +123,20 @@ func (c *Config) UpdateLogLevel(level int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.LogLevel = level
+}
+
+// GetLanguage returns the configured language (thread-safe)
+func (c *Config) GetLanguage() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.Language
+}
+
+// UpdateLanguage updates the language (thread-safe)
+func (c *Config) UpdateLanguage(language string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Language = language
 }
 
 // GetConfigPath returns the default config file path

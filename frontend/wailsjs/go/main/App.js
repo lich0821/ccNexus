@@ -14,6 +14,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetLanguage() {
+  return window['go']['main']['App']['GetLanguage']();
+}
+
 export function GetLogLevel() {
   return window['go']['main']['App']['GetLogLevel']();
 }
@@ -28,6 +32,10 @@ export function GetLogsByLevel(arg1) {
 
 export function GetStats() {
   return window['go']['main']['App']['GetStats']();
+}
+
+export function GetSystemLanguage() {
+  return window['go']['main']['App']['GetSystemLanguage']();
 }
 
 export function GetVersion() {
@@ -48,6 +56,10 @@ export function Quit() {
 
 export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
+}
+
+export function SetLanguage(arg1) {
+  return window['go']['main']['App']['SetLanguage'](arg1);
 }
 
 export function SetLogLevel(arg1) {

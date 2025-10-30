@@ -442,3 +442,63 @@ body {
 .log-textarea::-webkit-scrollbar-thumb:hover {
     background: #777;
 }
+
+/* Language Switcher */
+.lang-switcher {
+    position: relative;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 5px;
+    transition: all 0.2s;
+}
+
+.lang-switcher:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.lang-switcher svg {
+    display: block;
+}
+
+.lang-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: all 0.3s ease;
+    min-width: 100px;
+    z-index: 1000;
+}
+
+.lang-switcher:hover .lang-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lang-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 14px;
+    color: #333;
+}
+
+.lang-item:first-child {
+    border-radius: 8px 8px 0 0;
+}
+
+.lang-item:last-child {
+    border-radius: 0 0 8px 8px;
+}
+
+.lang-item:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}

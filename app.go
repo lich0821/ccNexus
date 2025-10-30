@@ -474,6 +474,48 @@ func (a *App) GetLogLevel() int {
 	return int(logger.GetLogger().GetMinLevel())
 }
 
+// GetSystemLanguage detects the system language
+func (a *App) GetSystemLanguage() string {
+	// Try to get system language from environment variables
+	locale := os.Getenv("LANG")
+	if locale == "" {
+		locale = os.Getenv("LC_ALL")
+	}
+	if locale == "" {
+		locale = os.Getenv("LANGUAGE")
+	}
+	if locale == "" {
+		return "en"
+	}
+
+	// Parse locale (e.g., "zh_CN.UTF-8" -> "zh-CN")
+	// Simple check for Chinese
+	if strings.Contains(strings.ToLower(locale), "zh") {
+		return "zh-CN"
+	}
+	return "en"
+}
+
+// GetLanguage returns the current language setting
+func (a *App) GetLanguage() string {
+	lang := a.config.GetLanguage()
+	if lang == "" {
+		// Auto-detect if not set
+		return a.GetSystemLanguage()
+	}
+	return lang
+}
+
+// SetLanguage sets the UI language
+func (a *App) SetLanguage(language string) error {
+	a.config.UpdateLanguage(language)
+	if err := a.config.Save(a.configPath); err != nil {
+		return fmt.Errorf("failed to save language: %w", err)
+	}
+	logger.Info("Language changed to: %s", language)
+	return nil
+}
+
 // TestEndpoint tests an endpoint by sending a simple request
 func (a *App) TestEndpoint(index int) string {
 	endpoints := a.config.GetEndpoints()
