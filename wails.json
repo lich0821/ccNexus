@@ -23,8 +23,8 @@
   "info": {
     "companyName": "ccNexus",
     "productName": "ccNexus",
-    "productVersion": "0.6.2",
-    "copyright": "Copyright © 2024",
+    "productVersion": "0.7.0",
+    "copyright": "Copyright © 2024 Chuck",
     "comments": "A smart API endpoint rotation proxy for Claude Code"
   }
 }
