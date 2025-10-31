@@ -159,7 +159,6 @@ func Load(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// Return default config if file doesn't exist
 			return DefaultConfig(), nil
 		}
 		return nil, err
@@ -187,5 +186,9 @@ func (c *Config) Save(path string) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -128,32 +128,25 @@ func (s *Stats) Save() error {
 	defer s.mu.RUnlock()
 
 	if s.statsPath == "" {
-		return nil // No path set, skip saving
+		return nil
 	}
 
-	// Ensure directory exists
 	dir := filepath.Dir(s.statsPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return err
 	}
 
-	// Marshal to JSON
 	data, err := json.MarshalIndent(s, "", "  ")
 	if err != nil {
 		return err
 	}
 
-	// Write to file
 	return os.WriteFile(s.statsPath, data, 0644)
 }
 
 // saveAsync saves statistics asynchronously (non-blocking)
 func (s *Stats) saveAsync() {
-	if err := s.Save(); err != nil {
-		// Log error but don't block
-		// Note: We can't use logger here to avoid circular dependency
-		// The error will be silent, but stats will retry on next update
-	}
+	_ = s.Save()
 }
 
 // Load loads statistics from file
@@ -162,26 +155,22 @@ func (s *Stats) Load() error {
 	defer s.mu.Unlock()
 
 	if s.statsPath == "" {
-		return nil // No path set, skip loading
+		return nil
 	}
 
-	// Read file
 	data, err := os.ReadFile(s.statsPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// File doesn't exist, start with empty stats
 			return nil
 		}
 		return err
 	}
 
-	// Unmarshal JSON
 	var loaded Stats
 	if err := json.Unmarshal(data, &loaded); err != nil {
 		return err
 	}
 
-	// Copy loaded data
 	s.TotalRequests = loaded.TotalRequests
 	s.EndpointStats = loaded.EndpointStats
 	if s.EndpointStats == nil {

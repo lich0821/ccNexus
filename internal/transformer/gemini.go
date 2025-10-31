@@ -395,7 +395,7 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 		// Parse Gemini chunk
 		var chunk GeminiStreamChunk
 		if err := json.Unmarshal([]byte(line), &chunk); err != nil {
-			logger.Debug("Failed to parse Gemini chunk: %v, data: %s", err, line)
+			logger.Debug("[Gemini Transformer] Failed to parse chunk: %v, data: %s", err, line)
 			continue
 		}
 

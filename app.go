@@ -658,7 +658,7 @@ func (a *App) TestEndpoint(index int) string {
 			"message": fmt.Sprintf("Request failed: %v", err),
 		}
 		data, _ := json.Marshal(result)
-		logger.Warn("Test failed for %s: %v", endpoint.Name, err)
+		logger.Error("Test failed for %s: %v", endpoint.Name, err)
 		return string(data)
 	}
 	defer resp.Body.Close()
@@ -681,7 +681,7 @@ func (a *App) TestEndpoint(index int) string {
 			"message": fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(respBody)),
 		}
 		data, _ := json.Marshal(result)
-		logger.Warn("Test failed for %s: HTTP %d", endpoint.Name, resp.StatusCode)
+		logger.Error("Test failed for %s: HTTP %d", endpoint.Name, resp.StatusCode)
 		return string(data)
 	}
 

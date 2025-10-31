@@ -47,7 +47,7 @@ func (t *ClaudeTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 
 	// Override model if configured
 	result := string(claudeReq)
-	logger.Debug("[Claude] Overriding model: %s → %s", t.originalModel, t.model)
+	logger.Debug("[Claude Transformer] Overriding model: %s → %s", t.originalModel, t.model)
 	// Use regex to replace model value while preserving order
 	re := regexp.MustCompile(`"model":"[^"]*"`)
 	result = re.ReplaceAllString(result, `"model":"`+t.model+`"`)

@@ -184,9 +184,9 @@ func (t *OpenAITransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 							textParts = append(textParts, text)
 						}
 					case "tool_use":
-						logger.Debug("Found tool_use block in request message (role: %s)", msg.Role)
+						logger.Debug("[OpenAI Transformer] Found tool_use block in request message (role: %s)", msg.Role)
 					case "image":
-						logger.Debug("Image block found but not supported in OpenAI transformer")
+						logger.Debug("[OpenAI Transformer] Image block found but not supported")
 					}
 				}
 			}
@@ -318,7 +318,7 @@ func (t *OpenAITransformer) transformNonStreamingResponse(openaiResp []byte) ([]
 				// Parse arguments from JSON string to map
 				var input map[string]interface{}
 				if err := json.Unmarshal([]byte(toolCall.Function.Arguments), &input); err != nil {
-					logger.Warn("Failed to parse tool arguments: %v", err)
+					logger.Warn("[OpenAI Transformer] Failed to parse tool arguments: %v", err)
 					input = map[string]interface{}{"raw": toolCall.Function.Arguments}
 				}
 
@@ -453,7 +453,7 @@ func (t *OpenAITransformer) transformStreamingResponse(openaiStream []byte, ctx 
 			var chunk OpenAIStreamChunk
 			if err := json.Unmarshal([]byte(data), &chunk); err != nil {
 				// If parse fails, log the error and pass through original line
-				logger.Debug("Failed to parse OpenAI chunk: %v, data: %s", err, data)
+				logger.Debug("[OpenAI Transformer] Failed to parse chunk: %v, data: %s", err, data)
 				result.WriteString(line + "\n")
 				continue
 			}
