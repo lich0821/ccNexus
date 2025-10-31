@@ -1,6 +1,7 @@
 {
   "name": "claude-proxy-frontend",
   "version": "0.5.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
