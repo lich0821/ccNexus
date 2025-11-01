@@ -1,3 +1,4 @@
+//go:build windows
 // +build windows
 
 package tray
@@ -36,7 +37,7 @@ func onReady(icon []byte) {
 
 	mShow := systray.AddMenuItem("Show", "Show window")
 	systray.AddSeparator()
-	mQuit := systray.AddMenuItem("Quit", "Quit ccNexus")
+	mQuit := systray.AddMenuItem("Quit | 退出", "Quit ccNexus")
 
 	go func() {
 		for {

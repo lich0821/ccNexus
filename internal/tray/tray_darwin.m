@@ -20,7 +20,7 @@
 
         self.menu = [[NSMenu alloc] init];
 
-        NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit"
+        NSMenuItem *quitItem = [[NSMenuItem alloc] initWithTitle:@"Quit | 退出"
                                                           action:@selector(quitApp:)
                                                    keyEquivalent:@""];
         [quitItem setTarget:self];
