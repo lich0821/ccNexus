@@ -471,7 +471,7 @@ func (a *App) SetLogLevel(level int) {
 
 // GetLogLevel returns the current minimum log level
 func (a *App) GetLogLevel() int {
-	return int(logger.GetLogger().GetMinLevel())
+	return a.config.GetLogLevel()
 }
 
 // GetSystemLanguage detects the system language

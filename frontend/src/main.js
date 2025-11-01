@@ -42,6 +42,15 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Load initial data
     await loadConfigAndRender();
     loadStats();
+
+    // Restore log level from config
+    try {
+        const logLevel = await window.go.main.App.GetLogLevel();
+        document.getElementById('logLevel').value = logLevel;
+    } catch (error) {
+        console.error('Failed to get log level:', error);
+    }
+
     loadLogs();
 
     // Refresh stats every 5 seconds
