@@ -14,6 +14,7 @@ export function showAddEndpointModal() {
     document.getElementById('endpointKey').value = '';
     document.getElementById('endpointTransformer').value = 'claude';
     document.getElementById('endpointModel').value = '';
+    document.getElementById('endpointRemark').value = '';
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
 }
@@ -30,6 +31,7 @@ export async function editEndpoint(index) {
     document.getElementById('endpointKey').value = ep.apiKey;
     document.getElementById('endpointTransformer').value = ep.transformer || 'claude';
     document.getElementById('endpointModel').value = ep.model || '';
+    document.getElementById('endpointRemark').value = ep.remark || '';
 
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
@@ -41,6 +43,7 @@ export async function saveEndpoint() {
     const key = document.getElementById('endpointKey').value.trim();
     const transformer = document.getElementById('endpointTransformer').value;
     const model = document.getElementById('endpointModel').value.trim();
+    const remark = document.getElementById('endpointRemark').value.trim();
 
     if (!name || !url || !key) {
         alert('Please fill in all required fields');
@@ -54,9 +57,9 @@ export async function saveEndpoint() {
 
     try {
         if (currentEditIndex === -1) {
-            await addEndpoint(name, url, key, transformer, model);
+            await addEndpoint(name, url, key, transformer, model, remark);
         } else {
-            await updateEndpoint(currentEditIndex, name, url, key, transformer, model);
+            await updateEndpoint(currentEditIndex, name, url, key, transformer, model, remark);
         }
 
         closeModal();

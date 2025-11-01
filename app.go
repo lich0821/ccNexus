@@ -246,7 +246,7 @@ func (a *App) GetStats() string {
 }
 
 // AddEndpoint adds a new endpoint
-func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model string) error {
+func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark string) error {
 	// Default to claude if transformer not specified
 	if transformer == "" {
 		transformer = "claude"
@@ -263,6 +263,7 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model string) error
 		Enabled:     true,
 		Transformer: transformer,
 		Model:       model,
+		Remark:      remark,
 	})
 
 	a.config.UpdateEndpoints(endpoints)
@@ -334,7 +335,7 @@ func (a *App) RemoveEndpoint(index int) error {
 }
 
 // UpdateEndpoint updates an endpoint by index
-func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model string) error {
+func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model, remark string) error {
 	endpoints := a.config.GetEndpoints()
 
 	if index < 0 || index >= len(endpoints) {
@@ -362,6 +363,7 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 		Enabled:     enabled,
 		Transformer: transformer,
 		Model:       model,
+		Remark:      remark,
 	}
 
 	a.config.UpdateEndpoints(endpoints)

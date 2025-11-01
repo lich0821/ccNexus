@@ -153,6 +153,10 @@ export function initUI() {
                         ${t('modal.modelHelp')}
                     </p>
                 </div>
+                <div class="form-group">
+                    <label>${t('modal.remark')}</label>
+                    <input type="text" id="endpointRemark" placeholder="${t('modal.remarkHelp')}">
+                </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeModal()">${t('modal.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.saveEndpoint()">${t('modal.save')}</button>

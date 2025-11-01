@@ -7,6 +7,14 @@ let currentTestButton = null;
 let currentTestButtonOriginalText = '';
 let currentTestIndex = -1;
 
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        setTimeout(() => { button.innerHTML = originalHTML; }, 1000);
+    });
+}
+
 export function getTestState() {
     return { currentTestButton, currentTestIndex };
 }
@@ -75,11 +83,12 @@ export function renderEndpoints(endpoints) {
         item.innerHTML = `
             <div class="endpoint-info">
                 <h3>${ep.name} ${enabled ? '✅' : '❌'}</h3>
-                <p>🌐 ${ep.apiUrl}</p>
-                <p>🔑 ${maskApiKey(ep.apiKey)}</p>
+                <p style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🌐 ${ep.apiUrl}</span> <button class="copy-btn" data-copy="${ep.apiUrl}" aria-label="${t('endpoints.copy')}" title="${t('endpoints.copy')}"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M7 4c0-1.1.9-2 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1V8c0-2-1-3-3-3H7V4Z" fill="currentColor"></path><path d="M5 7a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5Z" fill="currentColor"></path></svg></button></p>
+                <p style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🔑 ${maskApiKey(ep.apiKey)}</span> <button class="copy-btn" data-copy="${ep.apiKey}" aria-label="${t('endpoints.copy')}" title="${t('endpoints.copy')}"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M7 4c0-1.1.9-2 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1V8c0-2-1-3-3-3H7V4Z" fill="currentColor"></path><path d="M5 7a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5Z" fill="currentColor"></path></svg></button></p>
                 <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 ${t('endpoints.transformer')}: ${transformer}${model ? ` (${model})` : ''}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 ${t('endpoints.requests')}: ${stats.requests} | ${t('endpoints.errors')}: ${stats.errors}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 ${t('endpoints.tokens')}: ${formatTokens(totalTokens)} (${t('statistics.in')}: ${formatTokens(stats.inputTokens)}, ${t('statistics.out')}: ${formatTokens(stats.outputTokens)})</p>
+                ${ep.remark ? `<p style="color: #888; font-size: 13px; margin-top: 5px; font-style: italic;" title="${ep.remark}">💬 ${ep.remark.length > 20 ? ep.remark.substring(0, 20) + '...' : ep.remark}</p>` : ''}
             </div>
             <div class="endpoint-actions">
                 <label class="toggle-switch">
@@ -96,6 +105,7 @@ export function renderEndpoints(endpoints) {
         const editBtn = item.querySelector('[data-action="edit"]');
         const deleteBtn = item.querySelector('[data-action="delete"]');
         const toggleSwitch = item.querySelector('input[type="checkbox"]');
+        const copyBtns = item.querySelectorAll('.copy-btn');
 
         if (currentTestIndex === index) {
             testBtn.disabled = true;
@@ -126,6 +136,11 @@ export function renderEndpoints(endpoints) {
                 alert('Failed to toggle endpoint: ' + error);
                 e.target.checked = !newEnabled;
             }
+        });
+        copyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                copyToClipboard(btn.getAttribute('data-copy'), btn);
+            });
         });
 
         container.appendChild(item);

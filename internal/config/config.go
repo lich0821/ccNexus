@@ -16,6 +16,7 @@ type Endpoint struct {
 	Enabled     bool   `json:"enabled"`
 	Transformer string `json:"transformer,omitempty"` // Transformer type: claude, openai, gemini, deepseek
 	Model       string `json:"model,omitempty"`       // Target model name for non-Claude APIs
+	Remark      string `json:"remark,omitempty"`      // Optional remark for the endpoint
 }
 
 // Config represents the application configuration

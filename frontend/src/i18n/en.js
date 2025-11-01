@@ -23,7 +23,9 @@ export default {
         test: 'Test',
         edit: 'Edit',
         delete: 'Delete',
-        noEndpoints: 'No endpoints configured. Click "Add Endpoint" to get started.'
+        noEndpoints: 'No endpoints configured. Click "Add Endpoint" to get started.',
+        copy: 'Copy',
+        copied: 'Copied'
     },
     modal: {
         addEndpoint: 'Add Endpoint',
@@ -38,6 +40,8 @@ export default {
         modelHelpClaude: 'Optional: Override the model specified in requests',
         modelHelpOpenAI: 'Required: Specify the OpenAI model to use',
         modelHelpGemini: 'Required: Specify the Gemini model to use',
+        remark: 'Remark',
+        remarkHelp: 'Optional: Add a remark for this endpoint',
         cancel: 'Cancel',
         save: 'Save',
         close: 'Close',

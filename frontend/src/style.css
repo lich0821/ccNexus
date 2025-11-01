@@ -120,7 +120,18 @@ body {
 .endpoint-info {
     flex: 1;
     min-width: 0;
+    max-width: 100%;
     overflow: hidden;
+}
+
+.endpoint-info p {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.endpoint-info h3 {
+    min-width: 0;
+    max-width: 100%;
 }
 
 .endpoint-actions {
@@ -501,4 +512,29 @@ body {
 .lang-item:hover {
     background: rgba(102, 126, 234, 0.1);
     color: #667eea;
+}
+
+/* Copy Button */
+.copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #667eea;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.copy-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
 }

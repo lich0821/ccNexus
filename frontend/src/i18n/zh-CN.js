@@ -23,7 +23,9 @@ export default {
         test: '测试',
         edit: '编辑',
         delete: '删除',
-        noEndpoints: '未配置端点。点击"添加端点"开始使用。'
+        noEndpoints: '未配置端点。点击"添加端点"开始使用。',
+        copy: '复制',
+        copied: '已复制'
     },
     modal: {
         addEndpoint: '添加端点',
@@ -38,6 +40,8 @@ export default {
         modelHelpClaude: '可选：覆盖请求中指定的模型',
         modelHelpOpenAI: '必填：指定要使用的 OpenAI 模型',
         modelHelpGemini: '必填：指定要使用的 Gemini 模型',
+        remark: '备注',
+        remarkHelp: '可选：为此端点添加备注说明',
         cancel: '取消',
         save: '保存',
         close: '关闭',
