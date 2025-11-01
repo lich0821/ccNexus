@@ -14,6 +14,7 @@ import (
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/tokencount"
 	"github.com/lich0821/ccNexus/internal/transformer"
 )
 
@@ -161,6 +162,7 @@ func (p *Proxy) Start() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", p.handleProxy)
+	mux.HandleFunc("/v1/messages/count_tokens", p.handleCountTokens)
 	mux.HandleFunc("/health", p.handleHealth)
 	mux.HandleFunc("/stats", p.handleStats)
 
@@ -490,6 +492,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			scanner := bufio.NewScanner(resp.Body)
 			var inputTokens, outputTokens int
 			var buffer bytes.Buffer
+			var outputText strings.Builder
 			eventCount := 0
 			streamDone := false
 
@@ -564,7 +567,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					}
 					flusher.Flush()
 
-					// Parse token usage
+					// Parse token usage and collect output text
 					scanner2 := bufio.NewScanner(bytes.NewReader(transformedEvent))
 					for scanner2.Scan() {
 						eventLine := scanner2.Text()
@@ -579,14 +582,19 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 											if input, ok := usage["input_tokens"].(float64); ok {
 												inputTokens = int(input)
 											}
-											// Also check cache_read_input_tokens
 											if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
 												inputTokens += int(cacheRead)
 											}
-											// Also check cache_creation_input_tokens
 											if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
 												inputTokens += int(cacheCreate)
 											}
+										}
+									}
+								}
+								if eventType == "content_block_delta" {
+									if delta, ok := event["delta"].(map[string]interface{}); ok {
+										if text, ok := delta["text"].(string); ok {
+											outputText.WriteString(text)
 										}
 									}
 								}
@@ -629,6 +637,22 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 
 			resp.Body.Close()
+
+			// Fallback: estimate tokens when usage is 0
+			if inputTokens == 0 || outputTokens == 0 {
+				if inputTokens == 0 {
+					var req tokencount.CountTokensRequest
+					if json.Unmarshal(bodyBytes, &req) == nil {
+						inputTokens = tokencount.EstimateInputTokens(&req)
+						logger.Debug("[%s] Estimated streaming input tokens: %d", endpoint.Name, inputTokens)
+					}
+				}
+
+				if outputTokens == 0 && outputText.Len() > 0 {
+					outputTokens = tokencount.EstimateOutputTokens(outputText.String())
+					logger.Debug("[%s] Estimated streaming output tokens: %d", endpoint.Name, outputTokens)
+				}
+			}
 
 			if inputTokens > 0 || outputTokens > 0 {
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
@@ -730,8 +754,44 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			// Extract token usage
 			var apiResp APIResponse
 			if err := json.Unmarshal(transformedResp, &apiResp); err == nil {
-				if apiResp.Usage.InputTokens > 0 || apiResp.Usage.OutputTokens > 0 {
-					p.stats.RecordTokens(endpoint.Name, apiResp.Usage.InputTokens, apiResp.Usage.OutputTokens)
+				inputTokens := apiResp.Usage.InputTokens
+				outputTokens := apiResp.Usage.OutputTokens
+
+				// Fallback: estimate tokens when usage is 0
+				if inputTokens == 0 || outputTokens == 0 {
+					if inputTokens == 0 {
+						var req tokencount.CountTokensRequest
+						if json.Unmarshal(bodyBytes, &req) == nil {
+							inputTokens = tokencount.EstimateInputTokens(&req)
+							logger.Debug("[%s] Estimated input tokens: %d", endpoint.Name, inputTokens)
+						}
+					}
+
+					if outputTokens == 0 {
+						var resp map[string]interface{}
+						if json.Unmarshal(transformedResp, &resp) == nil {
+							if content, ok := resp["content"].([]interface{}); ok {
+								var totalText strings.Builder
+								for _, item := range content {
+									if block, ok := item.(map[string]interface{}); ok {
+										if blockType, _ := block["type"].(string); blockType == "text" {
+											if text, ok := block["text"].(string); ok {
+												totalText.WriteString(text)
+											}
+										}
+									}
+								}
+								if totalText.Len() > 0 {
+									outputTokens = tokencount.EstimateOutputTokens(totalText.String())
+									logger.Debug("[%s] Estimated output tokens: %d", endpoint.Name, outputTokens)
+								}
+							}
+						}
+					}
+				}
+
+				if inputTokens > 0 || outputTokens > 0 {
+					p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 				}
 			}
 
@@ -795,6 +855,88 @@ func (p *Proxy) handleStats(w http.ResponseWriter, r *http.Request) {
 // GetStats returns current statistics
 func (p *Proxy) GetStats() *Stats {
 	return p.stats
+}
+
+// handleCountTokens handles token counting with fallback
+func (p *Proxy) handleCountTokens(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	var req tokencount.CountTokensRequest
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	endpoint := p.getCurrentEndpoint()
+	if endpoint.Name == "" {
+		// No endpoint available, use local estimation
+		tokens := tokencount.EstimateInputTokens(&req)
+		resp := tokencount.CountTokensResponse{InputTokens: tokens}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	// Try to proxy to backend API
+	normalizedAPIUrl := normalizeAPIUrl(endpoint.APIUrl)
+	targetURL := fmt.Sprintf("https://%s/v1/messages/count_tokens", normalizedAPIUrl)
+
+	proxyReq, err := http.NewRequest("POST", targetURL, bytes.NewReader(bodyBytes))
+	if err != nil {
+		// Fallback to local estimation
+		tokens := tokencount.EstimateInputTokens(&req)
+		resp := tokencount.CountTokensResponse{InputTokens: tokens}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	proxyReq.Header.Set("x-api-key", endpoint.APIKey)
+	proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
+	proxyReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(proxyReq)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		// Fallback to local estimation
+		tokens := tokencount.EstimateInputTokens(&req)
+		response := tokencount.CountTokensResponse{InputTokens: tokens}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		logger.Debug("[%s] count_tokens failed, using estimation: %d", endpoint.Name, tokens)
+		return
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		// Fallback to local estimation
+		tokens := tokencount.EstimateInputTokens(&req)
+		response := tokencount.CountTokensResponse{InputTokens: tokens}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	var apiResp tokencount.CountTokensResponse
+	if err := json.Unmarshal(respBody, &apiResp); err != nil || apiResp.InputTokens == 0 {
+		// Fallback to local estimation if parse failed or tokens is 0
+		tokens := tokencount.EstimateInputTokens(&req)
+		response := tokencount.CountTokensResponse{InputTokens: tokens}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+		logger.Debug("[%s] count_tokens returned 0, using estimation: %d", endpoint.Name, tokens)
+		return
+	}
+
+	// Return API response
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(respBody)
 }
 
 // UpdateConfig updates the proxy configuration
