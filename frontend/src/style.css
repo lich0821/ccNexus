@@ -576,3 +576,86 @@ body {
     background: #BDBDBD;
     cursor: not-allowed;
 }
+
+/* 拖拽功能样式 */
+.endpoint-item {
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid transparent;
+    cursor: grab;
+}
+
+.endpoint-item:hover {
+    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.drag-handle {
+    display: none;
+}
+
+.endpoint-item.dragging {
+    opacity: 0.6;
+    transform: scale(1.02) rotate(2deg);
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.3);
+    z-index: 1000;
+    border-color: #667eea;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    cursor: grabbing;
+}
+
+.endpoint-item.drag-over {
+    border: 3px solid transparent;
+    border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-image-slice: 1;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.12) 100%);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+}
+
+.endpoint-item.drag-over::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
+    border-radius: 2px;
+    animation: dragOverPulse 1s ease-in-out infinite;
+}
+
+@keyframes dragOverPulse {
+    0%, 100% {
+        opacity: 0.5;
+        width: 80%;
+    }
+    50% {
+        opacity: 1;
+        width: 90%;
+    }
+}
+
+.endpoint-item.drag-over.drag-over-bottom {
+    border: 3px solid transparent;
+    border-image: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-image-slice: 1;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.12) 100%);
+    transform: translateY(4px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+}
+
+.endpoint-item.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
+    border-radius: 2px;
+    animation: dragOverPulse 1s ease-in-out infinite;
+}
+

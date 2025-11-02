@@ -52,3 +52,7 @@ export async function testEndpoint(index) {
     const resultStr = await window.go.main.App.TestEndpoint(index);
     return JSON.parse(resultStr);
 }
+
+export async function moveEndpoint(fromIndex, toIndex) {
+    await window.go.main.App.MoveEndpoint(fromIndex, toIndex);
+}

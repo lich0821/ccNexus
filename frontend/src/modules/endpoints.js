@@ -1,19 +1,11 @@
 import { t } from '../i18n/index.js';
 import { formatTokens, maskApiKey } from '../utils/format.js';
 import { getEndpointStats } from './stats.js';
-import { toggleEndpoint } from './config.js';
+import { toggleEndpoint, moveEndpoint } from './config.js';
 
 let currentTestButton = null;
 let currentTestButtonOriginalText = '';
 let currentTestIndex = -1;
-
-function copyToClipboard(text, button) {
-    navigator.clipboard.writeText(text).then(() => {
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-        setTimeout(() => { button.innerHTML = originalHTML; }, 1000);
-    });
-}
 
 export function getTestState() {
     return { currentTestButton, currentTestIndex };
@@ -58,29 +50,12 @@ export async function renderEndpoints(endpoints) {
     container.innerHTML = '';
 
     const endpointStats = getEndpointStats();
-    const sortedEndpoints = endpoints.map((ep, index) => {
+
+    let draggedIndex = null;
+    let autoScrollInterval = null;
+
+    endpoints.forEach((ep, index) => {
         const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
-        const enabled = ep.enabled !== undefined ? ep.enabled : true;
-        return { endpoint: ep, originalIndex: index, stats, enabled };
-    }).sort((a, b) => {
-        if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
-
-        const statsA = a.stats;
-        const statsB = b.stats;
-
-        if (statsA.requests === 0 && statsB.requests === 0) return 0;
-        if (statsA.requests === 0) return 1;
-        if (statsB.requests === 0) return -1;
-
-        const successRateA = (statsA.requests - statsA.errors) / statsA.requests;
-        const successRateB = (statsB.requests - statsB.errors) / statsB.requests;
-
-        if (successRateA !== successRateB) return successRateB - successRateA;
-
-        return statsB.requests - statsA.requests;
-    });
-
-    sortedEndpoints.forEach(({ endpoint: ep, originalIndex: index, stats }) => {
         const totalTokens = stats.inputTokens + stats.outputTokens;
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
         const transformer = ep.transformer || 'claude';
@@ -89,7 +64,10 @@ export async function renderEndpoints(endpoints) {
 
         const item = document.createElement('div');
         item.className = 'endpoint-item';
+        item.draggable = true;
+        item.setAttribute('data-index', index);
         item.innerHTML = `
+            <div class="drag-handle">⋮⋮</div>
             <div class="endpoint-info">
                 <h3>
                     ${ep.name}
@@ -102,7 +80,6 @@ export async function renderEndpoints(endpoints) {
                 <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 ${t('endpoints.transformer')}: ${transformer}${model ? ` (${model})` : ''}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">📊 ${t('endpoints.requests')}: ${stats.requests} | ${t('endpoints.errors')}: ${stats.errors}</p>
                 <p style="color: #666; font-size: 14px; margin-top: 3px;">🎯 ${t('endpoints.tokens')}: ${formatTokens(totalTokens)} (${t('statistics.in')}: ${formatTokens(stats.inputTokens)}, ${t('statistics.out')}: ${formatTokens(stats.outputTokens)})</p>
-                ${ep.remark ? `<p style="color: #888; font-size: 13px; margin-top: 5px; font-style: italic;" title="${ep.remark}">💬 ${ep.remark.length > 20 ? ep.remark.substring(0, 20) + '...' : ep.remark}</p>` : ''}
             </div>
             <div class="endpoint-actions">
                 <label class="toggle-switch">
@@ -119,7 +96,6 @@ export async function renderEndpoints(endpoints) {
         const editBtn = item.querySelector('[data-action="edit"]');
         const deleteBtn = item.querySelector('[data-action="delete"]');
         const toggleSwitch = item.querySelector('input[type="checkbox"]');
-        const copyBtns = item.querySelectorAll('.copy-btn');
 
         if (currentTestIndex === index) {
             testBtn.disabled = true;
@@ -151,13 +127,17 @@ export async function renderEndpoints(endpoints) {
                 e.target.checked = !newEnabled;
             }
         });
-        copyBtns.forEach(btn => {
+
+        // Copy button event listeners
+        const copyButtons = item.querySelectorAll('.copy-btn');
+        copyButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                copyToClipboard(btn.getAttribute('data-copy'), btn);
+                const textToCopy = btn.getAttribute('data-copy');
+                copyToClipboard(textToCopy, btn);
             });
         });
 
-        // Add switch button event listener
+        // Switch button event listener
         const switchBtn = item.querySelector('[data-action="switch"]');
         if (switchBtn) {
             switchBtn.addEventListener('click', async () => {
@@ -166,7 +146,7 @@ export async function renderEndpoints(endpoints) {
                     switchBtn.disabled = true;
                     switchBtn.innerHTML = '⏳';
                     await window.go.main.App.SwitchToEndpoint(name);
-                    window.loadConfig(); // Refresh display
+                    window.loadConfig();
                 } catch (error) {
                     console.error('Failed to switch endpoint:', error);
                     alert(t('endpoints.switchFailed') + ': ' + error);
@@ -179,6 +159,138 @@ export async function renderEndpoints(endpoints) {
             });
         }
 
+        // 拖拽事件监听器
+        item.addEventListener('dragstart', (e) => {
+            draggedIndex = parseInt(item.getAttribute('data-index'));
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', item.innerHTML);
+
+            // 开始自动滚动
+            startAutoScroll();
+        });
+
+        item.addEventListener('dragend', (e) => {
+            item.classList.remove('dragging');
+
+            // 清除所有拖拽相关的类
+            container.querySelectorAll('.endpoint-item').forEach(el => {
+                el.classList.remove('drag-over', 'drag-over-bottom');
+            });
+
+            // 停止自动滚动
+            stopAutoScroll();
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+
+            // 如果是正在被拖拽的元素，不处理
+            if (item.classList.contains('dragging')) {
+                return;
+            }
+
+            const currentIndex = parseInt(item.getAttribute('data-index'));
+
+            // 清除所有拖拽反馈（排除正在拖拽的元素）
+            container.querySelectorAll('.endpoint-item:not(.dragging)').forEach(el => {
+                el.classList.remove('drag-over', 'drag-over-bottom');
+            });
+
+            // 如果拖拽到自己位置，不显示反馈
+            if (draggedIndex === currentIndex) {
+                return;
+            }
+
+            const box = item.getBoundingClientRect();
+            const midpoint = box.top + box.height / 2;
+
+            if (e.clientY < midpoint) {
+                // 拖到元素上方
+                item.classList.add('drag-over');
+            } else {
+                // 拖到元素下方
+                item.classList.add('drag-over', 'drag-over-bottom');
+            }
+        });
+
+        item.addEventListener('dragleave', (e) => {
+            item.classList.remove('drag-over', 'drag-over-bottom');
+        });
+
+        item.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over', 'drag-over-bottom');
+
+            if (draggedIndex === null || draggedIndex === index) {
+                return;
+            }
+
+            try {
+                await moveEndpoint(draggedIndex, index);
+                window.loadConfig();
+            } catch (error) {
+                console.error('Failed to move endpoint:', error);
+                alert('Failed to move endpoint: ' + error);
+            }
+        });
+
         container.appendChild(item);
     });
+}
+
+// 自动滚动变量
+let scrollInterval = null;
+let mouseY = 0;
+
+// 开始自动滚动
+function startAutoScroll() {
+    const scrollZone = 100;
+    const scrollSpeed = 10;
+
+    scrollInterval = setInterval(() => {
+        const containerEl = document.querySelector('.container');
+        if (!containerEl) return;
+
+        const rect = containerEl.getBoundingClientRect();
+
+        if (mouseY < rect.top + scrollZone) {
+            containerEl.scrollTop -= scrollSpeed;
+        } else if (mouseY > rect.bottom - scrollZone) {
+            containerEl.scrollTop += scrollSpeed;
+        }
+    }, 50);
+
+    document.addEventListener('dragover', updateMouseY);
+}
+
+// 停止自动滚动
+function stopAutoScroll() {
+    if (scrollInterval) {
+        clearInterval(scrollInterval);
+        scrollInterval = null;
+    }
+    document.removeEventListener('dragover', updateMouseY);
+}
+
+// 更新鼠标位置
+function updateMouseY(e) {
+    mouseY = e.clientY;
+}
+
+// 辅助函数：获取拖拽元素应该放置的位置
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('.endpoint-item:not(.dragging)')];
+
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
 }

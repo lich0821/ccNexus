@@ -50,6 +50,10 @@ export function HideWindow() {
   return window['go']['main']['App']['HideWindow']();
 }
 
+export function MoveEndpoint(arg1, arg2) {
+  return window['go']['main']['App']['MoveEndpoint'](arg1, arg2);
+}
+
 export function OpenURL(arg1) {
   return window['go']['main']['App']['OpenURL'](arg1);
 }

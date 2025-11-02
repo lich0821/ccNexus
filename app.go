@@ -517,6 +517,47 @@ func (a *App) SetLanguage(language string) error {
 	return nil
 }
 
+// 将一个端点移到新位置
+func (a *App) MoveEndpoint(fromIndex, toIndex int) error {
+	endpoints := a.config.GetEndpoints()
+
+	if fromIndex < 0 || fromIndex >= len(endpoints) {
+		return fmt.Errorf("invalid source index: %d", fromIndex)
+	}
+	if toIndex < 0 || toIndex >= len(endpoints) {
+		return fmt.Errorf("invalid target index: %d", toIndex)
+	}
+
+	if fromIndex == toIndex {
+		return nil // No change needed
+	}
+
+	// Remove the endpoint from the source position
+	endpoint := endpoints[fromIndex]
+	endpoints = append(endpoints[:fromIndex], endpoints[fromIndex+1:]...)
+
+	// Insert the endpoint at the target position
+	if toIndex > fromIndex {
+		// If moving forward, adjust target index since we've already removed the source element
+		toIndex--
+	}
+	endpoints = append(endpoints[:toIndex], append([]config.Endpoint{endpoint}, endpoints[toIndex:]...)...)
+
+	a.config.UpdateEndpoints(endpoints)
+
+	if err := a.config.Validate(); err != nil {
+		return err
+	}
+
+	if err := a.proxy.UpdateConfig(a.config); err != nil {
+		return err
+	}
+
+	logger.Info("Endpoint moved: %s (%d → %d)", endpoint.Name, fromIndex, toIndex)
+
+	return a.config.Save(a.configPath)
+}
+
 // TestEndpoint tests an endpoint by sending a simple request
 func (a *App) TestEndpoint(index int) string {
 	endpoints := a.config.GetEndpoints()
