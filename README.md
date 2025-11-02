@@ -13,6 +13,10 @@
 
 </div>
 
+## 📸 Screenshot
+
+![ccNexus Screenshot](docs/images/screenshot-EN.png)
+
 ## ✨ Features
 
 - 🔄 **Automatic Endpoint Rotation** - Seamlessly switches between endpoints on errors

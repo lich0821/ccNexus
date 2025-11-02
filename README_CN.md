@@ -13,6 +13,10 @@
 
 </div>
 
+## 📸 截图
+
+![ccNexus 截图](docs/images/screenshot-CN.png)
+
 ## ✨ 功能特性
 
 - 🔄 **自动端点切换** - 遇到错误时无缝切换端点
@@ -218,52 +222,7 @@ ccNexus/
 ```
 
 ## ❓ 常见问题
-
-### Q: 代理无法启动？
-
-**A**: 检查端口是否被占用：
-```bash
-# macOS/Linux
-lsof -i :3000
-
-# Windows
-netstat -ano | findstr :3000
-```
-
-### Q: Claude Code 无法连接？
-
-**A**: 确认：
-1. 代理应用正在运行
-2. Claude Code 配置的 Base URL 是 `http://localhost:3000`
-3. 防火墙没有阻止连接
-
-### Q: 端点切换不生效？
-
-**A**: 检查：
-1. 配置了多个端点
-2. 端点的 API Key 有效
-3. 查看应用日志确认切换行为
-
-### Q: 如何查看详细日志？
-
-**A**:
-- **内置日志面板**：使用应用程序 UI 中的日志部分
-  - 选择日志级别：DEBUG、INFO、WARN 或 ERROR
-  - 每 2 秒自动刷新
-  - 一键复制日志内容
-  - 显示最近 100 条日志记录
-- **控制台输出**：
-  - **macOS/Linux**：在终端运行应用查看实时日志
-  - **Windows**：日志显示在内置日志面板中
-  - **高级用法**：使用 `./ccNexus 2>&1 | tee ccNexus.log` 将日志保存到文件
-
-### Q: 日志级别是什么意思？
-
-**A**:
-- **DEBUG** (🔍)：详细的调试信息（请求 URL、Token 计数等）
-- **INFO** (ℹ️)：一般信息（端点切换、配置变更）
-- **WARN** (⚠️)：警告信息（HTTP 错误、重试尝试）
-- **ERROR** (❌)：错误信息（严重故障、连接问题）
+[FAQ](https://mp.weixin.qq.com/s/ohtkyIMd5YC7So1q-gE0og)
 
 ## 🤝 贡献
 
