@@ -23,6 +23,8 @@ export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
 
+export function MoveEndpoint(arg1:number,arg2:number):Promise<void>;
+
 export function OpenURL(arg1:string):Promise<void>;
 
 export function Quit():Promise<void>;
