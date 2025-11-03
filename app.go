@@ -72,9 +72,8 @@ func (a *App) startup(ctx context.Context) {
 
 	logger.Info("Application starting...")
 
-	// Enable debug file logging in dev mode
-	env := runtime.Environment(ctx)
-	if env.BuildType == "dev" {
+	// Enable debug file logging when DEBUG environment variable is set
+	if os.Getenv("DEBUG") != "" {
 		if err := logger.GetLogger().EnableDebugFile("debug.log"); err != nil {
 			logger.Warn("Failed to enable debug file: %v", err)
 		} else {
