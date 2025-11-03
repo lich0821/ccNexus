@@ -184,7 +184,7 @@ func (t *OpenAITransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 							textParts = append(textParts, text)
 						}
 					case "tool_use":
-						logger.Debug("[OpenAI Transformer] Found tool_use block in request message (role: %s)", msg.Role)
+						// Tool use blocks are handled elsewhere, skip silently
 					case "image":
 						logger.Debug("[OpenAI Transformer] Image block found but not supported")
 					}

@@ -128,11 +128,13 @@ type APIResponse struct {
 
 // Proxy represents the proxy server
 type Proxy struct {
-	config       *config.Config
-	stats        *Stats
-	currentIndex int
-	mu           sync.RWMutex
-	server       *http.Server
+	config           *config.Config
+	stats            *Stats
+	currentIndex     int
+	mu               sync.RWMutex
+	server           *http.Server
+	activeRequests   map[string]bool // tracks active requests by endpoint name
+	activeRequestsMu sync.RWMutex    // protects activeRequests map
 }
 
 // New creates a new Proxy instance
@@ -150,9 +152,10 @@ func New(cfg *config.Config) *Proxy {
 	}
 
 	return &Proxy{
-		config:       cfg,
-		stats:        stats,
-		currentIndex: 0,
+		config:         cfg,
+		stats:          stats,
+		currentIndex:   0,
+		activeRequests: make(map[string]bool),
 	}
 }
 
@@ -212,7 +215,35 @@ func (p *Proxy) getCurrentEndpoint() config.Endpoint {
 	return endpoints[index]
 }
 
+// markRequestActive marks an endpoint as having active requests
+func (p *Proxy) markRequestActive(endpointName string) {
+	p.activeRequestsMu.Lock()
+	defer p.activeRequestsMu.Unlock()
+	p.activeRequests[endpointName] = true
+}
+
+// markRequestInactive marks an endpoint as having no active requests
+func (p *Proxy) markRequestInactive(endpointName string) {
+	p.activeRequestsMu.Lock()
+	defer p.activeRequestsMu.Unlock()
+	delete(p.activeRequests, endpointName)
+}
+
+// hasActiveRequests checks if an endpoint has active requests
+func (p *Proxy) hasActiveRequests(endpointName string) bool {
+	p.activeRequestsMu.RLock()
+	defer p.activeRequestsMu.RUnlock()
+	return p.activeRequests[endpointName]
+}
+
+// isCurrentEndpoint checks if the given endpoint is still the current one
+func (p *Proxy) isCurrentEndpoint(endpointName string) bool {
+	current := p.getCurrentEndpoint()
+	return current.Name == endpointName
+}
+
 // rotateEndpoint switches to the next endpoint (thread-safe)
+// waitForActive: if true, waits briefly for active requests to complete before switching
 func (p *Proxy) rotateEndpoint() config.Endpoint {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -224,7 +255,27 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	}
 
 	oldIndex := p.currentIndex
-	oldEndpoint := endpoints[oldIndex]
+	oldEndpoint := endpoints[oldIndex%len(endpoints)]
+
+	// Check if there are active requests on the current endpoint
+	// Wait a short time for them to complete (max 500ms)
+	if p.hasActiveRequests(oldEndpoint.Name) {
+		logger.Debug("[SWITCH] Waiting for active requests on %s to complete...", oldEndpoint.Name)
+		p.mu.Unlock() // Release lock while waiting
+
+		for i := 0; i < 10; i++ { // Check 10 times, 50ms each = 500ms max
+			time.Sleep(50 * time.Millisecond)
+			if !p.hasActiveRequests(oldEndpoint.Name) {
+				break
+			}
+		}
+
+		p.mu.Lock() // Re-acquire lock
+		if p.hasActiveRequests(oldEndpoint.Name) {
+			logger.Warn("[SWITCH] Active requests still present on %s after waiting, forcing switch", oldEndpoint.Name)
+		}
+	}
+
 	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
@@ -238,6 +289,134 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 func shouldRetry(statusCode int) bool {
 	// Retry on any non-200 status code
 	return statusCode != http.StatusOK
+}
+
+// cleanIncompleteToolCalls removes incomplete tool_use/tool_result pairs from messages
+// This ensures compatibility when switching between different API endpoints
+func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
+	var req map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
+		// If we can't parse it, return original
+		return bodyBytes, nil
+	}
+
+	messages, ok := req["messages"].([]interface{})
+	if !ok || len(messages) == 0 {
+		return bodyBytes, nil
+	}
+
+	// Track which tool_use IDs have matching tool_result
+	toolUseIDs := make(map[string]bool)
+	toolResultIDs := make(map[string]bool)
+
+	// First pass: collect all tool_use and tool_result IDs
+	for _, msg := range messages {
+		msgMap, ok := msg.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		role, _ := msgMap["role"].(string)
+		content := msgMap["content"]
+
+		// Handle content as array
+		if contentArray, ok := content.([]interface{}); ok {
+			for _, block := range contentArray {
+				if blockMap, ok := block.(map[string]interface{}); ok {
+					blockType, _ := blockMap["type"].(string)
+
+					if blockType == "tool_use" && role == "assistant" {
+						if id, ok := blockMap["id"].(string); ok {
+							toolUseIDs[id] = true
+						}
+					} else if blockType == "tool_result" && role == "user" {
+						if toolUseID, ok := blockMap["tool_use_id"].(string); ok {
+							toolResultIDs[toolUseID] = true
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Find incomplete tool_use IDs (those without matching tool_result)
+	incompleteToolUseIDs := make(map[string]bool)
+	for id := range toolUseIDs {
+		if !toolResultIDs[id] {
+			incompleteToolUseIDs[id] = true
+		}
+	}
+
+	// If no incomplete tool calls, return original
+	if len(incompleteToolUseIDs) == 0 {
+		return bodyBytes, nil
+	}
+
+	logger.Debug("Found %d incomplete tool_use blocks, cleaning up", len(incompleteToolUseIDs))
+
+	// Second pass: clean up messages
+	cleanedMessages := make([]interface{}, 0, len(messages))
+	for _, msg := range messages {
+		msgMap, ok := msg.(map[string]interface{})
+		if !ok {
+			cleanedMessages = append(cleanedMessages, msg)
+			continue
+		}
+
+		role, _ := msgMap["role"].(string)
+		content := msgMap["content"]
+
+		// Only process assistant messages with array content
+		if role != "assistant" {
+			cleanedMessages = append(cleanedMessages, msg)
+			continue
+		}
+
+		contentArray, ok := content.([]interface{})
+		if !ok {
+			cleanedMessages = append(cleanedMessages, msg)
+			continue
+		}
+
+		// Filter out incomplete tool_use blocks
+		cleanedContent := make([]interface{}, 0)
+		hasContent := false
+
+		for _, block := range contentArray {
+			blockMap, ok := block.(map[string]interface{})
+			if !ok {
+				cleanedContent = append(cleanedContent, block)
+				hasContent = true
+				continue
+			}
+
+			blockType, _ := blockMap["type"].(string)
+
+			if blockType == "tool_use" {
+				if id, ok := blockMap["id"].(string); ok {
+					if incompleteToolUseIDs[id] {
+						// Skip this incomplete tool_use block
+						logger.Debug("Removing incomplete tool_use block: %s", id)
+						continue
+					}
+				}
+			}
+
+			cleanedContent = append(cleanedContent, block)
+			hasContent = true
+		}
+
+		// Only add message if it has content
+		if hasContent {
+			msgMap["content"] = cleanedContent
+			cleanedMessages = append(cleanedMessages, msgMap)
+		} else {
+			logger.Debug("Removing assistant message with only incomplete tool_use blocks")
+		}
+	}
+
+	req["messages"] = cleanedMessages
+	return json.Marshal(req)
 }
 
 // handleProxy handles the main proxy logic
@@ -255,6 +434,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	logger.DebugLog("=== Proxy Request ===")
 	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
+
+	// Clean incomplete tool_use/tool_result pairs to ensure compatibility across endpoints
+	cleanedBody, err := cleanIncompleteToolCalls(bodyBytes)
+	if err != nil {
+		logger.Warn("Failed to clean tool calls: %v, using original request", err)
+		cleanedBody = bodyBytes
+	}
+	bodyBytes = cleanedBody
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
@@ -284,6 +471,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Mark this endpoint as having active requests
+		p.markRequestActive(endpoint.Name)
+
 		// Record request
 		p.stats.RecordRequest(endpoint.Name)
 
@@ -301,6 +491,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if endpoint.Model == "" {
 				logger.Error("[%s] OpenAI transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
 					p.rotateEndpoint()
@@ -312,6 +503,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if endpoint.Model == "" {
 				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
 					p.rotateEndpoint()
@@ -334,6 +526,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
 				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
 					p.rotateEndpoint()
@@ -347,6 +540,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
 				p.rotateEndpoint()
@@ -398,6 +592,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
 				p.rotateEndpoint()
@@ -416,13 +611,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Set authentication header based on transformer type
-		if transformerName == "openai" {
+		switch transformerName {
+		case "openai":
 			proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
-		} else if transformerName == "gemini" {
+		case "gemini":
 			q := proxyReq.URL.Query()
 			q.Set("key", endpoint.APIKey)
 			proxyReq.URL.RawQuery = q.Encode()
-		} else {
+		default:
 			// Set both x-api-key and Authorization headers for compatibility
 			// Some services use x-api-key (e.g., Anthropic Claude), others use Bearer token
 			proxyReq.Header.Set("x-api-key", endpoint.APIKey)
@@ -434,13 +630,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		// Send request
 		client := &http.Client{
-			Timeout: 120 * time.Second,
+			Timeout: 300 * time.Second, // 5 minutes timeout for slow endpoints
 		}
 
 		resp, err := client.Do(proxyReq)
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
 				p.rotateEndpoint()
@@ -499,6 +696,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			for scanner.Scan() && !streamDone {
 				line := scanner.Text()
 
+				// Check if endpoint has been switched - if so, abort streaming
+				if !p.isCurrentEndpoint(endpoint.Name) {
+					logger.Warn("[%s] Endpoint switched during streaming, terminating stream gracefully", endpoint.Name)
+					streamDone = true
+					break
+				}
+
 				// Check for [DONE] marker to stop reading immediately
 				if strings.Contains(line, "data: [DONE]") {
 					streamDone = true
@@ -509,18 +713,23 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 					var transformedEvent []byte
 					var err error
-					if transformerName == "openai" {
+					switch transformerName {
+					case "openai":
 						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
-					} else if transformerName == "gemini" {
+					case "gemini":
 						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
-					} else {
+					default:
 						transformedEvent, err = trans.TransformResponse(eventData, true)
 					}
 
 					if err == nil {
 						logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount+1, string(transformedEvent))
-						w.Write(transformedEvent)
-						flusher.Flush()
+						_, writeErr := w.Write(transformedEvent)
+						if writeErr != nil {
+							logger.Error("[%s] Failed to write [DONE] event: %v", endpoint.Name, writeErr)
+						} else {
+							flusher.Flush()
+						}
 					}
 					break
 				}
@@ -539,11 +748,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					var err error
 
 					// Transform based on transformer type
-					if transformerName == "openai" {
+					switch transformerName {
+					case "openai":
 						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
-					} else if transformerName == "gemini" {
+					case "gemini":
 						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
-					} else {
+					default:
 						transformedEvent, err = trans.TransformResponse(eventData, true)
 					}
 
@@ -556,6 +766,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					}
 
 					logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
+
+					// Check again before writing to make sure endpoint hasn't been switched
+					if !p.isCurrentEndpoint(endpoint.Name) {
+						logger.Warn("[%s] Endpoint switched before writing event #%d, aborting stream", endpoint.Name, eventCount)
+						streamDone = true
+						break
+					}
 
 					// Write transformed event
 					_, writeErr := w.Write(transformedEvent)
@@ -658,6 +875,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 			}
 
+			// Clean up before returning
+			p.markRequestInactive(endpoint.Name)
 			return
 		}
 
@@ -667,6 +886,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			logger.Error("[%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
 				p.rotateEndpoint()
@@ -713,6 +933,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 
 			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
 			// Only rotate if there are multiple endpoints
 			if len(endpoints) > 1 {
 				p.rotateEndpoint()
@@ -732,6 +953,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				logger.Error("[%s] Failed to transform response: %v", endpoint.Name, err)
 				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
 				// Only rotate if there are multiple endpoints
 				if len(endpoints) > 1 {
 					p.rotateEndpoint()
@@ -795,6 +1017,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 
+			// Clean up before returning
+			p.markRequestInactive(endpoint.Name)
 			return
 		}
 
@@ -808,6 +1032,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(resp.StatusCode)
 		w.Write(respBody)
 
+		// Clean up before returning
+		p.markRequestInactive(endpoint.Name)
 		return
 	}
 
@@ -900,7 +1126,7 @@ func (p *Proxy) handleCountTokens(w http.ResponseWriter, r *http.Request) {
 	proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
 	proxyReq.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 30 * time.Second} // Token counting should be fast
 	resp, err := client.Do(proxyReq)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		// Fallback to local estimation
