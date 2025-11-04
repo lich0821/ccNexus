@@ -347,12 +347,25 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 		}
 	}
 
-	// If no incomplete tool calls, return original
-	if len(incompleteToolUseIDs) == 0 {
+	// Find orphaned tool_result IDs (those without matching tool_use)
+	orphanedToolResultIDs := make(map[string]bool)
+	for id := range toolResultIDs {
+		if !toolUseIDs[id] {
+			orphanedToolResultIDs[id] = true
+		}
+	}
+
+	// If no incomplete pairs, return original
+	if len(incompleteToolUseIDs) == 0 && len(orphanedToolResultIDs) == 0 {
 		return bodyBytes, nil
 	}
 
-	logger.Debug("Found %d incomplete tool_use blocks, cleaning up", len(incompleteToolUseIDs))
+	if len(incompleteToolUseIDs) > 0 {
+		logger.Debug("Found %d incomplete tool_use blocks, cleaning up", len(incompleteToolUseIDs))
+	}
+	if len(orphanedToolResultIDs) > 0 {
+		logger.Debug("Found %d orphaned tool_result blocks, cleaning up", len(orphanedToolResultIDs))
+	}
 
 	// Second pass: clean up messages
 	cleanedMessages := make([]interface{}, 0, len(messages))
@@ -366,19 +379,14 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 		role, _ := msgMap["role"].(string)
 		content := msgMap["content"]
 
-		// Only process assistant messages with array content
-		if role != "assistant" {
-			cleanedMessages = append(cleanedMessages, msg)
-			continue
-		}
-
+		// Handle array content for both assistant and user messages
 		contentArray, ok := content.([]interface{})
 		if !ok {
 			cleanedMessages = append(cleanedMessages, msg)
 			continue
 		}
 
-		// Filter out incomplete tool_use blocks
+		// Filter out incomplete tool_use blocks (from assistant) and orphaned tool_result blocks (from user)
 		cleanedContent := make([]interface{}, 0)
 		hasContent := false
 
@@ -392,11 +400,21 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 
 			blockType, _ := blockMap["type"].(string)
 
-			if blockType == "tool_use" {
+			// Skip incomplete tool_use blocks from assistant messages
+			if blockType == "tool_use" && role == "assistant" {
 				if id, ok := blockMap["id"].(string); ok {
 					if incompleteToolUseIDs[id] {
-						// Skip this incomplete tool_use block
 						logger.Debug("Removing incomplete tool_use block: %s", id)
+						continue
+					}
+				}
+			}
+
+			// Skip orphaned tool_result blocks from user messages
+			if blockType == "tool_result" && role == "user" {
+				if toolUseID, ok := blockMap["tool_use_id"].(string); ok {
+					if orphanedToolResultIDs[toolUseID] {
+						logger.Debug("Removing orphaned tool_result block: %s", toolUseID)
 						continue
 					}
 				}
@@ -411,7 +429,11 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 			msgMap["content"] = cleanedContent
 			cleanedMessages = append(cleanedMessages, msgMap)
 		} else {
-			logger.Debug("Removing assistant message with only incomplete tool_use blocks")
+			if role == "assistant" {
+				logger.Debug("Removing assistant message with only incomplete tool_use blocks")
+			} else if role == "user" {
+				logger.Debug("Removing user message with only orphaned tool_result blocks")
+			}
 		}
 	}
 
@@ -435,14 +457,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
-	// Clean incomplete tool_use/tool_result pairs to ensure compatibility across endpoints
-	cleanedBody, err := cleanIncompleteToolCalls(bodyBytes)
-	if err != nil {
-		logger.Warn("Failed to clean tool calls: %v, using original request", err)
-		cleanedBody = bodyBytes
-	}
-	bodyBytes = cleanedBody
-
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
 		logger.Error("No enabled endpoints available")
@@ -450,15 +464,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine max retries based on number of endpoints
-	// If only 1 endpoint, allow 1 retry (total 2 attempts)
-	// If multiple endpoints, try each one once
-	var maxRetries int
-	if len(endpoints) == 1 {
-		maxRetries = 2 // Try the same endpoint twice
-	} else {
-		maxRetries = len(endpoints)
-	}
+	// Determine max retries: always try each endpoint twice before moving to next
+	// Total attempts = number of endpoints * 2 (each endpoint gets 2 chances)
+	maxRetries := len(endpoints) * 2
+	endpointAttempts := 0 // Track attempts for current endpoint
 
 	// Try each endpoint
 	for retry := 0; retry < maxRetries; retry++ {
@@ -470,6 +479,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
 			return
 		}
+
+		// Increment attempt counter for current endpoint
+		endpointAttempts++
 
 		// Mark this endpoint as having active requests
 		p.markRequestActive(endpoint.Name)
@@ -492,9 +504,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Error("[%s] OpenAI transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				// Only rotate if there are multiple endpoints
-				if len(endpoints) > 1 {
+				// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+				if endpointAttempts >= 2 {
 					p.rotateEndpoint()
+					endpointAttempts = 0 // Reset counter for next endpoint
 				}
 				continue
 			}
@@ -504,9 +517,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				// Only rotate if there are multiple endpoints
-				if len(endpoints) > 1 {
+				// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+				if endpointAttempts >= 2 {
 					p.rotateEndpoint()
+					endpointAttempts = 0 // Reset counter for next endpoint
 				}
 				continue
 			}
@@ -527,9 +541,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Error("[%s] Failed to get transformer '%s': %v", endpoint.Name, transformerName, err)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				// Only rotate if there are multiple endpoints
-				if len(endpoints) > 1 {
+				// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+				if endpointAttempts >= 2 {
 					p.rotateEndpoint()
+					endpointAttempts = 0 // Reset counter for next endpoint
 				}
 				continue
 			}
@@ -541,9 +556,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			// Only rotate if there are multiple endpoints
-			if len(endpoints) > 1 {
+			// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+			if endpointAttempts >= 2 {
 				p.rotateEndpoint()
+				endpointAttempts = 0 // Reset counter for next endpoint
 			}
 			continue
 		}
@@ -551,6 +567,15 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		logger.Debug("[%s] Using transformer: %s", endpoint.Name, transformerName)
 		logger.DebugLog("[%s] Transformer: %s", endpoint.Name, transformerName)
 		logger.DebugLog("[%s] Transformed Request: %s", endpoint.Name, string(transformedBody))
+
+		// Clean incomplete tool_use/tool_result pairs after transformation
+		// This ensures compatibility when switching between different API endpoints
+		cleanedBody, err := cleanIncompleteToolCalls(transformedBody)
+		if err != nil {
+			logger.Warn("[%s] Failed to clean tool calls: %v, using original transformed request", endpoint.Name, err)
+			cleanedBody = transformedBody
+		}
+		transformedBody = cleanedBody
 
 		// Parse the transformed request to check if thinking is enabled
 		var thinkingEnabled bool
@@ -593,9 +618,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			// Only rotate if there are multiple endpoints
-			if len(endpoints) > 1 {
+			// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+			if endpointAttempts >= 2 {
 				p.rotateEndpoint()
+				endpointAttempts = 0 // Reset counter for next endpoint
 			}
 			continue
 		}
@@ -638,9 +664,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			// Only rotate if there are multiple endpoints
-			if len(endpoints) > 1 {
+			// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+			if endpointAttempts >= 2 {
 				p.rotateEndpoint()
+				endpointAttempts = 0 // Reset counter for next endpoint
 			}
 			continue
 		}
@@ -855,6 +882,83 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			resp.Body.Close()
 
+			// Check for scanner errors or unexpected stream termination
+			if err := scanner.Err(); err != nil {
+				logger.Error("[%s] Stream scanner error: %v", endpoint.Name, err)
+			}
+
+			// If stream didn't end properly (no message_stop event sent), send one now
+			if !streamDone {
+				logger.Warn("[%s] Stream ended unexpectedly without [DONE] marker, sending synthetic message_stop", endpoint.Name)
+
+				// Close any open blocks (thinking, tool, or content)
+				if streamCtx != nil {
+					if streamCtx.ThinkingBlockStarted {
+						blockStopEvent := map[string]interface{}{
+							"type":  "content_block_stop",
+							"index": streamCtx.ThinkingIndex,
+						}
+						blockStopJSON, _ := json.Marshal(blockStopEvent)
+						w.Write([]byte("event: content_block_stop\n"))
+						w.Write([]byte("data: " + string(blockStopJSON) + "\n\n"))
+						flusher.Flush()
+					}
+
+					if streamCtx.ToolBlockStarted {
+						blockStopEvent := map[string]interface{}{
+							"type":  "content_block_stop",
+							"index": streamCtx.LastToolIndex,
+						}
+						blockStopJSON, _ := json.Marshal(blockStopEvent)
+						w.Write([]byte("event: content_block_stop\n"))
+						w.Write([]byte("data: " + string(blockStopJSON) + "\n\n"))
+						flusher.Flush()
+					}
+
+					if streamCtx.ContentBlockStarted {
+						blockStopEvent := map[string]interface{}{
+							"type":  "content_block_stop",
+							"index": streamCtx.ContentIndex,
+						}
+						blockStopJSON, _ := json.Marshal(blockStopEvent)
+						w.Write([]byte("event: content_block_stop\n"))
+						w.Write([]byte("data: " + string(blockStopJSON) + "\n\n"))
+						flusher.Flush()
+					}
+				}
+
+				// Send message_delta with stop_reason
+				var outputTokensForDelta int
+				if streamCtx != nil {
+					outputTokensForDelta = streamCtx.OutputTokens
+				} else {
+					outputTokensForDelta = outputTokens
+				}
+
+				messageDeltaEvent := map[string]interface{}{
+					"type": "message_delta",
+					"delta": map[string]interface{}{
+						"stop_reason": "end_turn",
+					},
+					"usage": map[string]interface{}{
+						"output_tokens": outputTokensForDelta,
+					},
+				}
+				messageDeltaJSON, _ := json.Marshal(messageDeltaEvent)
+				w.Write([]byte("event: message_delta\n"))
+				w.Write([]byte("data: " + string(messageDeltaJSON) + "\n\n"))
+				flusher.Flush()
+
+				// Send message_stop event
+				stopEvent := map[string]interface{}{
+					"type": "message_stop",
+				}
+				stopJSON, _ := json.Marshal(stopEvent)
+				w.Write([]byte("event: message_stop\n"))
+				w.Write([]byte("data: " + string(stopJSON) + "\n\n"))
+				flusher.Flush()
+			}
+
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
 				if inputTokens == 0 {
@@ -887,9 +991,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to read response: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			// Only rotate if there are multiple endpoints
-			if len(endpoints) > 1 {
+			// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+			if endpointAttempts >= 2 {
 				p.rotateEndpoint()
+				endpointAttempts = 0 // Reset counter for next endpoint
 			}
 			continue
 		}
@@ -934,9 +1039,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			// Only rotate if there are multiple endpoints
-			if len(endpoints) > 1 {
+			// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+			if endpointAttempts >= 2 {
 				p.rotateEndpoint()
+				endpointAttempts = 0 // Reset counter for next endpoint
 			}
 
 			if retry < maxRetries-1 {
@@ -954,9 +1060,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Error("[%s] Failed to transform response: %v", endpoint.Name, err)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				// Only rotate if there are multiple endpoints
-				if len(endpoints) > 1 {
+				// Retry logic: if first attempt, retry same endpoint; if second attempt, rotate
+				if endpointAttempts >= 2 {
 					p.rotateEndpoint()
+					endpointAttempts = 0 // Reset counter for next endpoint
 				}
 				continue
 			}
