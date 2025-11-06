@@ -25,7 +25,10 @@ export default {
         delete: '删除',
         noEndpoints: '未配置端点。点击"添加端点"开始使用。',
         copy: '复制',
-        copied: '已复制'
+        copied: '已复制',
+        current: '当前使用',
+        switchTo: '切换',
+        switchFailed: '切换失败'
     },
     modal: {
         addEndpoint: '添加端点',

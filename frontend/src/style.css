@@ -538,3 +538,41 @@ body {
 .copy-btn:active {
     transform: scale(0.95);
 }
+
+/* Current badge */
+.current-badge {
+    background: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 8px;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+/* Switch button */
+.btn-switch {
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    vertical-align: middle;
+    display: inline-block;
+}
+
+.btn-switch:hover {
+    background: #5568d3;
+}
+
+.btn-switch:disabled {
+    background: #BDBDBD;
+    cursor: not-allowed;
+}

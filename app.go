@@ -749,3 +749,20 @@ func (a *App) TestEndpoint(index int) string {
 	logger.Info("Test successful for %s", endpoint.Name)
 	return string(data)
 }
+
+// GetCurrentEndpoint returns the current active endpoint name
+func (a *App) GetCurrentEndpoint() string {
+	if a.proxy == nil {
+		return ""
+	}
+	return a.proxy.GetCurrentEndpointName()
+}
+
+// SwitchToEndpoint manually switches to a specific endpoint by name
+func (a *App) SwitchToEndpoint(endpointName string) error {
+	if a.proxy == nil {
+		return fmt.Errorf("proxy not initialized")
+	}
+
+	return a.proxy.SetCurrentEndpoint(endpointName)
+}
