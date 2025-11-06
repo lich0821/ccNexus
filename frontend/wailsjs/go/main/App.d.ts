@@ -7,6 +7,8 @@ export function ClearLogs():Promise<void>;
 
 export function GetConfig():Promise<string>;
 
+export function GetCurrentEndpoint():Promise<string>;
+
 export function GetLanguage():Promise<string>;
 
 export function GetLogLevel():Promise<number>;
@@ -34,6 +36,8 @@ export function SetLanguage(arg1:string):Promise<void>;
 export function SetLogLevel(arg1:number):Promise<void>;
 
 export function ShowWindow():Promise<void>;
+
+export function SwitchToEndpoint(arg1:string):Promise<void>;
 
 export function TestEndpoint(arg1:number):Promise<string>;
 

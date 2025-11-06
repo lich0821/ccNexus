@@ -35,8 +35,16 @@ export function setTestState(button, index) {
     currentTestIndex = index;
 }
 
-export function renderEndpoints(endpoints) {
+export async function renderEndpoints(endpoints) {
     const container = document.getElementById('endpointList');
+
+    // Get current endpoint
+    let currentEndpointName = '';
+    try {
+        currentEndpointName = await window.go.main.App.GetCurrentEndpoint();
+    } catch (error) {
+        console.error('Failed to get current endpoint:', error);
+    }
 
     if (endpoints.length === 0) {
         container.innerHTML = `
@@ -77,12 +85,18 @@ export function renderEndpoints(endpoints) {
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
         const transformer = ep.transformer || 'claude';
         const model = ep.model || '';
+        const isCurrentEndpoint = ep.name === currentEndpointName;
 
         const item = document.createElement('div');
         item.className = 'endpoint-item';
         item.innerHTML = `
             <div class="endpoint-info">
-                <h3>${ep.name} ${enabled ? '✅' : '❌'}</h3>
+                <h3>
+                    ${ep.name}
+                    ${enabled ? '✅' : '❌'}
+                    ${isCurrentEndpoint ? '<span class="current-badge">' + t('endpoints.current') + '</span>' : ''}
+                    ${enabled && !isCurrentEndpoint ? '<button class="btn btn-switch" data-action="switch" data-name="' + ep.name + '">' + t('endpoints.switchTo') + '</button>' : ''}
+                </h3>
                 <p style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🌐 ${ep.apiUrl}</span> <button class="copy-btn" data-copy="${ep.apiUrl}" aria-label="${t('endpoints.copy')}" title="${t('endpoints.copy')}"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M7 4c0-1.1.9-2 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1V8c0-2-1-3-3-3H7V4Z" fill="currentColor"></path><path d="M5 7a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5Z" fill="currentColor"></path></svg></button></p>
                 <p style="display: flex; align-items: center; gap: 8px; min-width: 0;"><span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">🔑 ${maskApiKey(ep.apiKey)}</span> <button class="copy-btn" data-copy="${ep.apiKey}" aria-label="${t('endpoints.copy')}" title="${t('endpoints.copy')}"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M7 4c0-1.1.9-2 2-2h11a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-1V8c0-2-1-3-3-3H7V4Z" fill="currentColor"></path><path d="M5 7a2 2 0 0 0-2 2v10c0 1.1.9 2 2 2h10a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2H5Z" fill="currentColor"></path></svg></button></p>
                 <p style="color: #666; font-size: 14px; margin-top: 5px;">🔄 ${t('endpoints.transformer')}: ${transformer}${model ? ` (${model})` : ''}</p>
@@ -142,6 +156,28 @@ export function renderEndpoints(endpoints) {
                 copyToClipboard(btn.getAttribute('data-copy'), btn);
             });
         });
+
+        // Add switch button event listener
+        const switchBtn = item.querySelector('[data-action="switch"]');
+        if (switchBtn) {
+            switchBtn.addEventListener('click', async () => {
+                const name = switchBtn.getAttribute('data-name');
+                try {
+                    switchBtn.disabled = true;
+                    switchBtn.innerHTML = '⏳';
+                    await window.go.main.App.SwitchToEndpoint(name);
+                    window.loadConfig(); // Refresh display
+                } catch (error) {
+                    console.error('Failed to switch endpoint:', error);
+                    alert(t('endpoints.switchFailed') + ': ' + error);
+                } finally {
+                    if (switchBtn) {
+                        switchBtn.disabled = false;
+                        switchBtn.innerHTML = t('endpoints.switchTo');
+                    }
+                }
+            });
+        }
 
         container.appendChild(item);
     });

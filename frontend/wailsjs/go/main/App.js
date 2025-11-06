@@ -14,6 +14,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetCurrentEndpoint() {
+  return window['go']['main']['App']['GetCurrentEndpoint']();
+}
+
 export function GetLanguage() {
   return window['go']['main']['App']['GetLanguage']();
 }
@@ -68,6 +72,10 @@ export function SetLogLevel(arg1) {
 
 export function ShowWindow() {
   return window['go']['main']['App']['ShowWindow']();
+}
+
+export function SwitchToEndpoint(arg1) {
+  return window['go']['main']['App']['SwitchToEndpoint'](arg1);
 }
 
 export function TestEndpoint(arg1) {

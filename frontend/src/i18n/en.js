@@ -25,7 +25,10 @@ export default {
         delete: 'Delete',
         noEndpoints: 'No endpoints configured. Click "Add Endpoint" to get started.',
         copy: 'Copy',
-        copied: 'Copied'
+        copied: 'Copied',
+        current: 'Current',
+        switchTo: 'Switch',
+        switchFailed: 'Switch Failed'
     },
     modal: {
         addEndpoint: 'Add Endpoint',

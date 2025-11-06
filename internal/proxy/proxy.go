@@ -285,6 +285,37 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	return newEndpoint
 }
 
+// GetCurrentEndpointName returns the current endpoint name (thread-safe)
+func (p *Proxy) GetCurrentEndpointName() string {
+	endpoint := p.getCurrentEndpoint()
+	return endpoint.Name
+}
+
+// SetCurrentEndpoint manually switches to a specific endpoint by name
+// Returns error if endpoint not found or not enabled
+// Thread-safe and won't affect ongoing requests
+func (p *Proxy) SetCurrentEndpoint(targetName string) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	endpoints := p.getEnabledEndpoints()
+	if len(endpoints) == 0 {
+		return fmt.Errorf("no enabled endpoints")
+	}
+
+	// Find the endpoint by name
+	for i, ep := range endpoints {
+		if ep.Name == targetName {
+			oldEndpoint := endpoints[p.currentIndex%len(endpoints)]
+			p.currentIndex = i
+			logger.Info("[MANUAL SWITCH] %s → %s", oldEndpoint.Name, ep.Name)
+			return nil
+		}
+	}
+
+	return fmt.Errorf("endpoint '%s' not found or not enabled", targetName)
+}
+
 // shouldRetry determines if a response should trigger a retry
 func shouldRetry(statusCode int) bool {
 	// Retry on any non-200 status code
