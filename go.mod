@@ -6,6 +6,7 @@ toolchain go1.24.3
 
 require (
 	github.com/getlantern/systray v1.2.2
+	github.com/studio-b12/gowebdav v0.11.0
 	github.com/wailsapp/wails/v2 v2.10.2
 )
 

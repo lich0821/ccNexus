@@ -3,7 +3,13 @@
 
 export function AddEndpoint(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<void>;
 
+export function BackupToWebDAV(arg1:string):Promise<void>;
+
 export function ClearLogs():Promise<void>;
+
+export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
+
+export function DetectWebDAVConflict(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<string>;
 
@@ -25,6 +31,8 @@ export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
 
+export function ListWebDAVBackups():Promise<string>;
+
 export function OpenURL(arg1:string):Promise<void>;
 
 export function Quit():Promise<void>;
@@ -32,6 +40,8 @@ export function Quit():Promise<void>;
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
+
+export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
 
 export function SetLanguage(arg1:string):Promise<void>;
 
@@ -43,6 +53,8 @@ export function SwitchToEndpoint(arg1:string):Promise<void>;
 
 export function TestEndpoint(arg1:number):Promise<string>;
 
+export function TestWebDAVConnection(arg1:string,arg2:string,arg3:string):Promise<string>;
+
 export function ToggleEndpoint(arg1:number,arg2:boolean):Promise<void>;
 
 export function UpdateConfig(arg1:string):Promise<void>;
@@ -50,3 +62,5 @@ export function UpdateConfig(arg1:string):Promise<void>;
 export function UpdateEndpoint(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string):Promise<void>;
 
 export function UpdatePort(arg1:number):Promise<void>;
+
+export function UpdateWebDAVConfig(arg1:string,arg2:string,arg3:string):Promise<void>;

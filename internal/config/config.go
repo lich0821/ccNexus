@@ -19,14 +19,24 @@ type Endpoint struct {
 	Remark      string `json:"remark,omitempty"`      // Optional remark for the endpoint
 }
 
+// WebDAVConfig represents WebDAV synchronization configuration
+type WebDAVConfig struct {
+	URL        string `json:"url"`        // WebDAV server URL
+	Username   string `json:"username"`   // Username
+	Password   string `json:"password"`   // Password
+	ConfigPath string `json:"configPath"` // Config backup path (default /ccNexus/config)
+	StatsPath  string `json:"statsPath"`  // Stats backup path (default /ccNexus/stats)
+}
+
 // Config represents the application configuration
 type Config struct {
-	Port         int        `json:"port"`
-	Endpoints    []Endpoint `json:"endpoints"`
-	LogLevel     int        `json:"logLevel"`     // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language     string     `json:"language"`      // UI language: en, zh-CN
-	WindowWidth  int        `json:"windowWidth"`  // Window width in pixels
-	WindowHeight int        `json:"windowHeight"` // Window height in pixels
+	Port         int           `json:"port"`
+	Endpoints    []Endpoint    `json:"endpoints"`
+	LogLevel     int           `json:"logLevel"`           // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language     string        `json:"language"`           // UI language: en, zh-CN
+	WindowWidth  int           `json:"windowWidth"`        // Window width in pixels
+	WindowHeight int           `json:"windowHeight"`       // Window height in pixels
+	WebDAV       *WebDAVConfig `json:"webdav,omitempty"`   // WebDAV synchronization config
 	mu           sync.RWMutex
 }
 
@@ -211,4 +221,18 @@ func (c *Config) Save(path string) error {
 	}
 
 	return nil
+}
+
+// GetWebDAV returns the WebDAV configuration (thread-safe)
+func (c *Config) GetWebDAV() *WebDAVConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.WebDAV
+}
+
+// UpdateWebDAV updates the WebDAV configuration (thread-safe)
+func (c *Config) UpdateWebDAV(webdav *WebDAVConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.WebDAV = webdav
 }

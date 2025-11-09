@@ -78,9 +78,14 @@ export function initUI() {
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
-                    <button class="btn btn-primary" onclick="window.showAddEndpointModal()">
-                        ➕ ${t('header.addEndpoint')}
-                    </button>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
+                            ☁️ ${t('webdav.dataSync')}
+                        </button>
+                        <button class="btn btn-primary" onclick="window.showAddEndpointModal()">
+                            ➕ ${t('header.addEndpoint')}
+                        </button>
+                    </div>
                 </div>
                 <div id="endpointList" class="endpoint-list">
                     <div class="loading">${t('endpoints.title')}...</div>

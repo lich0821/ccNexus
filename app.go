@@ -17,6 +17,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/lich0821/ccNexus/internal/tray"
+	"github.com/lich0821/ccNexus/internal/webdav"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -837,3 +838,257 @@ func (a *App) ReorderEndpoints(names []string) error {
 
 	return a.config.Save(a.configPath)
 }
+
+// UpdateWebDAVConfig updates the WebDAV configuration
+func (a *App) UpdateWebDAVConfig(url, username, password string) error {
+	webdavConfig := &config.WebDAVConfig{
+		URL:        url,
+		Username:   username,
+		Password:   password,
+		ConfigPath: "/ccNexus/config",
+		StatsPath:  "/ccNexus/stats",
+	}
+
+	a.config.UpdateWebDAV(webdavConfig)
+
+	if err := a.config.Save(a.configPath); err != nil {
+		return fmt.Errorf("failed to save WebDAV config: %w", err)
+	}
+
+	logger.Info("WebDAV configuration updated: %s", url)
+	return nil
+}
+
+// TestWebDAVConnection tests the WebDAV connection with provided credentials
+func (a *App) TestWebDAVConnection(url, username, password string) string {
+	webdavCfg := &config.WebDAVConfig{
+		URL:      url,
+		Username: username,
+		Password: password,
+	}
+
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建WebDAV客户端失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	testResult := client.TestConnection()
+	data, _ := json.Marshal(testResult)
+	return string(data)
+}
+
+// BackupToWebDAV backs up configuration and stats to WebDAV
+func (a *App) BackupToWebDAV(filename string) error {
+	webdavCfg := a.config.GetWebDAV()
+	if webdavCfg == nil {
+		return fmt.Errorf("WebDAV未配置")
+	}
+
+	// Create WebDAV client
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+	}
+
+	// Create sync manager
+	manager := webdav.NewManager(client)
+
+	// Get stats path
+	statsPath, err := proxy.GetStatsPath()
+	if err != nil {
+		logger.Warn("Failed to get stats path: %v", err)
+	}
+
+	// Load stats
+	stats := proxy.NewStats()
+	stats.SetStatsPath(statsPath)
+	if err := stats.Load(); err != nil {
+		logger.Warn("Failed to load stats: %v", err)
+	}
+
+	// Backup to WebDAV
+	version := a.GetVersion()
+	if err := manager.BackupConfig(a.config, stats, version, filename); err != nil {
+		return fmt.Errorf("备份失败: %w", err)
+	}
+
+	logger.Info("Backup created: %s", filename)
+	return nil
+}
+
+// RestoreFromWebDAV restores configuration and stats from WebDAV
+func (a *App) RestoreFromWebDAV(filename, choice string) error {
+	webdavCfg := a.config.GetWebDAV()
+	if webdavCfg == nil {
+		return fmt.Errorf("WebDAV未配置")
+	}
+
+	// If user chose to keep local config, do nothing
+	if choice == "local" {
+		logger.Info("User chose to keep local configuration")
+		return nil
+	}
+
+	// Create WebDAV client
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+	}
+
+	// Create sync manager
+	manager := webdav.NewManager(client)
+
+	// Get stats path
+	statsPath, err := proxy.GetStatsPath()
+	if err != nil {
+		return fmt.Errorf("获取统计文件路径失败: %w", err)
+	}
+
+	// Restore from WebDAV
+	newConfig, newStats, err := manager.RestoreConfig(filename, a.configPath, statsPath)
+	if err != nil {
+		return fmt.Errorf("恢复失败: %w", err)
+	}
+
+	// Update in-memory config
+	a.config = newConfig
+
+	// Update proxy config
+	if err := a.proxy.UpdateConfig(newConfig); err != nil {
+		return fmt.Errorf("更新代理配置失败: %w", err)
+	}
+
+	// Update stats if available
+	if newStats != nil {
+		// The stats are already saved by manager.RestoreConfig
+		logger.Info("Statistics restored from backup")
+	}
+
+	logger.Info("Configuration restored from: %s", filename)
+	return nil
+}
+
+// ListWebDAVBackups lists all backups on WebDAV server
+func (a *App) ListWebDAVBackups() string {
+	webdavCfg := a.config.GetWebDAV()
+	if webdavCfg == nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": "WebDAV未配置",
+			"backups": []interface{}{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Create WebDAV client
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建WebDAV客户端失败: %v", err),
+			"backups": []interface{}{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Create sync manager
+	manager := webdav.NewManager(client)
+
+	// List backups
+	backups, err := manager.ListConfigBackups()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("获取备份列表失败: %v", err),
+			"backups": []interface{}{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"message": "获取备份列表成功",
+		"backups": backups,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// DeleteWebDAVBackups deletes backups from WebDAV server
+func (a *App) DeleteWebDAVBackups(filenames []string) error {
+	webdavCfg := a.config.GetWebDAV()
+	if webdavCfg == nil {
+		return fmt.Errorf("WebDAV未配置")
+	}
+
+	// Create WebDAV client
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+	}
+
+	// Create sync manager
+	manager := webdav.NewManager(client)
+
+	// Delete backups
+	if err := manager.DeleteConfigBackups(filenames); err != nil {
+		return fmt.Errorf("删除备份失败: %w", err)
+	}
+
+	logger.Info("Backups deleted: %v", filenames)
+	return nil
+}
+
+// DetectWebDAVConflict detects conflicts between local and remote config
+func (a *App) DetectWebDAVConflict(filename string) string {
+	webdavCfg := a.config.GetWebDAV()
+	if webdavCfg == nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": "WebDAV未配置",
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Create WebDAV client
+	client, err := webdav.NewClient(webdavCfg)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建WebDAV客户端失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Create sync manager
+	manager := webdav.NewManager(client)
+
+	// Detect conflict
+	conflictInfo, err := manager.DetectConflict(a.config, filename)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("检测冲突失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success":      true,
+		"conflictInfo": conflictInfo,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
