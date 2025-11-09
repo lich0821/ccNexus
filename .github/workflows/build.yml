@@ -20,6 +20,9 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: amd64
+          - os: ubuntu-latest
+            platform: linux
+            arch: arm64
           - os: macos-latest
             platform: darwin
             arch: amd64
@@ -29,6 +32,9 @@ jobs:
           - os: windows-latest
             platform: windows
             arch: amd64
+          - os: windows-latest
+            platform: windows
+            arch: arm64
 
     runs-on: ${{ matrix.os }}
 
@@ -76,7 +82,15 @@ jobs:
         if: matrix.platform == 'linux' && steps.cache-wails.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          if [ "${{ matrix.arch }}" == "amd64" ]; then
+            sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          else
+            # Install cross-compilation tools for arm64
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+              libgtk-3-dev:arm64 libwebkit2gtk-4.1-dev:arm64 pkg-config
+          fi
           # Create webkit2gtk-4.0.pc symlink to webkit2gtk-4.1.pc in all pkg-config paths
           for pcdir in $(pkg-config --variable pc_path pkg-config | tr ':' ' '); do
             if [ -f "$pcdir/webkit2gtk-4.1.pc" ]; then
@@ -93,7 +107,15 @@ jobs:
         if: matrix.platform == 'linux' && steps.cache-wails.outputs.cache-hit == 'true'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          if [ "${{ matrix.arch }}" == "amd64" ]; then
+            sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          else
+            # Install cross-compilation tools for arm64
+            sudo dpkg --add-architecture arm64
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu \
+              libgtk-3-dev:arm64 libwebkit2gtk-4.1-dev:arm64 pkg-config
+          fi
           # Create webkit2gtk-4.0.pc symlink to webkit2gtk-4.1.pc in all pkg-config paths
           for pcdir in $(pkg-config --variable pc_path pkg-config | tr ':' ' '); do
             if [ -f "$pcdir/webkit2gtk-4.1.pc" ]; then
@@ -126,9 +148,20 @@ jobs:
             pkg-config --exists webkit2gtk-4.0 && echo "✓ webkit2gtk-4.0 is available" || echo "✗ webkit2gtk-4.0 NOT available"
             pkg-config --modversion webkit2gtk-4.0 || true
 
-            export CGO_CFLAGS="$(pkg-config --cflags gtk+-3.0 webkit2gtk-4.0)"
-            export CGO_LDFLAGS="$(pkg-config --libs gtk+-3.0 webkit2gtk-4.0)"
-            export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:${PKG_CONFIG_PATH}"
+            if [ "${{ matrix.arch }}" == "arm64" ]; then
+              # Configure for cross-compilation to ARM64
+              export CC=aarch64-linux-gnu-gcc
+              export CXX=aarch64-linux-gnu-g++
+              export GOOS=linux
+              export GOARCH=arm64
+              export PKG_CONFIG_PATH="/usr/lib/aarch64-linux-gnu/pkgconfig"
+              export CGO_CFLAGS="-I/usr/include/aarch64-linux-gnu"
+              export CGO_LDFLAGS="-L/usr/lib/aarch64-linux-gnu"
+            else
+              export CGO_CFLAGS="$(pkg-config --cflags gtk+-3.0 webkit2gtk-4.0)"
+              export CGO_LDFLAGS="$(pkg-config --libs gtk+-3.0 webkit2gtk-4.0)"
+              export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/share/pkgconfig:${PKG_CONFIG_PATH}"
+            fi
 
             echo "CGO_CFLAGS: $CGO_CFLAGS"
             echo "CGO_LDFLAGS: $CGO_LDFLAGS"
