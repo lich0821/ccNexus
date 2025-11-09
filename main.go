@@ -4,6 +4,7 @@ import (
 	"embed"
 	"log"
 
+	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -20,10 +21,33 @@ var trayIcon []byte
 func main() {
 	app := NewApp(trayIcon)
 
-	err := wails.Run(&options.App{
+	// Load configuration to get window size
+	configPath, err := config.GetConfigPath()
+	if err != nil {
+		log.Printf("Warning: Failed to get config path: %v, using defaults", err)
+		configPath = "config.json"
+	}
+
+	cfg, err := config.Load(configPath)
+	if err != nil {
+		log.Printf("Warning: Failed to load config: %v, using defaults", err)
+		cfg = config.DefaultConfig()
+	}
+
+	// Get window size from config
+	windowWidth, windowHeight := cfg.GetWindowSize()
+	// Use defaults if not set or invalid
+	if windowWidth <= 0 {
+		windowWidth = 1024
+	}
+	if windowHeight <= 0 {
+		windowHeight = 768
+	}
+
+	err = wails.Run(&options.App{
 		Title:       "ccNexus",
-		Width:       1024,
-		Height:      768,
+		Width:       windowWidth,
+		Height:      windowHeight,
 		StartHidden: false,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
@@ -39,7 +63,7 @@ func main() {
 		Fullscreen:    false,
 		MinWidth:      800,
 		MinHeight:     600,
-		DisableResize: true,
+		DisableResize: false,
 		Mac: &mac.Options{
 			TitleBar: &mac.TitleBar{
 				TitlebarAppearsTransparent: false,

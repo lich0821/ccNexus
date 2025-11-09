@@ -63,21 +63,11 @@ export async function renderEndpoints(endpoints) {
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
         return { endpoint: ep, originalIndex: index, stats, enabled };
     }).sort((a, b) => {
+        // Sort by enabled status first (enabled endpoints first)
         if (a.enabled !== b.enabled) return a.enabled ? -1 : 1;
 
-        const statsA = a.stats;
-        const statsB = b.stats;
-
-        if (statsA.requests === 0 && statsB.requests === 0) return 0;
-        if (statsA.requests === 0) return 1;
-        if (statsB.requests === 0) return -1;
-
-        const successRateA = (statsA.requests - statsA.errors) / statsA.requests;
-        const successRateB = (statsB.requests - statsB.errors) / statsB.requests;
-
-        if (successRateA !== successRateB) return successRateB - successRateA;
-
-        return statsB.requests - statsA.requests;
+        // Then sort by original index (config file order)
+        return a.originalIndex - b.originalIndex;
     });
 
     sortedEndpoints.forEach(({ endpoint: ep, originalIndex: index, stats }) => {
@@ -109,9 +99,9 @@ export async function renderEndpoints(endpoints) {
                     <input type="checkbox" data-index="${index}" ${enabled ? 'checked' : ''}>
                     <span class="toggle-slider"></span>
                 </label>
-                <button class="btn btn-secondary" data-action="test" data-index="${index}">${t('endpoints.test')}</button>
-                <button class="btn btn-secondary" data-action="edit" data-index="${index}">${t('endpoints.edit')}</button>
-                <button class="btn btn-danger" data-action="delete" data-index="${index}">${t('endpoints.delete')}</button>
+                <button class="btn-card btn-secondary" data-action="test" data-index="${index}">${t('endpoints.test')}</button>
+                <button class="btn-card btn-secondary" data-action="edit" data-index="${index}">${t('endpoints.edit')}</button>
+                <button class="btn-card btn-danger" data-action="delete" data-index="${index}">${t('endpoints.delete')}</button>
             </div>
         `;
 

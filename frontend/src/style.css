@@ -19,25 +19,52 @@ body {
 
 .header {
     background: rgb(255, 255, 255);
-    padding: 20px 30px;
+    padding: 15px 30px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .header h1 {
-    font-size: 24px;
+    font-size: 22px;
     color: #667eea;
-    margin-bottom: 5px;
+    margin-bottom: 3px;
 }
 
 .header p {
     color: #666;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 .container {
     flex: 1;
     overflow-y: auto;
     padding: 30px;
+}
+
+.footer {
+    background: rgb(255, 255, 255);
+    border-top: 1px solid rgba(102, 126, 234, 0.15);
+    padding: 12px 30px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+}
+
+.footer-left {
+    display: flex;
+    align-items: center;
+}
+
+.footer-right {
+    display: flex;
+    align-items: center;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
 }
 
 .card {
@@ -165,12 +192,13 @@ body {
 }
 
 .btn {
-    padding: 8px;
+    padding: 10px 24px;
     border: none;
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
+    min-width: 80px;
 }
 
 .btn-primary {
@@ -200,6 +228,15 @@ body {
     background: #5a6268;
 }
 
+.btn-danger {
+    background: #ff4444;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #ff2222;
+}
+
 .form-group {
     margin-bottom: 15px;
 }
@@ -211,17 +248,100 @@ body {
     color: #333;
 }
 
-.form-group input {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    background-color: white;
+    transition: border-color 0.2s, box-shadow 0.2s;
 }
 
-.form-group input:focus {
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 35px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
     border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-group select:hover {
+    border-color: #667eea;
+}
+
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrapper input {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    transition: color 0.2s;
+}
+
+.password-toggle:hover {
+    color: #667eea;
+}
+
+.password-toggle:focus {
+    outline: none;
+}
+
+.error-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: #ff4444;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.error-toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+.error-toast-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.error-toast-icon {
+    font-size: 18px;
 }
 
 .modal {
@@ -244,25 +364,42 @@ body {
 .modal-content {
     background: white;
     border-radius: 12px;
-    padding: 30px;
-    max-width: 500px;
+    padding: 0;
+    max-width: min(500px, 90vw);
+    max-height: 90vh;
     width: 90%;
+    overflow: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header {
-    margin-bottom: 20px;
+    padding: 30px 30px 20px 30px;
+    flex-shrink: 0;
+}
+
+.modal-body {
+    padding: 0 30px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 10px 30px 20px 30px;
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
     font-size: 20px;
     color: #333;
+    margin: 0;
 }
 
 .modal-footer {
     display: flex;
     gap: 10px;
     justify-content: flex-end;
-    margin-top: 20px;
 }
 
 .loading {
@@ -368,7 +505,7 @@ body {
     cursor: pointer;
     transition: all 0.3s ease;
     display: inline-flex;
-    align-items: center;
+    align-items: baseline;
     gap: 8px;
 }
 
@@ -409,6 +546,17 @@ body {
 .btn-sm {
     padding: 6px 12px;
     font-size: 13px;
+}
+
+/* Card button styles (for endpoint cards) */
+.btn-card {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 55px;
 }
 
 .log-panel {
@@ -529,6 +677,8 @@ body {
     cursor: pointer;
     transition: all 0.2s;
     flex-shrink: 0;
+    position: relative;
+    top: 2px;
 }
 
 .copy-btn:hover {
@@ -543,20 +693,22 @@ body {
 .current-badge {
     background: #4CAF50;
     color: white;
-    padding: 2px 8px;
+    padding: 3px 7px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: normal;
     margin-left: 8px;
     vertical-align: middle;
     display: inline-block;
+    position: relative;
+    top: -1px;
 }
 
 /* Switch button */
 .btn-switch {
     background: #667eea;
     color: white;
-    padding: 2px 8px;
+    padding: 3px 7px;
     border-radius: 4px;
     font-size: 12px;
     font-weight: normal;
@@ -566,13 +718,18 @@ body {
     transition: all 0.2s;
     vertical-align: middle;
     display: inline-block;
+    position: relative;
+    top: -1px;
+    min-width: auto !important;
 }
 
 .btn-switch:hover {
     background: #5568d3;
+    transform: translateY(-1px);
 }
 
 .btn-switch:disabled {
     background: #BDBDBD;
     cursor: not-allowed;
+    transform: none;
 }

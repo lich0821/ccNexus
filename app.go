@@ -170,13 +170,40 @@ func (a *App) HideWindow() {
 
 // beforeClose is called when the window is about to close
 func (a *App) beforeClose(ctx context.Context) bool {
+	// Save current window size before hiding
+	a.saveWindowSize(ctx)
 	runtime.WindowHide(ctx)
 	return true // Return true to prevent window close (just hide it)
+}
+
+// saveWindowSize saves the current window size to config
+func (a *App) saveWindowSize(ctx context.Context) {
+	// Get current window size
+	width, height := runtime.WindowGetSize(ctx)
+
+	// Only save if size is valid
+	if width > 0 && height > 0 {
+		a.config.UpdateWindowSize(width, height)
+		if err := a.config.Save(a.configPath); err != nil {
+			logger.Warn("Failed to save window size: %v", err)
+		} else {
+			logger.Debug("Window size saved: %dx%d", width, height)
+		}
+	}
 }
 
 // Quit quits the application
 func (a *App) Quit() {
 	logger.Info("Quitting application...")
+
+	// Save window size before quitting
+	a.ctxMutex.RLock()
+	ctx := a.ctx
+	a.ctxMutex.RUnlock()
+
+	if ctx != nil {
+		a.saveWindowSize(ctx)
+	}
 
 	// Save stats and cleanup
 	if a.proxy != nil {
@@ -290,24 +317,6 @@ func (a *App) RemoveEndpoint(index int) error {
 
 	if index < 0 || index >= len(endpoints) {
 		return fmt.Errorf("invalid endpoint index: %d", index)
-	}
-
-	// Show confirmation dialog
-	selection, err := runtime.MessageDialog(a.ctx, runtime.MessageDialogOptions{
-		Type:          runtime.QuestionDialog,
-		Title:         "Confirm Delete",
-		Message:       fmt.Sprintf("Are you sure you want to delete endpoint '%s'?", endpoints[index].Name),
-		Buttons:       []string{"Delete", "Cancel"},
-		DefaultButton: "Cancel",
-	})
-
-	if err != nil {
-		return fmt.Errorf("dialog error: %w", err)
-	}
-
-	// If user clicked Cancel, return without error
-	if selection != "Delete" {
-		return nil
 	}
 
 	// Save endpoint name before removal for logging

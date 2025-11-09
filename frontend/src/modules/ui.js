@@ -117,45 +117,68 @@ export function initUI() {
             </div>
         </div>
 
+        <!-- Footer -->
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span style="opacity: 0.8;">© 2025 ccNexus</span>
+                </div>
+                <div class="footer-right">
+                    <span style="opacity: 0.7; margin-right: 5px;">v</span>
+                    <span id="appVersion" style="font-weight: 500;">1.0.0</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Add/Edit Endpoint Modal -->
         <div id="endpointModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
                     <h2 id="modalTitle">${t('modal.addEndpoint')}</h2>
                 </div>
-                <div class="form-group">
-                    <label>${t('modal.name')} <span class="required" style="color: #ff4444;">*</span></label>
-                    <input type="text" id="endpointName" placeholder="e.g., Claude Official" required>
-                </div>
-                <div class="form-group">
-                    <label>${t('modal.apiUrl')} <span class="required" style="color: #ff4444;">*</span></label>
-                    <input type="text" id="endpointUrl" placeholder="e.g., api.anthropic.com" required>
-                </div>
-                <div class="form-group">
-                    <label>${t('modal.apiKey')} <span class="required" style="color: #ff4444;">*</span></label>
-                    <input type="password" id="endpointKey" placeholder="sk-ant-api03-..." required>
-                </div>
-                <div class="form-group">
-                    <label>${t('modal.transformer')} <span class="required" style="color: #ff4444;">*</span></label>
-                    <select id="endpointTransformer" onchange="window.handleTransformerChange()" required>
-                        <option value="claude">Claude (Default)</option>
-                        <option value="openai">OpenAI</option>
-                        <option value="gemini">Gemini</option>
-                    </select>
-                    <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                        ${t('modal.transformerHelp')}
-                    </p>
-                </div>
-                <div class="form-group" id="modelFieldGroup" style="display: block;">
-                    <label>${t('modal.model')} <span class="required" id="modelRequired" style="display: none; color: #ff4444;">*</span></label>
-                    <input type="text" id="endpointModel" placeholder="e.g., claude-3-5-sonnet-20241022">
-                    <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
-                        ${t('modal.modelHelp')}
-                    </p>
-                </div>
-                <div class="form-group">
-                    <label>${t('modal.remark')}</label>
-                    <input type="text" id="endpointRemark" placeholder="${t('modal.remarkHelp')}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.name')}</label>
+                        <input type="text" id="endpointName" placeholder="${t('modal.namePlaceholder')}">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.apiUrl')}</label>
+                        <input type="text" id="endpointUrl" placeholder="${t('modal.apiUrlPlaceholder')}">
+                    </div>
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.apiKey')}</label>
+                        <div class="password-input-wrapper">
+                            <input type="password" id="endpointKey" placeholder="${t('modal.apiKeyPlaceholder')}">
+                            <button type="button" class="password-toggle" onclick="window.togglePasswordVisibility()" title="${t('modal.togglePassword')}">
+                                <svg id="eyeIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.transformer')}</label>
+                        <select id="endpointTransformer" onchange="window.handleTransformerChange()">
+                            <option value="claude">Claude (Default)</option>
+                            <option value="openai">OpenAI</option>
+                            <option value="gemini">Gemini</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('modal.transformerHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group" id="modelFieldGroup" style="display: block;">
+                        <label><span class="required" id="modelRequired" style="display: none; color: #ff4444;">* </span>${t('modal.model')}</label>
+                        <input type="text" id="endpointModel" placeholder="${t('modal.modelPlaceholder')}">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
+                            ${t('modal.modelHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>${t('modal.remark')}</label>
+                        <input type="text" id="endpointRemark" placeholder="${t('modal.remarkHelp')}">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeModal()">${t('modal.cancel')}</button>
@@ -170,13 +193,15 @@ export function initUI() {
                 <div class="modal-header">
                     <h2>${t('modal.changePort')}</h2>
                 </div>
-                <div class="form-group">
-                    <label>${t('modal.port')} (1-65535)</label>
-                    <input type="number" id="portInput" min="1" max="65535" placeholder="3000">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>${t('modal.port')} (1-65535)</label>
+                        <input type="number" id="portInput" min="1" max="65535" placeholder="3000">
+                    </div>
+                    <p style="color: #666; font-size: 14px; margin-top: 10px;">
+                        ⚠️ ${t('modal.portNote')}
+                    </p>
                 </div>
-                <p style="color: #666; font-size: 14px; margin-top: 10px;">
-                    ⚠️ ${t('modal.portNote')}
-                </p>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closePortModal()">${t('modal.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.savePort()">${t('modal.save')}</button>
@@ -186,11 +211,11 @@ export function initUI() {
 
         <!-- Welcome Modal -->
         <div id="welcomeModal" class="modal">
-            <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2>👋 ${t('welcome.title')}</h2>
                 </div>
-                <div style="padding: 20px 0;">
+                <div class="modal-body">
                     <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
                         ${t('welcome.message')}
                     </p>
@@ -224,17 +249,41 @@ export function initUI() {
 
         <!-- Test Result Modal -->
         <div id="testResultModal" class="modal">
-            <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2 id="testResultTitle">🧪 ${t('test.title')}</h2>
                 </div>
-                <div style="padding: 20px 0;">
+                <div class="modal-body">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
                         <!-- Test result will be inserted here -->
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-primary" onclick="window.closeTestResultModal()">${t('modal.close')}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Toast -->
+        <div id="errorToast" class="error-toast">
+            <div class="error-toast-content">
+                <span class="error-toast-icon">⚠️</span>
+                <span id="errorToastMessage"></span>
+            </div>
+        </div>
+
+        <!-- Confirm Dialog -->
+        <div id="confirmDialog" class="modal">
+            <div class="modal-content" style="max-width: min(400px, 90vw);">
+                <div class="modal-header">
+                    <h2 id="confirmTitle">⚠️ 确认操作</h2>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage" style="font-size: 15px; line-height: 1.6; color: #333;"></p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.cancelConfirm()">取消</button>
+                    <button class="btn btn-danger" onclick="window.acceptConfirm()">确定</button>
                 </div>
             </div>
         </div>

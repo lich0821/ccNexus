@@ -22,7 +22,10 @@ import {
     testEndpointHandler,
     closeTestResultModal,
     openGitHub,
-    openArticle
+    openArticle,
+    togglePasswordVisibility,
+    acceptConfirm,
+    cancelConfirm
 } from './modules/modal.js'
 
 // Load data on startup
@@ -38,6 +41,14 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize UI
     initUI();
+
+    // Load and display version
+    try {
+        const version = await window.go.main.App.GetVersion();
+        document.getElementById('appVersion').textContent = version;
+    } catch (error) {
+        console.error('Failed to get version:', error);
+    }
 
     // Load initial data
     await loadConfigAndRender();
@@ -107,3 +118,6 @@ window.changeLogLevel = changeLogLevel;
 window.copyLogs = copyLogs;
 window.clearLogs = clearLogs;
 window.changeLanguage = changeLanguage;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.acceptConfirm = acceptConfirm;
+window.cancelConfirm = cancelConfirm;
