@@ -62,6 +62,10 @@ export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }
 
+export function ReorderEndpoints(arg1) {
+  return window['go']['main']['App']['ReorderEndpoints'](arg1);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['main']['App']['SetLanguage'](arg1);
 }

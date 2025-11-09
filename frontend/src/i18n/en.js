@@ -28,7 +28,8 @@ export default {
         copied: 'Copied',
         current: 'Current',
         switchTo: 'Switch',
-        switchFailed: 'Switch Failed'
+        switchFailed: 'Switch Failed',
+        reorderFailed: 'Reorder Failed'
     },
     modal: {
         addEndpoint: 'Add Endpoint',
