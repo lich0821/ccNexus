@@ -6,6 +6,7 @@ import { loadConfig } from './modules/config.js'
 import { loadStats } from './modules/stats.js'
 import { renderEndpoints } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
+import { showDataSyncDialog } from './modules/webdav.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -134,3 +135,4 @@ window.cancelConfirm = cancelConfirm;
 window.showCloseActionDialog = showCloseActionDialog;
 window.quitApplication = quitApplication;
 window.minimizeToTray = minimizeToTray;
+window.showDataSyncDialog = showDataSyncDialog;
