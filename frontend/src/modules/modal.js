@@ -45,6 +45,21 @@ export function cancelConfirm() {
     }
 }
 
+// Close action dialog
+export function showCloseActionDialog() {
+    document.getElementById('closeActionDialog').classList.add('active');
+}
+
+export function quitApplication() {
+    document.getElementById('closeActionDialog').classList.remove('active');
+    window.go.main.App.Quit();
+}
+
+export function minimizeToTray() {
+    document.getElementById('closeActionDialog').classList.remove('active');
+    window.go.main.App.HideWindow();
+}
+
 // Toggle password visibility
 export function togglePasswordVisibility() {
     const input = document.getElementById('endpointKey');

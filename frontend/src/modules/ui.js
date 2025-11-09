@@ -274,16 +274,44 @@ export function initUI() {
 
         <!-- Confirm Dialog -->
         <div id="confirmDialog" class="modal">
-            <div class="modal-content" style="max-width: min(400px, 90vw);">
-                <div class="modal-header">
-                    <h2 id="confirmTitle">⚠️ 确认操作</h2>
+            <div class="confirm-dialog-content">
+                <div class="confirm-body">
+                    <div class="confirm-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 9v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="confirm-content">
+                        <h4 class="confirm-title">确认删除</h4>
+                        <p id="confirmMessage" class="confirm-message"></p>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <p id="confirmMessage" style="font-size: 15px; line-height: 1.6; color: #333;"></p>
+                <div class="confirm-divider"></div>
+                <div class="confirm-footer">
+                    <button class="btn-confirm-delete" onclick="window.acceptConfirm()">删除</button>
+                    <button class="btn-confirm-cancel" onclick="window.cancelConfirm()">取消</button>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" onclick="window.cancelConfirm()">取消</button>
-                    <button class="btn btn-danger" onclick="window.acceptConfirm()">确定</button>
+            </div>
+        </div>
+
+        <!-- Close Action Dialog -->
+        <div id="closeActionDialog" class="modal">
+            <div class="confirm-dialog-content">
+                <div class="confirm-body">
+                    <div class="confirm-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="confirm-content">
+                        <h4 class="confirm-title">关闭窗口</h4>
+                        <p class="confirm-message">您希望如何处理？</p>
+                    </div>
+                </div>
+                <div class="confirm-divider"></div>
+                <div class="confirm-footer">
+                    <button class="btn-confirm-delete" onclick="window.quitApplication()">退出程序</button>
+                    <button class="btn-confirm-cancel" onclick="window.minimizeToTray()">最小化到托盘</button>
                 </div>
             </div>
         </div>

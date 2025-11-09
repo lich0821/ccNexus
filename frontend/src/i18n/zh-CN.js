@@ -28,7 +28,8 @@ export default {
         copied: '已复制',
         current: '当前使用',
         switchTo: '切换',
-        switchFailed: '切换失败'
+        switchFailed: '切换失败',
+        reorderFailed: '排序失败'
     },
     modal: {
         addEndpoint: '添加端点',

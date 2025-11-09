@@ -31,6 +31,8 @@ export function Quit():Promise<void>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
+export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
+
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;

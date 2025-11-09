@@ -39,7 +39,7 @@ func goQuitApp() {
 }
 
 // Setup initializes the system tray using native macOS APIs
-func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func()) {
+func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func(), language string) {
 	showWindow = showFunc
 	hideWindow = hideFunc
 	quitApp = quitFunc
@@ -51,4 +51,8 @@ func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func()) {
 
 func Quit() {
 	// Cleanup if needed
+}
+
+func UpdateLanguage(language string) {
+	// TODO: Implement native menu update for macOS
 }

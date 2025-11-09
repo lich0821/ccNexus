@@ -25,7 +25,10 @@ import {
     openArticle,
     togglePasswordVisibility,
     acceptConfirm,
-    cancelConfirm
+    cancelConfirm,
+    showCloseActionDialog,
+    quitApplication,
+    minimizeToTray
 } from './modules/modal.js'
 
 // Load data on startup
@@ -79,6 +82,13 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
 
+    // Listen for close dialog event from backend
+    if (window.runtime) {
+        window.runtime.EventsOn('show-close-dialog', () => {
+            showCloseActionDialog();
+        });
+    }
+
     // Handle Cmd/Ctrl+W to hide window
     window.addEventListener('keydown', (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === 'w') {
@@ -121,3 +131,6 @@ window.changeLanguage = changeLanguage;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.acceptConfirm = acceptConfirm;
 window.cancelConfirm = cancelConfirm;
+window.showCloseActionDialog = showCloseActionDialog;
+window.quitApplication = quitApplication;
+window.minimizeToTray = minimizeToTray;
