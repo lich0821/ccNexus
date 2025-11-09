@@ -143,7 +143,11 @@ func (a *App) shutdown(ctx context.Context) {
 
 // initTray initializes the system tray
 func (a *App) initTray() {
-	tray.Setup(a.trayIcon, a.ShowWindow, a.HideWindow, a.Quit)
+	lang := a.config.GetLanguage()
+	if lang == "" {
+		lang = a.GetSystemLanguage()
+	}
+	tray.Setup(a.trayIcon, a.ShowWindow, a.HideWindow, a.Quit, lang)
 }
 
 // ShowWindow shows the application window
@@ -170,10 +174,14 @@ func (a *App) HideWindow() {
 
 // beforeClose is called when the window is about to close
 func (a *App) beforeClose(ctx context.Context) bool {
-	// Save current window size before hiding
+	// Save current window size before showing close dialog
 	a.saveWindowSize(ctx)
-	runtime.WindowHide(ctx)
-	return true // Return true to prevent window close (just hide it)
+
+	// Emit event to show close action dialog
+	runtime.EventsEmit(ctx, "show-close-dialog")
+
+	// Return true to prevent window close (dialog will handle the action)
+	return true
 }
 
 // saveWindowSize saves the current window size to config
@@ -522,6 +530,10 @@ func (a *App) SetLanguage(language string) error {
 	if err := a.config.Save(a.configPath); err != nil {
 		return fmt.Errorf("failed to save language: %w", err)
 	}
+
+	// Update tray menu language
+	tray.UpdateLanguage(language)
+
 	logger.Info("Language changed to: %s", language)
 	return nil
 }
@@ -774,4 +786,54 @@ func (a *App) SwitchToEndpoint(endpointName string) error {
 	}
 
 	return a.proxy.SetCurrentEndpoint(endpointName)
+}
+
+// ReorderEndpoints reorders endpoints based on the provided name array
+func (a *App) ReorderEndpoints(names []string) error {
+	endpoints := a.config.GetEndpoints()
+
+	// Verify length matches
+	if len(names) != len(endpoints) {
+		return fmt.Errorf("names array length (%d) doesn't match endpoints count (%d)", len(names), len(endpoints))
+	}
+
+	// Check for duplicates in names array
+	seen := make(map[string]bool)
+	for _, name := range names {
+		if seen[name] {
+			return fmt.Errorf("duplicate endpoint name in reorder request: %s", name)
+		}
+		seen[name] = true
+	}
+
+	// Create a map for quick lookup of endpoints by name
+	endpointMap := make(map[string]config.Endpoint)
+	for _, ep := range endpoints {
+		endpointMap[ep.Name] = ep
+	}
+
+	// Build new order and verify all names exist
+	newEndpoints := make([]config.Endpoint, 0, len(names))
+	for _, name := range names {
+		ep, exists := endpointMap[name]
+		if !exists {
+			return fmt.Errorf("endpoint not found: %s", name)
+		}
+		newEndpoints = append(newEndpoints, ep)
+	}
+
+	// Update config
+	a.config.UpdateEndpoints(newEndpoints)
+
+	if err := a.config.Validate(); err != nil {
+		return err
+	}
+
+	if err := a.proxy.UpdateConfig(a.config); err != nil {
+		return err
+	}
+
+	logger.Info("Endpoints reordered: %v", names)
+
+	return a.config.Save(a.configPath)
 }
