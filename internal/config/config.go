@@ -21,19 +21,23 @@ type Endpoint struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port      int        `json:"port"`
-	Endpoints []Endpoint `json:"endpoints"`
-	LogLevel  int        `json:"logLevel"` // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language  string     `json:"language"`  // UI language: en, zh-CN
-	mu        sync.RWMutex
+	Port         int        `json:"port"`
+	Endpoints    []Endpoint `json:"endpoints"`
+	LogLevel     int        `json:"logLevel"`     // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language     string     `json:"language"`      // UI language: en, zh-CN
+	WindowWidth  int        `json:"windowWidth"`  // Window width in pixels
+	WindowHeight int        `json:"windowHeight"` // Window height in pixels
+	mu           sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() *Config {
 	return &Config{
-		Port:     3000,
-		LogLevel: 1,  // Default to INFO level
-		Language: "", // Empty means auto-detect
+		Port:         3000,
+		LogLevel:     1,    // Default to INFO level
+		Language:     "",   // Empty means auto-detect
+		WindowWidth:  1024, // Default window width
+		WindowHeight: 768,  // Default window height
 		Endpoints: []Endpoint{
 			{
 				Name:        "Claude Official",
@@ -138,6 +142,21 @@ func (c *Config) UpdateLanguage(language string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Language = language
+}
+
+// GetWindowSize returns the configured window size (thread-safe)
+func (c *Config) GetWindowSize() (width, height int) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.WindowWidth, c.WindowHeight
+}
+
+// UpdateWindowSize updates the window size (thread-safe)
+func (c *Config) UpdateWindowSize(width, height int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.WindowWidth = width
+	c.WindowHeight = height
 }
 
 // GetConfigPath returns the default config file path
