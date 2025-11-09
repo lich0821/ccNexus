@@ -158,16 +158,36 @@ Claude Code → 代理 (localhost:3000) → 端点 #1 (非 200 响应)
 
 - Go 1.22+
 - Node.js 18+
-- Wails CLI v2
+- Wails CLI v2（若未安装会自动安装）
 
-### 设置
+### 快速开始
+
+项目包含智能 `run.mjs` 脚本，自动处理依赖和设置：
 
 ```bash
 # 克隆仓库
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
 
-# 安装 Wails
+# 开发模式运行（自动安装 Wails）
+node run.mjs
+
+# 或使用 npm
+npm start
+# 或
+npm run dev
+```
+
+**run.mjs 特性：**
+- ✅ 自动安装 Wails CLI（如未找到）
+- ✅ 自动安装前端依赖
+- ✅ 使用国内镜像加速下载（GOPROXY、npm 镜像）
+- ✅ 简洁的命令行界面
+
+### 手动设置（备选方案）
+
+```bash
+# 手动安装 Wails
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 # 安装依赖
@@ -181,14 +201,34 @@ wails dev
 ### 构建
 
 ```bash
-# 为当前平台构建
-wails build
+# 标准构建
+node run.mjs -b
+# 或
+npm run build
 
-# 为特定平台构建
-wails build -platform windows/amd64
-wails build -platform darwin/amd64
-wails build -platform darwin/arm64
-wails build -platform linux/amd64
+# 生产构建（优化+压缩）
+node run.mjs -b -p
+# 或
+npm run build:prod
+
+# 构建特定平台
+node run.mjs -b --platform windows/amd64
+node run.mjs -b --platform darwin/universal
+node run.mjs -b --platform linux/amd64
+
+# 或使用 npm 脚本
+npm run build:windows
+npm run build:macos
+npm run build:linux
+```
+
+### 脚本选项
+
+```bash
+node run.mjs              # 开发模式（默认）
+node run.mjs -b           # 构建模式
+node run.mjs -b -p        # 生产构建（优化）
+node run.mjs --help       # 显示帮助
 ```
 
 ## 📚 项目结构

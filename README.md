@@ -158,16 +158,36 @@ Example:
 
 - Go 1.22+
 - Node.js 18+
-- Wails CLI v2
+- Wails CLI v2 (will be auto-installed if not present)
 
-### Setup
+### Quick Start
+
+The project includes a smart `run.mjs` script that automatically handles dependencies and setup:
 
 ```bash
 # Clone repository
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
 
-# Install Wails
+# Run in development mode (auto-installs Wails if needed)
+node run.mjs
+
+# Or use npm
+npm start
+# or
+npm run dev
+```
+
+**Features of run.mjs:**
+- ✅ Auto-installs Wails CLI if not found
+- ✅ Auto-installs frontend dependencies
+- ✅ Uses China mirrors for faster downloads (GOPROXY, npm registry)
+- ✅ Simple command-line interface
+
+### Manual Setup (Alternative)
+
+```bash
+# Install Wails manually
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 # Install dependencies
@@ -181,14 +201,34 @@ wails dev
 ### Build
 
 ```bash
-# Build for current platform
-wails build
+# Standard build
+node run.mjs -b
+# or
+npm run build
+
+# Production build (optimized + compressed)
+node run.mjs -b -p
+# or
+npm run build:prod
 
 # Build for specific platform
-wails build -platform windows/amd64
-wails build -platform darwin/amd64
-wails build -platform darwin/arm64
-wails build -platform linux/amd64
+node run.mjs -b --platform windows/amd64
+node run.mjs -b --platform darwin/universal
+node run.mjs -b --platform linux/amd64
+
+# Or use npm scripts
+npm run build:windows
+npm run build:macos
+npm run build:linux
+```
+
+### Script Options
+
+```bash
+node run.mjs              # Development mode (default)
+node run.mjs -b           # Build mode
+node run.mjs -b -p        # Production build (optimized)
+node run.mjs --help       # Show help
 ```
 
 ## 📚 Project Structure
