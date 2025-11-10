@@ -3,7 +3,7 @@ import '../wailsjs/runtime/runtime.js'
 import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
-import { loadStats } from './modules/stats.js'
+import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
 import { renderEndpoints } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
@@ -56,7 +56,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Load initial data
     await loadConfigAndRender();
-    loadStats();
+    loadStatsByPeriod('daily'); // Load today's stats by default
 
     // Restore log level from config
     try {
@@ -70,7 +70,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Refresh stats every 5 seconds
     setInterval(async () => {
-        await loadStats();
+        await loadStats(); // Refresh cumulative stats for endpoint cards
+        const currentPeriod = getCurrentPeriod(); // Get current selected period
+        await loadStatsByPeriod(currentPeriod); // Refresh period stats (daily/weekly/monthly)
         const config = await window.go.main.App.GetConfig();
         if (config) {
             renderEndpoints(JSON.parse(config).endpoints);
@@ -136,3 +138,4 @@ window.showCloseActionDialog = showCloseActionDialog;
 window.quitApplication = quitApplication;
 window.minimizeToTray = minimizeToTray;
 window.showDataSyncDialog = showDataSyncDialog;
+window.switchStatsPeriod = switchStatsPeriod;

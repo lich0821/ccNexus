@@ -466,7 +466,7 @@ export async function openBackupManager() {
             return;
         }
 
-        hideModal();
+        hideSubModal();
         await restoreFromWebDAV(filename);
     };
 

@@ -50,6 +50,22 @@ export function GetStats() {
   return window['go']['main']['App']['GetStats']();
 }
 
+export function GetStatsDaily() {
+  return window['go']['main']['App']['GetStatsDaily']();
+}
+
+export function GetStatsMonthly() {
+  return window['go']['main']['App']['GetStatsMonthly']();
+}
+
+export function GetStatsTrend() {
+  return window['go']['main']['App']['GetStatsTrend']();
+}
+
+export function GetStatsWeekly() {
+  return window['go']['main']['App']['GetStatsWeekly']();
+}
+
 export function GetSystemLanguage() {
   return window['go']['main']['App']['GetSystemLanguage']();
 }

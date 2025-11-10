@@ -103,9 +103,13 @@ export default {
     },
     statistics: {
         title: '统计信息',
+        daily: '今日',
+        weekly: '本周',
+        monthly: '本月',
         endpoints: '端点',
         activeTotal: '活跃 / 总数',
         totalRequests: '总请求数',
+        successFailed: '成功 / 失败',
         success: '成功',
         failed: '失败',
         totalTokens: '总 Token 数',

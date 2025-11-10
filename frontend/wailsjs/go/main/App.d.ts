@@ -25,6 +25,14 @@ export function GetLogsByLevel(arg1:number):Promise<string>;
 
 export function GetStats():Promise<string>;
 
+export function GetStatsDaily():Promise<string>;
+
+export function GetStatsMonthly():Promise<string>;
+
+export function GetStatsTrend():Promise<string>;
+
+export function GetStatsWeekly():Promise<string>;
+
 export function GetSystemLanguage():Promise<string>;
 
 export function GetVersion():Promise<string>;

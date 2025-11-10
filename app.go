@@ -122,6 +122,20 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}()
 
+	// Start data cleanup task (runs daily to remove data older than 30 days)
+	go func() {
+		// Run cleanup once at startup
+		a.proxy.GetStats().CleanupOldData(30)
+
+		// Then run cleanup daily
+		ticker := time.NewTicker(24 * time.Hour)
+		defer ticker.Stop()
+		for range ticker.C {
+			a.proxy.GetStats().CleanupOldData(30)
+			logger.Debug("Daily stats cleanup completed")
+		}
+	}()
+
 	// Wait for tray to initialize, then show window
 	time.Sleep(300 * time.Millisecond)
 	runtime.WindowShow(ctx)
@@ -278,6 +292,174 @@ func (a *App) GetStats() string {
 
 	data, _ := json.Marshal(stats)
 	return string(data)
+}
+
+// GetStatsDaily returns statistics for today
+func (a *App) GetStatsDaily() string {
+	now := time.Now()
+	today := now.Format("2006-01-02")
+
+	dailyStats := a.proxy.GetStats().GetDailyStats(today)
+
+	// Calculate totals
+	var totalRequests, totalErrors, totalInputTokens, totalOutputTokens int
+	for _, stats := range dailyStats {
+		totalRequests += stats.Requests
+		totalErrors += stats.Errors
+		totalInputTokens += stats.InputTokens
+		totalOutputTokens += stats.OutputTokens
+	}
+
+	result := map[string]interface{}{
+		"period":          "daily",
+		"date":            today,
+		"totalRequests":   totalRequests,
+		"totalErrors":     totalErrors,
+		"totalSuccess":    totalRequests - totalErrors,
+		"totalInputTokens": totalInputTokens,
+		"totalOutputTokens": totalOutputTokens,
+		"endpoints":       dailyStats,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetStatsWeekly returns statistics for this week (Monday to now)
+func (a *App) GetStatsWeekly() string {
+	now := time.Now()
+	// Calculate the start of this week (Monday)
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7 // Sunday = 7
+	}
+	daysFromMonday := weekday - 1
+	startOfWeek := now.AddDate(0, 0, -daysFromMonday)
+	startDate := startOfWeek.Format("2006-01-02")
+	endDate := now.Format("2006-01-02")
+
+	weeklyStats := a.proxy.GetStats().GetPeriodStats(startDate, endDate)
+
+	// Calculate totals
+	var totalRequests, totalErrors, totalInputTokens, totalOutputTokens int
+	for _, stats := range weeklyStats {
+		totalRequests += stats.Requests
+		totalErrors += stats.Errors
+		totalInputTokens += stats.InputTokens
+		totalOutputTokens += stats.OutputTokens
+	}
+
+	result := map[string]interface{}{
+		"period":          "weekly",
+		"startDate":       startDate,
+		"endDate":         endDate,
+		"totalRequests":   totalRequests,
+		"totalErrors":     totalErrors,
+		"totalSuccess":    totalRequests - totalErrors,
+		"totalInputTokens": totalInputTokens,
+		"totalOutputTokens": totalOutputTokens,
+		"endpoints":       weeklyStats,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetStatsMonthly returns statistics for this month (1st to now)
+func (a *App) GetStatsMonthly() string {
+	now := time.Now()
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	startDate := startOfMonth.Format("2006-01-02")
+	endDate := now.Format("2006-01-02")
+
+	monthlyStats := a.proxy.GetStats().GetPeriodStats(startDate, endDate)
+
+	// Calculate totals
+	var totalRequests, totalErrors, totalInputTokens, totalOutputTokens int
+	for _, stats := range monthlyStats {
+		totalRequests += stats.Requests
+		totalErrors += stats.Errors
+		totalInputTokens += stats.InputTokens
+		totalOutputTokens += stats.OutputTokens
+	}
+
+	result := map[string]interface{}{
+		"period":          "monthly",
+		"startDate":       startDate,
+		"endDate":         endDate,
+		"totalRequests":   totalRequests,
+		"totalErrors":     totalErrors,
+		"totalSuccess":    totalRequests - totalErrors,
+		"totalInputTokens": totalInputTokens,
+		"totalOutputTokens": totalOutputTokens,
+		"endpoints":       monthlyStats,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetStatsTrend returns trend comparison data
+func (a *App) GetStatsTrend() string {
+	now := time.Now()
+
+	// Today vs Yesterday
+	today := now.Format("2006-01-02")
+	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+
+	todayStats := a.proxy.GetStats().GetDailyStats(today)
+	yesterdayStats := a.proxy.GetStats().GetDailyStats(yesterday)
+
+	// Calculate totals for today
+	var todayRequests, todayErrors, todayInputTokens, todayOutputTokens int
+	for _, stats := range todayStats {
+		todayRequests += stats.Requests
+		todayErrors += stats.Errors
+		todayInputTokens += stats.InputTokens
+		todayOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate totals for yesterday
+	var yesterdayRequests, yesterdayErrors, yesterdayInputTokens, yesterdayOutputTokens int
+	for _, stats := range yesterdayStats {
+		yesterdayRequests += stats.Requests
+		yesterdayErrors += stats.Errors
+		yesterdayInputTokens += stats.InputTokens
+		yesterdayOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate percentage changes
+	requestsTrend := calculateTrend(todayRequests, yesterdayRequests)
+	errorsTrend := calculateTrend(todayErrors, yesterdayErrors)
+	tokensTrend := calculateTrend(todayInputTokens+todayOutputTokens, yesterdayInputTokens+yesterdayOutputTokens)
+
+	result := map[string]interface{}{
+		"daily": map[string]interface{}{
+			"current":       todayRequests,
+			"previous":      yesterdayRequests,
+			"trend":         requestsTrend,
+			"currentErrors": todayErrors,
+			"previousErrors": yesterdayErrors,
+			"errorsTrend":   errorsTrend,
+			"currentTokens": todayInputTokens + todayOutputTokens,
+			"previousTokens": yesterdayInputTokens + yesterdayOutputTokens,
+			"tokensTrend":   tokensTrend,
+		},
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// calculateTrend calculates percentage change between current and previous values
+func calculateTrend(current, previous int) float64 {
+	if previous == 0 {
+		if current == 0 {
+			return 0
+		}
+		return 100.0 // 100% increase from 0
+	}
+	return ((float64(current) - float64(previous)) / float64(previous)) * 100.0
 }
 
 // AddEndpoint adds a new endpoint

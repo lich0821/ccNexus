@@ -40,37 +40,60 @@ export function initUI() {
         <div class="container">
             <!-- Statistics -->
             <div class="card">
-                <h2>📊 ${t('statistics.title')}</h2>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="label">${t('statistics.endpoints')}</div>
-                        <div class="value">
-                            <span id="activeEndpoints">0</span>
-                            <span style="font-size: 20px; opacity: 0.7;"> / </span>
-                            <span id="totalEndpoints" style="font-size: 20px; opacity: 0.7;">0</span>
-                        </div>
-                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">${t('statistics.activeTotal')}</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">📊 ${t('statistics.title')}</h2>
+                    <div class="stats-tabs">
+                        <button class="stats-tab-btn active" data-period="daily" onclick="window.switchStatsPeriod('daily')">
+                            📅 ${t('statistics.daily')}
+                        </button>
+                        <button class="stats-tab-btn" data-period="weekly" onclick="window.switchStatsPeriod('weekly')">
+                            📆 ${t('statistics.weekly')}
+                        </button>
+                        <button class="stats-tab-btn" data-period="monthly" onclick="window.switchStatsPeriod('monthly')">
+                            📊 ${t('statistics.monthly')}
+                        </button>
                     </div>
+                </div>
+                <div class="stats-grid">
                     <div class="stat-box">
                         <div class="label">${t('statistics.totalRequests')}</div>
                         <div class="value">
-                            <span id="totalRequests">0</span>
+                            <span id="periodTotalRequests">0</span>
                         </div>
-                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                            <span id="successRequests">0</span> ${t('statistics.success')} /
-                            <span id="failedRequests">0</span> ${t('statistics.failed')}
+                        <div class="trend-container">
+                            <span class="trend" id="requestsTrend">→ 0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">${t('statistics.successFailed')}</div>
+                        <div class="value" style="font-size: 24px;">
+                            <span id="periodSuccess">0</span> / <span id="periodFailed">0</span>
+                        </div>
+                        <div class="trend-container">
+                            <span class="trend" id="errorsTrend">→ 0%</span>
                         </div>
                     </div>
                     <div class="stat-box">
                         <div class="label">${t('statistics.totalTokens')}</div>
                         <div class="value">
-                            <span id="totalTokens">0</span>
+                            <span id="periodTotalTokens">0</span>
                         </div>
-                        <div style="font-size: 12px; opacity: 0.8; margin-top: 5px;">
-                            ${t('statistics.in')}: <span id="totalInputTokens">0</span> /
-                            ${t('statistics.out')}: <span id="totalOutputTokens">0</span>
+                        <div class="trend-container">
+                            <span class="trend" id="tokensTrend">→ 0%</span>
                         </div>
                     </div>
+                </div>
+
+                <!-- Hidden cumulative stats for endpoint cards -->
+                <div style="display: none;">
+                    <span id="activeEndpoints">0</span>
+                    <span id="totalEndpoints">0</span>
+                    <span id="totalRequests">0</span>
+                    <span id="successRequests">0</span>
+                    <span id="failedRequests">0</span>
+                    <span id="totalTokens">0</span>
+                    <span id="totalInputTokens">0</span>
+                    <span id="totalOutputTokens">0</span>
                 </div>
             </div>
 
