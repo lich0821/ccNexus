@@ -103,9 +103,13 @@ export default {
     },
     statistics: {
         title: 'Statistics',
+        daily: 'Today',
+        weekly: 'This Week',
+        monthly: 'This Month',
         endpoints: 'Endpoints',
         activeTotal: 'Active / Total',
         totalRequests: 'Total Requests',
+        successFailed: 'Success / Failed',
         success: 'success',
         failed: 'failed',
         totalTokens: 'Total Tokens',

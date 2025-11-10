@@ -115,6 +115,66 @@ body {
     font-weight: bold;
 }
 
+/* Statistics Tabs */
+.stats-tabs {
+    display: flex;
+    gap: 10px;
+}
+
+.stats-tab-btn {
+    background: #f8f9fa;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.stats-tab-btn:hover {
+    background: #e9ecef;
+    transform: translateY(-1px);
+}
+
+.stats-tab-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Trend Display */
+.trend-container {
+    margin-top: 8px;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.trend {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 11px;
+}
+
+.trend-up {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.trend-down {
+    background: rgba(255, 255, 255, 0.2);
+    color: #a8e6cf;
+}
+
+.trend-flat {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
 .endpoint-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
