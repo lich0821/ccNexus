@@ -122,17 +122,39 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}()
 
-	// Start data cleanup task (runs daily to remove data older than 30 days)
+	// Start data archive task (checks and archives complete months at startup)
 	go func() {
-		// Run cleanup once at startup
-		a.proxy.GetStats().CleanupOldData(30)
+		archiveManager, err := proxy.NewArchiveManager()
+		if err != nil {
+			logger.Error("Failed to create archive manager: %v", err)
+			return
+		}
 
-		// Then run cleanup daily
+		// Check and archive complete months at startup
+		if err := archiveManager.CheckAndArchive(a.proxy.GetStats()); err != nil {
+			logger.Error("Failed to check/archive data: %v", err)
+		} else {
+			logger.Info("Archive check completed successfully")
+		}
+
+		// Start periodic archive task (runs daily for T+1 mode)
+		// This will update current month archive daily with yesterday's data
 		ticker := time.NewTicker(24 * time.Hour)
 		defer ticker.Stop()
-		for range ticker.C {
-			a.proxy.GetStats().CleanupOldData(30)
-			logger.Debug("Daily stats cleanup completed")
+
+		for {
+			select {
+			case <-ticker.C:
+				logger.Info("Running periodic archive task...")
+				if err := archiveManager.CheckAndArchive(a.proxy.GetStats()); err != nil {
+					logger.Error("Periodic archive failed: %v", err)
+				} else {
+					logger.Info("Periodic archive completed successfully")
+				}
+			case <-a.ctx.Done():
+				logger.Info("Archive task stopping...")
+				return
+			}
 		}
 	}()
 
@@ -146,8 +168,8 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called when the app is closing
 func (a *App) shutdown(ctx context.Context) {
 	if a.proxy != nil {
-		// Save stats before stopping
-		if err := a.proxy.GetStats().Save(); err != nil {
+		// Flush any pending saves and save stats before stopping
+		if err := a.proxy.GetStats().FlushSave(); err != nil {
 			logger.Warn("Failed to save stats on shutdown: %v", err)
 		}
 		a.proxy.Stop()
@@ -228,9 +250,9 @@ func (a *App) Quit() {
 		a.saveWindowSize(ctx)
 	}
 
-	// Save stats and cleanup
+	// Flush any pending saves and cleanup
 	if a.proxy != nil {
-		if err := a.proxy.GetStats().Save(); err != nil {
+		if err := a.proxy.GetStats().FlushSave(); err != nil {
 			logger.Warn("Failed to save stats: %v", err)
 		}
 		a.proxy.Stop()
@@ -310,15 +332,70 @@ func (a *App) GetStatsDaily() string {
 		totalOutputTokens += stats.OutputTokens
 	}
 
+	// Count active and total endpoints
+	endpoints := a.config.GetEndpoints()
+	totalEndpoints := len(endpoints)
+	activeEndpoints := 0
+	for _, ep := range endpoints {
+		if ep.Enabled {
+			activeEndpoints++
+		}
+	}
+
 	result := map[string]interface{}{
-		"period":          "daily",
-		"date":            today,
-		"totalRequests":   totalRequests,
-		"totalErrors":     totalErrors,
-		"totalSuccess":    totalRequests - totalErrors,
-		"totalInputTokens": totalInputTokens,
+		"period":            "daily",
+		"date":              today,
+		"totalRequests":     totalRequests,
+		"totalErrors":       totalErrors,
+		"totalSuccess":      totalRequests - totalErrors,
+		"totalInputTokens":  totalInputTokens,
 		"totalOutputTokens": totalOutputTokens,
-		"endpoints":       dailyStats,
+		"activeEndpoints":   activeEndpoints,
+		"totalEndpoints":    totalEndpoints,
+		"endpoints":         dailyStats,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetStatsYesterday returns statistics for yesterday
+func (a *App) GetStatsYesterday() string {
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+
+	yesterdayStats := a.proxy.GetStats().GetDailyStats(yesterday)
+
+	// Calculate totals
+	var totalRequests, totalErrors, totalInputTokens, totalOutputTokens int
+	for _, stats := range yesterdayStats {
+		totalRequests += stats.Requests
+		totalErrors += stats.Errors
+		totalInputTokens += stats.InputTokens
+		totalOutputTokens += stats.OutputTokens
+	}
+
+	// Count active and total endpoints
+	endpoints := a.config.GetEndpoints()
+	totalEndpoints := len(endpoints)
+	activeEndpoints := 0
+	for _, ep := range endpoints {
+		if ep.Enabled {
+			activeEndpoints++
+		}
+	}
+
+	result := map[string]interface{}{
+		"period":            "yesterday",
+		"date":              yesterday,
+		"totalRequests":     totalRequests,
+		"totalErrors":       totalErrors,
+		"totalSuccess":      totalRequests - totalErrors,
+		"totalInputTokens":  totalInputTokens,
+		"totalOutputTokens": totalOutputTokens,
+		"activeEndpoints":   activeEndpoints,
+		"totalEndpoints":    totalEndpoints,
+		"endpoints":         yesterdayStats,
 	}
 
 	data, _ := json.Marshal(result)
@@ -349,16 +426,28 @@ func (a *App) GetStatsWeekly() string {
 		totalOutputTokens += stats.OutputTokens
 	}
 
+	// Count active and total endpoints
+	endpoints := a.config.GetEndpoints()
+	totalEndpoints := len(endpoints)
+	activeEndpoints := 0
+	for _, ep := range endpoints {
+		if ep.Enabled {
+			activeEndpoints++
+		}
+	}
+
 	result := map[string]interface{}{
-		"period":          "weekly",
-		"startDate":       startDate,
-		"endDate":         endDate,
-		"totalRequests":   totalRequests,
-		"totalErrors":     totalErrors,
-		"totalSuccess":    totalRequests - totalErrors,
-		"totalInputTokens": totalInputTokens,
+		"period":            "weekly",
+		"startDate":         startDate,
+		"endDate":           endDate,
+		"totalRequests":     totalRequests,
+		"totalErrors":       totalErrors,
+		"totalSuccess":      totalRequests - totalErrors,
+		"totalInputTokens":  totalInputTokens,
 		"totalOutputTokens": totalOutputTokens,
-		"endpoints":       weeklyStats,
+		"activeEndpoints":   activeEndpoints,
+		"totalEndpoints":    totalEndpoints,
+		"endpoints":         weeklyStats,
 	}
 
 	data, _ := json.Marshal(result)
@@ -383,16 +472,28 @@ func (a *App) GetStatsMonthly() string {
 		totalOutputTokens += stats.OutputTokens
 	}
 
+	// Count active and total endpoints
+	endpoints := a.config.GetEndpoints()
+	totalEndpoints := len(endpoints)
+	activeEndpoints := 0
+	for _, ep := range endpoints {
+		if ep.Enabled {
+			activeEndpoints++
+		}
+	}
+
 	result := map[string]interface{}{
-		"period":          "monthly",
-		"startDate":       startDate,
-		"endDate":         endDate,
-		"totalRequests":   totalRequests,
-		"totalErrors":     totalErrors,
-		"totalSuccess":    totalRequests - totalErrors,
-		"totalInputTokens": totalInputTokens,
+		"period":            "monthly",
+		"startDate":         startDate,
+		"endDate":           endDate,
+		"totalRequests":     totalRequests,
+		"totalErrors":       totalErrors,
+		"totalSuccess":      totalRequests - totalErrors,
+		"totalInputTokens":  totalInputTokens,
 		"totalOutputTokens": totalOutputTokens,
-		"endpoints":       monthlyStats,
+		"activeEndpoints":   activeEndpoints,
+		"totalEndpoints":    totalEndpoints,
+		"endpoints":         monthlyStats,
 	}
 
 	data, _ := json.Marshal(result)
@@ -457,7 +558,9 @@ func calculateTrend(current, previous int) float64 {
 		if current == 0 {
 			return 0
 		}
-		return 100.0 // 100% increase from 0
+		// When previous is 0 but current > 0, return a large positive number
+		// to indicate significant increase (capped at 999.9% for display purposes)
+		return 999.9
 	}
 	return ((float64(current) - float64(previous)) / float64(previous)) * 100.0
 }
@@ -1269,6 +1372,117 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 	result := map[string]interface{}{
 		"success":      true,
 		"conflictInfo": conflictInfo,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// ListArchives returns a list of all available archive months
+func (a *App) ListArchives() string {
+	archiveManager, err := proxy.NewArchiveManager()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
+			"archives": []string{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	archives, err := archiveManager.ListArchives()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("获取归档列表失败: %v", err),
+			"archives": []string{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success":  true,
+		"archives": archives,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetArchiveData returns archived data for a specific month
+func (a *App) GetArchiveData(month string) string {
+	archiveManager, err := proxy.NewArchiveManager()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	archive, err := archiveManager.LoadArchive(month)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("加载归档失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"archive": archive,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetArchiveSummary returns summary statistics for an archived month
+func (a *App) GetArchiveSummary(month string) string {
+	archiveManager, err := proxy.NewArchiveManager()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	summary, err := archiveManager.GetArchiveSummary(month)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("获取归档摘要失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"summary": summary,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GenerateMockArchives generates mock archive data for testing
+func (a *App) GenerateMockArchives(monthsCount int) string {
+	if err := proxy.GenerateMockArchivesForUser(monthsCount); err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("生成模拟数据失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("成功生成 %d 个月的模拟归档数据", monthsCount),
 	}
 	data, _ := json.Marshal(result)
 	return string(data)

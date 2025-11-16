@@ -4,10 +4,12 @@ export default {
         version: 'Version'
     },
     header: {
-        title: 'ccNexus - API Endpoint Rotation Proxy',
+        title: 'ccNexus - API Endpoint Round-Robin Proxy',
         port: 'Port',
         addEndpoint: 'Add Endpoint',
-        github: 'GitHub'
+        github: 'GitHub',
+        githubRepo: 'GitHub Repository',
+        about: 'About ccNexus'
     },
     endpoints: {
         title: 'Endpoints',
@@ -85,14 +87,18 @@ export default {
     },
     welcome: {
         title: 'Welcome to ccNexus!',
-        message: 'ccNexus is a smart API endpoint rotation proxy for Claude Code.',
+        titleWithVersion: '👋 Welcome to ccNexus v{version}',
+        message: 'ccNexus is a smart API endpoint round-robin proxy for Claude Code.',
         features: 'Features',
         feature1: 'Automatic failover between multiple API endpoints',
         feature2: 'Support for Claude, OpenAI, and Gemini API formats',
         feature3: 'Real-time statistics and monitoring',
         feature4: 'Smart retry logic with round-robin load balancing',
         getStarted: 'Get Started',
-        dontShow: "Don't show this again"
+        dontShow: "Don't show this again",
+        qrCodeTip: 'Scan to follow the official account for more',
+        readArticle: '📖 Read Introduction',
+        githubRepo: '🔗 GitHub Repository'
     },
     settings: {
         language: 'Language',
@@ -104,9 +110,11 @@ export default {
     statistics: {
         title: 'Statistics',
         daily: 'Today',
+        yesterday: 'Yesterday',
         weekly: 'This Week',
         monthly: 'This Month',
-        endpoints: 'Endpoints',
+        history: 'History',
+        endpoints: 'Endpoints Count',
         activeTotal: 'Active / Total',
         totalRequests: 'Total Requests',
         successFailed: 'Success / Failed',
@@ -115,6 +123,20 @@ export default {
         totalTokens: 'Total Tokens',
         in: 'In',
         out: 'Out'
+    },
+    history: {
+        title: 'Historical Statistics',
+        selectMonth: 'Select Month',
+        noData: 'No data for this month',
+        noArchives: 'No historical archives available',
+        loadFailed: 'Failed to load archive data',
+        dailyDetails: 'Daily Details',
+        date: 'Date',
+        requests: 'Requests',
+        errors: 'Errors',
+        inputTokens: 'Input Tokens',
+        outputTokens: 'Output Tokens',
+        totalTokens: 'Total Tokens'
     },
     webdav: {
         title: 'WebDAV Cloud Backup',
@@ -175,5 +197,21 @@ export default {
         yes: 'Yes',
         no: 'No',
         confirm: 'Confirm'
-    }
+    },
+    tips: [
+        'Tip: You can add multiple API endpoints for automatic failover',
+        'Tip: ccNexus automatically switches to the next endpoint when one fails',
+        'Tip: Check the Statistics tab to monitor your API usage',
+        'Tip: Use different transformers (Claude/OpenAI/Gemini) for different endpoints',
+        'Tip: Enable multiple endpoints to improve response speed and reliability',
+        'Tip: Click the port number in the header to change the proxy port',
+        'Tip: View historical statistics by clicking the "History" tab',
+        'Tip: Use WebDAV to sync your configuration across devices',
+        'Tip: Test your endpoints before saving to ensure they work correctly',
+        'Tip: Your API keys are stored locally and never sent to third parties',
+        'Tip: Add remarks to your endpoints to help identify them easily',
+        'Tip: Switch between English and Chinese in the language selector',
+        'Tip: Statistics are updated every 5 seconds automatically',
+        'Tip: ccNexus supports Claude, OpenAI, and Gemini API formats'
+    ]
 };

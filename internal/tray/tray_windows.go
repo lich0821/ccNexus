@@ -5,15 +5,18 @@ package tray
 
 import (
 	"github.com/getlantern/systray"
+	"github.com/lich0821/ccNexus/internal/logger"
 )
 
 var (
-	showWindow func()
-	hideWindow func()
-	quitApp    func()
-	mShow      *systray.MenuItem
-	mQuit      *systray.MenuItem
+	showWindow  func()
+	hideWindow  func()
+	quitApp     func()
+	mShow       *systray.MenuItem
+	mQuit       *systray.MenuItem
 	currentLang string
+	// Add a channel to serialize window operations
+	windowOpChan chan func()
 )
 
 // Tray menu texts
@@ -47,13 +50,50 @@ func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func(), langu
 	quitApp = quitFunc
 	currentLang = language
 
+	// Initialize the window operation channel with buffer size 1
+	// This ensures operations are serialized and prevents goroutine accumulation
+	windowOpChan = make(chan func(), 1)
+
+	// Start a single worker goroutine to handle all window operations
+	go windowOperationWorker()
+
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error("System tray setup panic: %v", r)
+			}
+		}()
+
 		systray.Run(func() {
 			onReady(icon)
 		}, func() {
 			onExit()
 		})
 	}()
+}
+
+// windowOperationWorker is a single worker that processes window operations serially
+func windowOperationWorker() {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("Window operation worker panic: %v, restarting...", r)
+			// Restart the worker if it crashes
+			go windowOperationWorker()
+		}
+	}()
+
+	for op := range windowOpChan {
+		if op != nil {
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						logger.Error("Window operation panic: %v", r)
+					}
+				}()
+				op()
+			}()
+		}
+	}
 }
 
 func onReady(icon []byte) {
@@ -74,25 +114,57 @@ func onReady(icon []byte) {
 
 	// Handle menu clicks in a separate goroutine
 	go func() {
-		for {
-			select {
-			case <-mShow.ClickedCh:
-				if showWindow != nil {
-					showWindow()
-				}
-			case <-mQuit.ClickedCh:
-				if quitApp != nil {
-					quitApp()
-				}
-				systray.Quit()
-				return
+		// Add panic recovery to prevent the goroutine from crashing
+		defer func() {
+			if r := recover(); r != nil {
+				logger.Error("Tray menu event handler panic recovered: %v", r)
+				// Restart the event handler
+				go handleMenuEvents()
 			}
-		}
+		}()
+
+		handleMenuEvents()
 	}()
 }
 
+// handleMenuEvents handles the menu click events
+func handleMenuEvents() {
+	// Add panic recovery for this handler as well
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("Menu event handler panic: %v", r)
+		}
+	}()
+
+	for {
+		select {
+		case <-mShow.ClickedCh:
+			if showWindow != nil {
+				// Send operation to the worker channel (non-blocking)
+				// Use select with default to avoid blocking if channel is full
+				select {
+				case windowOpChan <- showWindow:
+					// Operation queued successfully
+				default:
+					// Channel is full, skip duplicate request
+				}
+			}
+
+		case <-mQuit.ClickedCh:
+			if quitApp != nil {
+				quitApp()
+			}
+			systray.Quit()
+			return
+		}
+	}
+}
+
 func onExit() {
-	// Cleanup if needed
+	// Close the window operation channel
+	if windowOpChan != nil {
+		close(windowOpChan)
+	}
 }
 
 func Quit() {
@@ -101,6 +173,12 @@ func Quit() {
 
 // UpdateLanguage updates the tray menu language
 func UpdateLanguage(language string) {
+	defer func() {
+		if r := recover(); r != nil {
+			logger.Error("UpdateLanguage panic: %v", r)
+		}
+	}()
+
 	currentLang = language
 	if mShow != nil && mQuit != nil {
 		texts := getMenuTexts(language)

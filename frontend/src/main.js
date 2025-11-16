@@ -7,6 +7,7 @@ import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } fro
 import { renderEndpoints } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
+import { initTips } from './modules/tips.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -67,6 +68,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     loadLogs();
+
+    // Initialize tips
+    initTips();
 
     // Refresh stats every 5 seconds
     setInterval(async () => {
@@ -139,3 +143,9 @@ window.quitApplication = quitApplication;
 window.minimizeToTray = minimizeToTray;
 window.showDataSyncDialog = showDataSyncDialog;
 window.switchStatsPeriod = switchStatsPeriod;
+
+// History modal functions
+window.closeHistoryModal = async () => {
+    const { closeHistoryModal } = await import('./modules/history.js');
+    closeHistoryModal();
+};

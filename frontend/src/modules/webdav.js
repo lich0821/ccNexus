@@ -27,6 +27,7 @@ function showModal(title, content) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2>${title}</h2>
+                <button class="modal-close" onclick="window.closeDataSyncDialog()">&times;</button>
             </div>
             <div class="modal-body">
                 ${content}
@@ -36,12 +37,7 @@ function showModal(title, content) {
 
     document.body.appendChild(modal);
 
-    // Close modal when clicking outside
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            hideModal();
-        }
-    });
+    // Do NOT close modal when clicking outside (like history modal)
 }
 
 // Show a sub-modal on top of existing modal
@@ -61,6 +57,7 @@ function showSubModal(title, content) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2>${title}</h2>
+                <button class="modal-close" onclick="window.closeBackupManager()">&times;</button>
             </div>
             <div class="modal-body">
                 ${content}
@@ -70,12 +67,7 @@ function showSubModal(title, content) {
 
     document.body.appendChild(modal);
 
-    // Close modal when clicking outside
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            hideSubModal();
-        }
-    });
+    // Do NOT close modal when clicking outside (like history modal)
 }
 
 // Show a confirm modal on top of sub modal
@@ -199,16 +191,10 @@ export async function showDataSyncDialog() {
                     </button>
                 </div>
             </div>
-
-            <div class="data-sync-footer">
-                <button class="btn btn-secondary" onclick="window.closeDataSyncDialog()">
-                    ${t('modal.close')}
-                </button>
-            </div>
         </div>
     `;
 
-    showModal(`☁️ ${t('webdav.dataSync')}`, content);
+    showModal(`🔄 ${t('webdav.dataSync')}`, content);
 }
 
 // Save WebDAV config from dialog
@@ -423,9 +409,6 @@ export async function openBackupManager() {
                     renderBackupList(backups)
                 }
             </div>
-            <div class="backup-manager-footer">
-                <button class="btn btn-secondary" onclick="window.closeBackupManager()">${t('modal.close')}</button>
-            </div>
         </div>
     `;
 
@@ -612,11 +595,6 @@ async function promptFilename(message, defaultValue) {
     return new Promise((resolve) => {
         const content = `
             <div class="prompt-dialog">
-                <div class="prompt-header">
-                    <span class="prompt-icon">📝</span>
-                    <span class="prompt-title">${t('webdav.filename')}</span>
-                </div>
-                <div class="prompt-divider"></div>
                 <div class="prompt-body">
                     <input type="text" id="promptInput" class="form-input" value="${defaultValue || ''}" />
                 </div>
@@ -627,7 +605,7 @@ async function promptFilename(message, defaultValue) {
             </div>
         `;
 
-        showSubModal('', content);
+        showSubModal('📝 ' + t('webdav.filename'), content);
 
         // Focus input
         setTimeout(() => {

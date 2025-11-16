@@ -48,7 +48,7 @@ export async function loadStats() {
     }
 }
 
-// Load statistics by period (daily, weekly, monthly)
+// Load statistics by period (daily, yesterday, weekly, monthly)
 export async function loadStatsByPeriod(period = 'daily') {
     try {
         currentPeriod = period;
@@ -57,6 +57,9 @@ export async function loadStatsByPeriod(period = 'daily') {
         switch (period) {
             case 'daily':
                 statsStr = await window.go.main.App.GetStatsDaily();
+                break;
+            case 'yesterday':
+                statsStr = await window.go.main.App.GetStatsYesterday();
                 break;
             case 'weekly':
                 statsStr = await window.go.main.App.GetStatsWeekly();
@@ -77,6 +80,14 @@ export async function loadStatsByPeriod(period = 'daily') {
 
         const totalTokens = (stats.totalInputTokens || 0) + (stats.totalOutputTokens || 0);
         document.getElementById('periodTotalTokens').textContent = formatTokens(totalTokens);
+        document.getElementById('periodInputTokens').textContent = formatTokens(stats.totalInputTokens || 0);
+        document.getElementById('periodOutputTokens').textContent = formatTokens(stats.totalOutputTokens || 0);
+
+        // Update endpoint stats (active / total)
+        const activeEndpoints = stats.activeEndpoints || 0;
+        const totalEndpoints = stats.totalEndpoints || 0;
+        document.getElementById('activeEndpointsDisplay').textContent = activeEndpoints;
+        document.getElementById('totalEndpointsDisplay').textContent = totalEndpoints;
 
         // Load and display trend
         await loadTrend();
@@ -153,6 +164,15 @@ function formatTrend(value) {
 
 // Switch statistics period
 export function switchStatsPeriod(period) {
+    // Handle history modal separately
+    if (period === 'history') {
+        // Open history modal without changing active tab
+        import('./history.js').then(module => {
+            module.showHistoryModal();
+        });
+        return;
+    }
+
     currentPeriod = period;
 
     // Update tab buttons

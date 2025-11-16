@@ -37,7 +37,7 @@ body {
 .container {
     flex: 1;
     overflow-y: auto;
-    padding: 30px;
+    padding: 30px 30px 13px 30px;;
 }
 
 .footer {
@@ -58,6 +58,15 @@ body {
 .footer-left {
     display: flex;
     align-items: center;
+    min-width: 150px;
+}
+
+.footer-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 }
 
 .footer-right {
@@ -65,6 +74,38 @@ body {
     align-items: center;
     color: #667eea;
     font-family: 'Courier New', monospace;
+    min-width: 80px;
+    justify-content: flex-end;
+}
+
+/* Tips Container */
+.tips-container {
+    position: absolute;
+    left: 0px;
+    right: 50px;
+    overflow: hidden;
+    height: 20px;
+}
+
+/* Scrolling Tip */
+.tip-scroll {
+    display: inline-block;
+    white-space: nowrap;
+    font-size: 13px;
+    color: #999;
+    font-weight: 400;
+    position: absolute;
+    right: 0;
+    animation: scrollTip 20s linear;
+}
+
+@keyframes scrollTip {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(calc(-100% - 100vw));
+    }
 }
 
 .card {
@@ -98,21 +139,101 @@ body {
     border-radius: 8px;
     text-align: center;
     transition: transform 0.2s;
+    position: relative;
 }
 
 .stat-box:hover {
     transform: translateY(-2px);
 }
 
-.stat-box .label {
-    font-size: 12px;
-    opacity: 0.9;
-    margin-bottom: 5px;
+/* Stat Box Header - 顶部区域（标签+趋势） */
+.stat-box .stat-header {
+    margin-bottom: 10px;
+    min-height: 20px;
+    text-align: center;
 }
 
-.stat-box .value {
+.stat-box .stat-label {
+    font-size: 13px;
+    font-weight: normal;
+    opacity: 0.95;
+}
+
+/* Stat Box Value - 主数字统一32px */
+.stat-box .stat-value {
     font-size: 32px;
     font-weight: bold;
+    margin: 8px 0;
+    line-height: 1.2;
+}
+
+/* 端点卡片：突出活跃数字 */
+.stat-box .stat-primary {
+    font-size: 35px;
+}
+
+.stat-box .stat-secondary {
+    font-size: 19px;
+    color: rgba(255, 255, 255, 0.65);
+    margin: 0 4px;
+}
+
+/* Stat Box Detail - 详细信息统一13px */
+.stat-box .stat-detail {
+    font-size: 13px;
+    color: rgba(200, 200, 200, 0.9);
+    margin-top: 8px;
+}
+
+/* 分隔符样式 */
+.stat-separator {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 4px;
+}
+
+.stat-total {
+    font-size: 28px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-divider {
+    color: rgba(255, 255, 255, 0.5);
+    margin: 0 6px;
+}
+
+.stat-text {
+    opacity: 0.85;
+}
+
+/* Trend Display - 趋势标签 */
+.trend {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 11px;
+    background: rgba(255, 255, 255, 0.15);
+    white-space: nowrap;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+}
+
+.trend-up {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.trend-down {
+    background: rgba(255, 255, 255, 0.2);
+    color: #a8e6cf;
+}
+
+.trend-flat {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* Statistics Tabs */
@@ -145,34 +266,172 @@ body {
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-/* Trend Display */
-.trend-container {
-    margin-top: 8px;
-    font-size: 12px;
-    opacity: 0.9;
+/* History Statistics Styles */
+.history-selector {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.trend {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
+.history-selector label {
     font-weight: 500;
-    font-size: 11px;
+    color: #333;
 }
 
-.trend-up {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
+.history-selector select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
-.trend-down {
-    background: rgba(255, 255, 255, 0.2);
-    color: #a8e6cf;
+.history-selector select:hover {
+    border-color: #667eea;
 }
 
-.trend-flat {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+.history-selector select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.history-details {
+    margin-top: 30px;
+}
+
+.history-details h3 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 18px;
+}
+
+.table-container {
+    overflow-x: auto;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+#historyDailyTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+#historyDailyTable th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 16px;
+    text-align: center;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#historyDailyTable td {
+    padding: 12px 16px;
+    border-top: 1px solid #f0f0f0;
+    color: #333;
+    font-size: 14px;
+    text-align: center;
+}
+
+#historyDailyTable tbody tr:hover {
+    background: #f8f9fa;
+}
+
+#historyDailyTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.error-message {
+    margin-top: 15px;
+    padding: 12px 16px;
+    background: #fee;
+    border: 1px solid #fcc;
+    border-radius: 8px;
+    color: #c33;
+    font-size: 14px;
+}
+
+/* History Modal Styles */
+#historyModal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+#historyModal .modal-header h2 {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+}
+
+#historyModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+#historyModal .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+/* Adjust history styles for modal */
+#historyModal .history-selector {
+    margin-bottom: 25px;
+}
+
+#historyModal .stats-grid {
+    margin-bottom: 30px;
+}
+
+#historyModal .history-details h3 {
+    margin-bottom: 20px;
 }
 
 .endpoint-list {
@@ -468,6 +727,114 @@ body {
     display: flex;
 }
 
+#endpointModal {
+    backdrop-filter: blur(4px);
+}
+
+#endpointModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#endpointModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#endpointModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#endpointModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+#endpointModal .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+#endpointModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
+#portModal {
+    backdrop-filter: blur(4px);
+}
+
+#portModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#portModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#portModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#portModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+#portModal .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+#portModal .modal-body {
+    padding: 25px 30px 10px 30px;
+}
+
 .modal-content {
     background: white;
     border-radius: 12px;
@@ -484,20 +851,6 @@ body {
 .modal-header {
     padding: 30px 30px 20px 30px;
     flex-shrink: 0;
-}
-
-/* Backup manager modal header should have blue border */
-#subModal:has(.backup-manager) .modal-header {
-    border-bottom: none;
-    padding: 30px 30px 0 30px;
-}
-
-#subModal:has(.backup-manager) .modal-header h2 {
-    margin: 0;
-    border-bottom: 2px solid #667eea;
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    margin-right: 1px;
 }
 
 .modal-body {
@@ -1120,29 +1473,6 @@ body {
     width: 100%;
 }
 
-.prompt-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.prompt-icon {
-    font-size: 20px;
-}
-
-.prompt-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #333;
-}
-
-.prompt-divider {
-    height: 2px;
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-    margin-bottom: 15px;
-}
-
 .prompt-body {
     margin-bottom: 15px;
 }
@@ -1168,15 +1498,6 @@ body {
     display: flex;
     gap: 8px;
     justify-content: flex-end;
-}
-
-.backup-manager-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 15px;
-    margin-bottom: 10px;
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
 }
 
 .backup-list-container {
@@ -1372,15 +1693,125 @@ body {
 }
 
 /* Override modal-content width for generic modal (data sync) */
+#genericModal {
+    backdrop-filter: blur(4px);
+}
+
 #genericModal .modal-content {
     max-width: min(530px, 92vw);
     width: 530px;
 }
 
+/* Generic Modal header with close button (like history modal) */
+#genericModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#genericModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#genericModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#genericModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+#genericModal .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+#genericModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
 /* Sub-modal styles */
+#subModal {
+    backdrop-filter: blur(4px);
+}
+
 #subModal .modal-content {
     max-width: 380px !important;
     width: 380px !important;
+}
+
+/* Sub-modal header with close button and divider */
+#subModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#subModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#subModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#subModal .modal-close {
+    background: none;
+    border: none;
+    font-size: 32px;
+    color: #999;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s;
+}
+
+#subModal .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+#subModal .modal-body {
+    padding: 25px 30px 30px 30px;
 }
 
 #subModal .prompt-dialog,
@@ -1396,11 +1827,11 @@ body {
 }
 
 .data-sync-section {
-    margin-bottom: 25px;
+    margin-bottom: 0px;
 }
 
 .data-sync-section h3 {
-    margin: 0 0 15px 0;
+    margin: 0 0 20px 0;
     font-size: 16px;
     color: #555;
     border-bottom: 2px solid #667eea;
@@ -1410,7 +1841,7 @@ body {
 .data-sync-actions {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    gap: 10px;
 }
 
 .data-sync-actions .btn.btn-primary,
@@ -1420,18 +1851,59 @@ body {
     font-size: 13px !important;
 }
 
-.data-sync-footer {
-    display: flex;
-    justify-content: flex-end;
-    margin-top: 20px;
-    margin-bottom: 10px;
-    padding-top: 15px;
-    border-top: 1px solid #e0e0e0;
-}
-
 /* Required field indicator */
 .required-mark {
     color: #ff4444;
     margin-right: 3px;
     font-weight: bold;
+}
+
+/* History Modal Override Styles - Must be at the end to ensure highest priority */
+#historyModal.modal {
+    display: none !important;
+}
+
+#historyModal.modal[style*="display: flex"],
+#historyModal.modal[style*="display:flex"] {
+    display: flex !important;
+}
+
+#historyModal .modal-content {
+    background: white !important;
+    border-radius: 16px !important;
+    width: 95% !important;
+    max-width: 800px !important;
+    max-height: 75vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    animation: slideUp 0.3s ease !important;
+    padding: 0 !important;
+}
+
+#historyModal .modal-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 20px 30px !important;
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+}
+
+#historyModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#historyModal .modal-body {
+    padding: 25px 30px 30px 30px !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
 }

@@ -22,6 +22,18 @@ export function DetectWebDAVConflict(arg1) {
   return window['go']['main']['App']['DetectWebDAVConflict'](arg1);
 }
 
+export function GenerateMockArchives(arg1) {
+  return window['go']['main']['App']['GenerateMockArchives'](arg1);
+}
+
+export function GetArchiveData(arg1) {
+  return window['go']['main']['App']['GetArchiveData'](arg1);
+}
+
+export function GetArchiveSummary(arg1) {
+  return window['go']['main']['App']['GetArchiveSummary'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
@@ -66,6 +78,10 @@ export function GetStatsWeekly() {
   return window['go']['main']['App']['GetStatsWeekly']();
 }
 
+export function GetStatsYesterday() {
+  return window['go']['main']['App']['GetStatsYesterday']();
+}
+
 export function GetSystemLanguage() {
   return window['go']['main']['App']['GetSystemLanguage']();
 }
@@ -76,6 +92,10 @@ export function GetVersion() {
 
 export function HideWindow() {
   return window['go']['main']['App']['HideWindow']();
+}
+
+export function ListArchives() {
+  return window['go']['main']['App']['ListArchives']();
 }
 
 export function ListWebDAVBackups() {
