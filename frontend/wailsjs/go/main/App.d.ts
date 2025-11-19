@@ -11,6 +11,12 @@ export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
 
 export function DetectWebDAVConflict(arg1:string):Promise<string>;
 
+export function GenerateMockArchives(arg1:number):Promise<string>;
+
+export function GetArchiveData(arg1:string):Promise<string>;
+
+export function GetArchiveSummary(arg1:string):Promise<string>;
+
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;
@@ -33,11 +39,15 @@ export function GetStatsTrend():Promise<string>;
 
 export function GetStatsWeekly():Promise<string>;
 
+export function GetStatsYesterday():Promise<string>;
+
 export function GetSystemLanguage():Promise<string>;
 
 export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
+
+export function ListArchives():Promise<string>;
 
 export function ListWebDAVBackups():Promise<string>;
 

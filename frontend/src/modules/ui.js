@@ -15,12 +15,12 @@ export function initUI() {
                         <span class="port-number" id="proxyPort">3000</span>
                     </div>
                     <div style="display: flex; gap: 10px;">
-                        <button class="header-link" onclick="window.openGitHub()" title="GitHub Repository">
+                        <button class="header-link" onclick="window.openGitHub()" title="${t('header.githubRepo')}">
                             <svg width="24" height="24" viewBox="0 0 16 16" fill="currentColor">
                                 <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
                             </svg>
                         </button>
-                        <button class="header-link" onclick="window.showWelcomeModal()" title="About ccNexus">
+                        <button class="header-link" onclick="window.showWelcomeModal()" title="${t('header.about')}">
                             📖
                         </button>
                         <div class="lang-switcher">
@@ -46,40 +46,65 @@ export function initUI() {
                         <button class="stats-tab-btn active" data-period="daily" onclick="window.switchStatsPeriod('daily')">
                             📅 ${t('statistics.daily')}
                         </button>
+                        <button class="stats-tab-btn" data-period="yesterday" onclick="window.switchStatsPeriod('yesterday')">
+                            📆 ${t('statistics.yesterday')}
+                        </button>
                         <button class="stats-tab-btn" data-period="weekly" onclick="window.switchStatsPeriod('weekly')">
-                            📆 ${t('statistics.weekly')}
+                            📊 ${t('statistics.weekly')}
                         </button>
                         <button class="stats-tab-btn" data-period="monthly" onclick="window.switchStatsPeriod('monthly')">
-                            📊 ${t('statistics.monthly')}
+                            📈 ${t('statistics.monthly')}
+                        </button>
+                        <button class="stats-tab-btn" data-period="history" onclick="window.switchStatsPeriod('history')">
+                            📚 ${t('statistics.history')}
                         </button>
                     </div>
                 </div>
-                <div class="stats-grid">
+
+                <!-- Current Stats View -->
+                <div id="currentStatsView">
+                    <div class="stats-grid">
                     <div class="stat-box">
-                        <div class="label">${t('statistics.totalRequests')}</div>
-                        <div class="value">
-                            <span id="periodTotalRequests">0</span>
+                        <div class="stat-header">
+                            <div class="stat-label">${t('statistics.endpoints')}</div>
                         </div>
-                        <div class="trend-container">
+                        <div class="stat-value">
+                            <span id="activeEndpointsDisplay" class="stat-primary">0</span>
+                            <span class="stat-secondary"> / </span>
+                            <span id="totalEndpointsDisplay" class="stat-secondary">0</span>
+                        </div>
+                        <div class="stat-detail">${t('statistics.activeTotal')}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-header">
+                            <div class="stat-label">${t('statistics.totalRequests')}</div>
                             <span class="trend" id="requestsTrend">→ 0%</span>
                         </div>
+                        <div class="stat-value">
+                            <span id="periodTotalRequests">0</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span id="periodSuccess">0</span>
+                            <span class="stat-text"> ${t('statistics.success')}</span>
+                            <span class="stat-divider"> / </span>
+                            <span id="periodFailed">0</span>
+                            <span class="stat-text"> ${t('statistics.failed')}</span>
+                        </div>
                     </div>
                     <div class="stat-box">
-                        <div class="label">${t('statistics.successFailed')}</div>
-                        <div class="value" style="font-size: 24px;">
-                            <span id="periodSuccess">0</span> / <span id="periodFailed">0</span>
+                        <div class="stat-header">
+                            <div class="stat-label">${t('statistics.totalTokens')}</div>
+                            <span class="trend" id="tokensTrend">→ 0%</span>
                         </div>
-                        <div class="trend-container">
-                            <span class="trend" id="errorsTrend">→ 0%</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="label">${t('statistics.totalTokens')}</div>
-                        <div class="value">
+                        <div class="stat-value">
                             <span id="periodTotalTokens">0</span>
                         </div>
-                        <div class="trend-container">
-                            <span class="trend" id="tokensTrend">→ 0%</span>
+                        <div class="stat-detail">
+                            <span id="periodInputTokens">0</span>
+                            <span class="stat-text"> ${t('statistics.in')}</span>
+                            <span class="stat-divider"> / </span>
+                            <span id="periodOutputTokens">0</span>
+                            <span class="stat-text"> ${t('statistics.out')}</span>
                         </div>
                     </div>
                 </div>
@@ -95,6 +120,77 @@ export function initUI() {
                     <span id="totalInputTokens">0</span>
                     <span id="totalOutputTokens">0</span>
                 </div>
+                </div>
+            </div>
+
+            <!-- History Modal (弹窗) -->
+            <div id="historyModal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>📚 ${t('history.title')}</h2>
+                        <button class="modal-close" onclick="window.closeHistoryModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="history-selector">
+                            <label>${t('history.selectMonth')}:</label>
+                            <select id="historyMonthSelect"></select>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-header">
+                                    <div class="stat-label">${t('statistics.totalRequests')}</div>
+                                </div>
+                                <div class="stat-value">
+                                    <span id="historyTotalRequests">0</span>
+                                </div>
+                                <div class="stat-detail">
+                                    <span id="historySuccess">0</span>
+                                    <span class="stat-text"> ${t('statistics.success')}</span>
+                                    <span class="stat-divider"> / </span>
+                                    <span id="historyFailed">0</span>
+                                    <span class="stat-text"> ${t('statistics.failed')}</span>
+                                </div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-header">
+                                    <div class="stat-label">${t('statistics.totalTokens')}</div>
+                                </div>
+                                <div class="stat-value">
+                                    <span id="historyTotalTokens">0</span>
+                                </div>
+                                <div class="stat-detail">
+                                    <span id="historyInputTokens">0</span>
+                                    <span class="stat-text"> ${t('statistics.in')}</span>
+                                    <span class="stat-divider"> / </span>
+                                    <span id="historyOutputTokens">0</span>
+                                    <span class="stat-text"> ${t('statistics.out')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="history-details">
+                            <h3>${t('history.dailyDetails')}</h3>
+                            <div class="table-container">
+                                <table id="historyDailyTable">
+                                    <thead>
+                                        <tr>
+                                            <th>${t('history.date')}</th>
+                                            <th>${t('history.requests')}</th>
+                                            <th>${t('history.errors')}</th>
+                                            <th>${t('history.inputTokens')}</th>
+                                            <th>${t('history.outputTokens')}</th>
+                                            <th>${t('history.totalTokens')}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="historyError" class="error-message" style="display: none;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Endpoints -->
@@ -103,7 +199,7 @@ export function initUI() {
                     <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
-                            ☁️ ${t('webdav.dataSync')}
+                            🔄 ${t('webdav.dataSync')}
                         </button>
                         <button class="btn btn-primary" onclick="window.showAddEndpointModal()">
                             ➕ ${t('header.addEndpoint')}
@@ -151,6 +247,11 @@ export function initUI() {
                 <div class="footer-left">
                     <span style="opacity: 0.8;">© 2025 ccNexus</span>
                 </div>
+                <div class="footer-center">
+                    <div class="tips-container">
+                        <span id="scrollingTip" class="tip-scroll"></span>
+                    </div>
+                </div>
                 <div class="footer-right">
                     <span style="opacity: 0.7; margin-right: 5px;">v</span>
                     <span id="appVersion" style="font-weight: 500;">1.0.0</span>
@@ -162,7 +263,8 @@ export function initUI() {
         <div id="endpointModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2 id="modalTitle">${t('modal.addEndpoint')}</h2>
+                    <h2 id="modalTitle">➕ ${t('modal.addEndpoint')}</h2>
+                    <button class="modal-close" onclick="window.closeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -219,7 +321,8 @@ export function initUI() {
         <div id="portModal" class="modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h2>${t('modal.changePort')}</h2>
+                    <h2>⚙️ ${t('modal.changePort')}</h2>
+                    <button class="modal-close" onclick="window.closePortModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
@@ -250,26 +353,23 @@ export function initUI() {
 
                     <div style="text-align: center; margin: 30px 0;">
                         <img src="/WeChat.jpg" alt="WeChat QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <p style="margin-top: 10px; color: #666; font-size: 14px;">扫码关注公众号，了解更多</p>
+                        <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
                     </div>
 
                     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
                         <button class="btn btn-primary" onclick="window.openArticle()">
-                            📖 阅读介绍
+                            ${t('welcome.readArticle')}
                         </button>
                         <button class="btn btn-secondary" onclick="window.openGitHub()">
-                            🔗 GitHub Repository
+                            ${t('welcome.githubRepo')}
                         </button>
                     </div>
-
-                    <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
-                        <label style="display: flex; align-items: center; justify-content: center; cursor: pointer;">
-                            <input type="checkbox" id="dontShowAgain" style="margin-right: 8px;">
-                            <span style="font-size: 14px; color: #666;">${t('welcome.dontShow')}</span>
-                        </label>
-                    </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; align-items: center; gap: 20px;">
+                    <label style="display: flex; align-items: center; cursor: pointer;">
+                        <input type="checkbox" id="dontShowAgain" style="margin-right: 8px;">
+                        <span style="font-size: 14px; color: #666;">${t('welcome.dontShow')}</span>
+                    </label>
                     <button class="btn btn-primary" onclick="window.closeWelcomeModal()">${t('welcome.getStarted')}</button>
                 </div>
             </div>
@@ -349,18 +449,7 @@ export function initUI() {
 }
 
 function setupModalEventListeners() {
-    // Close modals on background click
-    document.getElementById('endpointModal').addEventListener('click', (e) => {
-        if (e.target.id === 'endpointModal') {
-            window.closeModal();
-        }
-    });
-
-    document.getElementById('portModal').addEventListener('click', (e) => {
-        if (e.target.id === 'portModal') {
-            window.closePortModal();
-        }
-    });
+    // Close modals on background click (endpointModal and portModal do NOT close on background click)
 
     document.getElementById('welcomeModal').addEventListener('click', (e) => {
         if (e.target.id === 'welcomeModal') {
