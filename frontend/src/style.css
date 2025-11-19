@@ -1907,3 +1907,149 @@ body {
     overflow-y: auto !important;
     flex: 1 !important;
 }
+
+/* Enhanced Conflict Dialog Styles */
+.conflict-details-container {
+    max-height: 400px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 6px;
+}
+
+.conflict-endpoint {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    overflow: hidden;
+}
+
+.conflict-endpoint:last-child {
+    margin-bottom: 0;
+}
+
+.conflict-endpoint-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f3f4f6;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.conflict-endpoint-header strong {
+    color: #374151;
+    font-size: 14px;
+}
+
+.conflict-badge {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.conflict-endpoint-body {
+    padding: 12px;
+}
+
+.conflict-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.conflict-field-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.conflict-field-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.conflict-field-values {
+    display: flex;
+    gap: 10px;
+}
+
+.conflict-value-local,
+.conflict-value-remote {
+    flex: 1;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.conflict-value-local {
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+}
+
+.conflict-value-remote {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+}
+
+.conflict-value-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.conflict-value-local .conflict-value-label {
+    color: #1e40af;
+}
+
+.conflict-value-remote .conflict-value-label {
+    color: #92400e;
+}
+
+.conflict-value-local code,
+.conflict-value-remote code {
+    display: block;
+    background: white;
+    padding: 4px 6px;
+    border-radius: 3px;
+    font-size: 11px;
+    word-break: break-all;
+    color: #374151;
+}
+
+.conflict-strategy-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 15px;
+}
+
+.conflict-strategy-info p {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    color: #1e40af;
+    line-height: 1.5;
+}
+
+.conflict-strategy-info p:last-child {
+    margin-bottom: 0;
+}
+
+.conflict-strategy-info strong {
+    color: #1e3a8a;
+}
+
+/* Update conflict dialog content max width */
+.conflict-dialog-content {
+    max-width: 700px;
+}

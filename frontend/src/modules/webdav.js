@@ -306,7 +306,7 @@ function generateBackupFilename() {
     const minutes = String(now.getMinutes()).padStart(2, '0');
     const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    return `ccNexus-${year}${month}${day}${hours}${minutes}${seconds}.json`;
+    return `ccNexus-${year}${month}${day}${hours}${minutes}${seconds}.db`;
 }
 
 // Backup to WebDAV
@@ -336,11 +336,11 @@ export async function restoreFromWebDAV(filename) {
         return;
     }
 
-    const conflictInfo = conflictResult.conflictInfo;
+    const conflicts = conflictResult.conflicts || [];
 
-    // If there's a conflict, show conflict dialog
-    if (conflictInfo.hasConflict) {
-        const choice = await showConflictDialog(conflictInfo);
+    // If there are conflicts, show conflict dialog
+    if (conflicts.length > 0) {
+        const choice = await showConflictDialog(conflicts);
         if (!choice) {
             return; // User cancelled
         }
@@ -524,8 +524,49 @@ function formatDateTime(dateStr) {
 }
 
 // Show conflict dialog
-async function showConflictDialog(conflictInfo) {
+async function showConflictDialog(conflicts) {
     return new Promise((resolve) => {
+        // Build conflict details HTML
+        const conflictDetailsHTML = conflicts.map(conflict => {
+            const fields = conflict.conflictFields || [];
+            const fieldLabels = {
+                'apiUrl': 'API URL',
+                'apiKey': 'API Key',
+                'enabled': t('webdav.enabled'),
+                'transformer': 'Transformer',
+                'model': 'Model',
+                'remark': t('webdav.remark')
+            };
+
+            return `
+                <div class="conflict-endpoint">
+                    <div class="conflict-endpoint-header">
+                        <strong>📍 ${conflict.endpointName}</strong>
+                        <span class="conflict-badge">${fields.length} ${fields.length === 1 ? 'conflict' : 'conflicts'}</span>
+                    </div>
+                    <div class="conflict-endpoint-body">
+                        <div class="conflict-fields">
+                            ${fields.map(field => `
+                                <div class="conflict-field-item">
+                                    <span class="conflict-field-name">${fieldLabels[field] || field}:</span>
+                                    <div class="conflict-field-values">
+                                        <div class="conflict-value-local">
+                                            <span class="conflict-value-label">Local:</span>
+                                            <code>${formatFieldValue(conflict.localEndpoint[field])}</code>
+                                        </div>
+                                        <div class="conflict-value-remote">
+                                            <span class="conflict-value-label">Remote:</span>
+                                            <code>${formatFieldValue(conflict.remoteEndpoint[field])}</code>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
         const content = `
             <div class="conflict-dialog-content">
                 <div class="conflict-header">
@@ -534,47 +575,21 @@ async function showConflictDialog(conflictInfo) {
                 </div>
                 <div class="conflict-divider"></div>
                 <div class="conflict-body">
-                    <p class="conflict-message">${t('webdav.conflictDetected')}</p>
-                    <div class="conflict-comparison">
-                        <div class="conflict-card">
-                            <div class="conflict-card-header">${t('webdav.localConfig')}</div>
-                            <div class="conflict-card-body">
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.endpoints')}:</span>
-                                    <span class="conflict-value">${conflictInfo.localEndpointCount}</span>
-                                </div>
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.port')}:</span>
-                                    <span class="conflict-value">${conflictInfo.localPort}</span>
-                                </div>
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.modTime')}:</span>
-                                    <span class="conflict-value">${formatDateTime(conflictInfo.localModTime)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="conflict-card">
-                            <div class="conflict-card-header">${t('webdav.remoteBackup')}</div>
-                            <div class="conflict-card-body">
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.endpoints')}:</span>
-                                    <span class="conflict-value">${conflictInfo.remoteEndpointCount}</span>
-                                </div>
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.port')}:</span>
-                                    <span class="conflict-value">${conflictInfo.remotePort}</span>
-                                </div>
-                                <div class="conflict-item">
-                                    <span class="conflict-label">${t('webdav.modTime')}:</span>
-                                    <span class="conflict-value">${formatDateTime(conflictInfo.remoteModTime)}</span>
-                                </div>
-                            </div>
-                        </div>
+                    <p class="conflict-message">
+                        ${t('webdav.conflictDetected')}
+                        <strong>${conflicts.length}</strong> endpoint${conflicts.length > 1 ? 's have' : ' has'} conflicting configurations.
+                    </p>
+                    <div class="conflict-details-container">
+                        ${conflictDetailsHTML}
+                    </div>
+                    <div class="conflict-strategy-info">
+                        <p><strong>${t('webdav.useRemote')}:</strong> Remote configuration will overwrite local conflicting endpoints.</p>
+                        <p><strong>${t('webdav.keepLocal')}:</strong> Keep local configuration, only add new endpoints from remote.</p>
                     </div>
                 </div>
                 <div class="conflict-footer">
                     <button class="btn btn-primary" onclick="window.resolveConflict('remote')">${t('webdav.useRemote')}</button>
-                    <button class="btn btn-secondary" onclick="window.resolveConflict('local')">${t('webdav.keepLocal')}</button>
+                    <button class="btn btn-secondary" onclick="window.resolveConflict('keep_local')">${t('webdav.keepLocal')}</button>
                     <button class="btn btn-secondary" onclick="window.resolveConflict(null)">${t('common.cancel')}</button>
                 </div>
             </div>
@@ -588,6 +603,24 @@ async function showConflictDialog(conflictInfo) {
             resolve(choice);
         };
     });
+}
+
+// Format field value for display
+function formatFieldValue(value) {
+    if (value === null || value === undefined || value === '') {
+        return '<em>empty</em>';
+    }
+    if (typeof value === 'boolean') {
+        return value ? '✓ Enabled' : '✗ Disabled';
+    }
+    // Handle numeric boolean (0/1) for enabled field
+    if (typeof value === 'number' && (value === 0 || value === 1)) {
+        return value === 1 ? '✓ Enabled' : '✗ Disabled';
+    }
+    if (typeof value === 'string' && value.length > 50) {
+        return value.substring(0, 47) + '...';
+    }
+    return String(value);
 }
 
 // Prompt for filename
@@ -695,3 +728,4 @@ function showNotification(message, type = 'info') {
         setTimeout(() => notification.remove(), 300);
     }, 3000);
 }
+

@@ -1,10 +1,14 @@
 package webdav
 
 import (
+	"encoding/xml"
 	"fmt"
+	"io"
+	"net/http"
 	"path"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/lich0821/ccNexus/internal/config"
 
@@ -13,8 +17,35 @@ import (
 
 // Client WebDAV 客户端
 type Client struct {
-	client *gowebdav.Client
-	config *config.WebDAVConfig
+	client     *gowebdav.Client
+	config     *config.WebDAVConfig
+	httpClient *http.Client
+}
+
+// XML structures for PROPFIND response
+type propfindResponse struct {
+	XMLName   xml.Name   `xml:"multistatus"`
+	Responses []response `xml:"response"`
+}
+
+type response struct {
+	Href     string   `xml:"href"`
+	Propstat propstat `xml:"propstat"`
+}
+
+type propstat struct {
+	Prop prop   `xml:"prop"`
+	Status string `xml:"status"`
+}
+
+type prop struct {
+	GetLastModified  string       `xml:"getlastmodified"`
+	GetContentLength int64        `xml:"getcontentlength"`
+	ResourceType     resourceType `xml:"resourcetype"`
+}
+
+type resourceType struct {
+	Collection *struct{} `xml:"collection"`
 }
 
 // NewClient 创建 WebDAV 客户端
@@ -30,6 +61,14 @@ func NewClient(cfg *config.WebDAVConfig) (*Client, error) {
 	// 创建 WebDAV 客户端
 	client := gowebdav.NewClient(cfg.URL, cfg.Username, cfg.Password)
 
+	// 设置超时时间（30秒）
+	client.SetTimeout(30 * time.Second)
+
+	// 创建独立的 HTTP 客户端用于自定义请求
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
 	// 设置默认路径
 	if cfg.ConfigPath == "" {
 		cfg.ConfigPath = "/ccNexus/config"
@@ -39,14 +78,14 @@ func NewClient(cfg *config.WebDAVConfig) (*Client, error) {
 	}
 
 	return &Client{
-		client: client,
-		config: cfg,
+		client:     client,
+		config:     cfg,
+		httpClient: httpClient,
 	}, nil
 }
 
 // TestConnection 测试 WebDAV 连接
 func (c *Client) TestConnection() *TestResult {
-	// 尝试连接并读取根目录
 	err := c.client.Connect()
 	if err != nil {
 		return &TestResult{
@@ -63,23 +102,23 @@ func (c *Client) TestConnection() *TestResult {
 
 // ensureDirectory 确保目录存在
 func (c *Client) ensureDirectory(dirPath string) error {
-	// 检查目录是否存在
-	info, err := c.client.Stat(dirPath)
+	err := c.client.MkdirAll(dirPath, 0755)
+
 	if err == nil {
-		// 目录存在
-		if !info.IsDir() {
-			return fmt.Errorf("路径 %s 已存在但不是目录", dirPath)
-		}
 		return nil
 	}
 
-	// 目录不存在，创建它
-	err = c.client.MkdirAll(dirPath, 0755)
-	if err != nil {
-		return fmt.Errorf("创建目录失败: %v", err)
+	// 检查错误类型
+	errStr := err.Error()
+
+	// 405 Method Not Allowed 或包含 "exists" 表示目录已存在，这是正常的
+	if strings.Contains(errStr, "405") ||
+		strings.Contains(errStr, "exists") ||
+		strings.Contains(errStr, "Method Not Allowed") {
+		return nil
 	}
 
-	return nil
+	return fmt.Errorf("创建目录失败: %v", err)
 }
 
 // UploadBackup 上传备份文件
@@ -115,32 +154,91 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 		backupPath = c.config.ConfigPath
 	}
 
-	// 读取目录内容
-	files, err := c.client.ReadDir(backupPath)
-	if err != nil {
-		// 如果目录不存在，返回空列表
-		if strings.Contains(err.Error(), "404") {
-			return []BackupFile{}, nil
-		}
-		return nil, fmt.Errorf("读取目录失败: %v", err)
+	// 使用自定义 PROPFIND 请求
+
+	// 构建完整 URL
+	fullURL := c.config.URL + strings.TrimPrefix(backupPath, "/")
+	if !strings.HasSuffix(fullURL, "/") {
+		fullURL += "/"
 	}
+
+	// 创建 PROPFIND 请求
+	req, err := http.NewRequest("PROPFIND", fullURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("创建请求失败: %v", err)
+	}
+
+	// 设置请求头
+	req.Header.Set("Depth", "1")
+	req.Header.Set("Content-Type", "application/xml")
+	req.SetBasicAuth(c.config.Username, c.config.Password)
+
+	// 发送请求
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("请求失败: %v", err)
+	}
+	defer resp.Body.Close()
+
+
+	// 检查状态码
+	if resp.StatusCode == 404 {
+		return []BackupFile{}, nil
+	}
+
+	if resp.StatusCode != 207 { // 207 Multi-Status
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	// 读取响应体
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("读取响应失败: %v", err)
+	}
+
+
+	// 解析 XML
+	var propfind propfindResponse
+	if err := xml.Unmarshal(body, &propfind); err != nil {
+		return nil, fmt.Errorf("解析XML失败: %v", err)
+	}
+
 
 	// 转换为 BackupFile 列表
 	var backups []BackupFile
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		// 只列出 .json 文件
-		if !strings.HasSuffix(file.Name(), ".json") {
+	for _, resp := range propfind.Responses {
+		// 跳过目录本身
+		if resp.Propstat.Prop.ResourceType.Collection != nil {
 			continue
 		}
 
+		// 提取文件名
+		filename := path.Base(resp.Href)
+		if filename == "" || filename == "/" {
+			continue
+		}
+
+		// 只列出 .json 和 .db 文件（但排除 .meta.json 文件）
+		if strings.HasSuffix(filename, ".meta.json") {
+			continue
+		}
+		if !strings.HasSuffix(filename, ".json") && !strings.HasSuffix(filename, ".db") {
+			continue
+		}
+
+		// 解析修改时间
+		modTime, err := time.Parse(time.RFC1123, resp.Propstat.Prop.GetLastModified)
+		if err != nil {
+			// 尝试其他时间格式
+			modTime, _ = time.Parse(time.RFC1123Z, resp.Propstat.Prop.GetLastModified)
+		}
+
 		backups = append(backups, BackupFile{
-			Filename: file.Name(),
-			Size:     file.Size(),
-			ModTime:  file.ModTime(),
+			Filename: filename,
+			Size:     resp.Propstat.Prop.GetContentLength,
+			ModTime:  modTime,
 		})
+
 	}
 
 	// 按修改时间降序排序（最新的在前）
@@ -149,6 +247,14 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 	})
 
 	return backups, nil
+}
+
+// min returns the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // DownloadBackup 下载备份文件
@@ -189,6 +295,7 @@ func (c *Client) DeleteBackups(filenames []string, isConfig bool) error {
 		err := c.client.Remove(remotePath)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("%s: %v", filename, err))
+		} else {
 		}
 	}
 

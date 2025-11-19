@@ -137,8 +137,8 @@ type Proxy struct {
 }
 
 // New creates a new Proxy instance
-func New(cfg *config.Config, statsStorage StatsStorage) *Proxy {
-	stats := NewStats(statsStorage)
+func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy {
+	stats := NewStats(statsStorage, deviceID)
 
 	// Set stats path for backward compatibility
 	statsPath, err := GetStatsPath()

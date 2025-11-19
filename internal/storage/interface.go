@@ -3,16 +3,16 @@ package storage
 import "time"
 
 type Endpoint struct {
-	ID          int64
-	Name        string
-	APIUrl      string
-	APIKey      string
-	Enabled     bool
-	Transformer string
-	Model       string
-	Remark      string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          int64     `json:"id"`
+	Name        string    `json:"name"`
+	APIUrl      string    `json:"apiUrl"`
+	APIKey      string    `json:"apiKey"`
+	Enabled     bool      `json:"enabled"`
+	Transformer string    `json:"transformer"`
+	Model       string    `json:"model"`
+	Remark      string    `json:"remark"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 type DailyStat struct {

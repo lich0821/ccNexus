@@ -143,9 +143,18 @@ func (a *App) startup(ctx context.Context) {
 		logger.Debug("Log level restored from config: %d", cfg.GetLogLevel())
 	}
 
+	// Get or create device ID
+	deviceID, err := sqliteStorage.GetOrCreateDeviceID()
+	if err != nil {
+		logger.Warn("Failed to get device ID: %v, using default", err)
+		deviceID = "default"
+	} else {
+		logger.Info("Device ID: %s", deviceID)
+	}
+
 	// Create proxy with storage
 	statsAdapter := storage.NewStatsStorageAdapter(sqliteStorage)
-	a.proxy = proxy.New(cfg, statsAdapter)
+	a.proxy = proxy.New(cfg, statsAdapter, deviceID)
 
 	// Initialize system tray first
 	a.initTray()
@@ -241,10 +250,14 @@ func (a *App) saveWindowSize(ctx context.Context) {
 	// Only save if size is valid
 	if width > 0 && height > 0 {
 		a.config.UpdateWindowSize(width, height)
-		if err := a.config.Save(a.configPath); err != nil {
-			logger.Warn("Failed to save window size: %v", err)
-		} else {
-			logger.Debug("Window size saved: %dx%d", width, height)
+		// Save to SQLite storage
+		if a.storage != nil {
+			configAdapter := storage.NewConfigStorageAdapter(a.storage)
+			if err := a.config.SaveToStorage(configAdapter); err != nil {
+				logger.Warn("Failed to save window size: %v", err)
+			} else {
+				logger.Debug("Window size saved: %dx%d", width, height)
+			}
 		}
 	}
 }
@@ -257,17 +270,13 @@ func (a *App) SetCloseWindowBehavior(behavior string) error {
 
 	a.config.UpdateCloseWindowBehavior(behavior)
 
-	// Save to storage
+	// Save to SQLite storage
 	if a.storage != nil {
 		configAdapter := storage.NewConfigStorageAdapter(a.storage)
 		if err := a.config.SaveToStorage(configAdapter); err != nil {
-			logger.Warn("Failed to save close window behavior to storage: %v", err)
+			logger.Warn("Failed to save close window behavior: %v", err)
+			return err
 		}
-	}
-
-	// Also save to JSON for backward compatibility
-	if err := a.config.Save(a.configPath); err != nil {
-		logger.Warn("Failed to save close window behavior to JSON: %v", err)
 	}
 
 	logger.Info("Close window behavior set to: %s", behavior)
@@ -331,17 +340,12 @@ func (a *App) UpdateConfig(configJSON string) error {
 		return err
 	}
 
-	// Save to storage
+	// Save to SQLite storage
 	if a.storage != nil {
 		configAdapter := storage.NewConfigStorageAdapter(a.storage)
 		if err := newConfig.SaveToStorage(configAdapter); err != nil {
 			return fmt.Errorf("failed to save config: %w", err)
 		}
-	}
-
-	// Also save to JSON for backward compatibility
-	if err := newConfig.Save(a.configPath); err != nil {
-		logger.Warn("Failed to save config to JSON: %v", err)
 	}
 
 	a.config = &newConfig
@@ -648,13 +652,21 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark strin
 		return err
 	}
 
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
 	if model != "" {
 		logger.Info("Endpoint added: %s (%s) [%s/%s]", name, apiUrl, transformer, model)
 	} else {
 		logger.Info("Endpoint added: %s (%s) [%s]", name, apiUrl, transformer)
 	}
 
-	return a.config.Save(a.configPath)
+	return nil
 }
 
 // RemoveEndpoint removes an endpoint by index
@@ -683,9 +695,17 @@ func (a *App) RemoveEndpoint(index int) error {
 		return err
 	}
 
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
 	logger.Info("Endpoint removed: %s", removedName)
 
-	return a.config.Save(a.configPath)
+	return nil
 }
 
 // UpdateEndpoint updates an endpoint by index
@@ -739,6 +759,14 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 		return err
 	}
 
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
 	if oldName != name {
 		if model != "" {
 			logger.Info("Endpoint updated: %s → %s (%s) [%s/%s]", oldName, name, apiUrl, transformer, model)
@@ -753,7 +781,7 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 		}
 	}
 
-	return a.config.Save(a.configPath)
+	return nil
 }
 
 // UpdatePort updates the proxy port
@@ -764,8 +792,12 @@ func (a *App) UpdatePort(port int) error {
 
 	a.config.UpdatePort(port)
 
-	if err := a.config.Save(a.configPath); err != nil {
-		return err
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
 	}
 
 	// Note: Changing port requires restart
@@ -788,13 +820,21 @@ func (a *App) ToggleEndpoint(index int, enabled bool) error {
 		return err
 	}
 
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
 	if enabled {
 		logger.Info("Endpoint enabled: %s", endpointName)
 	} else {
 		logger.Info("Endpoint disabled: %s", endpointName)
 	}
 
-	return a.config.Save(a.configPath)
+	return nil
 }
 
 // OpenURL opens a URL in the default browser
@@ -827,10 +867,15 @@ func (a *App) SetLogLevel(level int) {
 
 	// Save to config
 	a.config.UpdateLogLevel(level)
-	if err := a.config.Save(a.configPath); err != nil {
-		logger.Warn("Failed to save log level to config: %v", err)
-	} else {
-		logger.Debug("Log level saved to config: %d", level)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			logger.Warn("Failed to save log level: %v", err)
+		} else {
+			logger.Debug("Log level saved: %d", level)
+		}
 	}
 }
 
@@ -874,8 +919,13 @@ func (a *App) GetLanguage() string {
 // SetLanguage sets the UI language
 func (a *App) SetLanguage(language string) error {
 	a.config.UpdateLanguage(language)
-	if err := a.config.Save(a.configPath); err != nil {
-		return fmt.Errorf("failed to save language: %w", err)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save language: %w", err)
+		}
 	}
 
 	// Update tray menu language
@@ -1185,9 +1235,17 @@ func (a *App) ReorderEndpoints(names []string) error {
 		return err
 	}
 
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
 	logger.Info("Endpoints reordered: %v", names)
 
-	return a.config.Save(a.configPath)
+	return nil
 }
 
 // UpdateWebDAVConfig updates the WebDAV configuration
@@ -1202,8 +1260,12 @@ func (a *App) UpdateWebDAVConfig(url, username, password string) error {
 
 	a.config.UpdateWebDAV(webdavConfig)
 
-	if err := a.config.Save(a.configPath); err != nil {
-		return fmt.Errorf("failed to save WebDAV config: %w", err)
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save WebDAV config: %w", err)
+		}
 	}
 
 	logger.Info("WebDAV configuration updated: %s", url)
@@ -1235,32 +1297,78 @@ func (a *App) TestWebDAVConnection(url, username, password string) string {
 
 // BackupToWebDAV backs up configuration and stats to WebDAV
 func (a *App) BackupToWebDAV(filename string) error {
+	logger.Info("Starting backup process for file: %s", filename)
+
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
+		logger.Error("WebDAV configuration is not set")
 		return fmt.Errorf("WebDAV未配置")
+	}
+	logger.Debug("WebDAV config loaded: URL=%s, Username=%s", webdavCfg.URL, webdavCfg.Username)
+
+	if a.storage == nil {
+		logger.Error("Storage is not initialized")
+		return fmt.Errorf("存储未初始化")
 	}
 
 	// Create WebDAV client
+	logger.Debug("Creating WebDAV client...")
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
+		logger.Error("Failed to create WebDAV client: %v", err)
 		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
 	}
+	logger.Debug("WebDAV client created successfully")
 
 	// Create sync manager
 	manager := webdav.NewManager(client)
 
-	// Get stats path
-	// Note: With SQLite storage, stats are managed by the storage layer
-	// Get current stats from proxy
-	stats := a.proxy.GetStats()
+	// Create temporary backup of database (without app_config)
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		logger.Error("Failed to get home directory: %v", err)
+		return fmt.Errorf("获取用户目录失败: %w", err)
+	}
+	tempDir := filepath.Join(homeDir, ".ccNexus", "temp")
+	logger.Debug("Creating temp directory: %s", tempDir)
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		logger.Error("Failed to create temp directory: %v", err)
+		return fmt.Errorf("创建临时目录失败: %w", err)
+	}
+	tempBackupPath := filepath.Join(tempDir, "backup_temp.db")
+
+	// Remove existing temp file if it exists
+	if _, err := os.Stat(tempBackupPath); err == nil {
+		logger.Debug("Removing existing temp file: %s", tempBackupPath)
+		os.Remove(tempBackupPath)
+	}
+
+	defer func() {
+		logger.Debug("Cleaning up temp file: %s", tempBackupPath)
+		os.Remove(tempBackupPath)
+	}()
+
+	// Create backup copy without app_config
+	logger.Info("Creating database backup copy (excluding app_config)...")
+	if err := a.storage.CreateBackupCopy(tempBackupPath); err != nil {
+		logger.Error("Failed to create database backup: %v", err)
+		return fmt.Errorf("创建数据库备份失败: %w", err)
+	}
+
+	// Check file size
+	if fileInfo, err := os.Stat(tempBackupPath); err == nil {
+		logger.Debug("Backup file created: %s (size: %d bytes)", tempBackupPath, fileInfo.Size())
+	}
 
 	// Backup to WebDAV
 	version := a.GetVersion()
-	if err := manager.BackupConfig(a.config, stats, version, filename); err != nil {
+	logger.Info("Uploading backup to WebDAV (version: %s)...", version)
+	if err := manager.BackupDatabase(tempBackupPath, version, filename); err != nil {
+		logger.Error("Failed to upload backup to WebDAV: %v", err)
 		return fmt.Errorf("备份失败: %w", err)
 	}
 
-	logger.Info("Backup created: %s", filename)
+	logger.Info("Backup created successfully: %s", filename)
 	return nil
 }
 
@@ -1269,6 +1377,10 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
 		return fmt.Errorf("WebDAV未配置")
+	}
+
+	if a.storage == nil {
+		return fmt.Errorf("存储未初始化")
 	}
 
 	// If user chose to keep local config, do nothing
@@ -1286,16 +1398,41 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	// Create sync manager
 	manager := webdav.NewManager(client)
 
-	// Get stats path
-	statsPath, err := proxy.GetStatsPath()
+	// Create temporary directory for downloaded backup
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("获取统计文件路径失败: %w", err)
+		return fmt.Errorf("获取用户目录失败: %w", err)
+	}
+	tempDir := filepath.Join(homeDir, ".ccNexus", "temp")
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		return fmt.Errorf("创建临时目录失败: %w", err)
+	}
+	tempRestorePath := filepath.Join(tempDir, "restore_temp.db")
+	defer os.Remove(tempRestorePath) // Clean up temp file
+
+	// Download and restore database from WebDAV
+	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
+		return fmt.Errorf("恢复失败: %w", err)
 	}
 
-	// Restore from WebDAV
-	newConfig, newStats, err := manager.RestoreConfig(filename, a.configPath, statsPath)
+	// Determine merge strategy based on user choice
+	var strategy storage.MergeStrategy
+	if choice == "remote" {
+		strategy = storage.MergeStrategyOverwriteLocal
+	} else {
+		strategy = storage.MergeStrategyKeepLocal
+	}
+
+	// Merge the restored database into current database
+	if err := a.storage.MergeFromBackup(tempRestorePath, strategy); err != nil {
+		return fmt.Errorf("合并数据失败: %w", err)
+	}
+
+	// Reload configuration from storage
+	configAdapter := storage.NewConfigStorageAdapter(a.storage)
+	newConfig, err := config.LoadFromStorage(configAdapter)
 	if err != nil {
-		return fmt.Errorf("恢复失败: %w", err)
+		return fmt.Errorf("加载配置失败: %w", err)
 	}
 
 	// Update in-memory config
@@ -1306,20 +1443,17 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 		return fmt.Errorf("更新代理配置失败: %w", err)
 	}
 
-	// Update stats if available
-	if newStats != nil {
-		// The stats are already saved by manager.RestoreConfig
-		logger.Info("Statistics restored from backup")
-	}
-
-	logger.Info("Configuration restored from: %s", filename)
+	logger.Info("Configuration and statistics restored from: %s", filename)
 	return nil
 }
 
 // ListWebDAVBackups lists all backups on WebDAV server
 func (a *App) ListWebDAVBackups() string {
+	logger.Info("Listing WebDAV backups...")
+
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
+		logger.Error("WebDAV configuration is not set")
 		result := map[string]interface{}{
 			"success": false,
 			"message": "WebDAV未配置",
@@ -1328,10 +1462,13 @@ func (a *App) ListWebDAVBackups() string {
 		data, _ := json.Marshal(result)
 		return string(data)
 	}
+	logger.Debug("WebDAV config: URL=%s, Username=%s", webdavCfg.URL, webdavCfg.Username)
 
 	// Create WebDAV client
+	logger.Debug("Creating WebDAV client...")
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
+		logger.Error("Failed to create WebDAV client: %v", err)
 		result := map[string]interface{}{
 			"success": false,
 			"message": fmt.Sprintf("创建WebDAV客户端失败: %v", err),
@@ -1340,13 +1477,16 @@ func (a *App) ListWebDAVBackups() string {
 		data, _ := json.Marshal(result)
 		return string(data)
 	}
+	logger.Debug("WebDAV client created successfully")
 
 	// Create sync manager
 	manager := webdav.NewManager(client)
 
 	// List backups
+	logger.Info("Fetching backup list from WebDAV...")
 	backups, err := manager.ListConfigBackups()
 	if err != nil {
+		logger.Error("Failed to list backups: %v", err)
 		result := map[string]interface{}{
 			"success": false,
 			"message": fmt.Sprintf("获取备份列表失败: %v", err),
@@ -1354,6 +1494,11 @@ func (a *App) ListWebDAVBackups() string {
 		}
 		data, _ := json.Marshal(result)
 		return string(data)
+	}
+
+	logger.Info("Found %d backup(s)", len(backups))
+	for i, backup := range backups {
+		logger.Debug("Backup %d: %s (size: %d bytes, modified: %s)", i+1, backup.Filename, backup.Size, backup.ModTime)
 	}
 
 	result := map[string]interface{}{
@@ -1402,6 +1547,15 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 		return string(data)
 	}
 
+	if a.storage == nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": "存储未初始化",
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
 	// Create WebDAV client
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
@@ -1416,8 +1570,40 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 	// Create sync manager
 	manager := webdav.NewManager(client)
 
-	// Detect conflict
-	conflictInfo, err := manager.DetectConflict(a.config, filename)
+	// Create temporary directory for downloaded backup
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("获取用户目录失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+	tempDir := filepath.Join(homeDir, ".ccNexus", "temp")
+	if err := os.MkdirAll(tempDir, 0755); err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("创建临时目录失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+	tempRestorePath := filepath.Join(tempDir, "conflict_check_temp.db")
+	defer os.Remove(tempRestorePath) // Clean up temp file
+
+	// Download database from WebDAV
+	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("下载备份失败: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Detect endpoint conflicts
+	conflicts, err := a.storage.DetectEndpointConflicts(tempRestorePath)
 	if err != nil {
 		result := map[string]interface{}{
 			"success": false,
@@ -1428,8 +1614,8 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 	}
 
 	result := map[string]interface{}{
-		"success":      true,
-		"conflictInfo": conflictInfo,
+		"success":   true,
+		"conflicts": conflicts,
 	}
 	data, _ := json.Marshal(result)
 	return string(data)

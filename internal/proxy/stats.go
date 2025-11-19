@@ -67,6 +67,7 @@ type DailyRecord struct {
 // Stats represents overall proxy statistics
 type Stats struct {
 	storage       StatsStorage
+	deviceID      string
 	mu            sync.RWMutex
 	statsPath     string // Path to stats file (for backward compatibility)
 
@@ -79,9 +80,10 @@ type Stats struct {
 }
 
 // NewStats creates a new Stats instance
-func NewStats(storage StatsStorage) *Stats {
+func NewStats(storage StatsStorage, deviceID string) *Stats {
 	return &Stats{
 		storage:      storage,
+		deviceID:     deviceID,
 		saveDebounce: 2 * time.Second, // Debounce save operations by 2 seconds
 	}
 }
@@ -96,7 +98,6 @@ func (s *Stats) SetStatsPath(path string) {
 // RecordRequest records a request for an endpoint
 func (s *Stats) RecordRequest(endpointName string) {
 	date := time.Now().Format("2006-01-02")
-	deviceID := "default"
 
 	stat := &StatRecord{
 		EndpointName: endpointName,
@@ -105,7 +106,7 @@ func (s *Stats) RecordRequest(endpointName string) {
 		Errors:       0,
 		InputTokens:  0,
 		OutputTokens: 0,
-		DeviceID:     deviceID,
+		DeviceID:     s.deviceID,
 	}
 
 	if err := s.storage.RecordDailyStat(stat); err != nil {
@@ -116,7 +117,6 @@ func (s *Stats) RecordRequest(endpointName string) {
 // RecordError records an error for an endpoint
 func (s *Stats) RecordError(endpointName string) {
 	date := time.Now().Format("2006-01-02")
-	deviceID := "default"
 
 	stat := &StatRecord{
 		EndpointName: endpointName,
@@ -125,7 +125,7 @@ func (s *Stats) RecordError(endpointName string) {
 		Errors:       1,
 		InputTokens:  0,
 		OutputTokens: 0,
-		DeviceID:     deviceID,
+		DeviceID:     s.deviceID,
 	}
 
 	if err := s.storage.RecordDailyStat(stat); err != nil {
@@ -136,7 +136,6 @@ func (s *Stats) RecordError(endpointName string) {
 // RecordTokens records token usage for an endpoint
 func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int) {
 	date := time.Now().Format("2006-01-02")
-	deviceID := "default"
 
 	stat := &StatRecord{
 		EndpointName: endpointName,
@@ -145,7 +144,7 @@ func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int)
 		Errors:       0,
 		InputTokens:  inputTokens,
 		OutputTokens: outputTokens,
-		DeviceID:     deviceID,
+		DeviceID:     s.deviceID,
 	}
 
 	if err := s.storage.RecordDailyStat(stat); err != nil {

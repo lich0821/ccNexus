@@ -10,8 +10,9 @@ import (
 )
 
 type SQLiteStorage struct {
-	db *sql.DB
-	mu sync.RWMutex
+	db     *sql.DB
+	dbPath string
+	mu     sync.RWMutex
 }
 
 func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
@@ -20,7 +21,10 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		return nil, err
 	}
 
-	s := &SQLiteStorage{db: db}
+	s := &SQLiteStorage{
+		db:     db,
+		dbPath: dbPath,
+	}
 	if err := s.initSchema(); err != nil {
 		db.Close()
 		return nil, err
@@ -281,8 +285,44 @@ func (s *SQLiteStorage) GetEndpointTotalStats(endpointName string) (*EndpointSta
 	}, nil
 }
 
+// GetOrCreateDeviceID returns the device ID, creating one if it doesn't exist
+func (s *SQLiteStorage) GetOrCreateDeviceID() (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Try to get existing device ID
+	var deviceID string
+	err := s.db.QueryRow(`SELECT value FROM app_config WHERE key = 'device_id'`).Scan(&deviceID)
+
+	if err == nil && deviceID != "" {
+		return deviceID, nil
+	}
+
+	// Generate new device ID
+	deviceID = generateDeviceID()
+
+	// Save to database
+	_, err = s.db.Exec(`INSERT OR REPLACE INTO app_config (key, value) VALUES ('device_id', ?)`, deviceID)
+	if err != nil {
+		return "", err
+	}
+
+	return deviceID, nil
+}
+
+func generateDeviceID() string {
+	// Use timestamp + random string for uniqueness
+	timestamp := time.Now().UnixNano()
+	return fmt.Sprintf("device-%x", timestamp)[:16]
+}
+
 func GenerateDeviceID() string {
-	return fmt.Sprintf("default-%s", time.Now().Format("20060102"))
+	return generateDeviceID()
+}
+
+// GetDBPath returns the database file path
+func (s *SQLiteStorage) GetDBPath() string {
+	return s.dbPath
 }
 
 // GetArchiveMonths returns a list of all months that have data
@@ -352,4 +392,261 @@ func (s *SQLiteStorage) GetMonthlyArchiveData(month string) ([]MonthlyArchiveDat
 	}
 
 	return results, rows.Err()
+}
+
+// CreateBackupCopy creates a backup copy of the database without app_config data
+func (s *SQLiteStorage) CreateBackupCopy(backupPath string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Use VACUUM INTO to create a copy
+	_, err := s.db.Exec(fmt.Sprintf("VACUUM INTO '%s'", backupPath))
+	if err != nil {
+		return fmt.Errorf("failed to create backup: %w", err)
+	}
+
+	// Open the backup and remove app_config data
+	backupDB, err := sql.Open("sqlite", backupPath)
+	if err != nil {
+		return fmt.Errorf("failed to open backup: %w", err)
+	}
+	defer backupDB.Close()
+
+	// Delete app_config data (device-specific settings)
+	_, err = backupDB.Exec("DELETE FROM app_config")
+	if err != nil {
+		return fmt.Errorf("failed to clean app_config: %w", err)
+	}
+
+	return nil
+}
+
+// MergeConflict represents an endpoint merge conflict
+type MergeConflict struct {
+	EndpointName   string   `json:"endpointName"`
+	ConflictFields []string `json:"conflictFields"`
+	LocalEndpoint  Endpoint `json:"localEndpoint"`
+	RemoteEndpoint Endpoint `json:"remoteEndpoint"`
+}
+
+// DetectEndpointConflicts detects conflicts between local and remote endpoints
+func (s *SQLiteStorage) DetectEndpointConflicts(remoteDBPath string) ([]MergeConflict, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Attach remote database
+	_, err := s.db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' AS remote", remoteDBPath))
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach remote database: %w", err)
+	}
+	defer s.db.Exec("DETACH DATABASE remote")
+
+	// Get local endpoints
+	localEndpoints, err := s.getEndpointsFromDB(s.db, "main")
+	if err != nil {
+		return nil, err
+	}
+
+	// Get remote endpoints
+	remoteEndpoints, err := s.getEndpointsFromDB(s.db, "remote")
+	if err != nil {
+		return nil, err
+	}
+
+	// Build local endpoint map
+	localMap := make(map[string]Endpoint)
+	for _, ep := range localEndpoints {
+		localMap[ep.Name] = ep
+	}
+
+	// Detect conflicts
+	var conflicts []MergeConflict
+	for _, remote := range remoteEndpoints {
+		if local, exists := localMap[remote.Name]; exists {
+			// Check for differences
+			conflictFields := compareEndpoints(local, remote)
+			if len(conflictFields) > 0 {
+				conflicts = append(conflicts, MergeConflict{
+					EndpointName:   remote.Name,
+					ConflictFields: conflictFields,
+					LocalEndpoint:  local,
+					RemoteEndpoint: remote,
+				})
+			}
+		}
+	}
+
+	return conflicts, nil
+}
+
+// getEndpointsFromDB gets endpoints from a specific database (main or attached)
+func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoint, error) {
+	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, created_at, updated_at FROM %s.endpoints`, dbName)
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var endpoints []Endpoint
+	for rows.Next() {
+		var ep Endpoint
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+			return nil, err
+		}
+		endpoints = append(endpoints, ep)
+	}
+
+	return endpoints, rows.Err()
+}
+
+// compareEndpoints compares two endpoints and returns conflicting fields
+func compareEndpoints(local, remote Endpoint) []string {
+	var conflicts []string
+
+	if local.APIUrl != remote.APIUrl {
+		conflicts = append(conflicts, "apiUrl")
+	}
+	if local.APIKey != remote.APIKey {
+		conflicts = append(conflicts, "apiKey")
+	}
+	if local.Enabled != remote.Enabled {
+		conflicts = append(conflicts, "enabled")
+	}
+	if local.Transformer != remote.Transformer {
+		conflicts = append(conflicts, "transformer")
+	}
+	if local.Model != remote.Model {
+		conflicts = append(conflicts, "model")
+	}
+	if local.Remark != remote.Remark {
+		conflicts = append(conflicts, "remark")
+	}
+
+	return conflicts
+}
+
+// MergeStrategy defines how to handle conflicts during merge
+type MergeStrategy string
+
+const (
+	MergeStrategyKeepLocal      MergeStrategy = "keep_local"      // Keep local on conflict, add new
+	MergeStrategyOverwriteLocal MergeStrategy = "overwrite_local" // Overwrite local on conflict
+)
+
+// MergeFromBackup merges data from a backup database
+func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrategy) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Attach backup database
+	_, err := s.db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' AS backup", backupDBPath))
+	if err != nil {
+		return fmt.Errorf("failed to attach backup database: %w", err)
+	}
+	defer s.db.Exec("DETACH DATABASE backup")
+
+	// Begin transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// 1. Merge endpoints based on strategy
+	if err := s.mergeEndpoints(tx, strategy); err != nil {
+		return fmt.Errorf("failed to merge endpoints: %w", err)
+	}
+
+	// 2. Merge daily_stats (always merge, no conflicts)
+	if err := s.mergeDailyStats(tx); err != nil {
+		return fmt.Errorf("failed to merge daily stats: %w", err)
+	}
+
+	// 3. Do NOT merge app_config (keep local device-specific settings)
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
+}
+
+// mergeEndpoints merges endpoints based on strategy
+func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error {
+	if strategy == MergeStrategyKeepLocal {
+		// Insert only new endpoints (ignore conflicts)
+		_, err := tx.Exec(`
+			INSERT OR IGNORE INTO endpoints
+			(name, api_url, api_key, enabled, transformer, model, remark)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark
+			FROM backup.endpoints
+		`)
+		return err
+	} else if strategy == MergeStrategyOverwriteLocal {
+		// Replace existing endpoints
+		_, err := tx.Exec(`
+			INSERT OR REPLACE INTO endpoints
+			(name, api_url, api_key, enabled, transformer, model, remark)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark
+			FROM backup.endpoints
+		`)
+		return err
+	}
+
+	return fmt.Errorf("unknown merge strategy: %s", strategy)
+}
+
+// mergeDailyStats merges daily stats (always merge, auto-aggregate by device_id)
+func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx) error {
+	// Step 1: Create a temporary table with merged stats
+	_, err := tx.Exec(`
+		CREATE TEMP TABLE merged_stats AS
+		SELECT
+			b.endpoint_name,
+			b.date,
+			COALESCE(m.requests, 0) + b.requests as requests,
+			COALESCE(m.errors, 0) + b.errors as errors,
+			COALESCE(m.input_tokens, 0) + b.input_tokens as input_tokens,
+			COALESCE(m.output_tokens, 0) + b.output_tokens as output_tokens,
+			b.device_id
+		FROM backup.daily_stats b
+		LEFT JOIN main.daily_stats m
+			ON b.endpoint_name = m.endpoint_name
+			AND b.date = m.date
+			AND b.device_id = m.device_id
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Step 2: Delete conflicting rows from main database
+	_, err = tx.Exec(`
+		DELETE FROM daily_stats
+		WHERE EXISTS (
+			SELECT 1 FROM backup.daily_stats b
+			WHERE b.endpoint_name = daily_stats.endpoint_name
+			AND b.date = daily_stats.date
+			AND b.device_id = daily_stats.device_id
+		)
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Step 3: Insert merged stats
+	_, err = tx.Exec(`
+		INSERT INTO daily_stats
+		(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
+		SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
+		FROM merged_stats
+	`)
+	if err != nil {
+		return err
+	}
+
+	// Step 4: Clean up temp table
+	_, err = tx.Exec(`DROP TABLE merged_stats`)
+	return err
 }
