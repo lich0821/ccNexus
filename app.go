@@ -38,12 +38,9 @@ const (
 )
 
 // normalizeAPIUrl ensures the API URL has the correct format
-// Removes http:// or https:// prefix if present
+// Preserves http:// or https:// prefix if present, otherwise keeps as-is
 func normalizeAPIUrl(apiUrl string) string {
-	// Remove http:// or https:// prefix
-	apiUrl = strings.TrimPrefix(apiUrl, "https://")
-	apiUrl = strings.TrimPrefix(apiUrl, "http://")
-	// Remove trailing slash
+	// Just remove trailing slash, keep protocol as-is
 	apiUrl = strings.TrimSuffix(apiUrl, "/")
 	return apiUrl
 }
@@ -572,7 +569,7 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark strin
 		transformer = "claude"
 	}
 
-	// Normalize API URL (remove http/https prefix if present)
+	// Normalize API URL (remove trailing slash only)
 	apiUrl = normalizeAPIUrl(apiUrl)
 
 	endpoints := a.config.GetEndpoints()
@@ -655,7 +652,7 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 		transformer = "claude"
 	}
 
-	// Normalize API URL (remove http/https prefix if present)
+	// Normalize API URL (remove trailing slash only)
 	apiUrl = normalizeAPIUrl(apiUrl)
 
 	endpoints[index] = config.Endpoint{
@@ -926,7 +923,12 @@ func (a *App) TestEndpoint(index int) string {
 	}
 
 	// Build full URL
-	url := fmt.Sprintf("https://%s%s", endpoint.APIUrl, apiPath)
+	normalizedAPIUrl := normalizeAPIUrl(endpoint.APIUrl)
+	// Add https:// if no protocol specified
+	if !strings.HasPrefix(normalizedAPIUrl, "http://") && !strings.HasPrefix(normalizedAPIUrl, "https://") {
+		normalizedAPIUrl = "https://" + normalizedAPIUrl
+	}
+	url := fmt.Sprintf("%s%s", normalizedAPIUrl, apiPath)
 
 	// Create HTTP request
 	req, err := http.NewRequest("POST", url, bytes.NewReader(requestBody))

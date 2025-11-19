@@ -105,13 +105,12 @@ func min(a, b int) int {
 }
 
 // normalizeAPIUrl ensures the API URL has the correct format
-// Removes http:// or https:// prefix if present, as we'll add https:// when making requests
+// If URL has http:// or https:// prefix, keep it; otherwise default to https://
 func normalizeAPIUrl(apiUrl string) string {
-	// Remove http:// or https:// prefix
-	apiUrl = strings.TrimPrefix(apiUrl, "https://")
-	apiUrl = strings.TrimPrefix(apiUrl, "http://")
-	// Remove trailing slash
 	apiUrl = strings.TrimSuffix(apiUrl, "/")
+	if !strings.HasPrefix(apiUrl, "http://") && !strings.HasPrefix(apiUrl, "https://") {
+		return "https://" + apiUrl
+	}
 	return apiUrl
 }
 
@@ -636,10 +635,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		// Normalize API URL (remove http/https prefix if present)
+		// Normalize API URL (add https:// if no protocol specified)
 		normalizedAPIUrl := normalizeAPIUrl(endpoint.APIUrl)
 
-		targetURL := fmt.Sprintf("https://%s%s", normalizedAPIUrl, targetPath)
+		targetURL := fmt.Sprintf("%s%s", normalizedAPIUrl, targetPath)
 		if r.URL.RawQuery != "" {
 			targetURL += "?" + r.URL.RawQuery
 		}
@@ -683,7 +682,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Set Host to target API (required for proper routing)
-		proxyReq.Header.Set("Host", normalizedAPIUrl)
+		hostOnly := strings.TrimPrefix(strings.TrimPrefix(normalizedAPIUrl, "https://"), "http://")
+		proxyReq.Header.Set("Host", hostOnly)
 
 		// Send request
 		client := &http.Client{
@@ -1248,7 +1248,7 @@ func (p *Proxy) handleCountTokens(w http.ResponseWriter, r *http.Request) {
 
 	// Try to proxy to backend API
 	normalizedAPIUrl := normalizeAPIUrl(endpoint.APIUrl)
-	targetURL := fmt.Sprintf("https://%s/v1/messages/count_tokens", normalizedAPIUrl)
+	targetURL := fmt.Sprintf("%s/v1/messages/count_tokens", normalizedAPIUrl)
 
 	proxyReq, err := http.NewRequest("POST", targetURL, bytes.NewReader(bodyBytes))
 	if err != nil {
