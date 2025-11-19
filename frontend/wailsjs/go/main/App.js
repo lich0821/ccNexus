@@ -118,6 +118,10 @@ export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
 }
 
+export function SetCloseWindowBehavior(arg1) {
+  return window['go']['main']['App']['SetCloseWindowBehavior'](arg1);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['main']['App']['SetLanguage'](arg1);
 }

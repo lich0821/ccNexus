@@ -31,14 +31,15 @@ type WebDAVConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port         int           `json:"port"`
-	Endpoints    []Endpoint    `json:"endpoints"`
-	LogLevel     int           `json:"logLevel"`           // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language     string        `json:"language"`           // UI language: en, zh-CN
-	WindowWidth  int           `json:"windowWidth"`        // Window width in pixels
-	WindowHeight int           `json:"windowHeight"`       // Window height in pixels
-	WebDAV       *WebDAVConfig `json:"webdav,omitempty"`   // WebDAV synchronization config
-	mu           sync.RWMutex
+	Port                 int           `json:"port"`
+	Endpoints            []Endpoint    `json:"endpoints"`
+	LogLevel             int           `json:"logLevel"`                     // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language             string        `json:"language"`                     // UI language: en, zh-CN
+	WindowWidth          int           `json:"windowWidth"`                  // Window width in pixels
+	WindowHeight         int           `json:"windowHeight"`                 // Window height in pixels
+	CloseWindowBehavior  string        `json:"closeWindowBehavior,omitempty"` // "quit" or "minimize", empty means ask user
+	WebDAV               *WebDAVConfig `json:"webdav,omitempty"`             // WebDAV synchronization config
+	mu                   sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
@@ -168,6 +169,20 @@ func (c *Config) UpdateWindowSize(width, height int) {
 	defer c.mu.Unlock()
 	c.WindowWidth = width
 	c.WindowHeight = height
+}
+
+// GetCloseWindowBehavior returns the close window behavior (thread-safe)
+func (c *Config) GetCloseWindowBehavior() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.CloseWindowBehavior
+}
+
+// UpdateCloseWindowBehavior updates the close window behavior (thread-safe)
+func (c *Config) UpdateCloseWindowBehavior(behavior string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.CloseWindowBehavior = behavior
 }
 
 // GetConfigPath returns the default config file path
@@ -325,6 +340,10 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.WindowHeight = 768
 	}
 
+	if behavior, err := storage.GetConfig("closeWindowBehavior"); err == nil {
+		config.CloseWindowBehavior = behavior
+	}
+
 	// Load WebDAV config if exists
 	if url, err := storage.GetConfig("webdav_url"); err == nil && url != "" {
 		username, _ := storage.GetConfig("webdav_username")
@@ -397,6 +416,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 	storage.SetConfig("language", c.Language)
 	storage.SetConfig("windowWidth", strconv.Itoa(c.WindowWidth))
 	storage.SetConfig("windowHeight", strconv.Itoa(c.WindowHeight))
+	storage.SetConfig("closeWindowBehavior", c.CloseWindowBehavior)
 
 	// Save WebDAV config
 	if c.WebDAV != nil {

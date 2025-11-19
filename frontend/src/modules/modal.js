@@ -50,13 +50,25 @@ export function showCloseActionDialog() {
     document.getElementById('closeActionDialog').classList.add('active');
 }
 
-export function quitApplication() {
+export async function quitApplication() {
     document.getElementById('closeActionDialog').classList.remove('active');
+    // Save user preference
+    try {
+        await window.go.main.App.SetCloseWindowBehavior('quit');
+    } catch (error) {
+        console.error('Failed to save close window behavior:', error);
+    }
     window.go.main.App.Quit();
 }
 
-export function minimizeToTray() {
+export async function minimizeToTray() {
     document.getElementById('closeActionDialog').classList.remove('active');
+    // Save user preference
+    try {
+        await window.go.main.App.SetCloseWindowBehavior('minimize');
+    } catch (error) {
+        console.error('Failed to save close window behavior:', error);
+    }
     window.go.main.App.HideWindow();
 }
 

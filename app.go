@@ -214,7 +214,19 @@ func (a *App) beforeClose(ctx context.Context) bool {
 	// Save current window size before showing close dialog
 	a.saveWindowSize(ctx)
 
-	// Emit event to show close action dialog
+	// Check if user has already set a preference
+	behavior := a.config.GetCloseWindowBehavior()
+
+	if behavior == "quit" {
+		// User previously chose to quit, so quit directly
+		return false // Allow window to close (will trigger shutdown)
+	} else if behavior == "minimize" {
+		// User previously chose to minimize, so hide window
+		a.HideWindow()
+		return true // Prevent window close
+	}
+
+	// No preference set, show dialog to ask user
 	runtime.EventsEmit(ctx, "show-close-dialog")
 
 	// Return true to prevent window close (dialog will handle the action)
@@ -235,6 +247,31 @@ func (a *App) saveWindowSize(ctx context.Context) {
 			logger.Debug("Window size saved: %dx%d", width, height)
 		}
 	}
+}
+
+// SetCloseWindowBehavior sets the user's preference for close window behavior
+func (a *App) SetCloseWindowBehavior(behavior string) error {
+	if behavior != "quit" && behavior != "minimize" {
+		return fmt.Errorf("invalid behavior: %s (must be 'quit' or 'minimize')", behavior)
+	}
+
+	a.config.UpdateCloseWindowBehavior(behavior)
+
+	// Save to storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			logger.Warn("Failed to save close window behavior to storage: %v", err)
+		}
+	}
+
+	// Also save to JSON for backward compatibility
+	if err := a.config.Save(a.configPath); err != nil {
+		logger.Warn("Failed to save close window behavior to JSON: %v", err)
+	}
+
+	logger.Info("Close window behavior set to: %s", behavior)
+	return nil
 }
 
 // Quit quits the application

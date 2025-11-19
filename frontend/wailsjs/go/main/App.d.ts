@@ -59,6 +59,8 @@ export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
 
+export function SetCloseWindowBehavior(arg1:string):Promise<void>;
+
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
