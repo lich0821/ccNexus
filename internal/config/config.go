@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"sync"
 )
 
@@ -235,4 +236,176 @@ func (c *Config) UpdateWebDAV(webdav *WebDAVConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.WebDAV = webdav
+}
+
+// StorageAdapter defines the interface needed for loading/saving config
+type StorageAdapter interface {
+	GetEndpoints() ([]StorageEndpoint, error)
+	SaveEndpoint(ep *StorageEndpoint) error
+	UpdateEndpoint(ep *StorageEndpoint) error
+	DeleteEndpoint(name string) error
+	GetConfig(key string) (string, error)
+	SetConfig(key, value string) error
+}
+
+// StorageEndpoint represents an endpoint in storage
+type StorageEndpoint struct {
+	Name        string
+	APIUrl      string
+	APIKey      string
+	Enabled     bool
+	Transformer string
+	Model       string
+	Remark      string
+}
+
+// LoadFromStorage loads configuration from SQLite storage
+func LoadFromStorage(storage StorageAdapter) (*Config, error) {
+	config := &Config{
+		Endpoints: []Endpoint{},
+	}
+
+	// Load endpoints
+	endpoints, err := storage.GetEndpoints()
+	if err != nil {
+		return nil, fmt.Errorf("failed to load endpoints: %w", err)
+	}
+
+	for _, ep := range endpoints {
+		endpoint := Endpoint{
+			Name:        ep.Name,
+			APIUrl:      ep.APIUrl,
+			APIKey:      ep.APIKey,
+			Enabled:     ep.Enabled,
+			Transformer: ep.Transformer,
+			Model:       ep.Model,
+			Remark:      ep.Remark,
+		}
+		if endpoint.Transformer == "" {
+			endpoint.Transformer = "claude"
+		}
+		config.Endpoints = append(config.Endpoints, endpoint)
+	}
+
+	// Load app config
+	if portStr, err := storage.GetConfig("port"); err == nil && portStr != "" {
+		if port, err := strconv.Atoi(portStr); err == nil {
+			config.Port = port
+		}
+	}
+	if config.Port == 0 {
+		config.Port = 3000
+	}
+
+	if logLevelStr, err := storage.GetConfig("logLevel"); err == nil && logLevelStr != "" {
+		if logLevel, err := strconv.Atoi(logLevelStr); err == nil {
+			config.LogLevel = logLevel
+		}
+	}
+
+	if lang, err := storage.GetConfig("language"); err == nil {
+		config.Language = lang
+	}
+
+	if widthStr, err := storage.GetConfig("windowWidth"); err == nil && widthStr != "" {
+		if width, err := strconv.Atoi(widthStr); err == nil {
+			config.WindowWidth = width
+		}
+	}
+	if config.WindowWidth == 0 {
+		config.WindowWidth = 1024
+	}
+
+	if heightStr, err := storage.GetConfig("windowHeight"); err == nil && heightStr != "" {
+		if height, err := strconv.Atoi(heightStr); err == nil {
+			config.WindowHeight = height
+		}
+	}
+	if config.WindowHeight == 0 {
+		config.WindowHeight = 768
+	}
+
+	// Load WebDAV config if exists
+	if url, err := storage.GetConfig("webdav_url"); err == nil && url != "" {
+		username, _ := storage.GetConfig("webdav_username")
+		password, _ := storage.GetConfig("webdav_password")
+		configPath, _ := storage.GetConfig("webdav_configPath")
+		statsPath, _ := storage.GetConfig("webdav_statsPath")
+
+		config.WebDAV = &WebDAVConfig{
+			URL:        url,
+			Username:   username,
+			Password:   password,
+			ConfigPath: configPath,
+			StatsPath:  statsPath,
+		}
+	}
+
+	return config, nil
+}
+
+// SaveToStorage saves configuration to SQLite storage
+func (c *Config) SaveToStorage(storage StorageAdapter) error {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Get existing endpoints from storage
+	existingEndpoints, err := storage.GetEndpoints()
+	if err != nil {
+		return fmt.Errorf("failed to get existing endpoints: %w", err)
+	}
+
+	existingNames := make(map[string]bool)
+	for _, ep := range existingEndpoints {
+		existingNames[ep.Name] = true
+	}
+
+	// Save/update endpoints
+	for _, ep := range c.Endpoints {
+		endpoint := &StorageEndpoint{
+			Name:        ep.Name,
+			APIUrl:      ep.APIUrl,
+			APIKey:      ep.APIKey,
+			Enabled:     ep.Enabled,
+			Transformer: ep.Transformer,
+			Model:       ep.Model,
+			Remark:      ep.Remark,
+		}
+
+		if existingNames[ep.Name] {
+			if err := storage.UpdateEndpoint(endpoint); err != nil {
+				return fmt.Errorf("failed to update endpoint %s: %w", ep.Name, err)
+			}
+		} else {
+			if err := storage.SaveEndpoint(endpoint); err != nil {
+				return fmt.Errorf("failed to save endpoint %s: %w", ep.Name, err)
+			}
+		}
+		delete(existingNames, ep.Name)
+	}
+
+	// Delete endpoints that no longer exist
+	for name := range existingNames {
+		if err := storage.DeleteEndpoint(name); err != nil {
+			return fmt.Errorf("failed to delete endpoint %s: %w", name, err)
+		}
+	}
+
+	// Save app config
+	storage.SetConfig("port", strconv.Itoa(c.Port))
+	storage.SetConfig("logLevel", strconv.Itoa(c.LogLevel))
+	storage.SetConfig("language", c.Language)
+	storage.SetConfig("windowWidth", strconv.Itoa(c.WindowWidth))
+	storage.SetConfig("windowHeight", strconv.Itoa(c.WindowHeight))
+
+	// Save WebDAV config
+	if c.WebDAV != nil {
+		storage.SetConfig("webdav_url", c.WebDAV.URL)
+		storage.SetConfig("webdav_username", c.WebDAV.Username)
+		storage.SetConfig("webdav_password", c.WebDAV.Password)
+		storage.SetConfig("webdav_configPath", c.WebDAV.ConfigPath)
+		storage.SetConfig("webdav_statsPath", c.WebDAV.StatsPath)
+	}
+
+	return nil
 }

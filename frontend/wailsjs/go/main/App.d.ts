@@ -15,8 +15,6 @@ export function GenerateMockArchives(arg1:number):Promise<string>;
 
 export function GetArchiveData(arg1:string):Promise<string>;
 
-export function GetArchiveSummary(arg1:string):Promise<string>;
-
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;

@@ -30,10 +30,6 @@ export function GetArchiveData(arg1) {
   return window['go']['main']['App']['GetArchiveData'](arg1);
 }
 
-export function GetArchiveSummary(arg1) {
-  return window['go']['main']['App']['GetArchiveSummary'](arg1);
-}
-
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }

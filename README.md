@@ -29,10 +29,12 @@
 - 🔐 **Secure API Key Display** - Shows only last 4 characters of API keys
 - 🚦 **Smart Load Balancing** - Distributes requests only to enabled endpoints
 - 📋 **Comprehensive Logging** - Multi-level logging (DEBUG/INFO/WARN/ERROR) with real-time viewing
+- 📈 **Historical Statistics** - View monthly archived statistics with SQLite storage
 - 🖥️ **Desktop GUI** - Beautiful cross-platform interface built with Wails
 - 🚀 **Single Binary** - No dependencies, just download and run
 - 🔧 **Easy Configuration** - Manage endpoints through GUI or config file
-- 💾 **Persistent Config** - Automatically saves configuration and preferences
+- 💾 **Persistent Storage** - SQLite database for configuration and statistics
+- 🔄 **Auto Migration** - Seamlessly migrates from JSON to SQLite on first run
 - 🔒 **Local First** - All data stays on your machine
 
 ## 🚀 Quick Start
@@ -101,11 +103,16 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
-## 🔧 Configuration File
+## 🔧 Configuration and Data Storage
 
-Configuration is stored at:
-- **Windows**: `%USERPROFILE%\.ccNexus\config.json`
-- **macOS/Linux**: `~/.ccNexus/config.json`
+Data is stored at:
+- **Windows**: `%USERPROFILE%\.ccNexus\`
+- **macOS/Linux**: `~/.ccNexus/`
+
+Files:
+- `config.json` - Legacy configuration (auto-migrated to SQLite on first run)
+- `ccnexus.db` - SQLite database (configuration and statistics)
+- `backup/` - Backup of legacy JSON files after migration
 
 Example:
 
@@ -243,6 +250,13 @@ ccNexus/
 │   │   └── stats.go       # Statistics tracking
 │   ├── config/            # Configuration management
 │   │   └── config.go      # Config structure
+│   ├── storage/           # Data persistence layer
+│   │   ├── interface.go   # Storage interface
+│   │   ├── sqlite.go      # SQLite implementation
+│   │   ├── migration.go   # JSON to SQLite migration
+│   │   ├── legacy.go      # Legacy JSON support
+│   │   ├── adapter.go     # Config storage adapter
+│   │   └── stats_adapter.go # Stats storage adapter
 │   ├── transformer/       # API format transformers
 │   │   ├── transformer.go # Transformer interface
 │   │   ├── claude.go      # Claude API format

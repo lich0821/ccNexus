@@ -124,6 +124,18 @@ export async function saveEndpoint() {
         return;
     }
 
+    // Check for duplicate endpoint name
+    const configStr = await window.go.main.App.GetConfig();
+    const config = JSON.parse(configStr);
+    const existingEndpoint = config.endpoints.find((ep, idx) =>
+        ep.name === name && idx !== currentEditIndex
+    );
+
+    if (existingEndpoint) {
+        showError(`Endpoint name "${name}" already exists. Please use a different name.`);
+        return;
+    }
+
     try {
         if (currentEditIndex === -1) {
             await addEndpoint(name, url, key, transformer, model, remark);

@@ -137,17 +137,13 @@ type Proxy struct {
 }
 
 // New creates a new Proxy instance
-func New(cfg *config.Config) *Proxy {
-	stats := NewStats()
+func New(cfg *config.Config, statsStorage StatsStorage) *Proxy {
+	stats := NewStats(statsStorage)
 
-	// Set stats path and load existing stats
+	// Set stats path for backward compatibility
 	statsPath, err := GetStatsPath()
 	if err == nil {
 		stats.SetStatsPath(statsPath)
-		if err := stats.Load(); err != nil {
-			// Log error but continue with empty stats
-			// Note: We can't use logger here as it may not be initialized yet
-		}
 	}
 
 	return &Proxy{

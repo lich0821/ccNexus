@@ -1,9 +1,9 @@
 package proxy
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sync"
 	"time"
 
@@ -29,12 +29,46 @@ type EndpointStats struct {
 	DailyHistory map[string]*DailyStats `json:"dailyHistory"` // Key: date string (source of truth)
 }
 
+// StatsStorage defines the interface for stats persistence
+type StatsStorage interface {
+	RecordDailyStat(stat interface{}) error
+	GetTotalStats() (int, map[string]interface{}, error)
+	GetDailyStats(endpointName, startDate, endDate string) ([]interface{}, error)
+}
+
+// StatRecord represents a stat record for storage
+type StatRecord struct {
+	EndpointName string
+	Date         string
+	Requests     int
+	Errors       int
+	InputTokens  int
+	OutputTokens int
+	DeviceID     string
+}
+
+// StatsData represents aggregated stats data
+type StatsData struct {
+	Requests     int
+	Errors       int
+	InputTokens  int64
+	OutputTokens int64
+}
+
+// DailyRecord represents daily stats
+type DailyRecord struct {
+	Date         string
+	Requests     int
+	Errors       int
+	InputTokens  int
+	OutputTokens int
+}
+
 // Stats represents overall proxy statistics
 type Stats struct {
-	TotalRequests int                       `json:"totalRequests"` // Computed from EndpointStats
-	EndpointStats map[string]*EndpointStats `json:"endpointStats"`
+	storage       StatsStorage
 	mu            sync.RWMutex
-	statsPath     string // Path to stats file
+	statsPath     string // Path to stats file (for backward compatibility)
 
 	// Save optimization
 	savePending   bool
@@ -45,14 +79,14 @@ type Stats struct {
 }
 
 // NewStats creates a new Stats instance
-func NewStats() *Stats {
+func NewStats(storage StatsStorage) *Stats {
 	return &Stats{
-		EndpointStats: make(map[string]*EndpointStats),
-		saveDebounce:  2 * time.Second, // Debounce save operations by 2 seconds
+		storage:      storage,
+		saveDebounce: 2 * time.Second, // Debounce save operations by 2 seconds
 	}
 }
 
-// SetStatsPath sets the path for stats persistence
+// SetStatsPath sets the path for stats persistence (for backward compatibility)
 func (s *Stats) SetStatsPath(path string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -61,105 +95,62 @@ func (s *Stats) SetStatsPath(path string) {
 
 // RecordRequest records a request for an endpoint
 func (s *Stats) RecordRequest(endpointName string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, exists := s.EndpointStats[endpointName]; !exists {
-		s.EndpointStats[endpointName] = &EndpointStats{
-			DailyHistory: make(map[string]*DailyStats),
-		}
-	}
-
-	stats := s.EndpointStats[endpointName]
-	stats.LastUsed = time.Now()
-
-	// Record to daily stats (source of truth)
 	date := time.Now().Format("2006-01-02")
-	s.recordDailyRequest(endpointName, date)
+	deviceID := "default"
 
-	// Schedule save with debounce
-	s.scheduleSave()
-}
-
-// recordDailyRequest records a request to daily history (internal method, no lock)
-func (s *Stats) recordDailyRequest(endpointName, date string) {
-	stats := s.EndpointStats[endpointName]
-	if stats.DailyHistory == nil {
-		stats.DailyHistory = make(map[string]*DailyStats)
+	stat := &StatRecord{
+		EndpointName: endpointName,
+		Date:         date,
+		Requests:     1,
+		Errors:       0,
+		InputTokens:  0,
+		OutputTokens: 0,
+		DeviceID:     deviceID,
 	}
 
-	if _, exists := stats.DailyHistory[date]; !exists {
-		stats.DailyHistory[date] = &DailyStats{Date: date}
+	if err := s.storage.RecordDailyStat(stat); err != nil {
+		logger.Error("Failed to record request: %v", err)
 	}
-
-	stats.DailyHistory[date].Requests++
 }
 
 // RecordError records an error for an endpoint
 func (s *Stats) RecordError(endpointName string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, exists := s.EndpointStats[endpointName]; !exists {
-		s.EndpointStats[endpointName] = &EndpointStats{
-			DailyHistory: make(map[string]*DailyStats),
-		}
-	}
-
-	// Record to daily stats (source of truth)
 	date := time.Now().Format("2006-01-02")
-	s.recordDailyError(endpointName, date)
+	deviceID := "default"
 
-	// Schedule save with debounce
-	s.scheduleSave()
-}
-
-// recordDailyError records an error to daily history (internal method, no lock)
-func (s *Stats) recordDailyError(endpointName, date string) {
-	stats := s.EndpointStats[endpointName]
-	if stats.DailyHistory == nil {
-		stats.DailyHistory = make(map[string]*DailyStats)
+	stat := &StatRecord{
+		EndpointName: endpointName,
+		Date:         date,
+		Requests:     0,
+		Errors:       1,
+		InputTokens:  0,
+		OutputTokens: 0,
+		DeviceID:     deviceID,
 	}
 
-	if _, exists := stats.DailyHistory[date]; !exists {
-		stats.DailyHistory[date] = &DailyStats{Date: date}
+	if err := s.storage.RecordDailyStat(stat); err != nil {
+		logger.Error("Failed to record error: %v", err)
 	}
-
-	stats.DailyHistory[date].Errors++
 }
 
 // RecordTokens records token usage for an endpoint
 func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if _, exists := s.EndpointStats[endpointName]; !exists {
-		s.EndpointStats[endpointName] = &EndpointStats{
-			DailyHistory: make(map[string]*DailyStats),
-		}
-	}
-
-	// Record to daily stats (source of truth)
 	date := time.Now().Format("2006-01-02")
-	s.recordDailyTokens(endpointName, date, inputTokens, outputTokens)
+	deviceID := "default"
 
-	// Schedule save with debounce
-	s.scheduleSave()
-}
-
-// recordDailyTokens records token usage to daily history (internal method, no lock)
-func (s *Stats) recordDailyTokens(endpointName, date string, inputTokens, outputTokens int) {
-	stats := s.EndpointStats[endpointName]
-	if stats.DailyHistory == nil {
-		stats.DailyHistory = make(map[string]*DailyStats)
+	stat := &StatRecord{
+		EndpointName: endpointName,
+		Date:         date,
+		Requests:     0,
+		Errors:       0,
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		DeviceID:     deviceID,
 	}
 
-	if _, exists := stats.DailyHistory[date]; !exists {
-		stats.DailyHistory[date] = &DailyStats{Date: date}
+	if err := s.storage.RecordDailyStat(stat); err != nil {
+		logger.Error("Failed to record tokens: %v", err)
 	}
-
-	stats.DailyHistory[date].InputTokens += inputTokens
-	stats.DailyHistory[date].OutputTokens += outputTokens
 }
 
 // scheduleSave schedules a save operation with debounce to avoid frequent writes
@@ -190,148 +181,51 @@ func (s *Stats) scheduleSave() {
 }
 
 // GetStats returns a copy of current statistics (thread-safe)
-// Computes aggregated values from DailyHistory
 func (s *Stats) GetStats() (int, map[string]*EndpointStats) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	totalRequests, statsData, err := s.storage.GetTotalStats()
+	if err != nil {
+		logger.Error("Failed to get stats: %v", err)
+		return 0, make(map[string]*EndpointStats)
+	}
 
-	// Deep copy and compute aggregated values
-	statsCopy := make(map[string]*EndpointStats)
-	totalRequests := 0
-
-	for name, stats := range s.EndpointStats {
-		// Deep copy daily history
-		dailyCopy := make(map[string]*DailyStats)
-		var requests, errors, inputTokens, outputTokens int
-
-		for date, daily := range stats.DailyHistory {
-			dailyCopy[date] = &DailyStats{
-				Date:         daily.Date,
-				Requests:     daily.Requests,
-				Errors:       daily.Errors,
-				InputTokens:  daily.InputTokens,
-				OutputTokens: daily.OutputTokens,
-			}
-
-			// Compute aggregated values from daily history
-			requests += daily.Requests
-			errors += daily.Errors
-			inputTokens += daily.InputTokens
-			outputTokens += daily.OutputTokens
+	// Convert to EndpointStats format
+	result := make(map[string]*EndpointStats)
+	for name, data := range statsData {
+		// Type assert to get the actual data using reflection
+		v := reflect.ValueOf(data)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
 		}
 
-		totalRequests += requests
-
-		statsCopy[name] = &EndpointStats{
-			Requests:     requests,
-			Errors:       errors,
-			InputTokens:  inputTokens,
-			OutputTokens: outputTokens,
-			LastUsed:     stats.LastUsed,
-			DailyHistory: dailyCopy,
+		result[name] = &EndpointStats{
+			Requests:     int(v.FieldByName("Requests").Int()),
+			Errors:       int(v.FieldByName("Errors").Int()),
+			InputTokens:  int(v.FieldByName("InputTokens").Int()),
+			OutputTokens: int(v.FieldByName("OutputTokens").Int()),
+			LastUsed:     time.Now(),
+			DailyHistory: make(map[string]*DailyStats),
 		}
 	}
 
-	return totalRequests, statsCopy
+	return totalRequests, result
 }
 
 // Reset resets all statistics
 func (s *Stats) Reset() {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.TotalRequests = 0
-	s.EndpointStats = make(map[string]*EndpointStats)
-
-	// Force immediate save
-	go func() {
-		if err := s.Save(); err != nil {
-			logger.Error("Failed to save stats after reset: %v", err)
-		}
-	}()
+	// Note: With SQLite storage, we don't reset the database
+	// This would require deleting all records, which we don't want to do
+	logger.Warn("Reset is not supported with SQLite storage")
 }
 
-// Save saves statistics to file
+// Save saves statistics to file (for backward compatibility, does nothing with SQLite)
 func (s *Stats) Save() error {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	if s.statsPath == "" {
-		return nil
-	}
-
-	dir := filepath.Dir(s.statsPath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return err
-	}
-
-	// Compute aggregated values before saving
-	s.computeAggregatedValues()
-
-	data, err := json.MarshalIndent(s, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(s.statsPath, data, 0644)
+	// With SQLite, stats are saved immediately on record
+	return nil
 }
 
-// computeAggregatedValues computes aggregated values from daily history
-// Must be called with read lock held
-func (s *Stats) computeAggregatedValues() {
-	totalRequests := 0
-
-	for _, stats := range s.EndpointStats {
-		var requests, errors, inputTokens, outputTokens int
-
-		for _, daily := range stats.DailyHistory {
-			requests += daily.Requests
-			errors += daily.Errors
-			inputTokens += daily.InputTokens
-			outputTokens += daily.OutputTokens
-		}
-
-		stats.Requests = requests
-		stats.Errors = errors
-		stats.InputTokens = inputTokens
-		stats.OutputTokens = outputTokens
-
-		totalRequests += requests
-	}
-
-	s.TotalRequests = totalRequests
-}
-
-// Load loads statistics from file
+// Load loads statistics from file (for backward compatibility, does nothing with SQLite)
 func (s *Stats) Load() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.statsPath == "" {
-		return nil
-	}
-
-	data, err := os.ReadFile(s.statsPath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return err
-	}
-
-	var loaded Stats
-	if err := json.Unmarshal(data, &loaded); err != nil {
-		return err
-	}
-
-	s.EndpointStats = loaded.EndpointStats
-	if s.EndpointStats == nil {
-		s.EndpointStats = make(map[string]*EndpointStats)
-	}
-
-	// Recompute aggregated values from daily history to ensure consistency
-	s.computeAggregatedValues()
-
+	// With SQLite, stats are loaded on demand from storage
 	return nil
 }
 
@@ -351,54 +245,86 @@ func GetStatsPath() (string, error) {
 }
 
 // GetPeriodStats returns aggregated statistics for a time period
-// Only returns endpoints that have data in the specified period
 func (s *Stats) GetPeriodStats(startDate, endDate string) map[string]*DailyStats {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	// Get all endpoints from storage
+	totalRequests, statsData, err := s.storage.GetTotalStats()
+	if err != nil {
+		logger.Error("Failed to get stats: %v", err)
+		return make(map[string]*DailyStats)
+	}
 
+	_ = totalRequests // unused
 	result := make(map[string]*DailyStats)
 
-	for endpointName, stats := range s.EndpointStats {
+	// For each endpoint, get daily stats in the period
+	for endpointName := range statsData {
+		dailyRecords, err := s.storage.GetDailyStats(endpointName, startDate, endDate)
+		if err != nil {
+			logger.Error("Failed to get daily stats for %s: %v", endpointName, err)
+			continue
+		}
+
+		if len(dailyRecords) == 0 {
+			continue
+		}
+
+		// Aggregate the period
 		aggregated := &DailyStats{
 			Date: startDate + " to " + endDate,
 		}
 
-		hasData := false
-		for date, daily := range stats.DailyHistory {
-			if date >= startDate && date <= endDate {
-				aggregated.Requests += daily.Requests
-				aggregated.Errors += daily.Errors
-				aggregated.InputTokens += daily.InputTokens
-				aggregated.OutputTokens += daily.OutputTokens
-				hasData = true
+		for _, dailyInterface := range dailyRecords {
+			// Use reflection to extract fields
+			v := reflect.ValueOf(dailyInterface)
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
 			}
+
+			aggregated.Requests += int(v.FieldByName("Requests").Int())
+			aggregated.Errors += int(v.FieldByName("Errors").Int())
+			aggregated.InputTokens += int(v.FieldByName("InputTokens").Int())
+			aggregated.OutputTokens += int(v.FieldByName("OutputTokens").Int())
 		}
 
-		// Only include endpoints that have data in this period
-		if hasData {
-			result[endpointName] = aggregated
-		}
+		result[endpointName] = aggregated
 	}
 
 	return result
 }
 
 // GetDailyStats returns statistics for a specific date
-// Only returns endpoints that have data on the specified date
 func (s *Stats) GetDailyStats(date string) map[string]*DailyStats {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	// Get all endpoints from storage
+	totalRequests, statsData, err := s.storage.GetTotalStats()
+	if err != nil {
+		logger.Error("Failed to get stats: %v", err)
+		return make(map[string]*DailyStats)
+	}
 
+	_ = totalRequests // unused
 	result := make(map[string]*DailyStats)
 
-	for endpointName, stats := range s.EndpointStats {
-		if daily, exists := stats.DailyHistory[date]; exists {
+	// For each endpoint, get stats for the specific date
+	for endpointName := range statsData {
+		dailyRecords, err := s.storage.GetDailyStats(endpointName, date, date)
+		if err != nil {
+			logger.Error("Failed to get daily stats for %s: %v", endpointName, err)
+			continue
+		}
+
+		if len(dailyRecords) > 0 {
+			// Use reflection to extract fields
+			v := reflect.ValueOf(dailyRecords[0])
+			if v.Kind() == reflect.Ptr {
+				v = v.Elem()
+			}
+
 			result[endpointName] = &DailyStats{
-				Date:         daily.Date,
-				Requests:     daily.Requests,
-				Errors:       daily.Errors,
-				InputTokens:  daily.InputTokens,
-				OutputTokens: daily.OutputTokens,
+				Date:         v.FieldByName("Date").String(),
+				Requests:     int(v.FieldByName("Requests").Int()),
+				Errors:       int(v.FieldByName("Errors").Int()),
+				InputTokens:  int(v.FieldByName("InputTokens").Int()),
+				OutputTokens: int(v.FieldByName("OutputTokens").Int()),
 			}
 		}
 	}

@@ -29,10 +29,12 @@
 - 🔐 **安全的 API Key 显示** - 仅显示 API Key 的后 4 位
 - 🚦 **智能负载均衡** - 仅向启用的端点分发请求
 - 📋 **完善的日志系统** - 多级日志（DEBUG/INFO/WARN/ERROR）实时查看
+- 📈 **历史统计** - 查看按月归档的历史统计数据，基于 SQLite 存储
 - 🖥️ **桌面 GUI** - 基于 Wails 的精美跨平台界面
 - 🚀 **单文件分发** - 无需依赖，下载即用
 - 🔧 **简单配置** - 通过 GUI 或配置文件管理端点
-- 💾 **持久化配置** - 自动保存配置和偏好设置
+- 💾 **持久化存储** - SQLite 数据库存储配置和统计数据
+- 🔄 **自动迁移** - 首次运行时自动从 JSON 迁移到 SQLite
 - 🔒 **本地优先** - 所有数据保存在本地
 
 ## 🚀 快速开始
@@ -101,11 +103,16 @@ Claude Code → 代理 (localhost:3000) → 端点 #1 (非 200 响应)
 4. **自动重试**：遇到非 200 响应时切换端点并重试
 5. **轮询机制**：循环使用所有端点
 
-## 🔧 配置文件
+## 🔧 配置和数据存储
 
-配置文件位置：
-- **Windows**: `%USERPROFILE%\.ccNexus\config.json`
-- **macOS/Linux**: `~/.ccNexus/config.json`
+数据存储位置：
+- **Windows**: `%USERPROFILE%\.ccNexus\`
+- **macOS/Linux**: `~/.ccNexus/`
+
+文件说明：
+- `config.json` - 旧版配置文件（首次运行时自动迁移到 SQLite）
+- `ccnexus.db` - SQLite 数据库（配置和统计数据）
+- `backup/` - 迁移后的旧版 JSON 文件备份
 
 示例：
 
@@ -243,6 +250,13 @@ ccNexus/
 │   │   └── stats.go       # 统计追踪
 │   ├── config/            # 配置管理
 │   │   └── config.go      # 配置结构
+│   ├── storage/           # 数据持久化层
+│   │   ├── interface.go   # 存储接口
+│   │   ├── sqlite.go      # SQLite 实现
+│   │   ├── migration.go   # JSON 到 SQLite 迁移
+│   │   ├── legacy.go      # 旧版 JSON 支持
+│   │   ├── adapter.go     # 配置存储适配器
+│   │   └── stats_adapter.go # 统计存储适配器
 │   ├── transformer/       # API 格式转换器
 │   │   ├── transformer.go # 转换器接口
 │   │   ├── claude.go      # Claude API 格式

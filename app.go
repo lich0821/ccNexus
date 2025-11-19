@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -16,6 +17,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
+	"github.com/lich0821/ccNexus/internal/storage"
 	"github.com/lich0821/ccNexus/internal/tray"
 	"github.com/lich0821/ccNexus/internal/webdav"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -50,6 +52,7 @@ type App struct {
 	ctx        context.Context
 	config     *config.Config
 	proxy      *proxy.Proxy
+	storage    *storage.SQLiteStorage
 	configPath string
 	ctxMutex   sync.RWMutex
 	trayIcon   []byte
@@ -79,23 +82,57 @@ func (a *App) startup(ctx context.Context) {
 		}
 	}
 
-	// Get config path
-	configPath, err := config.GetConfigPath()
+	// Get config directory
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		logger.Warn("Failed to get config path: %v, using default", err)
-		configPath = "config.json"
+		logger.Error("Failed to get home directory: %v", err)
+		homeDir = "."
 	}
+	configDir := filepath.Join(homeDir, ".ccNexus")
+	if err := os.MkdirAll(configDir, 0755); err != nil {
+		logger.Error("Failed to create config directory: %v", err)
+	}
+
+	// Setup paths
+	configPath := filepath.Join(configDir, "config.json")
+	statsPath := filepath.Join(configDir, "stats.json")
+	dbPath := filepath.Join(configDir, "ccnexus.db")
+
 	a.configPath = configPath
 	logger.Debug("Config path: %s", configPath)
+	logger.Debug("Database path: %s", dbPath)
 
-	// Load configuration
-	cfg, err := config.Load(configPath)
+	// Run migration from JSON to SQLite if needed
+	if err := storage.MigrateFromJSON(configPath, statsPath, dbPath); err != nil {
+		logger.Error("Migration failed: %v", err)
+	}
+
+	// Initialize SQLite storage
+	sqliteStorage, err := storage.NewSQLiteStorage(dbPath)
 	if err != nil {
-		logger.Warn("Failed to load config: %v, using default", err)
+		logger.Error("Failed to initialize storage: %v", err)
+		// Fallback to JSON mode
+		cfg, err := config.Load(configPath)
+		if err != nil {
+			logger.Warn("Failed to load config: %v, using default", err)
+			cfg = config.DefaultConfig()
+		}
+		a.config = cfg
+		// Create proxy without storage (will fail, but we log the error)
+		logger.Error("Cannot start without storage")
+		return
+	}
+	a.storage = sqliteStorage
+
+	// Load configuration from SQLite
+	configAdapter := storage.NewConfigStorageAdapter(sqliteStorage)
+	cfg, err := config.LoadFromStorage(configAdapter)
+	if err != nil {
+		logger.Warn("Failed to load config from storage: %v, using default", err)
 		cfg = config.DefaultConfig()
-		// Save default config only if it doesn't exist
-		if err := cfg.Save(configPath); err != nil {
-			logger.Warn("Failed to save config: %v", err)
+		// Save default config to storage
+		if err := cfg.SaveToStorage(configAdapter); err != nil {
+			logger.Warn("Failed to save default config: %v", err)
 		}
 	}
 	a.config = cfg
@@ -106,8 +143,9 @@ func (a *App) startup(ctx context.Context) {
 		logger.Debug("Log level restored from config: %d", cfg.GetLogLevel())
 	}
 
-	// Create proxy
-	a.proxy = proxy.New(cfg)
+	// Create proxy with storage
+	statsAdapter := storage.NewStatsStorageAdapter(sqliteStorage)
+	a.proxy = proxy.New(cfg, statsAdapter)
 
 	// Initialize system tray first
 	a.initTray()
@@ -116,42 +154,6 @@ func (a *App) startup(ctx context.Context) {
 	go func() {
 		if err := a.proxy.Start(); err != nil {
 			logger.Error("Proxy server error: %v", err)
-		}
-	}()
-
-	// Start data archive task (checks and archives complete months at startup)
-	go func() {
-		archiveManager, err := proxy.NewArchiveManager()
-		if err != nil {
-			logger.Error("Failed to create archive manager: %v", err)
-			return
-		}
-
-		// Check and archive complete months at startup
-		if err := archiveManager.CheckAndArchive(a.proxy.GetStats()); err != nil {
-			logger.Error("Failed to check/archive data: %v", err)
-		} else {
-			logger.Info("Archive check completed successfully")
-		}
-
-		// Start periodic archive task (runs daily for T+1 mode)
-		// This will update current month archive daily with yesterday's data
-		ticker := time.NewTicker(24 * time.Hour)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				logger.Info("Running periodic archive task...")
-				if err := archiveManager.CheckAndArchive(a.proxy.GetStats()); err != nil {
-					logger.Error("Periodic archive failed: %v", err)
-				} else {
-					logger.Info("Periodic archive completed successfully")
-				}
-			case <-a.ctx.Done():
-				logger.Info("Archive task stopping...")
-				return
-			}
 		}
 	}()
 
@@ -165,11 +167,12 @@ func (a *App) startup(ctx context.Context) {
 // shutdown is called when the app is closing
 func (a *App) shutdown(ctx context.Context) {
 	if a.proxy != nil {
-		// Flush any pending saves and save stats before stopping
-		if err := a.proxy.GetStats().FlushSave(); err != nil {
-			logger.Warn("Failed to save stats on shutdown: %v", err)
-		}
 		a.proxy.Stop()
+	}
+	if a.storage != nil {
+		if err := a.storage.Close(); err != nil {
+			logger.Warn("Failed to close storage: %v", err)
+		}
 	}
 	logger.Info("Application stopped")
 	logger.GetLogger().Close()
@@ -291,9 +294,17 @@ func (a *App) UpdateConfig(configJSON string) error {
 		return err
 	}
 
-	// Save to file
+	// Save to storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := newConfig.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save config: %w", err)
+		}
+	}
+
+	// Also save to JSON for backward compatibility
 	if err := newConfig.Save(a.configPath); err != nil {
-		return fmt.Errorf("failed to save config: %w", err)
+		logger.Warn("Failed to save config to JSON: %v", err)
 	}
 
 	a.config = &newConfig
@@ -564,6 +575,14 @@ func calculateTrend(current, previous int) float64 {
 
 // AddEndpoint adds a new endpoint
 func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark string) error {
+	// Check for duplicate endpoint name
+	endpoints := a.config.GetEndpoints()
+	for _, ep := range endpoints {
+		if ep.Name == name {
+			return fmt.Errorf("endpoint name '%s' already exists", name)
+		}
+	}
+
 	// Default to claude if transformer not specified
 	if transformer == "" {
 		transformer = "claude"
@@ -572,7 +591,6 @@ func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark strin
 	// Normalize API URL (remove trailing slash only)
 	apiUrl = normalizeAPIUrl(apiUrl)
 
-	endpoints := a.config.GetEndpoints()
 	endpoints = append(endpoints, config.Endpoint{
 		Name:        name,
 		APIUrl:      apiUrl,
@@ -643,6 +661,15 @@ func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model
 
 	// Save old name for logging
 	oldName := endpoints[index].Name
+
+	// Check for duplicate endpoint name (only if name is changing)
+	if oldName != name {
+		for i, ep := range endpoints {
+			if i != index && ep.Name == name {
+				return fmt.Errorf("endpoint name '%s' already exists", name)
+			}
+		}
+	}
 
 	// Preserve the Enabled status
 	enabled := endpoints[index].Enabled
@@ -1186,17 +1213,9 @@ func (a *App) BackupToWebDAV(filename string) error {
 	manager := webdav.NewManager(client)
 
 	// Get stats path
-	statsPath, err := proxy.GetStatsPath()
-	if err != nil {
-		logger.Warn("Failed to get stats path: %v", err)
-	}
-
-	// Load stats
-	stats := proxy.NewStats()
-	stats.SetStatsPath(statsPath)
-	if err := stats.Load(); err != nil {
-		logger.Warn("Failed to load stats: %v", err)
-	}
+	// Note: With SQLite storage, stats are managed by the storage layer
+	// Get current stats from proxy
+	stats := a.proxy.GetStats()
 
 	// Backup to WebDAV
 	version := a.GetVersion()
@@ -1381,22 +1400,22 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 
 // ListArchives returns a list of all available archive months
 func (a *App) ListArchives() string {
-	archiveManager, err := proxy.NewArchiveManager()
-	if err != nil {
+	if a.storage == nil {
 		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
+			"success":  false,
+			"message":  "Storage not initialized",
 			"archives": []string{},
 		}
 		data, _ := json.Marshal(result)
 		return string(data)
 	}
 
-	archives, err := archiveManager.ListArchives()
+	months, err := a.storage.GetArchiveMonths()
 	if err != nil {
+		logger.Error("Failed to get archive months: %v", err)
 		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("获取归档列表失败: %v", err),
+			"success":  false,
+			"message":  fmt.Sprintf("Failed to load archives: %v", err),
 			"archives": []string{},
 		}
 		data, _ := json.Marshal(result)
@@ -1405,7 +1424,7 @@ func (a *App) ListArchives() string {
 
 	result := map[string]interface{}{
 		"success":  true,
-		"archives": archives,
+		"archives": months,
 	}
 	data, _ := json.Marshal(result)
 	return string(data)
@@ -1413,78 +1432,87 @@ func (a *App) ListArchives() string {
 
 // GetArchiveData returns archived data for a specific month
 func (a *App) GetArchiveData(month string) string {
-	archiveManager, err := proxy.NewArchiveManager()
-	if err != nil {
+	if a.storage == nil {
 		result := map[string]interface{}{
 			"success": false,
-			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
+			"message": "Storage not initialized",
 		}
 		data, _ := json.Marshal(result)
 		return string(data)
 	}
 
-	archive, err := archiveManager.LoadArchive(month)
+	// Get monthly archive data from storage
+	archiveData, err := a.storage.GetMonthlyArchiveData(month)
 	if err != nil {
+		logger.Error("Failed to get archive data for %s: %v", month, err)
 		result := map[string]interface{}{
 			"success": false,
-			"message": fmt.Sprintf("加载归档失败: %v", err),
+			"message": fmt.Sprintf("Failed to load archive: %v", err),
 		}
 		data, _ := json.Marshal(result)
 		return string(data)
+	}
+
+	// Build archive structure compatible with frontend
+	// Format: { endpoints: { endpointName: { dailyHistory: { date: stats } } }, summary: {...} }
+	endpoints := make(map[string]map[string]interface{})
+	var totalRequests, totalErrors, totalInputTokens, totalOutputTokens int
+
+	for _, record := range archiveData {
+		// Initialize endpoint if not exists
+		if endpoints[record.EndpointName] == nil {
+			endpoints[record.EndpointName] = map[string]interface{}{
+				"dailyHistory": make(map[string]interface{}),
+			}
+		}
+
+		// Add daily record
+		dailyHistory := endpoints[record.EndpointName]["dailyHistory"].(map[string]interface{})
+		dailyHistory[record.Date] = map[string]interface{}{
+			"date":         record.Date,
+			"requests":     record.Requests,
+			"errors":       record.Errors,
+			"inputTokens":  record.InputTokens,
+			"outputTokens": record.OutputTokens,
+		}
+
+		// Accumulate totals
+		totalRequests += record.Requests
+		totalErrors += record.Errors
+		totalInputTokens += record.InputTokens
+		totalOutputTokens += record.OutputTokens
+	}
+
+	// Build summary
+	summary := map[string]interface{}{
+		"totalRequests":     totalRequests,
+		"totalErrors":       totalErrors,
+		"totalInputTokens":  totalInputTokens,
+		"totalOutputTokens": totalOutputTokens,
+	}
+
+	// Build final result
+	archive := map[string]interface{}{
+		"endpoints": endpoints,
+		"summary":   summary,
 	}
 
 	result := map[string]interface{}{
 		"success": true,
 		"archive": archive,
 	}
-	data, _ := json.Marshal(result)
-	return string(data)
-}
 
-// GetArchiveSummary returns summary statistics for an archived month
-func (a *App) GetArchiveSummary(month string) string {
-	archiveManager, err := proxy.NewArchiveManager()
-	if err != nil {
-		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("创建归档管理器失败: %v", err),
-		}
-		data, _ := json.Marshal(result)
-		return string(data)
-	}
-
-	summary, err := archiveManager.GetArchiveSummary(month)
-	if err != nil {
-		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("获取归档摘要失败: %v", err),
-		}
-		data, _ := json.Marshal(result)
-		return string(data)
-	}
-
-	result := map[string]interface{}{
-		"success": true,
-		"summary": summary,
-	}
 	data, _ := json.Marshal(result)
 	return string(data)
 }
 
 // GenerateMockArchives generates mock archive data for testing
+// Note: This function is kept for backward compatibility but is no longer needed
+// Archive data is now stored in SQLite and can be queried via GetArchiveData()
 func (a *App) GenerateMockArchives(monthsCount int) string {
-	if err := proxy.GenerateMockArchivesForUser(monthsCount); err != nil {
-		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("生成模拟数据失败: %v", err),
-		}
-		data, _ := json.Marshal(result)
-		return string(data)
-	}
-
 	result := map[string]interface{}{
-		"success": true,
-		"message": fmt.Sprintf("成功生成 %d 个月的模拟归档数据", monthsCount),
+		"success": false,
+		"message": "Mock archives are no longer supported. Use real data from SQLite.",
 	}
 	data, _ := json.Marshal(result)
 	return string(data)
