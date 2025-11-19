@@ -1346,6 +1346,8 @@ func (a *App) BackupToWebDAV(filename string) error {
 	defer func() {
 		logger.Debug("Cleaning up temp file: %s", tempBackupPath)
 		os.Remove(tempBackupPath)
+		logger.Debug("Cleaning up temp directory: %s", tempDir)
+		os.RemoveAll(tempDir)
 	}()
 
 	// Create backup copy without app_config
@@ -1408,7 +1410,8 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 		return fmt.Errorf("创建临时目录失败: %w", err)
 	}
 	tempRestorePath := filepath.Join(tempDir, "restore_temp.db")
-	defer os.Remove(tempRestorePath) // Clean up temp file
+	defer os.Remove(tempRestorePath)  // Clean up temp file
+	defer os.RemoveAll(tempDir)       // Clean up temp directory
 
 	// Download and restore database from WebDAV
 	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
@@ -1590,7 +1593,8 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 		return string(data)
 	}
 	tempRestorePath := filepath.Join(tempDir, "conflict_check_temp.db")
-	defer os.Remove(tempRestorePath) // Clean up temp file
+	defer os.Remove(tempRestorePath)  // Clean up temp file
+	defer os.RemoveAll(tempDir)       // Clean up temp directory
 
 	// Download database from WebDAV
 	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
