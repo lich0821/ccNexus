@@ -741,6 +741,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			// Stream and transform SSE events in real-time
 			scanner := bufio.NewScanner(resp.Body)
+			// Increase buffer size to handle large SSE events (default 64KB is too small)
+			// Set to 1MB to handle large tool responses and content
+			buf := make([]byte, 0, 64*1024)
+			scanner.Buffer(buf, 1024*1024)
 			var inputTokens, outputTokens int
 			var buffer bytes.Buffer
 			var outputText strings.Builder
@@ -914,9 +918,97 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Error("[%s] Stream scanner error: %v", endpoint.Name, err)
 			}
 
+			// Process any remaining data in buffer (for events without trailing newline)
+			if buffer.Len() > 0 && !streamDone {
+				eventCount++
+				eventData := buffer.Bytes()
+				logger.DebugLog("[%s] SSE Event #%d (Final, no trailing newline): %s", endpoint.Name, eventCount, string(eventData))
+
+				var transformedEvent []byte
+				var err error
+
+				// Transform based on transformer type
+				switch transformerName {
+				case "openai":
+					transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+				case "gemini":
+					transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+				default:
+					transformedEvent, err = trans.TransformResponse(eventData, true)
+				}
+
+				if err == nil {
+					logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
+					_, writeErr := w.Write(transformedEvent)
+					if writeErr != nil {
+						logger.Error("[%s] Failed to write final event #%d to client: %v", endpoint.Name, eventCount, writeErr)
+					} else {
+						flusher.Flush()
+
+						// Parse token usage and check for message_stop
+						scanner2 := bufio.NewScanner(bytes.NewReader(transformedEvent))
+						for scanner2.Scan() {
+							eventLine := scanner2.Text()
+							if strings.HasPrefix(eventLine, "data: ") {
+								jsonData := strings.TrimPrefix(eventLine, "data: ")
+								var event map[string]interface{}
+								if err := json.Unmarshal([]byte(jsonData), &event); err == nil {
+									eventType, _ := event["type"].(string)
+									if eventType == "message_start" {
+										if message, ok := event["message"].(map[string]interface{}); ok {
+											if usage, ok := message["usage"].(map[string]interface{}); ok {
+												if input, ok := usage["input_tokens"].(float64); ok {
+													inputTokens = int(input)
+												}
+												if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
+													inputTokens += int(cacheRead)
+												}
+												if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
+													inputTokens += int(cacheCreate)
+												}
+											}
+										}
+									}
+									if eventType == "content_block_delta" {
+										if delta, ok := event["delta"].(map[string]interface{}); ok {
+											if text, ok := delta["text"].(string); ok {
+												outputText.WriteString(text)
+											}
+										}
+									}
+									if eventType == "message_delta" {
+										if usage, ok := event["usage"].(map[string]interface{}); ok {
+											if input, ok := usage["input_tokens"].(float64); ok {
+												inputTokens = int(input)
+											}
+											if cacheRead, ok := usage["cache_read_input_tokens"].(float64); ok && cacheRead > 0 {
+												inputTokens += int(cacheRead)
+											}
+											if cacheCreate, ok := usage["cache_creation_input_tokens"].(float64); ok && cacheCreate > 0 {
+												inputTokens += int(cacheCreate)
+											}
+											if output, ok := usage["output_tokens"].(float64); ok {
+												outputTokens = int(output)
+											}
+										}
+									}
+									if eventType == "message_stop" {
+										streamDone = true
+									}
+								}
+							}
+						}
+					}
+				} else {
+					logger.Error("[%s] Failed to transform final SSE event #%d: %v", endpoint.Name, eventCount, err)
+				}
+
+				buffer.Reset()
+			}
+
 			// If stream didn't end properly (no message_stop event sent), send one now
 			if !streamDone {
-				logger.Warn("[%s] Stream ended unexpectedly without [DONE] marker, sending synthetic message_stop", endpoint.Name)
+				logger.Warn("[%s] Stream ended unexpectedly without proper termination, sending synthetic message_stop", endpoint.Name)
 
 				// Close any open blocks (thinking, tool, or content)
 				if streamCtx != nil {
