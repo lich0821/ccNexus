@@ -1,6 +1,15 @@
 import { t } from '../i18n/index.js';
 import { changeLanguage } from './ui.js';
 
+// Apply theme to body element
+export function applyTheme(theme) {
+    if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+    } else {
+        document.body.classList.remove('dark-theme');
+    }
+}
+
 // Show settings modal
 export async function showSettingsModal() {
     const modal = document.getElementById('settingsModal');
@@ -40,6 +49,13 @@ async function loadCurrentSettings() {
         if (languageSelect) {
             languageSelect.value = language;
         }
+
+        // Set theme
+        const theme = config.theme || 'light';
+        const themeSelect = document.getElementById('settingsTheme');
+        if (themeSelect) {
+            themeSelect.value = theme;
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -51,6 +67,7 @@ export async function saveSettings() {
         // Get values from form
         const closeWindowBehavior = document.getElementById('settingsCloseWindowBehavior').value;
         const language = document.getElementById('settingsLanguage').value;
+        const theme = document.getElementById('settingsTheme').value;
 
         // Save close window behavior
         await window.go.main.App.SetCloseWindowBehavior(closeWindowBehavior);
@@ -58,6 +75,13 @@ export async function saveSettings() {
         // Get current config
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
+
+        // Update theme if changed
+        if (config.theme !== theme) {
+            await window.go.main.App.SetTheme(theme);
+            // Apply theme immediately
+            applyTheme(theme);
+        }
 
         // Update language if changed
         if (config.language !== language) {
