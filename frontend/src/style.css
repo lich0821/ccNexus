@@ -181,8 +181,9 @@ body {
 /* Stat Box Detail - 详细信息统一13px */
 .stat-box .stat-detail {
     font-size: 13px;
-    color: rgba(200, 200, 200, 0.9);
+    color: rgba(255, 255, 255, 0.75);
     margin-top: 8px;
+    -webkit-font-smoothing: antialiased;
 }
 
 /* 分隔符样式 */
@@ -198,19 +199,15 @@ body {
 }
 
 .stat-divider {
-    color: rgba(255, 255, 255, 0.5);
-    margin: 0 6px;
-}
-
-.stat-text {
-    opacity: 0.85;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
 }
 
 /* Trend Display - 趋势标签 */
 .trend {
     display: inline-flex;
     align-items: center;
-    padding: 3px 8px;
+    padding: 2px 8px 4px 8px;
     border-radius: 12px;
     font-weight: 600;
     font-size: 11px;
@@ -402,23 +399,26 @@ body {
 }
 
 #historyModal .modal-close {
-    background: none;
+    width: 32px;
+    height: 32px;
     border: none;
-    font-size: 32px;
-    color: #999;
+    background: #f0f0f0;
+    border-radius: 50%;
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    padding: 0;
 }
 
 #historyModal .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 /* Adjust history styles for modal */
@@ -434,9 +434,14 @@ body {
     margin-bottom: 20px;
 }
 
+.endpoint-panel {
+    transition: all 0.3s ease;
+    overflow: visible;
+}
+
 .endpoint-list {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 15px;
 }
 
@@ -758,23 +763,26 @@ body {
 }
 
 #endpointModal .modal-close {
-    background: none;
+    width: 32px;
+    height: 32px;
     border: none;
-    font-size: 32px;
-    color: #999;
+    background: #f0f0f0;
+    border-radius: 50%;
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    padding: 0;
 }
 
 #endpointModal .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 #endpointModal .modal-body {
@@ -812,23 +820,26 @@ body {
 }
 
 #portModal .modal-close {
-    background: none;
+    width: 32px;
+    height: 32px;
     border: none;
-    font-size: 32px;
-    color: #999;
+    background: #f0f0f0;
+    border-radius: 50%;
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    padding: 0;
 }
 
 #portModal .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 #portModal .modal-body {
@@ -996,6 +1007,30 @@ body {
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
+/* Endpoint Toggle Button */
+.endpoint-toggle-btn {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    background: white;
+    color: #333;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.endpoint-toggle-btn:hover {
+    border-color: #667eea;
+    background: #f8f9fa;
+}
+
+.endpoint-toggle-btn:active {
+    transform: scale(0.98);
+}
+
 /* Log Panel Styles */
 .log-level-select {
     padding: 6px 12px;
@@ -1015,6 +1050,37 @@ body {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Log Level Select Button Style (same as secondary button) */
+.log-level-select-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    background-color: #6c757d;
+    color: white;
+    transition: all 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23ffffff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 10px;
+    padding-right: 30px;
+}
+
+.log-level-select-btn:hover {
+    background-color: #5a6268;
+}
+
+.log-level-select-btn:focus {
+    outline: none;
+    background-color: #5a6268;
+}
+
+.log-level-select-btn:active {
+    transform: scale(0.98);
 }
 
 .btn-sm {
@@ -1372,9 +1438,13 @@ body {
     border-radius: 8px;
     max-width: 500px;
     width: 90%;
+    min-height: 479px;
     padding: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: confirmSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .conflict-header {
@@ -1466,6 +1536,33 @@ body {
     display: flex;
     gap: 8px;
     justify-content: center;
+    margin-top: auto;
+}
+
+.conflict-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+.conflict-close-btn:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
 }
 
 /* Prompt Dialog */
@@ -1730,23 +1827,26 @@ body {
 }
 
 #genericModal .modal-close {
-    background: none;
+    width: 32px;
+    height: 32px;
     border: none;
-    font-size: 32px;
-    color: #999;
+    background: #f0f0f0;
+    border-radius: 50%;
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    padding: 0;
 }
 
 #genericModal .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 #genericModal .modal-body {
@@ -1791,27 +1891,53 @@ body {
 }
 
 #subModal .modal-close {
-    background: none;
+    width: 32px;
+    height: 32px;
     border: none;
-    font-size: 32px;
-    color: #999;
+    background: #f0f0f0;
+    border-radius: 50%;
     cursor: pointer;
-    width: 40px;
-    height: 40px;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all 0.3s;
+    transition: all 0.2s;
+    padding: 0;
 }
 
 #subModal .modal-close:hover {
-    background: #f0f0f0;
+    background: #e0e0e0;
     color: #333;
+    transform: rotate(90deg);
 }
 
 #subModal .modal-body {
     padding: 25px 30px 30px 30px;
+}
+
+/* Notification animations */
+@keyframes slideInRight {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
 }
 
 #subModal .prompt-dialog,
@@ -1910,7 +2036,7 @@ body {
 
 /* Enhanced Conflict Dialog Styles */
 .conflict-details-container {
-    max-height: 400px;
+    max-height: 500px;
     overflow-y: auto;
     margin-bottom: 15px;
     padding: 10px;
@@ -2051,5 +2177,63 @@ body {
 
 /* Update conflict dialog content max width */
 .conflict-dialog-content {
-    max-width: 700px;
+    max-width: 520px;
+}
+
+/* Settings Modal Styles */
+#settingsModal {
+    backdrop-filter: blur(4px);
+}
+
+#settingsModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#settingsModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#settingsModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#settingsModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#settingsModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#settingsModal .modal-body {
+    padding: 25px 30px 30px 30px;
 }

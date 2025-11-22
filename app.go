@@ -227,15 +227,15 @@ func (a *App) beforeClose(ctx context.Context) bool {
 	behavior := a.config.GetCloseWindowBehavior()
 
 	if behavior == "quit" {
-		// User previously chose to quit, so quit directly
+		// User chose to quit directly
 		return false // Allow window to close (will trigger shutdown)
 	} else if behavior == "minimize" {
-		// User previously chose to minimize, so hide window
+		// User chose to minimize to tray
 		a.HideWindow()
 		return true // Prevent window close
 	}
 
-	// No preference set, show dialog to ask user
+	// behavior == "ask" or not set, show dialog to ask user
 	runtime.EventsEmit(ctx, "show-close-dialog")
 
 	// Return true to prevent window close (dialog will handle the action)
@@ -263,9 +263,10 @@ func (a *App) saveWindowSize(ctx context.Context) {
 }
 
 // SetCloseWindowBehavior sets the user's preference for close window behavior
+// Accepts: "quit", "minimize", "ask"
 func (a *App) SetCloseWindowBehavior(behavior string) error {
-	if behavior != "quit" && behavior != "minimize" {
-		return fmt.Errorf("invalid behavior: %s (must be 'quit' or 'minimize')", behavior)
+	if behavior != "quit" && behavior != "minimize" && behavior != "ask" {
+		return fmt.Errorf("invalid behavior: %s (must be 'quit', 'minimize', or 'ask')", behavior)
 	}
 
 	a.config.UpdateCloseWindowBehavior(behavior)
@@ -602,16 +603,270 @@ func (a *App) GetStatsTrend() string {
 }
 
 // calculateTrend calculates percentage change between current and previous values
+// Maximum trend is capped at ±100%
 func calculateTrend(current, previous int) float64 {
 	if previous == 0 {
 		if current == 0 {
 			return 0
 		}
-		// When previous is 0 but current > 0, return a large positive number
-		// to indicate significant increase (capped at 999.9% for display purposes)
-		return 999.9
+		// When previous is 0 but current > 0, cap at 100%
+		return 100.0
 	}
-	return ((float64(current) - float64(previous)) / float64(previous)) * 100.0
+
+	trend := ((float64(current) - float64(previous)) / float64(previous)) * 100.0
+
+	// Cap trend between -100% and +100%
+	if trend > 100.0 {
+		return 100.0
+	}
+	if trend < -100.0 {
+		return -100.0
+	}
+
+	return trend
+}
+
+// GetStatsTrendByPeriod returns trend comparison data for specified period
+func (a *App) GetStatsTrendByPeriod(period string) string {
+	switch period {
+	case "daily":
+		return a.getTrendDailyVsYesterday()
+	case "yesterday":
+		return a.getTrendYesterdayVsDayBefore()
+	case "weekly":
+		return a.getTrendWeeklyVsLastWeek()
+	case "monthly":
+		return a.getTrendMonthlyVsLastMonth()
+	default:
+		return a.getTrendDailyVsYesterday()
+	}
+}
+
+// getTrendDailyVsYesterday returns today vs yesterday trend
+func (a *App) getTrendDailyVsYesterday() string {
+	now := time.Now()
+	today := now.Format("2006-01-02")
+	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+
+	todayStats := a.proxy.GetStats().GetDailyStats(today)
+	yesterdayStats := a.proxy.GetStats().GetDailyStats(yesterday)
+
+	// Calculate totals for today
+	var todayRequests, todayErrors, todayInputTokens, todayOutputTokens int
+	for _, stats := range todayStats {
+		todayRequests += stats.Requests
+		todayErrors += stats.Errors
+		todayInputTokens += stats.InputTokens
+		todayOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate totals for yesterday
+	var yesterdayRequests, yesterdayErrors, yesterdayInputTokens, yesterdayOutputTokens int
+	for _, stats := range yesterdayStats {
+		yesterdayRequests += stats.Requests
+		yesterdayErrors += stats.Errors
+		yesterdayInputTokens += stats.InputTokens
+		yesterdayOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate percentage changes
+	requestsTrend := calculateTrend(todayRequests, yesterdayRequests)
+	errorsTrend := calculateTrend(todayErrors, yesterdayErrors)
+	tokensTrend := calculateTrend(todayInputTokens+todayOutputTokens, yesterdayInputTokens+yesterdayOutputTokens)
+
+	result := map[string]interface{}{
+		"current":        todayRequests,
+		"previous":       yesterdayRequests,
+		"trend":          requestsTrend,
+		"currentErrors":  todayErrors,
+		"previousErrors": yesterdayErrors,
+		"errorsTrend":    errorsTrend,
+		"currentTokens":  todayInputTokens + todayOutputTokens,
+		"previousTokens": yesterdayInputTokens + yesterdayOutputTokens,
+		"tokensTrend":    tokensTrend,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// getTrendYesterdayVsDayBefore returns yesterday vs day before yesterday trend
+func (a *App) getTrendYesterdayVsDayBefore() string {
+	now := time.Now()
+	yesterday := now.AddDate(0, 0, -1).Format("2006-01-02")
+	dayBefore := now.AddDate(0, 0, -2).Format("2006-01-02")
+
+	yesterdayStats := a.proxy.GetStats().GetDailyStats(yesterday)
+	dayBeforeStats := a.proxy.GetStats().GetDailyStats(dayBefore)
+
+	// Calculate totals for yesterday
+	var yesterdayRequests, yesterdayErrors, yesterdayInputTokens, yesterdayOutputTokens int
+	for _, stats := range yesterdayStats {
+		yesterdayRequests += stats.Requests
+		yesterdayErrors += stats.Errors
+		yesterdayInputTokens += stats.InputTokens
+		yesterdayOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate totals for day before
+	var dayBeforeRequests, dayBeforeErrors, dayBeforeInputTokens, dayBeforeOutputTokens int
+	for _, stats := range dayBeforeStats {
+		dayBeforeRequests += stats.Requests
+		dayBeforeErrors += stats.Errors
+		dayBeforeInputTokens += stats.InputTokens
+		dayBeforeOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate percentage changes
+	requestsTrend := calculateTrend(yesterdayRequests, dayBeforeRequests)
+	errorsTrend := calculateTrend(yesterdayErrors, dayBeforeErrors)
+	tokensTrend := calculateTrend(yesterdayInputTokens+yesterdayOutputTokens, dayBeforeInputTokens+dayBeforeOutputTokens)
+
+	result := map[string]interface{}{
+		"current":        yesterdayRequests,
+		"previous":       dayBeforeRequests,
+		"trend":          requestsTrend,
+		"currentErrors":  yesterdayErrors,
+		"previousErrors": dayBeforeErrors,
+		"errorsTrend":    errorsTrend,
+		"currentTokens":  yesterdayInputTokens + yesterdayOutputTokens,
+		"previousTokens": dayBeforeInputTokens + dayBeforeOutputTokens,
+		"tokensTrend":    tokensTrend,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// getTrendWeeklyVsLastWeek returns this week vs last week same period trend
+func (a *App) getTrendWeeklyVsLastWeek() string {
+	now := time.Now()
+
+	// Calculate this week (Monday to today)
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7 // Sunday = 7
+	}
+	daysFromMonday := weekday - 1
+	thisWeekStart := now.AddDate(0, 0, -daysFromMonday)
+	thisWeekStartStr := thisWeekStart.Format("2006-01-02")
+	todayStr := now.Format("2006-01-02")
+
+	// Calculate last week same period (last Monday to last same weekday)
+	lastWeekStart := thisWeekStart.AddDate(0, 0, -7)
+	lastWeekEnd := now.AddDate(0, 0, -7)
+	lastWeekStartStr := lastWeekStart.Format("2006-01-02")
+	lastWeekEndStr := lastWeekEnd.Format("2006-01-02")
+
+	thisWeekStats := a.proxy.GetStats().GetPeriodStats(thisWeekStartStr, todayStr)
+	lastWeekStats := a.proxy.GetStats().GetPeriodStats(lastWeekStartStr, lastWeekEndStr)
+
+	// Calculate totals for this week
+	var thisWeekRequests, thisWeekErrors, thisWeekInputTokens, thisWeekOutputTokens int
+	for _, stats := range thisWeekStats {
+		thisWeekRequests += stats.Requests
+		thisWeekErrors += stats.Errors
+		thisWeekInputTokens += stats.InputTokens
+		thisWeekOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate totals for last week
+	var lastWeekRequests, lastWeekErrors, lastWeekInputTokens, lastWeekOutputTokens int
+	for _, stats := range lastWeekStats {
+		lastWeekRequests += stats.Requests
+		lastWeekErrors += stats.Errors
+		lastWeekInputTokens += stats.InputTokens
+		lastWeekOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate percentage changes
+	requestsTrend := calculateTrend(thisWeekRequests, lastWeekRequests)
+	errorsTrend := calculateTrend(thisWeekErrors, lastWeekErrors)
+	tokensTrend := calculateTrend(thisWeekInputTokens+thisWeekOutputTokens, lastWeekInputTokens+lastWeekOutputTokens)
+
+	result := map[string]interface{}{
+		"current":        thisWeekRequests,
+		"previous":       lastWeekRequests,
+		"trend":          requestsTrend,
+		"currentErrors":  thisWeekErrors,
+		"previousErrors": lastWeekErrors,
+		"errorsTrend":    errorsTrend,
+		"currentTokens":  thisWeekInputTokens + thisWeekOutputTokens,
+		"previousTokens": lastWeekInputTokens + lastWeekOutputTokens,
+		"tokensTrend":    tokensTrend,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// getTrendMonthlyVsLastMonth returns this month vs last month same period trend
+func (a *App) getTrendMonthlyVsLastMonth() string {
+	now := time.Now()
+
+	// Calculate this month (1st to today)
+	thisMonthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	thisMonthStartStr := thisMonthStart.Format("2006-01-02")
+	todayStr := now.Format("2006-01-02")
+
+	// Calculate last month same period (last month 1st to same day)
+	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
+	dayOfMonth := now.Day()
+	lastMonth := lastMonthStart.Month()
+	lastMonthYear := lastMonthStart.Year()
+
+	// Get the last day of last month
+	lastDayOfLastMonth := time.Date(lastMonthYear, lastMonth+1, 0, 0, 0, 0, 0, now.Location()).Day()
+
+	// If current day is greater than last month's last day, use last day of last month
+	if dayOfMonth > lastDayOfLastMonth {
+		dayOfMonth = lastDayOfLastMonth
+	}
+
+	lastMonthEnd := time.Date(lastMonthYear, lastMonth, dayOfMonth, 0, 0, 0, 0, now.Location())
+	lastMonthStartStr := lastMonthStart.Format("2006-01-02")
+	lastMonthEndStr := lastMonthEnd.Format("2006-01-02")
+
+	thisMonthStats := a.proxy.GetStats().GetPeriodStats(thisMonthStartStr, todayStr)
+	lastMonthStats := a.proxy.GetStats().GetPeriodStats(lastMonthStartStr, lastMonthEndStr)
+
+	// Calculate totals for this month
+	var thisMonthRequests, thisMonthErrors, thisMonthInputTokens, thisMonthOutputTokens int
+	for _, stats := range thisMonthStats {
+		thisMonthRequests += stats.Requests
+		thisMonthErrors += stats.Errors
+		thisMonthInputTokens += stats.InputTokens
+		thisMonthOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate totals for last month
+	var lastMonthRequests, lastMonthErrors, lastMonthInputTokens, lastMonthOutputTokens int
+	for _, stats := range lastMonthStats {
+		lastMonthRequests += stats.Requests
+		lastMonthErrors += stats.Errors
+		lastMonthInputTokens += stats.InputTokens
+		lastMonthOutputTokens += stats.OutputTokens
+	}
+
+	// Calculate percentage changes
+	requestsTrend := calculateTrend(thisMonthRequests, lastMonthRequests)
+	errorsTrend := calculateTrend(thisMonthErrors, lastMonthErrors)
+	tokensTrend := calculateTrend(thisMonthInputTokens+thisMonthOutputTokens, lastMonthInputTokens+lastMonthOutputTokens)
+
+	result := map[string]interface{}{
+		"current":        thisMonthRequests,
+		"previous":       lastMonthRequests,
+		"trend":          requestsTrend,
+		"currentErrors":  thisMonthErrors,
+		"previousErrors": lastMonthErrors,
+		"errorsTrend":    errorsTrend,
+		"currentTokens":  thisMonthInputTokens + thisMonthOutputTokens,
+		"previousTokens": lastMonthInputTokens + lastMonthOutputTokens,
+		"tokensTrend":    tokensTrend,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
 }
 
 // AddEndpoint adds a new endpoint
@@ -1727,6 +1982,89 @@ func (a *App) GetArchiveData(month string) string {
 	result := map[string]interface{}{
 		"success": true,
 		"archive": archive,
+	}
+
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// GetArchiveTrend returns trend comparison between selected month and previous month
+func (a *App) GetArchiveTrend(month string) string {
+	if a.storage == nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": "Storage not initialized",
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Parse month to get previous month
+	t, err := time.Parse("2006-01", month)
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Invalid month format: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	previousMonth := t.AddDate(0, -1, 0).Format("2006-01")
+
+	// Get current month data
+	currentData, err := a.storage.GetMonthlyArchiveData(month)
+	if err != nil {
+		logger.Error("Failed to get current month data: %v", err)
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Failed to load current month: %v", err),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Get previous month data
+	previousData, err := a.storage.GetMonthlyArchiveData(previousMonth)
+	if err != nil {
+		// Previous month may not exist, return flat trend
+		logger.Debug("Previous month %s has no data, returning flat trend", previousMonth)
+		result := map[string]interface{}{
+			"success": true,
+			"trend":    0.0,
+			"errorsTrend": 0.0,
+			"tokensTrend": 0.0,
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	// Calculate totals for current month
+	var currentRequests, currentErrors, currentTokens int
+	for _, record := range currentData {
+		currentRequests += record.Requests
+		currentErrors += record.Errors
+		currentTokens += record.InputTokens + record.OutputTokens
+	}
+
+	// Calculate totals for previous month
+	var previousRequests, previousErrors, previousTokens int
+	for _, record := range previousData {
+		previousRequests += record.Requests
+		previousErrors += record.Errors
+		previousTokens += record.InputTokens + record.OutputTokens
+	}
+
+	// Calculate trends
+	requestsTrend := calculateTrend(currentRequests, previousRequests)
+	errorsTrend := calculateTrend(currentErrors, previousErrors)
+	tokensTrend := calculateTrend(currentTokens, previousTokens)
+
+	result := map[string]interface{}{
+		"success":      true,
+		"trend":        requestsTrend,
+		"errorsTrend":  errorsTrend,
+		"tokensTrend":  tokensTrend,
 	}
 
 	data, _ := json.Marshal(result)

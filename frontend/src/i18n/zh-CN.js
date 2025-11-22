@@ -31,7 +31,9 @@ export default {
         current: '当前使用',
         switchTo: '切换',
         switchFailed: '切换失败',
-        reorderFailed: '排序失败'
+        reorderFailed: '排序失败',
+        collapse: '收起',
+        expand: '展开'
     },
     modal: {
         addEndpoint: '添加端点',
@@ -101,11 +103,24 @@ export default {
         githubRepo: '🔗 GitHub 仓库'
     },
     settings: {
+        title: '设置',
         language: '语言',
         languages: {
             en: 'English',
             'zh-CN': '简体中文'
-        }
+        },
+        closeWindowBehavior: '窗口关闭行为',
+        closeWindowBehaviorHelp: '选择点击关闭按钮时的默认操作',
+        closeWindowOptions: {
+            quit: '直接关闭',
+            minimize: '最小化到托盘',
+            ask: '每次询问'
+        },
+        languageHelp: '选择界面显示语言',
+        save: '保存',
+        cancel: '取消',
+        saveSuccess: '设置保存成功',
+        saveFailed: '设置保存失败'
     },
     statistics: {
         title: '统计信息',
@@ -189,6 +204,20 @@ export default {
         useRemote: '使用远程备份',
         keepLocal: '保留本地配置',
         enterBackupName: '请输入备份文件名',
+        enabled: '启用状态',
+        remark: '备注',
+        apiUrl: 'API 地址',
+        apiKey: 'API 密钥',
+        transformer: '转换器',
+        model: '模型',
+        conflict: '个冲突',
+        conflicts: '个冲突',
+        local: '本地',
+        remote: '远程',
+        endpointHas: '个端点存在冲突配置',
+        endpointsHave: '个端点存在冲突配置',
+        useRemoteDesc: '远程配置将覆盖本地冲突的端点配置',
+        keepLocalDesc: '保留本地配置，仅从远程添加新端点',
         inputFilename: '输入文件名'
     },
     common: {
@@ -199,19 +228,19 @@ export default {
         confirm: '确认'
     },
     tips: [
-        '小提示：您可以添加多个 API 端点实现自动故障转移',
-        '小提示：当某个端点失败时，ccNexus 会自动切换到下一个端点',
-        '小提示：查看统计信息标签页可以监控您的 API 使用情况',
-        '小提示：为不同端点使用不同的转换器（Claude/OpenAI/Gemini）',
-        '小提示：启用多个端点可以提高响应速度和可靠性',
-        '小提示：点击顶部的端口号可以修改代理端口',
-        '小提示：点击"历史"标签页可以查看历史统计数据',
-        '小提示：使用 WebDAV 功能可以跨设备同步您的配置',
-        '小提示：保存前测试端点可以确保它们正常工作',
-        '小提示：您的 API 密钥存储在本地，不会发送给第三方',
-        '小提示：为端点添加备注可以帮助您更容易识别它们',
-        '小提示：在语言选择器中可以切换中英文界面',
-        '小提示：统计数据每 5 秒自动更新一次',
-        '小提示：ccNexus 支持 Claude、OpenAI 和 Gemini API 格式'
+        '小贴士：您可以添加多个 API 端点实现自动故障转移',
+        '小贴士：当某个端点失败时，ccNexus 会自动切换到下一个端点',
+        '小贴士：查看统计信息标签页可以监控您的 API 使用情况',
+        '小贴士：为不同端点使用不同的转换器（Claude/OpenAI/Gemini）',
+        '小贴士：启用多个端点可以提高响应速度和可靠性',
+        '小贴士：点击顶部的端口号可以修改代理端口',
+        '小贴士：点击"历史"标签页可以查看历史统计数据',
+        '小贴士：使用 WebDAV 功能可以跨设备同步您的配置',
+        '小贴士：保存前测试端点可以确保它们正常工作',
+        '小贴士：您的 API 密钥存储在本地，不会发送给第三方',
+        '小贴士：为端点添加备注可以帮助您更容易识别它们',
+        '小贴士：在语言选择器中可以切换中英文界面',
+        '小贴士：统计数据每 3 秒自动更新一次',
+        '小贴士：ccNexus 支持 Claude、OpenAI 和 Gemini API 格式'
     ]
 };

@@ -50,11 +50,11 @@ export function toggleLogPanel() {
 
     if (logPanelExpanded) {
         panel.style.display = 'block';
-        icon.textContent = '▼';
+        icon.textContent = '🔼';
         text.textContent = t('logs.collapse');
     } else {
         panel.style.display = 'none';
-        icon.textContent = '▶';
+        icon.textContent = '🔽';
         text.textContent = t('logs.expand');
     }
 }

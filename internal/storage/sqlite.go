@@ -44,6 +44,7 @@ func (s *SQLiteStorage) initSchema() error {
 		transformer TEXT DEFAULT 'claude',
 		model TEXT,
 		remark TEXT,
+		sort_order INTEGER DEFAULT 0,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -72,15 +73,48 @@ func (s *SQLiteStorage) initSchema() error {
 	CREATE INDEX IF NOT EXISTS idx_daily_stats_device ON daily_stats(device_id);
 	`
 
-	_, err := s.db.Exec(schema)
-	return err
+	if _, err := s.db.Exec(schema); err != nil {
+		return err
+	}
+
+	// Migration: Add sort_order column if it doesn't exist
+	if err := s.migrateSortOrder(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// migrateSortOrder adds the sort_order column to existing databases
+func (s *SQLiteStorage) migrateSortOrder() error {
+	// Check if sort_order column exists
+	var count int
+	err := s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('endpoints') WHERE name='sort_order'`).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	// If column doesn't exist, add it and set default values
+	if count == 0 {
+		// Add the column
+		if _, err := s.db.Exec(`ALTER TABLE endpoints ADD COLUMN sort_order INTEGER DEFAULT 0`); err != nil {
+			return err
+		}
+
+		// Set sort_order for existing endpoints based on their current ID order
+		if _, err := s.db.Exec(`UPDATE endpoints SET sort_order = id WHERE sort_order = 0`); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, created_at, updated_at FROM endpoints`)
+	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, sort_order, created_at, updated_at FROM endpoints ORDER BY sort_order ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +123,7 @@ func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
 		}
 		endpoints = append(endpoints, ep)
@@ -102,8 +136,8 @@ func (s *SQLiteStorage) SaveEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, enabled, transformer, model, remark) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		ep.Name, ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark)
+	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, enabled, transformer, model, remark, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+		ep.Name, ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder)
 	if err != nil {
 		return err
 	}
@@ -120,8 +154,8 @@ func (s *SQLiteStorage) UpdateEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, enabled=?, transformer=?, model=?, remark=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
-		ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.Name)
+	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, enabled=?, transformer=?, model=?, remark=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
+		ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder, ep.Name)
 	return err
 }
 
@@ -481,7 +515,7 @@ func (s *SQLiteStorage) DetectEndpointConflicts(remoteDBPath string) ([]MergeCon
 
 // getEndpointsFromDB gets endpoints from a specific database (main or attached)
 func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoint, error) {
-	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, created_at, updated_at FROM %s.endpoints`, dbName)
+	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -491,7 +525,7 @@ func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoin
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
 		}
 		endpoints = append(endpoints, ep)
@@ -575,27 +609,28 @@ func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrat
 
 // mergeEndpoints merges endpoints based on strategy
 func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error {
-	if strategy == MergeStrategyKeepLocal {
+	switch strategy {
+	case MergeStrategyKeepLocal:
 		// Insert only new endpoints (ignore conflicts)
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark
+			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
 		`)
 		return err
-	} else if strategy == MergeStrategyOverwriteLocal {
+	case MergeStrategyOverwriteLocal:
 		// Replace existing endpoints
 		_, err := tx.Exec(`
 			INSERT OR REPLACE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark
+			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
 		`)
 		return err
+	default:
+		return fmt.Errorf("unknown merge strategy: %s", strategy)
 	}
-
-	return fmt.Errorf("unknown merge strategy: %s", strategy)
 }
 
 // mergeDailyStats merges daily stats (always merge, auto-aggregate by device_id)

@@ -133,6 +133,51 @@ function formatMonthDisplay(month) {
     }
 }
 
+// Load archive trend data for a specific month
+async function loadArchiveTrend(month) {
+    try {
+        const result = await window.go.main.App.GetArchiveTrend(month);
+        const data = JSON.parse(result);
+
+        if (!data.success) {
+            console.error('Failed to load archive trend:', data.message);
+            return null;
+        }
+
+        return {
+            requestsTrend: data.trend || 0,
+            errorsTrend: data.errorsTrend || 0,
+            tokensTrend: data.tokensTrend || 0
+        };
+    } catch (error) {
+        console.error('Failed to load archive trend:', error);
+        return null;
+    }
+}
+
+// Format trend value for display
+function formatTrend(value) {
+    const absValue = Math.abs(value);
+    const formattedValue = absValue.toFixed(1);
+
+    if (value > 0) {
+        return {
+            text: `↑ ${formattedValue}%`,
+            className: 'trend-up'
+        };
+    } else if (value < 0) {
+        return {
+            text: `↓ ${formattedValue}%`,
+            className: 'trend-down'
+        };
+    } else {
+        return {
+            text: '→ 0%',
+            className: 'trend-flat'
+        };
+    }
+}
+
 // Load and display archive data
 async function loadAndDisplayArchive(month) {
     const archive = await loadArchiveData(month);
@@ -141,8 +186,33 @@ async function loadAndDisplayArchive(month) {
     // Update summary cards
     updateSummaryCards(archive.summary);
 
+    // Load and display trend
+    const trend = await loadArchiveTrend(month);
+    if (trend) {
+        updateTrendDisplay(trend);
+    }
+
     // Render daily details table
     renderDailyTable(archive.endpoints);
+}
+
+// Update trend display
+function updateTrendDisplay(trend) {
+    const requestsTrend = formatTrend(trend.requestsTrend);
+    const tokensTrend = formatTrend(trend.tokensTrend);
+
+    const requestsEl = document.getElementById('historyRequestsTrend');
+    const tokensEl = document.getElementById('historyTokensTrend');
+
+    if (requestsEl) {
+        requestsEl.textContent = requestsTrend.text;
+        requestsEl.className = 'trend ' + requestsTrend.className;
+    }
+
+    if (tokensEl) {
+        tokensEl.textContent = tokensTrend.text;
+        tokensEl.className = 'trend ' + tokensTrend.className;
+    }
 }
 
 // Update summary statistics cards
