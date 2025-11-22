@@ -30,6 +30,10 @@ export function GetArchiveData(arg1) {
   return window['go']['main']['App']['GetArchiveData'](arg1);
 }
 
+export function GetArchiveTrend(arg1) {
+  return window['go']['main']['App']['GetArchiveTrend'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
@@ -68,6 +72,10 @@ export function GetStatsMonthly() {
 
 export function GetStatsTrend() {
   return window['go']['main']['App']['GetStatsTrend']();
+}
+
+export function GetStatsTrendByPeriod(arg1) {
+  return window['go']['main']['App']['GetStatsTrendByPeriod'](arg1);
 }
 
 export function GetStatsWeekly() {

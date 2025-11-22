@@ -89,8 +89,8 @@ export async function loadStatsByPeriod(period = 'daily') {
         document.getElementById('activeEndpointsDisplay').textContent = activeEndpoints;
         document.getElementById('totalEndpointsDisplay').textContent = totalEndpoints;
 
-        // Load and display trend
-        await loadTrend();
+        // Load and display trend for current period
+        await loadTrend(period);
 
         // Store endpoint stats for today
         endpointStats = stats.endpoints || {};
@@ -102,37 +102,34 @@ export async function loadStatsByPeriod(period = 'daily') {
     }
 }
 
-// Load trend comparison data
-async function loadTrend() {
+// Load trend comparison data for specified period
+async function loadTrend(period = 'daily') {
     try {
-        const trendStr = await window.go.main.App.GetStatsTrend();
+        const trendStr = await window.go.main.App.GetStatsTrendByPeriod(period);
         const trend = JSON.parse(trendStr);
 
-        // Display daily trend
-        if (trend.daily) {
-            const requestsTrend = formatTrend(trend.daily.trend);
-            const errorsTrend = formatTrend(trend.daily.errorsTrend);
-            const tokensTrend = formatTrend(trend.daily.tokensTrend);
+        const requestsTrend = formatTrend(trend.trend);
+        const errorsTrend = formatTrend(trend.errorsTrend);
+        const tokensTrend = formatTrend(trend.tokensTrend);
 
-            const requestsEl = document.getElementById('requestsTrend');
-            const errorsEl = document.getElementById('errorsTrend');
-            const tokensEl = document.getElementById('tokensTrend');
+        const requestsEl = document.getElementById('requestsTrend');
+        const errorsEl = document.getElementById('errorsTrend');
+        const tokensEl = document.getElementById('tokensTrend');
 
-            if (requestsEl) {
-                requestsEl.textContent = requestsTrend.text;
-                requestsEl.className = 'trend ' + requestsTrend.className;
-            }
+        if (requestsEl) {
+            requestsEl.textContent = requestsTrend.text;
+            requestsEl.className = 'trend ' + requestsTrend.className;
+        }
 
-            if (errorsEl) {
-                // For errors, negative trend is good
-                errorsEl.textContent = errorsTrend.text;
-                errorsEl.className = 'trend ' + (trend.daily.errorsTrend < 0 ? 'trend-down' : trend.daily.errorsTrend > 0 ? 'trend-up' : 'trend-flat');
-            }
+        if (errorsEl) {
+            // For errors, negative trend is good
+            errorsEl.textContent = errorsTrend.text;
+            errorsEl.className = 'trend ' + (trend.errorsTrend < 0 ? 'trend-down' : trend.errorsTrend > 0 ? 'trend-up' : 'trend-flat');
+        }
 
-            if (tokensEl) {
-                tokensEl.textContent = tokensTrend.text;
-                tokensEl.className = 'trend ' + tokensTrend.className;
-            }
+        if (tokensEl) {
+            tokensEl.textContent = tokensTrend.text;
+            tokensEl.className = 'trend ' + tokensTrend.className;
         }
     } catch (error) {
         console.error('Failed to load trend:', error);
@@ -146,7 +143,7 @@ function formatTrend(value) {
 
     if (value > 0) {
         return {
-            text: `↑ +${formattedValue}%`,
+            text: `↑ ${formattedValue}%`,
             className: 'trend-up'
         };
     } else if (value < 0) {
@@ -163,7 +160,7 @@ function formatTrend(value) {
 }
 
 // Switch statistics period
-export function switchStatsPeriod(period) {
+export async function switchStatsPeriod(period) {
     // Handle history modal separately
     if (period === 'history') {
         // Open history modal without changing active tab
@@ -186,5 +183,10 @@ export function switchStatsPeriod(period) {
     });
 
     // Load stats for the selected period
-    loadStatsByPeriod(period);
+    await loadStatsByPeriod(period);
+
+    // Reload endpoint list to update endpoint stats cards
+    if (window.loadConfig) {
+        window.loadConfig();
+    }
 }

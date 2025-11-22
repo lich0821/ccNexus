@@ -23,15 +23,9 @@ export function initUI() {
                         <button class="header-link" onclick="window.showWelcomeModal()" title="${t('header.about')}">
                             📖
                         </button>
-                        <div class="lang-switcher">
-                            <svg width="24" height="24" viewBox="0 0 1024 1024" fill="currentColor">
-                                <path d="M757.205333 473.173333c5.333333 0 10.453333 2.090667 14.250667 5.717334a19.029333 19.029333 0 0 1 5.888 13.738666v58.154667h141.184c11.093333 0 20.138667 8.704 20.138667 19.413333v232.704a19.797333 19.797333 0 0 1-20.138667 19.413334h-141.184v96.981333a19.754667 19.754667 0 0 1-20.138667 19.370667H716.8a20.565333 20.565333 0 0 1-14.250667-5.674667 19.029333 19.029333 0 0 1-5.888-13.696v-96.981333h-141.141333a20.565333 20.565333 0 0 1-14.250667-5.674667 19.029333 19.029333 0 0 1-5.930666-13.738667v-232.704c0-5.12 2.133333-10.112 5.930666-13.738666a20.565333 20.565333 0 0 1 14.250667-5.674667h141.141333v-58.154667c0-5.162667 2.133333-10.112 5.888-13.738666a20.565333 20.565333 0 0 1 14.250667-5.674667h40.362667zM192.597333 628.394667c22.272 0 40.32 17.365333 40.32 38.826666v38.741334c0 40.618667 32.512 74.368 74.624 77.397333l6.058667 0.213333h80.64c21.930667 0.469333 39.424 17.706667 39.424 38.784 0 21.077333-17.493333 38.314667-39.424 38.784H313.6c-89.088 0-161.28-69.461333-161.28-155.178666v-38.741334c0-21.461333 18.005333-38.826667 40.277333-38.826666z m504.106667 0h-80.64v116.394666h80.64v-116.394666z m161.28 0h-80.64v116.394666h80.64v-116.394666zM320.170667 85.333333c8.234667 0 15.658667 4.778667 18.773333 12.202667H338.773333l161.322667 387.84c2.517333 5.973333 1.706667 12.8-2.005333 18.090667a20.394667 20.394667 0 0 1-16.725334 8.533333h-43.52a20.181333 20.181333 0 0 1-18.688-12.202667L375.850667 395.648H210.901333l-43.264 104.149333A20.181333 20.181333 0 0 1 148.906667 512H105.514667a20.394667 20.394667 0 0 1-16.725334-8.533333 18.773333 18.773333 0 0 1-2.005333-18.090667l161.28-387.84A20.181333 20.181333 0 0 1 266.88 85.333333h53.290667zM716.8 162.901333c42.794667 0 83.84 16.341333 114.090667 45.44a152.234667 152.234667 0 0 1 47.232 109.738667v38.741333c-0.469333 21.077333-18.389333 37.930667-40.32 37.930667s-39.808-16.853333-40.32-37.930667v-38.741333c0-20.608-8.490667-40.32-23.637334-54.869333a82.304 82.304 0 0 0-57.045333-22.741334h-80.64c-21.888-0.469333-39.424-17.706667-39.424-38.784 0-21.077333 17.493333-38.314667 39.424-38.784h80.64z m-423.424 34.304L243.2 318.037333h100.48L293.418667 197.205333z"/>
-                            </svg>
-                            <div class="lang-menu">
-                                <div class="lang-item" onclick="window.changeLanguage('en')">English</div>
-                                <div class="lang-item" onclick="window.changeLanguage('zh-CN')">简体中文</div>
-                            </div>
-                        </div>
+                        <button class="header-link" onclick="window.showSettingsModal()" title="${t('settings.title')}">
+                            ⚙️
+                        </button>
                     </div>
                 </div>
             </div>
@@ -86,7 +80,7 @@ export function initUI() {
                         <div class="stat-detail">
                             <span id="periodSuccess">0</span>
                             <span class="stat-text"> ${t('statistics.success')}</span>
-                            <span class="stat-divider"> / </span>
+                            <span class="stat-divider">/</span>
                             <span id="periodFailed">0</span>
                             <span class="stat-text"> ${t('statistics.failed')}</span>
                         </div>
@@ -102,7 +96,7 @@ export function initUI() {
                         <div class="stat-detail">
                             <span id="periodInputTokens">0</span>
                             <span class="stat-text"> ${t('statistics.in')}</span>
-                            <span class="stat-divider"> / </span>
+                            <span class="stat-divider">/</span>
                             <span id="periodOutputTokens">0</span>
                             <span class="stat-text"> ${t('statistics.out')}</span>
                         </div>
@@ -140,6 +134,7 @@ export function initUI() {
                             <div class="stat-box">
                                 <div class="stat-header">
                                     <div class="stat-label">${t('statistics.totalRequests')}</div>
+                                    <span class="trend" id="historyRequestsTrend">→ 0%</span>
                                 </div>
                                 <div class="stat-value">
                                     <span id="historyTotalRequests">0</span>
@@ -147,7 +142,7 @@ export function initUI() {
                                 <div class="stat-detail">
                                     <span id="historySuccess">0</span>
                                     <span class="stat-text"> ${t('statistics.success')}</span>
-                                    <span class="stat-divider"> / </span>
+                                    <span class="stat-divider">/</span>
                                     <span id="historyFailed">0</span>
                                     <span class="stat-text"> ${t('statistics.failed')}</span>
                                 </div>
@@ -155,6 +150,7 @@ export function initUI() {
                             <div class="stat-box">
                                 <div class="stat-header">
                                     <div class="stat-label">${t('statistics.totalTokens')}</div>
+                                    <span class="trend" id="historyTokensTrend">→ 0%</span>
                                 </div>
                                 <div class="stat-value">
                                     <span id="historyTotalTokens">0</span>
@@ -162,7 +158,7 @@ export function initUI() {
                                 <div class="stat-detail">
                                     <span id="historyInputTokens">0</span>
                                     <span class="stat-text"> ${t('statistics.in')}</span>
-                                    <span class="stat-divider"> / </span>
+                                    <span class="stat-divider">/</span>
                                     <span id="historyOutputTokens">0</span>
                                     <span class="stat-text"> ${t('statistics.out')}</span>
                                 </div>
@@ -196,7 +192,12 @@ export function initUI() {
             <!-- Endpoints -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
+                        <button class="endpoint-toggle-btn" onclick="window.toggleEndpointPanel()">
+                            <span id="endpointToggleIcon">🔼</span> <span id="endpointToggleText">${t('endpoints.collapse')}</span>
+                        </button>
+                    </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
                             🔄 ${t('webdav.dataSync')}
@@ -206,8 +207,10 @@ export function initUI() {
                         </button>
                     </div>
                 </div>
-                <div id="endpointList" class="endpoint-list">
-                    <div class="loading">${t('endpoints.title')}...</div>
+                <div id="endpointPanel" class="endpoint-panel">
+                    <div id="endpointList" class="endpoint-list">
+                        <div class="loading">${t('endpoints.title')}...</div>
+                    </div>
                 </div>
             </div>
 
@@ -216,19 +219,19 @@ export function initUI() {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <h2 style="margin: 0;">📋 ${t('logs.title')}</h2>
-                        <select id="logLevel" class="log-level-select" onchange="window.changeLogLevel()">
-                            <option value="0">🔍 ${t('logs.levels.0')}+</option>
-                            <option value="1" selected>ℹ️ ${t('logs.levels.1')}+</option>
-                            <option value="2">⚠️ ${t('logs.levels.2')}+</option>
-                            <option value="3">❌ ${t('logs.levels.3')}</option>
-                        </select>
+                        <button class="endpoint-toggle-btn" onclick="window.toggleLogPanel()">
+                            <span id="logToggleIcon">🔼</span> <span id="logToggleText">${t('logs.collapse')}</span>
+                        </button>
                     </div>
                     <div style="display: flex; gap: 10px;">
+                        <select id="logLevel" class="log-level-select-btn" onchange="window.changeLogLevel()">
+                            <option value="0">🔍 ${t('logs.levels.0')}</option>
+                            <option value="1" selected>ℹ️ ${t('logs.levels.1')}</option>
+                            <option value="2">⚠️ ${t('logs.levels.2')}</option>
+                            <option value="3">❌ ${t('logs.levels.3')}</option>
+                        </select>
                         <button class="btn btn-secondary btn-sm" onclick="window.copyLogs()">
                             📋 ${t('logs.copy')}
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="window.toggleLogPanel()">
-                            <span id="logToggleIcon">▼</span> <span id="logToggleText">${t('logs.collapse')}</span>
                         </button>
                         <button class="btn btn-secondary btn-sm" onclick="window.clearLogs()">
                             🗑️ ${t('logs.clear')}
@@ -440,6 +443,43 @@ export function initUI() {
                 <div class="confirm-footer">
                     <button class="btn-confirm-delete" onclick="window.quitApplication()">退出程序</button>
                     <button class="btn-confirm-cancel" onclick="window.minimizeToTray()">最小化到托盘</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>⚙️ ${t('settings.title')}</h2>
+                    <button class="modal-close" onclick="window.closeSettingsModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>🎨 ${t('settings.closeWindowBehavior')}</label>
+                        <select id="settingsCloseWindowBehavior">
+                            <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
+                            <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
+                            <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.closeWindowBehaviorHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>🌍 ${t('settings.language')}</label>
+                        <select id="settingsLanguage">
+                            <option value="zh-CN">${t('settings.languages.zh-CN')}</option>
+                            <option value="en">${t('settings.languages.en')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.languageHelp')}
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.closeSettingsModal()">${t('settings.cancel')}</button>
+                    <button class="btn btn-primary" onclick="window.saveSettings()">${t('settings.save')}</button>
                 </div>
             </div>
         </div>

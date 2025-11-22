@@ -52,7 +52,7 @@ export function showCloseActionDialog() {
 
 export async function quitApplication() {
     document.getElementById('closeActionDialog').classList.remove('active');
-    // Save user preference
+    // Save user preference ("quit" = quit directly)
     try {
         await window.go.main.App.SetCloseWindowBehavior('quit');
     } catch (error) {
@@ -63,7 +63,7 @@ export async function quitApplication() {
 
 export async function minimizeToTray() {
     document.getElementById('closeActionDialog').classList.remove('active');
-    // Save user preference
+    // Save user preference ("minimize" = minimize to tray)
     try {
         await window.go.main.App.SetCloseWindowBehavior('minimize');
     } catch (error) {

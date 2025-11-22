@@ -31,7 +31,9 @@ export default {
         current: 'Current',
         switchTo: 'Switch',
         switchFailed: 'Switch Failed',
-        reorderFailed: 'Reorder Failed'
+        reorderFailed: 'Reorder Failed',
+        collapse: 'Collapse',
+        expand: 'Expand'
     },
     modal: {
         addEndpoint: 'Add Endpoint',
@@ -101,11 +103,24 @@ export default {
         githubRepo: '🔗 GitHub Repository'
     },
     settings: {
+        title: 'Settings',
         language: 'Language',
         languages: {
             en: 'English',
             'zh-CN': '简体中文'
-        }
+        },
+        closeWindowBehavior: 'Close Window Behavior',
+        closeWindowBehaviorHelp: 'Choose the default action when clicking the close button',
+        closeWindowOptions: {
+            quit: 'Quit Directly',
+            minimize: 'Minimize to Tray',
+            ask: 'Ask Every Time'
+        },
+        languageHelp: 'Select the interface display language',
+        save: 'Save',
+        cancel: 'Cancel',
+        saveSuccess: 'Settings saved successfully',
+        saveFailed: 'Failed to save settings'
     },
     statistics: {
         title: 'Statistics',
@@ -189,7 +204,21 @@ export default {
         useRemote: 'Use Remote Backup',
         keepLocal: 'Keep Local Configuration',
         enterBackupName: 'Please enter backup filename',
-        inputFilename: 'Input filename'
+        inputFilename: 'Input filename',
+        enabled: 'Enabled',
+        remark: 'Remark',
+        apiUrl: 'API URL',
+        apiKey: 'API Key',
+        transformer: 'Transformer',
+        model: 'Model',
+        conflict: 'conflict',
+        conflicts: 'conflicts',
+        local: 'Local',
+        remote: 'Remote',
+        endpointHas: 'endpoint has conflicting configurations',
+        endpointsHave: 'endpoints have conflicting configurations',
+        useRemoteDesc: 'Remote configuration will overwrite local conflicting endpoints',
+        keepLocalDesc: 'Keep local configuration, only add new endpoints from remote'
     },
     common: {
         ok: 'OK',
@@ -211,7 +240,7 @@ export default {
         'Tip: Your API keys are stored locally and never sent to third parties',
         'Tip: Add remarks to your endpoints to help identify them easily',
         'Tip: Switch between English and Chinese in the language selector',
-        'Tip: Statistics are updated every 5 seconds automatically',
+        'Tip: Statistics are updated every 3 seconds automatically',
         'Tip: ccNexus supports Claude, OpenAI, and Gemini API formats'
     ]
 };

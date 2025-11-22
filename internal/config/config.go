@@ -37,7 +37,7 @@ type Config struct {
 	Language             string        `json:"language"`                     // UI language: en, zh-CN
 	WindowWidth          int           `json:"windowWidth"`                  // Window width in pixels
 	WindowHeight         int           `json:"windowHeight"`                 // Window height in pixels
-	CloseWindowBehavior  string        `json:"closeWindowBehavior,omitempty"` // "quit" or "minimize", empty means ask user
+	CloseWindowBehavior  string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	WebDAV               *WebDAVConfig `json:"webdav,omitempty"`             // WebDAV synchronization config
 	mu                   sync.RWMutex
 }
@@ -172,6 +172,7 @@ func (c *Config) UpdateWindowSize(width, height int) {
 }
 
 // GetCloseWindowBehavior returns the close window behavior (thread-safe)
+// Returns: "quit", "minimize", "ask"
 func (c *Config) GetCloseWindowBehavior() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -179,6 +180,7 @@ func (c *Config) GetCloseWindowBehavior() string {
 }
 
 // UpdateCloseWindowBehavior updates the close window behavior (thread-safe)
+// Accepts: "quit", "minimize", "ask"
 func (c *Config) UpdateCloseWindowBehavior(behavior string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -272,6 +274,7 @@ type StorageEndpoint struct {
 	Transformer string
 	Model       string
 	Remark      string
+	SortOrder   int
 }
 
 // LoadFromStorage loads configuration from SQLite storage
@@ -340,8 +343,13 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.WindowHeight = 768
 	}
 
-	if behavior, err := storage.GetConfig("closeWindowBehavior"); err == nil {
-		config.CloseWindowBehavior = behavior
+	// Load close window behavior
+	if behaviorStr, err := storage.GetConfig("closeWindowBehavior"); err == nil && behaviorStr != "" {
+		config.CloseWindowBehavior = behaviorStr
+	}
+	// Default to "ask" if not set
+	if config.CloseWindowBehavior == "" {
+		config.CloseWindowBehavior = "ask"
 	}
 
 	// Load WebDAV config if exists
@@ -380,7 +388,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 	}
 
 	// Save/update endpoints
-	for _, ep := range c.Endpoints {
+	for i, ep := range c.Endpoints {
 		endpoint := &StorageEndpoint{
 			Name:        ep.Name,
 			APIUrl:      ep.APIUrl,
@@ -389,6 +397,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 			Transformer: ep.Transformer,
 			Model:       ep.Model,
 			Remark:      ep.Remark,
+			SortOrder:   i, // Use array index as sort order
 		}
 
 		if existingNames[ep.Name] {

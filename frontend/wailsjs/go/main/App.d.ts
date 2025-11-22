@@ -15,6 +15,8 @@ export function GenerateMockArchives(arg1:number):Promise<string>;
 
 export function GetArchiveData(arg1:string):Promise<string>;
 
+export function GetArchiveTrend(arg1:string):Promise<string>;
+
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;
@@ -34,6 +36,8 @@ export function GetStatsDaily():Promise<string>;
 export function GetStatsMonthly():Promise<string>;
 
 export function GetStatsTrend():Promise<string>;
+
+export function GetStatsTrendByPeriod(arg1:string):Promise<string>;
 
 export function GetStatsWeekly():Promise<string>;
 

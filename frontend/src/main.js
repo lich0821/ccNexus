@@ -4,10 +4,11 @@ import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
 import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
-import { renderEndpoints } from './modules/endpoints.js'
+import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
+import { showSettingsModal, closeSettingsModal, saveSettings } from './modules/settings.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -72,7 +73,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Initialize tips
     initTips();
 
-    // Refresh stats every 5 seconds
+    // Refresh stats every 3 seconds
     setInterval(async () => {
         await loadStats(); // Refresh cumulative stats for endpoint cards
         const currentPeriod = getCurrentPeriod(); // Get current selected period
@@ -81,7 +82,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (config) {
             renderEndpoints(JSON.parse(config).endpoints);
         }
-    }, 5000);
+    }, 3000);
 
     // Refresh logs every 2 seconds
     setInterval(loadLogs, 2000);
@@ -143,6 +144,10 @@ window.quitApplication = quitApplication;
 window.minimizeToTray = minimizeToTray;
 window.showDataSyncDialog = showDataSyncDialog;
 window.switchStatsPeriod = switchStatsPeriod;
+window.toggleEndpointPanel = toggleEndpointPanel;
+window.showSettingsModal = showSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveSettings = saveSettings;
 
 // History modal functions
 window.closeHistoryModal = async () => {

@@ -71,7 +71,7 @@ function showSubModal(title, content) {
 }
 
 // Show a confirm modal on top of sub modal
-function showConfirmModal(title, content) {
+function showConfirmModal(title, content, allowClickOutsideClose = true) {
     const existingModal = document.getElementById('confirmModal');
     if (existingModal) {
         existingModal.remove();
@@ -85,11 +85,13 @@ function showConfirmModal(title, content) {
 
     document.body.appendChild(modal);
 
-    modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-            hideConfirmModal();
-        }
-    });
+    if (allowClickOutsideClose) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideConfirmModal();
+            }
+        });
+    }
 }
 
 // Hide the confirm modal
@@ -530,11 +532,11 @@ async function showConflictDialog(conflicts) {
         const conflictDetailsHTML = conflicts.map(conflict => {
             const fields = conflict.conflictFields || [];
             const fieldLabels = {
-                'apiUrl': 'API URL',
-                'apiKey': 'API Key',
+                'apiUrl': t('webdav.apiUrl'),
+                'apiKey': t('webdav.apiKey'),
                 'enabled': t('webdav.enabled'),
-                'transformer': 'Transformer',
-                'model': 'Model',
+                'transformer': t('webdav.transformer'),
+                'model': t('webdav.model'),
                 'remark': t('webdav.remark')
             };
 
@@ -542,7 +544,7 @@ async function showConflictDialog(conflicts) {
                 <div class="conflict-endpoint">
                     <div class="conflict-endpoint-header">
                         <strong>📍 ${conflict.endpointName}</strong>
-                        <span class="conflict-badge">${fields.length} ${fields.length === 1 ? 'conflict' : 'conflicts'}</span>
+                        <span class="conflict-badge">${fields.length} ${fields.length === 1 ? t('webdav.conflict') : t('webdav.conflicts')}</span>
                     </div>
                     <div class="conflict-endpoint-body">
                         <div class="conflict-fields">
@@ -551,11 +553,11 @@ async function showConflictDialog(conflicts) {
                                     <span class="conflict-field-name">${fieldLabels[field] || field}:</span>
                                     <div class="conflict-field-values">
                                         <div class="conflict-value-local">
-                                            <span class="conflict-value-label">Local:</span>
+                                            <span class="conflict-value-label">${t('webdav.local')}:</span>
                                             <code>${formatFieldValue(conflict.localEndpoint[field])}</code>
                                         </div>
                                         <div class="conflict-value-remote">
-                                            <span class="conflict-value-label">Remote:</span>
+                                            <span class="conflict-value-label">${t('webdav.remote')}:</span>
                                             <code>${formatFieldValue(conflict.remoteEndpoint[field])}</code>
                                         </div>
                                     </div>
@@ -569,6 +571,7 @@ async function showConflictDialog(conflicts) {
 
         const content = `
             <div class="conflict-dialog-content">
+                <button class="conflict-close-btn" onclick="window.resolveConflict(null)">×</button>
                 <div class="conflict-header">
                     <span class="conflict-icon">⚠️</span>
                     <span class="conflict-title">${t('webdav.conflictTitle')}</span>
@@ -577,25 +580,24 @@ async function showConflictDialog(conflicts) {
                 <div class="conflict-body">
                     <p class="conflict-message">
                         ${t('webdav.conflictDetected')}
-                        <strong>${conflicts.length}</strong> endpoint${conflicts.length > 1 ? 's have' : ' has'} conflicting configurations.
+                        <strong>${conflicts.length}</strong> ${conflicts.length > 1 ? t('webdav.endpointsHave') : t('webdav.endpointHas')}
                     </p>
                     <div class="conflict-details-container">
                         ${conflictDetailsHTML}
                     </div>
                     <div class="conflict-strategy-info">
-                        <p><strong>${t('webdav.useRemote')}:</strong> Remote configuration will overwrite local conflicting endpoints.</p>
-                        <p><strong>${t('webdav.keepLocal')}:</strong> Keep local configuration, only add new endpoints from remote.</p>
+                        <p><strong>${t('webdav.useRemote')}:</strong> ${t('webdav.useRemoteDesc')}</p>
+                        <p><strong>${t('webdav.keepLocal')}:</strong> ${t('webdav.keepLocalDesc')}</p>
                     </div>
                 </div>
                 <div class="conflict-footer">
                     <button class="btn btn-primary" onclick="window.resolveConflict('remote')">${t('webdav.useRemote')}</button>
                     <button class="btn btn-secondary" onclick="window.resolveConflict('keep_local')">${t('webdav.keepLocal')}</button>
-                    <button class="btn btn-secondary" onclick="window.resolveConflict(null)">${t('common.cancel')}</button>
                 </div>
             </div>
         `;
 
-        showConfirmModal('', content);
+        showConfirmModal('', content, false);
 
         window.resolveConflict = (choice) => {
             hideConfirmModal();
