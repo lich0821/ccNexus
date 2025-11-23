@@ -1,4 +1,4 @@
-package transformer
+package gemini
 
 import (
 	"bufio"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/transformer"
 )
 
 // GeminiTransformer transforms between Claude and Gemini API formats
@@ -67,18 +68,18 @@ func cleanGeminiSchema(schema map[string]interface{}) map[string]interface{} {
 
 // TransformRequest converts Claude format request to Gemini format
 func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
-	var req ClaudeRequest
+	var req transformer.ClaudeRequest
 	if err := json.Unmarshal(claudeReq, &req); err != nil {
 		return nil, fmt.Errorf("failed to parse Claude request: %w", err)
 	}
 
 	// Convert messages to Gemini contents
-	geminiContents := make([]GeminiContent, 0, len(req.Messages))
+	geminiContents := make([]transformer.GeminiContent, 0, len(req.Messages))
 
 	for _, msg := range req.Messages {
-		geminiContent := GeminiContent{
+		geminiContent := transformer.GeminiContent{
 			Role:  msg.Role,
-			Parts: make([]GeminiPart, 0),
+			Parts: make([]transformer.GeminiPart, 0),
 		}
 
 		// Map Claude roles to Gemini roles
@@ -89,7 +90,7 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 		// Handle content - can be string or array
 		switch content := msg.Content.(type) {
 		case string:
-			geminiContent.Parts = append(geminiContent.Parts, GeminiPart{
+			geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
 				Text: content,
 			})
 		case []interface{}:
@@ -101,7 +102,7 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 					switch blockType {
 					case "text":
 						if text, ok := blockMap["text"].(string); ok {
-							geminiContent.Parts = append(geminiContent.Parts, GeminiPart{
+							geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
 								Text: text,
 							})
 						}
@@ -109,8 +110,8 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 						name, _ := blockMap["name"].(string)
 						input, _ := blockMap["input"].(map[string]interface{})
 
-						geminiContent.Parts = append(geminiContent.Parts, GeminiPart{
-							FunctionCall: &GeminiFunctionCall{
+						geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
+							FunctionCall: &transformer.GeminiFunctionCall{
 								Name: name,
 								Args: input,
 							},
@@ -144,8 +145,8 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 						}
 
 						// Use tool_use_id as the function name for response
-						geminiContent.Parts = append(geminiContent.Parts, GeminiPart{
-							FunctionResponse: &GeminiFunctionResponse{
+						geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
+							FunctionResponse: &transformer.GeminiFunctionResponse{
 								Name:     toolUseID,
 								Response: resultContent,
 							},
@@ -154,7 +155,7 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 				}
 			}
 		default:
-			geminiContent.Parts = append(geminiContent.Parts, GeminiPart{
+			geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
 				Text: fmt.Sprintf("%v", content),
 			})
 		}
@@ -163,7 +164,7 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 	}
 
 	// Create Gemini request
-	geminiReq := GeminiRequest{
+	geminiReq := transformer.GeminiRequest{
 		Contents: geminiContents,
 	}
 
@@ -191,8 +192,8 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 		}
 
 		if systemContent != "" {
-			geminiReq.SystemInstruction = &GeminiContent{
-				Parts: []GeminiPart{
+			geminiReq.SystemInstruction = &transformer.GeminiContent{
+				Parts: []transformer.GeminiPart{
 					{Text: strings.TrimSpace(systemContent)},
 				},
 			}
@@ -201,20 +202,20 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 
 	// Convert tools to Gemini format
 	if len(req.Tools) > 0 {
-		geminiTools := make([]GeminiTool, 0)
-		functionDeclarations := make([]GeminiFunctionDeclaration, 0, len(req.Tools))
+		geminiTools := make([]transformer.GeminiTool, 0)
+		functionDeclarations := make([]transformer.GeminiFunctionDeclaration, 0, len(req.Tools))
 
 		for _, tool := range req.Tools {
 			cleanedSchema := cleanGeminiSchema(tool.InputSchema)
 
-			functionDeclarations = append(functionDeclarations, GeminiFunctionDeclaration{
+			functionDeclarations = append(functionDeclarations, transformer.GeminiFunctionDeclaration{
 				Name:        tool.Name,
 				Description: tool.Description,
 				Parameters:  cleanedSchema,
 			})
 		}
 
-		geminiTools = append(geminiTools, GeminiTool{
+		geminiTools = append(geminiTools, transformer.GeminiTool{
 			FunctionDeclarations: functionDeclarations,
 		})
 
@@ -222,7 +223,7 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 	}
 
 	// Add generation config
-	geminiReq.GenerationConfig = &GeminiGenerationConfig{}
+	geminiReq.GenerationConfig = &transformer.GeminiGenerationConfig{}
 
 	if req.Temperature != 0 {
 		temp := req.Temperature
@@ -245,7 +246,7 @@ func (t *GeminiTransformer) TransformResponse(targetResp []byte, isStreaming boo
 }
 
 // TransformResponseWithContext converts Gemini format response to Claude format
-func (t *GeminiTransformer) TransformResponseWithContext(targetResp []byte, isStreaming bool, ctx *StreamContext) ([]byte, error) {
+func (t *GeminiTransformer) TransformResponseWithContext(targetResp []byte, isStreaming bool, ctx *transformer.StreamContext) ([]byte, error) {
 	if isStreaming {
 		if ctx == nil {
 			return nil, fmt.Errorf("StreamContext is required for streaming responses")
@@ -257,7 +258,7 @@ func (t *GeminiTransformer) TransformResponseWithContext(targetResp []byte, isSt
 
 // transformNonStreamingResponse converts Gemini non-streaming response to Claude format
 func (t *GeminiTransformer) transformNonStreamingResponse(geminiResp []byte) ([]byte, error) {
-	var resp GeminiResponse
+	var resp transformer.GeminiResponse
 	if err := json.Unmarshal(geminiResp, &resp); err != nil {
 		return nil, fmt.Errorf("failed to parse Gemini response: %w", err)
 	}
@@ -332,7 +333,7 @@ func (t *GeminiTransformer) transformNonStreamingResponse(geminiResp []byte) ([]
 }
 
 // transformStreamingResponse converts Gemini streaming response to Claude format
-func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx *StreamContext) ([]byte, error) {
+func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx *transformer.StreamContext) ([]byte, error) {
 	var result bytes.Buffer
 	scanner := bufio.NewScanner(bytes.NewReader(geminiStream))
 
@@ -393,7 +394,7 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 		}
 
 		// Parse Gemini chunk
-		var chunk GeminiStreamChunk
+		var chunk transformer.GeminiStreamChunk
 		if err := json.Unmarshal([]byte(line), &chunk); err != nil {
 			logger.Debug("[Gemini Transformer] Failed to parse chunk: %v, data: %s", err, line)
 			continue
