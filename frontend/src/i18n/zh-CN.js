@@ -183,6 +183,7 @@ export default {
         configSaved: '配置已保存',
         configSaveFailed: '配置保存失败',
         serverUrl: 'WebDAV 服务器地址',
+        serverUrlHelp: '支持坚果云、NextCloud、ownCloud 等标准 WebDAV 服务',
         username: '用户名',
         password: '密码',
         usernamePlaceholder: '输入 WebDAV 用户名',
@@ -246,7 +247,9 @@ export default {
         cancel: '取消',
         yes: '是',
         no: '否',
-        confirm: '确认'
+        confirm: '确认',
+        delete: '删除',
+        confirmDeleteTitle: '确认删除'
     },
     tips: [
         '小贴士：您可以添加多个 API 端点实现自动故障转移',

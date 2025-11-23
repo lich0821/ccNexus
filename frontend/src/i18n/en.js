@@ -183,6 +183,7 @@ export default {
         configSaved: 'Configuration saved',
         configSaveFailed: 'Failed to save configuration',
         serverUrl: 'WebDAV Server URL',
+        serverUrlHelp: 'Supports Nutstore, NextCloud, ownCloud and other standard WebDAV services',
         username: 'Username',
         password: 'Password',
         usernamePlaceholder: 'Enter WebDAV username',
@@ -246,7 +247,9 @@ export default {
         cancel: 'Cancel',
         yes: 'Yes',
         no: 'No',
-        confirm: 'Confirm'
+        confirm: 'Confirm',
+        delete: 'Delete',
+        confirmDeleteTitle: 'Confirm Deletion'
     },
     tips: [
         'Tip: You can add multiple API endpoints for automatic failover',

@@ -411,14 +411,14 @@ export function initUI() {
                         </svg>
                     </div>
                     <div class="confirm-content">
-                        <h4 class="confirm-title">确认删除</h4>
+                        <h4 class="confirm-title">${t('common.confirmDeleteTitle')}</h4>
                         <p id="confirmMessage" class="confirm-message"></p>
                     </div>
                 </div>
                 <div class="confirm-divider"></div>
                 <div class="confirm-footer">
-                    <button class="btn-confirm-delete" onclick="window.acceptConfirm()">删除</button>
-                    <button class="btn-confirm-cancel" onclick="window.cancelConfirm()">取消</button>
+                    <button class="btn-confirm-delete" onclick="window.acceptConfirm()">${t('common.delete')}</button>
+                    <button class="btn-confirm-cancel" onclick="window.cancelConfirm()">${t('common.cancel')}</button>
                 </div>
             </div>
         </div>
