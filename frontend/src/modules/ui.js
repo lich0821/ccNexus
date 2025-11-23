@@ -469,6 +469,7 @@ export function initUI() {
                             <select id="settingsTheme" style="flex: 1;">
                                 <option value="light">${t('settings.themes.light')}</option>
                                 <option value="dark">${t('settings.themes.dark')}</option>
+                                <option value="green">${t('settings.themes.green')}</option>
                             </select>
                             <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;" title="${t('settings.themeAutoHelp')}">
                                 <span style="font-size: 13px; color: var(--text-secondary);">${t('settings.themeAuto')}</span>

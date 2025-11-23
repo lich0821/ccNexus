@@ -6,23 +6,47 @@ let autoThemeIntervalId = null;
 
 // Apply theme to body element
 export function applyTheme(theme) {
+    // Remove all theme classes first
+    document.body.classList.remove('dark-theme', 'green-theme');
+
+    // Apply the selected theme
     if (theme === 'dark') {
         document.body.classList.add('dark-theme');
+    } else if (theme === 'green') {
+        document.body.classList.add('green-theme');
+    }
+    // 'light' theme uses default styles, no class needed
+}
+
+// Get theme based on current time and user's selected theme
+// Day (7:00-19:00): use selected theme (if selected is dark, default to light)
+// Night: always use dark theme
+function getTimeBasedTheme(selectedTheme) {
+    const hour = new Date().getHours();
+    const isDaytime = hour >= 7 && hour < 19;
+
+    if (isDaytime) {
+        // Daytime: use selected theme, but if selected is dark, default to light
+        return selectedTheme === 'dark' ? 'light' : selectedTheme;
     } else {
-        document.body.classList.remove('dark-theme');
+        // Nighttime: always dark
+        return 'dark';
     }
 }
 
-// Get theme based on current time (7:00-19:00 = light, otherwise = dark)
-function getTimeBasedTheme() {
-    const hour = new Date().getHours();
-    return (hour >= 7 && hour < 19) ? 'light' : 'dark';
-}
-
 // Check and apply auto theme
-export function checkAndApplyAutoTheme() {
-    const theme = getTimeBasedTheme();
-    applyTheme(theme);
+export async function checkAndApplyAutoTheme() {
+    try {
+        // Get user's selected theme from config
+        const selectedTheme = await window.go.main.App.GetTheme();
+        const theme = getTimeBasedTheme(selectedTheme);
+        applyTheme(theme);
+    } catch (error) {
+        console.error('Failed to check auto theme:', error);
+        // Fallback to light/dark switching
+        const hour = new Date().getHours();
+        applyTheme((hour >= 7 && hour < 19) ? 'light' : 'dark');
+    }
 }
 
 // Start auto theme checking (check every minute)

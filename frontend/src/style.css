@@ -1,5 +1,6 @@
 /* Import Theme Styles */
 @import './themes/dark.css';
+@import './themes/green.css';
 
 * {
     margin: 0;

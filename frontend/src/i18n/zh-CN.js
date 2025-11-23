@@ -112,11 +112,12 @@ export default {
         theme: '主题',
         themes: {
             light: '浅色模式',
-            dark: '深色模式'
+            dark: '深色模式',
+            green: '护眼模式'
         },
         themeHelp: '选择界面主题外观',
         themeAuto: '自动模式',
-        themeAutoHelp: '自动模式：7:00-19:00 使用浅色模式，其他时间使用深色模式',
+        themeAutoHelp: '自动模式：7:00-19:00 使用当前选择的主题，其他时间使用深色模式',
         closeWindowBehavior: '窗口关闭行为',
         closeWindowBehaviorHelp: '选择点击关闭按钮时的默认操作',
         closeWindowOptions: {

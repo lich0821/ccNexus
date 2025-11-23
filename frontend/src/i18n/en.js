@@ -112,11 +112,12 @@ export default {
         theme: 'Theme',
         themes: {
             light: 'Light Theme',
-            dark: 'Dark Theme'
+            dark: 'Dark Theme',
+            green: 'Eye Protection'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',
-        themeAutoHelp: 'Auto Mode: Light theme from 7:00-19:00, dark theme at other times',
+        themeAutoHelp: 'Auto Mode: Selected theme from 7:00-19:00, dark theme at other times',
         closeWindowBehavior: 'Close Window Behavior',
         closeWindowBehaviorHelp: 'Choose the default action when clicking the close button',
         closeWindowOptions: {
