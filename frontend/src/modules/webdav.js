@@ -57,7 +57,7 @@ function showSubModal(title, content) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2>${title}</h2>
-                <button class="modal-close" onclick="window.closeBackupManager()">&times;</button>
+                <button class="modal-close" onclick="window.closeSubModal()">&times;</button>
             </div>
             <div class="modal-body">
                 ${content}
@@ -112,6 +112,11 @@ function hideSubModal() {
     }
 }
 
+// Global function to close sub modal
+window.closeSubModal = function() {
+    hideSubModal();
+};
+
 // Hide the generic modal
 function hideModal() {
     const modal = document.getElementById('genericModal');
@@ -157,7 +162,7 @@ export async function showDataSyncDialog() {
                         <input type="text" id="dataSyncUrl" class="form-input"
                                placeholder="https://dav.example.com/remote.php/dav/files/username/"
                                value="${currentWebDAVConfig.url}">
-                        <small style="color: #888; font-size: 12px; margin-top: 5px;">支持坚果云、NextCloud、ownCloud 等标准 WebDAV 服务</small>
+                        <small style="color: #888; font-size: 12px; margin-top: 5px;">${t('webdav.serverUrlHelp')}</small>
                     </div>
                     <div class="form-row" style="gap: 20px;">
                         <div class="form-group" style="flex: 1;">
@@ -261,10 +266,10 @@ window.testDataSyncConnection = async function() {
         const result = JSON.parse(resultStr);
         if (result.success) {
             connectionTestPassed = true;
-            showNotification(result.message, 'success');
+            showNotification(t('webdav.connectionSuccess'), 'success');
         } else {
             connectionTestPassed = false;
-            showNotification(result.message, 'error');
+            showNotification(t('webdav.connectionFailed'), 'error');
         }
     } catch (error) {
         connectionTestPassed = false;

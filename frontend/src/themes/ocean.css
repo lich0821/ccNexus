@@ -1,0 +1,843 @@
+/**
+ * Ocean Blue Theme Styles
+ * 海洋蓝主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="ocean-theme" 即可启用海洋蓝主题
+ */
+
+/* Ocean Blue Theme Variables */
+body.ocean-theme {
+    --bg-gradient-start: #E6F7FF;
+    --bg-gradient-end: #B3E5FC;
+    --bg-primary: #F0FAFF;
+    --bg-secondary: #E1F5FE;
+    --bg-tertiary: #D1EFFD;
+    --text-primary: #01579B;
+    --text-secondary: #0277BD;
+    --text-tertiary: #0288D1;
+    --border-color: #81D4FA;
+    --border-light: #B3E5FC;
+    --card-bg: #FAFEFF;
+    --modal-bg: #F5FBFF;
+    --input-bg: #FFFFFF;
+    --hover-bg: #E1F5FE;
+    --shadow-color: rgba(1, 87, 155, 0.12);
+    --primary-color: #1890FF;
+    --primary-hover: #0277BD;
+}
+
+/* Ocean Blue Theme Specific Styles */
+body.ocean-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.ocean-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.ocean-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.ocean-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.ocean-theme .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.ocean-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.ocean-theme .stats-tab-btn.active {
+    background: linear-gradient(135deg, #1890FF 0%, #0277BD 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.ocean-theme .stat-box {
+    background: linear-gradient(135deg, #1890FF 0%, #0277BD 100%);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.ocean-theme .stat-box:hover {
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+}
+
+body.ocean-theme .stat-box .stat-label {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+body.ocean-theme .stat-box .stat-value {
+    color: #FFFFFF;
+}
+
+body.ocean-theme .stat-box .stat-primary {
+    color: #FFFFFF;
+}
+
+body.ocean-theme .stat-box .stat-secondary {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.ocean-theme .stat-box .stat-detail {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.ocean-theme .stat-box .stat-text {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.ocean-theme .stat-separator {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.ocean-theme .stat-total {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.ocean-theme .stat-divider {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.ocean-theme .trend {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+body.ocean-theme .trend-up {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+}
+
+body.ocean-theme .trend-down {
+    background: rgba(255, 255, 255, 0.2);
+    color: #B3E5FC;
+}
+
+body.ocean-theme .trend-flat {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.ocean-theme .endpoint-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+body.ocean-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .form-group input,
+body.ocean-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231890FF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.ocean-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.ocean-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.ocean-theme #endpointModal .modal-header h2,
+body.ocean-theme #portModal .modal-header h2,
+body.ocean-theme #historyModal .modal-header h2,
+body.ocean-theme #settingsModal .modal-header h2,
+body.ocean-theme #autoThemeConfigModal .modal-header h2,
+body.ocean-theme #welcomeModal .modal-header h2,
+body.ocean-theme #testResultModal .modal-header h2,
+body.ocean-theme #genericModal .modal-header h2,
+body.ocean-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.ocean-theme .confirm-dialog-content .confirm-title,
+body.ocean-theme #confirmDialog .confirm-title,
+body.ocean-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.ocean-theme .modal-close,
+body.ocean-theme #historyModal .modal-close,
+body.ocean-theme #endpointModal .modal-close,
+body.ocean-theme #portModal .modal-close,
+body.ocean-theme #genericModal .modal-close,
+body.ocean-theme #subModal .modal-close,
+body.ocean-theme #settingsModal .modal-close,
+body.ocean-theme #autoThemeConfigModal .modal-close,
+body.ocean-theme #welcomeModal .modal-close,
+body.ocean-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.ocean-theme .modal-close:hover,
+body.ocean-theme #historyModal .modal-close:hover,
+body.ocean-theme #endpointModal .modal-close:hover,
+body.ocean-theme #portModal .modal-close:hover,
+body.ocean-theme #genericModal .modal-close:hover,
+body.ocean-theme #subModal .modal-close:hover,
+body.ocean-theme #settingsModal .modal-close:hover,
+body.ocean-theme #autoThemeConfigModal .modal-close:hover,
+body.ocean-theme #welcomeModal .modal-close:hover,
+body.ocean-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.ocean-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.ocean-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.ocean-theme .header-link {
+    background: rgba(24, 144, 255, 0.1);
+    color: var(--primary-color);
+}
+
+body.ocean-theme .header-link:hover {
+    background: rgba(24, 144, 255, 0.2);
+}
+
+body.ocean-theme .port-display {
+    background: rgba(24, 144, 255, 0.1);
+    border-color: rgba(24, 144, 255, 0.3);
+}
+
+body.ocean-theme .port-display:hover {
+    background: rgba(24, 144, 255, 0.15);
+    border-color: rgba(24, 144, 255, 0.5);
+}
+
+body.ocean-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.ocean-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.ocean-theme #historyDailyTable {
+    background: var(--card-bg);
+}
+
+body.ocean-theme #historyDailyTable th {
+    background: linear-gradient(135deg, #1890FF 0%, #0277BD 100%);
+    color: white;
+}
+
+body.ocean-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.ocean-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.ocean-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.ocean-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.ocean-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.ocean-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.ocean-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .conflict-card {
+    border-color: var(--border-light);
+    background: var(--card-bg);
+}
+
+body.ocean-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.ocean-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.ocean-theme .backup-table th {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.ocean-theme .backup-table th,
+body.ocean-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.ocean-theme .data-sync-section h3 {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary-color);
+}
+
+body.ocean-theme .conflict-endpoint {
+    background: var(--card-bg);
+    border-color: var(--border-light);
+}
+
+body.ocean-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.ocean-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-value-local code,
+body.ocean-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.ocean-theme #genericModal .modal-header::after,
+body.ocean-theme #subModal .modal-header::after,
+body.ocean-theme #settingsModal .modal-header::after,
+body.ocean-theme #autoThemeConfigModal .modal-header::after,
+body.ocean-theme #endpointModal .modal-header::after,
+body.ocean-theme #portModal .modal-header::after,
+body.ocean-theme #historyModal .modal-header::after,
+body.ocean-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.ocean-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.ocean-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.ocean-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.ocean-theme .btn-primary {
+    background: #1890FF;
+    color: #ffffff;
+    border-color: #1890FF;
+}
+
+body.ocean-theme .btn-primary:hover {
+    background: #0277BD;
+    border-color: #0277BD;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.ocean-theme .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+/* Danger button - 危险操作按钮 */
+body.ocean-theme .btn-danger {
+    background: #ff4444;
+    color: #ffffff;
+    border-color: #ff4444;
+}
+
+body.ocean-theme .btn-danger:hover {
+    background: #ff2222;
+    border-color: #ff2222;
+}
+
+/* Card button - 卡片内按钮 */
+body.ocean-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.ocean-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.ocean-theme .btn-card.btn-danger {
+    background: #ff4444;
+    color: #ffffff;
+    border-color: #ff4444;
+}
+
+/* Small button - 小按钮 */
+body.ocean-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.ocean-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.ocean-theme .endpoint-toggle-btn {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.ocean-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%231890FF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.ocean-theme .log-level-select-btn:hover,
+body.ocean-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.ocean-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.ocean-theme .log-textarea {
+    background: #FFFFFF;
+    color: #01579B;
+    border-color: var(--border-color);
+}
+
+/* ========== Toggle Switch ========== */
+body.ocean-theme .toggle-slider {
+    background-color: #B3E5FC;
+}
+
+body.ocean-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.ocean-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.ocean-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.ocean-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.ocean-theme .copy-btn:hover {
+    background: rgba(24, 144, 255, 0.1);
+}
+
+/* ========== Badges ========== */
+body.ocean-theme .current-badge {
+    background: #52C41A;
+}
+
+body.ocean-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.ocean-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.ocean-theme .btn-switch:disabled {
+    background: #B3E5FC;
+}
+
+/* ========== Error Toast ========== */
+body.ocean-theme .error-toast {
+    background: #ff4444;
+    box-shadow: 0 4px 12px rgba(255, 68, 68, 0.3);
+}
+
+/* ========== Loading State ========== */
+body.ocean-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.ocean-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.ocean-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.ocean-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Welcome Modal ========== */
+body.ocean-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.ocean-theme #testResultModal .modal-body,
+body.ocean-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* ========== Port Display Text ========== */
+body.ocean-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.ocean-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.ocean-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.1);
+}
+
+/* ========== Prompt Dialog ========== */
+body.ocean-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.ocean-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.ocean-theme .notification-success {
+    background: #52C41A;
+}
+
+body.ocean-theme .notification-error {
+    background: #ff4444;
+}
+
+body.ocean-theme .notification-warning {
+    background: #FFA940;
+}
+
+body.ocean-theme .notification-info {
+    background: #1890FF;
+}
+
+/* ========== Error Message ========== */
+body.ocean-theme .error-message {
+    background: #FFF1F0;
+    border-color: #FFCCC7;
+    color: #CF1322;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.ocean-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.ocean-theme .conflict-divider {
+    background: linear-gradient(90deg, #1890FF 0%, #0277BD 100%);
+}
+
+body.ocean-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.ocean-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.ocean-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-value-local {
+    background: #E6FFFB;
+    border-color: #87E8DE;
+}
+
+body.ocean-theme .conflict-value-remote {
+    background: #FFF7E6;
+    border-color: #FFD591;
+}
+
+body.ocean-theme .conflict-value-label {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .conflict-badge {
+    background: #FFF7E6;
+    color: #D46B08;
+}
+
+/* ========== Data Sync Dialog ========== */
+body.ocean-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.ocean-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.ocean-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.ocean-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.ocean-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Ocean Theme ========== */
+body.ocean-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.ocean-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.ocean-theme ::-webkit-scrollbar-thumb {
+    background: #81D4FA;
+    border-radius: 5px;
+}
+
+body.ocean-theme ::-webkit-scrollbar-thumb:hover {
+    background: #4FC3F7;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.ocean-theme #confirmModal .modal-content,
+body.ocean-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.ocean-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.ocean-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(24, 144, 255, 0.4),
+        0 0 10px rgba(24, 144, 255, 0.5),
+        0 0 20px rgba(24, 144, 255, 0.3),
+        0 0 30px rgba(24, 144, 255, 0.2),
+        0 8px 24px var(--shadow-color);
+}
+
+body.ocean-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(24, 144, 255, 0.05);
+}
+
+/* ========== History Modal Fixes ========== */
+body.ocean-theme #historyModal .modal-content {
+    background: var(--modal-bg) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.ocean-theme #genericModal .modal-content,
+body.ocean-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Ocean Theme ========== */
+body.ocean-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.ocean-theme .required-mark {
+    color: #ff4444;
+}
+
+/* ========== Footer Left Text ========== */
+body.ocean-theme .footer-left span {
+    color: var(--text-secondary);
+}

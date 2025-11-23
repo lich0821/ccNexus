@@ -1,0 +1,888 @@
+/**
+ * Green Eye Protection Theme Styles
+ * 护眼模式主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="green-theme" 即可启用护眼主题
+ * 采用豆沙绿色调，减少视觉疲劳，保护眼睛
+ */
+
+/* Green Theme Variables */
+body.green-theme {
+    --bg-gradient-start: #C7EDCC;
+    --bg-gradient-end: #A8D8B9;
+    --bg-primary: #E3F4E1;
+    --bg-secondary: #D4EDDA;
+    --bg-tertiary: #C1E1C5;
+    --text-primary: #2D4A3E;
+    --text-secondary: #4A6B5D;
+    --text-tertiary: #6B8B7A;
+    --border-color: #A8D5BA;
+    --border-light: #B8E0C8;
+    --card-bg: #E8F5E9;
+    --modal-bg: #E3F4E1;
+    --input-bg: #F1F8E9;
+    --hover-bg: #D4EDDA;
+    --shadow-color: rgba(45, 74, 62, 0.12);
+    --primary-color: #4CAF50;
+    --primary-hover: #43A047;
+}
+
+/* Green Theme Specific Styles */
+body.green-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.green-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.green-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.green-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.green-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.green-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.green-theme .card {
+    background: var(--bg-primary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.green-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.green-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.green-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.green-theme .stats-tab-btn.active {
+    background: #81C784;
+    color: #1B5E20;
+    border-color: #66BB6A;
+    box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.green-theme .stat-box {
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.green-theme .stat-box:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.green-theme .stat-box .stat-label {
+    color: var(--text-secondary);
+}
+
+body.green-theme .stat-box .stat-value {
+    color: var(--primary-color);
+}
+
+body.green-theme .stat-box .stat-primary {
+    color: var(--primary-color);
+}
+
+body.green-theme .stat-box .stat-secondary {
+    color: var(--text-tertiary);
+}
+
+body.green-theme .stat-box .stat-detail {
+    color: var(--text-secondary);
+}
+
+body.green-theme .stat-box .stat-text {
+    color: var(--text-secondary);
+}
+
+body.green-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.green-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.green-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.green-theme .trend {
+    background: var(--bg-tertiary);
+}
+
+body.green-theme .trend-up {
+    background: rgba(76, 175, 80, 0.2);
+    color: #2E7D32;
+}
+
+body.green-theme .trend-down {
+    background: rgba(211, 47, 47, 0.15);
+    color: #C62828;
+}
+
+body.green-theme .trend-flat {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+body.green-theme .endpoint-item {
+    background: var(--bg-secondary);
+}
+
+body.green-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.green-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.green-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.green-theme .form-group input,
+body.green-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.green-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%234CAF50' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.green-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.green-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.green-theme #endpointModal .modal-header h2,
+body.green-theme #portModal .modal-header h2,
+body.green-theme #historyModal .modal-header h2,
+body.green-theme #settingsModal .modal-header h2,
+body.green-theme #autoThemeConfigModal .modal-header h2,
+body.green-theme #welcomeModal .modal-header h2,
+body.green-theme #testResultModal .modal-header h2,
+body.green-theme #genericModal .modal-header h2,
+body.green-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.green-theme .confirm-dialog-content .confirm-title,
+body.green-theme #confirmDialog .confirm-title,
+body.green-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.green-theme .modal-close,
+body.green-theme #historyModal .modal-close,
+body.green-theme #endpointModal .modal-close,
+body.green-theme #portModal .modal-close,
+body.green-theme #genericModal .modal-close,
+body.green-theme #subModal .modal-close,
+body.green-theme #settingsModal .modal-close,
+body.green-theme #autoThemeConfigModal .modal-close,
+body.green-theme #welcomeModal .modal-close,
+body.green-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.green-theme .modal-close:hover,
+body.green-theme #historyModal .modal-close:hover,
+body.green-theme #endpointModal .modal-close:hover,
+body.green-theme #portModal .modal-close:hover,
+body.green-theme #genericModal .modal-close:hover,
+body.green-theme #subModal .modal-close:hover,
+body.green-theme #settingsModal .modal-close:hover,
+body.green-theme #autoThemeConfigModal .modal-close:hover,
+body.green-theme #welcomeModal .modal-close:hover,
+body.green-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.green-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.green-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.green-theme .header-link {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--primary-color);
+}
+
+body.green-theme .header-link:hover {
+    background: rgba(76, 175, 80, 0.25);
+}
+
+body.green-theme .port-display {
+    background: rgba(76, 175, 80, 0.15);
+    border-color: rgba(76, 175, 80, 0.3);
+}
+
+body.green-theme .port-display:hover {
+    background: rgba(76, 175, 80, 0.25);
+    border-color: rgba(76, 175, 80, 0.5);
+}
+
+body.green-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.green-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.green-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.green-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.green-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.green-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.green-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.green-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.green-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.green-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.green-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.green-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.green-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.green-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.green-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.green-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.green-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.green-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.green-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.green-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.green-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.green-theme .backup-table th,
+body.green-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.green-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.green-theme .data-sync-section h3 {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+body.green-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.green-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.green-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-value-local code,
+body.green-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.green-theme #genericModal .modal-header::after,
+body.green-theme #subModal .modal-header::after,
+body.green-theme #settingsModal .modal-header::after,
+body.green-theme #autoThemeConfigModal .modal-header::after,
+body.green-theme #endpointModal .modal-header::after,
+body.green-theme #portModal .modal-header::after,
+body.green-theme #historyModal .modal-header::after,
+body.green-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.green-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.green-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.green-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.green-theme .btn-primary {
+    background: #4CAF50;
+    color: #ffffff;
+    border-color: #4CAF50;
+}
+
+body.green-theme .btn-primary:hover {
+    background: #43A047;
+    border-color: #43A047;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.green-theme .btn-secondary {
+    background: #A5D6A7;
+    color: #1B5E20;
+    border-color: #81C784;
+}
+
+body.green-theme .btn-secondary:hover {
+    background: #81C784;
+    border-color: #66BB6A;
+}
+
+/* Danger button - 危险操作按钮 */
+body.green-theme .btn-danger {
+    background: #E57373;
+    color: #ffffff;
+    border-color: #E57373;
+}
+
+body.green-theme .btn-danger:hover {
+    background: #EF5350;
+    border-color: #EF5350;
+}
+
+/* Card button - 卡片内按钮 */
+body.green-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.green-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.green-theme .btn-card.btn-danger {
+    background: #E57373;
+    color: #ffffff;
+    border-color: #E57373;
+}
+
+/* Small button - 小按钮 */
+body.green-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.green-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.green-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.green-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.green-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.green-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%232D4A3E' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.green-theme .log-level-select-btn:hover,
+body.green-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.green-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.green-theme .log-textarea {
+    background: #F1F8E9;
+    color: #2D4A3E;
+}
+
+/* ========== Toggle Switch ========== */
+body.green-theme .toggle-slider {
+    background-color: #A5D6A7;
+}
+
+body.green-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.green-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.green-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.green-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.green-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.green-theme .copy-btn:hover {
+    background: rgba(76, 175, 80, 0.15);
+}
+
+/* ========== Badges ========== */
+body.green-theme .current-badge {
+    background: #2E7D32;
+}
+
+body.green-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.green-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.green-theme .btn-switch:disabled {
+    background: #A5D6A7;
+}
+
+/* ========== Error Toast ========== */
+body.green-theme .error-toast {
+    background: #E57373;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== Loading State ========== */
+body.green-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.green-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.green-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.green-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.green-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.green-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.green-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.green-theme #testResultModal .modal-body,
+body.green-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.green-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.green-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: var(--text-primary) !important;
+}
+
+/* Test result error message */
+body.green-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: #FFCDD2 !important;
+    border-color: #EF9A9A !important;
+}
+
+body.green-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #C62828 !important;
+}
+
+/* Test result details box */
+body.green-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.green-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.green-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.green-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+}
+
+/* ========== Prompt Dialog ========== */
+body.green-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.green-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.green-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.green-theme .notification-success {
+    background: #4CAF50;
+}
+
+body.green-theme .notification-error {
+    background: #E57373;
+}
+
+body.green-theme .notification-warning {
+    background: #FFB74D;
+}
+
+body.green-theme .notification-info {
+    background: #64B5F6;
+}
+
+/* ========== Error Message ========== */
+body.green-theme .error-message {
+    background: rgba(229, 115, 115, 0.2);
+    border-color: #E57373;
+    color: #C62828;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.green-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.green-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.green-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.green-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.green-theme .conflict-value-local {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .conflict-value-remote {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.green-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.green-theme .conflict-badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.green-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.green-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.green-theme [style*="color: #666"],
+body.green-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.green-theme [style*="color: #555"],
+body.green-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.green-theme [style*="color: #333"],
+body.green-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.green-theme [style*="color: #999"],
+body.green-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.green-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.green-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.green-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Green Theme ========== */
+body.green-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.green-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.green-theme ::-webkit-scrollbar-thumb {
+    background: #A5D6A7;
+    border-radius: 5px;
+}
+
+body.green-theme ::-webkit-scrollbar-thumb:hover {
+    background: #81C784;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.green-theme #confirmModal .modal-content,
+body.green-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.green-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.green-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(76, 175, 80, 0.4),
+        0 0 10px rgba(76, 175, 80, 0.5),
+        0 0 20px rgba(76, 175, 80, 0.3),
+        0 8px 24px var(--shadow-color);
+}
+
+body.green-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(76, 175, 80, 0.1);
+}
+
+/* ========== History Modal Fixes ========== */
+body.green-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.green-theme #genericModal .modal-content,
+body.green-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Green Theme ========== */
+body.green-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.green-theme .required-mark {
+    color: #E57373;
+}
+
+/* ========== Footer Left Text ========== */
+body.green-theme .footer-left span {
+    color: var(--text-secondary);
+}

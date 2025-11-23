@@ -34,6 +34,14 @@ export function GetArchiveTrend(arg1) {
   return window['go']['main']['App']['GetArchiveTrend'](arg1);
 }
 
+export function GetAutoDarkTheme() {
+  return window['go']['main']['App']['GetAutoDarkTheme']();
+}
+
+export function GetAutoLightTheme() {
+  return window['go']['main']['App']['GetAutoLightTheme']();
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
@@ -94,6 +102,10 @@ export function GetTheme() {
   return window['go']['main']['App']['GetTheme']();
 }
 
+export function GetThemeAuto() {
+  return window['go']['main']['App']['GetThemeAuto']();
+}
+
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
@@ -130,6 +142,14 @@ export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
 }
 
+export function SetAutoDarkTheme(arg1) {
+  return window['go']['main']['App']['SetAutoDarkTheme'](arg1);
+}
+
+export function SetAutoLightTheme(arg1) {
+  return window['go']['main']['App']['SetAutoLightTheme'](arg1);
+}
+
 export function SetCloseWindowBehavior(arg1) {
   return window['go']['main']['App']['SetCloseWindowBehavior'](arg1);
 }
@@ -144,6 +164,10 @@ export function SetLogLevel(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function SetThemeAuto(arg1) {
+  return window['go']['main']['App']['SetThemeAuto'](arg1);
 }
 
 export function ShowWindow() {

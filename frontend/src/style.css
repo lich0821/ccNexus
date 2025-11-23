@@ -1,5 +1,15 @@
 /* Import Theme Styles */
 @import './themes/dark.css';
+@import './themes/green.css';
+@import './themes/starry.css';
+@import './themes/sakura.css';
+@import './themes/sunset.css';
+@import './themes/ocean.css';
+@import './themes/mocha.css';
+@import './themes/cyberpunk.css';
+@import './themes/aurora.css';
+@import './themes/holographic.css';
+@import './themes/quantum.css';
 
 * {
     margin: 0;
@@ -711,8 +721,8 @@ body {
 .error-toast {
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
+    right: 20px;
+    transform: translateX(100px);
     background: #ff4444;
     color: white;
     padding: 15px 25px;
@@ -725,7 +735,7 @@ body {
 }
 
 .error-toast.show {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(0);
     opacity: 1;
 }
 
@@ -755,6 +765,13 @@ body {
 
 .modal.active {
     display: flex;
+}
+
+/* Welcome/About Modal with blur background */
+#welcomeModal {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 #endpointModal {
@@ -979,6 +996,18 @@ body {
     cursor: not-allowed;
 }
 
+/* Small Toggle Switch for Settings */
+.toggle-switch[style*="width: 40px"] .toggle-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+}
+
+.toggle-switch[style*="width: 40px"] input:checked + .toggle-slider:before {
+    transform: translateX(20px);
+}
+
 /* Header Link Styles */
 .header-link {
     display: inline-flex;
@@ -1134,9 +1163,9 @@ body {
     width: 100%;
     height: 300px;
     padding: 12px;
-    border: none;
-    background: #1e1e1e;
-    color: #d4d4d4;
+    border: 1px solid #e0e0e0;
+    background: #fafbfc;
+    color: #24292e;
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.6;
@@ -1146,7 +1175,8 @@ body {
 
 .log-textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 /* Scrollbar styling for textarea */
@@ -1155,16 +1185,16 @@ body {
 }
 
 .log-textarea::-webkit-scrollbar-track {
-    background: #2d2d2d;
+    background: #f1f1f1;
 }
 
 .log-textarea::-webkit-scrollbar-thumb {
-    background: #555;
+    background: #c1c1c1;
     border-radius: 5px;
 }
 
 .log-textarea::-webkit-scrollbar-thumb:hover {
-    background: #777;
+    background: #a8a8a8;
 }
 
 /* Language Switcher */
@@ -2233,7 +2263,7 @@ body {
 #settingsModal .modal-header h2 {
     margin: 0;
     font-size: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 #settingsModal .modal-close {
@@ -2260,5 +2290,126 @@ body {
 }
 
 #settingsModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
+/* Auto Theme Config Modal Styles */
+#autoThemeConfigModal {
+    backdrop-filter: blur(4px);
+}
+
+#autoThemeConfigModal .modal-content {
+    max-width: min(420px, 90vw);
+    width: 420px;
+}
+
+#autoThemeConfigModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#autoThemeConfigModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#autoThemeConfigModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary);
+}
+
+#autoThemeConfigModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#autoThemeConfigModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#autoThemeConfigModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
+/* Test Result Modal Styles */
+#testResultModal {
+    backdrop-filter: blur(4px);
+}
+
+#testResultModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#testResultModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#testResultModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#testResultModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#testResultModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#testResultModal .modal-body {
     padding: 25px 30px 30px 30px;
 }

@@ -1,0 +1,906 @@
+/**
+ * Sunset Orange Theme Styles
+ * 暖阳橙主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="sunset-theme" 即可启用暖阳橙主题
+ * 温暖活力的橙色系配色，如夕阳般温馨
+ */
+
+/* Sunset Theme Variables */
+body.sunset-theme {
+    --bg-gradient-start: #FFF3E0;
+    --bg-gradient-end: #FFE0B2;
+    --bg-primary: #FFFAF5;
+    --bg-secondary: #FFF0E5;
+    --bg-tertiary: #FFE4D6;
+    --text-primary: #5D4037;
+    --text-secondary: #8D6E63;
+    --text-tertiary: #A1887F;
+    --border-color: #FFCC80;
+    --border-light: #FFE0B2;
+    --card-bg: #FFF8F0;
+    --modal-bg: #FFFAF5;
+    --input-bg: #FFFCFA;
+    --hover-bg: #FFECDF;
+    --shadow-color: rgba(255, 152, 0, 0.12);
+    --primary-color: #FF9800;
+    --primary-hover: #F57C00;
+}
+
+/* Sunset Theme Specific Styles */
+body.sunset-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.sunset-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.sunset-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .card {
+    background: var(--bg-primary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.sunset-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.sunset-theme .stats-tab-btn.active {
+    background: #FFB74D;
+    color: #5D4037;
+    border-color: #FFA726;
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.sunset-theme .stat-box {
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.sunset-theme .stat-box:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sunset-theme .stat-box .stat-label {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .stat-box .stat-value {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .stat-box .stat-primary {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .stat-box .stat-secondary {
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .stat-box .stat-detail {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .stat-box .stat-text {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .trend {
+    background: var(--bg-tertiary);
+}
+
+body.sunset-theme .trend-up {
+    background: rgba(72, 187, 120, 0.2);
+    color: #2F855A;
+}
+
+body.sunset-theme .trend-down {
+    background: rgba(229, 62, 62, 0.15);
+    color: #C53030;
+}
+
+body.sunset-theme .trend-flat {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .endpoint-item {
+    background: var(--bg-secondary);
+}
+
+body.sunset-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .form-group input,
+body.sunset-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF9800' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.sunset-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.sunset-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.sunset-theme #endpointModal .modal-header h2,
+body.sunset-theme #portModal .modal-header h2,
+body.sunset-theme #historyModal .modal-header h2,
+body.sunset-theme #settingsModal .modal-header h2,
+body.sunset-theme #autoThemeConfigModal .modal-header h2,
+body.sunset-theme #welcomeModal .modal-header h2,
+body.sunset-theme #testResultModal .modal-header h2,
+body.sunset-theme #genericModal .modal-header h2,
+body.sunset-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.sunset-theme .confirm-dialog-content .confirm-title,
+body.sunset-theme #confirmDialog .confirm-title,
+body.sunset-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.sunset-theme .modal-close,
+body.sunset-theme #historyModal .modal-close,
+body.sunset-theme #endpointModal .modal-close,
+body.sunset-theme #portModal .modal-close,
+body.sunset-theme #genericModal .modal-close,
+body.sunset-theme #subModal .modal-close,
+body.sunset-theme #settingsModal .modal-close,
+body.sunset-theme #autoThemeConfigModal .modal-close,
+body.sunset-theme #welcomeModal .modal-close,
+body.sunset-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.sunset-theme .modal-close:hover,
+body.sunset-theme #historyModal .modal-close:hover,
+body.sunset-theme #endpointModal .modal-close:hover,
+body.sunset-theme #portModal .modal-close:hover,
+body.sunset-theme #genericModal .modal-close:hover,
+body.sunset-theme #subModal .modal-close:hover,
+body.sunset-theme #settingsModal .modal-close:hover,
+body.sunset-theme #autoThemeConfigModal .modal-close:hover,
+body.sunset-theme #welcomeModal .modal-close:hover,
+body.sunset-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.sunset-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.sunset-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.sunset-theme .header-link {
+    background: rgba(255, 152, 0, 0.15);
+    color: var(--primary-color);
+}
+
+body.sunset-theme .header-link:hover {
+    background: rgba(255, 152, 0, 0.25);
+}
+
+body.sunset-theme .port-display {
+    background: rgba(255, 152, 0, 0.15);
+    border-color: rgba(255, 152, 0, 0.3);
+}
+
+body.sunset-theme .port-display:hover {
+    background: rgba(255, 152, 0, 0.25);
+    border-color: rgba(255, 152, 0, 0.5);
+}
+
+body.sunset-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.sunset-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.sunset-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.sunset-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.sunset-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.sunset-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.sunset-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.sunset-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.sunset-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.sunset-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.sunset-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.sunset-theme .backup-table th,
+body.sunset-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.sunset-theme .data-sync-section h3 {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+body.sunset-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.sunset-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.sunset-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-value-local code,
+body.sunset-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.sunset-theme #genericModal .modal-header::after,
+body.sunset-theme #subModal .modal-header::after,
+body.sunset-theme #settingsModal .modal-header::after,
+body.sunset-theme #autoThemeConfigModal .modal-header::after,
+body.sunset-theme #endpointModal .modal-header::after,
+body.sunset-theme #portModal .modal-header::after,
+body.sunset-theme #historyModal .modal-header::after,
+body.sunset-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.sunset-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.sunset-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.sunset-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.sunset-theme .btn-primary {
+    background: #FF9800;
+    color: #ffffff;
+    border-color: #FF9800;
+}
+
+body.sunset-theme .btn-primary:hover {
+    background: #F57C00;
+    border-color: #F57C00;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.sunset-theme .btn-secondary {
+    background: #FFE0B2;
+    color: #5D4037;
+    border-color: #FFCC80;
+}
+
+body.sunset-theme .btn-secondary:hover {
+    background: #FFCC80;
+    border-color: #FFB74D;
+}
+
+/* Danger button - 危险操作按钮 */
+body.sunset-theme .btn-danger {
+    background: #E53E3E;
+    color: #ffffff;
+    border-color: #E53E3E;
+}
+
+body.sunset-theme .btn-danger:hover {
+    background: #C53030;
+    border-color: #C53030;
+}
+
+/* Card button - 卡片内按钮 */
+body.sunset-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.sunset-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.sunset-theme .btn-card.btn-danger {
+    background: #E53E3E;
+    color: #ffffff;
+    border-color: #E53E3E;
+}
+
+/* Small button - 小按钮 */
+body.sunset-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.sunset-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.sunset-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.sunset-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235D4037' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.sunset-theme .log-level-select-btn:hover,
+body.sunset-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.sunset-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.sunset-theme .log-textarea {
+    background: #FFFCF8;
+    color: #5D4037;
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .log-textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+body.sunset-theme .log-textarea::-webkit-scrollbar-track {
+    background: #FFF0E5;
+}
+
+body.sunset-theme .log-textarea::-webkit-scrollbar-thumb {
+    background: #FFCC80;
+}
+
+body.sunset-theme .log-textarea::-webkit-scrollbar-thumb:hover {
+    background: #FFB74D;
+}
+
+/* ========== Toggle Switch ========== */
+body.sunset-theme .toggle-slider {
+    background-color: #FFCC80;
+}
+
+body.sunset-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.sunset-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.sunset-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.sunset-theme .copy-btn:hover {
+    background: rgba(255, 152, 0, 0.15);
+}
+
+/* ========== Badges ========== */
+body.sunset-theme .current-badge {
+    background: #48BB78;
+}
+
+body.sunset-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.sunset-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.sunset-theme .btn-switch:disabled {
+    background: #FFCC80;
+}
+
+/* ========== Error Toast ========== */
+body.sunset-theme .error-toast {
+    background: #E53E3E;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== Loading State ========== */
+body.sunset-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.sunset-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.sunset-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.sunset-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.sunset-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.sunset-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.sunset-theme #testResultModal .modal-body,
+body.sunset-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.sunset-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: #E6FFED !important;
+    border-color: #A3E4B2 !important;
+}
+
+body.sunset-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: #276749 !important;
+}
+
+/* Test result error message */
+body.sunset-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: #FFF0F0 !important;
+    border-color: #FFC0C0 !important;
+}
+
+body.sunset-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #C53030 !important;
+}
+
+/* Test result details box */
+body.sunset-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.sunset-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.sunset-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sunset-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.15);
+}
+
+/* ========== Prompt Dialog ========== */
+body.sunset-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.sunset-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sunset-theme .notification-success {
+    background: #48BB78;
+}
+
+body.sunset-theme .notification-error {
+    background: #E53E3E;
+}
+
+body.sunset-theme .notification-warning {
+    background: #FF9800;
+}
+
+body.sunset-theme .notification-info {
+    background: #FF9800;
+}
+
+/* ========== Error Message ========== */
+body.sunset-theme .error-message {
+    background: rgba(229, 62, 62, 0.15);
+    border-color: #E53E3E;
+    color: #C53030;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.sunset-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.sunset-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.sunset-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .conflict-value-local {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .conflict-value-remote {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.sunset-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.sunset-theme .conflict-badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.sunset-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.sunset-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.sunset-theme [style*="color: #666"],
+body.sunset-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.sunset-theme [style*="color: #555"],
+body.sunset-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.sunset-theme [style*="color: #333"],
+body.sunset-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.sunset-theme [style*="color: #999"],
+body.sunset-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.sunset-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.sunset-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.sunset-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Sunset Theme ========== */
+body.sunset-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.sunset-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.sunset-theme ::-webkit-scrollbar-thumb {
+    background: #FFCC80;
+    border-radius: 5px;
+}
+
+body.sunset-theme ::-webkit-scrollbar-thumb:hover {
+    background: #FFB74D;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.sunset-theme #confirmModal .modal-content,
+body.sunset-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.sunset-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sunset-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(255, 152, 0, 0.4),
+        0 0 10px rgba(255, 152, 0, 0.5),
+        0 0 20px rgba(255, 152, 0, 0.3),
+        0 8px 24px var(--shadow-color);
+}
+
+body.sunset-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(255, 152, 0, 0.1);
+}
+
+/* ========== History Modal Fixes ========== */
+body.sunset-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.sunset-theme #genericModal .modal-content,
+body.sunset-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Sunset Theme ========== */
+body.sunset-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.sunset-theme .required-mark {
+    color: #E53E3E;
+}
+
+/* ========== Footer Left Text ========== */
+body.sunset-theme .footer-left span {
+    color: var(--text-secondary);
+}

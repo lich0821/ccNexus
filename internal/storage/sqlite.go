@@ -592,8 +592,8 @@ func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrat
 		return fmt.Errorf("failed to merge endpoints: %w", err)
 	}
 
-	// 2. Merge daily_stats (always merge, no conflicts)
-	if err := s.mergeDailyStats(tx); err != nil {
+	// 2. Merge daily_stats based on strategy
+	if err := s.mergeDailyStats(tx, strategy); err != nil {
 		return fmt.Errorf("failed to merge daily stats: %w", err)
 	}
 
@@ -633,55 +633,43 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 	}
 }
 
-// mergeDailyStats merges daily stats (always merge, auto-aggregate by device_id)
-func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx) error {
-	// Step 1: Create a temporary table with merged stats
-	_, err := tx.Exec(`
-		CREATE TEMP TABLE merged_stats AS
-		SELECT
-			b.endpoint_name,
-			b.date,
-			COALESCE(m.requests, 0) + b.requests as requests,
-			COALESCE(m.errors, 0) + b.errors as errors,
-			COALESCE(m.input_tokens, 0) + b.input_tokens as input_tokens,
-			COALESCE(m.output_tokens, 0) + b.output_tokens as output_tokens,
-			b.device_id
-		FROM backup.daily_stats b
-		LEFT JOIN main.daily_stats m
-			ON b.endpoint_name = m.endpoint_name
-			AND b.date = m.date
-			AND b.device_id = m.device_id
-	`)
-	if err != nil {
+// mergeDailyStats merges daily stats based on strategy
+func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx, strategy MergeStrategy) error {
+	switch strategy {
+	case MergeStrategyKeepLocal:
+		// Keep local data, only insert records that don't exist locally
+		_, err := tx.Exec(`
+			INSERT OR IGNORE INTO daily_stats
+			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
+			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
+			FROM backup.daily_stats
+		`)
 		return err
-	}
+	case MergeStrategyOverwriteLocal:
+		// Overwrite local data with backup data
+		// Step 1: Delete conflicting rows from main database
+		_, err := tx.Exec(`
+			DELETE FROM daily_stats
+			WHERE EXISTS (
+				SELECT 1 FROM backup.daily_stats b
+				WHERE b.endpoint_name = daily_stats.endpoint_name
+				AND b.date = daily_stats.date
+				AND b.device_id = daily_stats.device_id
+			)
+		`)
+		if err != nil {
+			return err
+		}
 
-	// Step 2: Delete conflicting rows from main database
-	_, err = tx.Exec(`
-		DELETE FROM daily_stats
-		WHERE EXISTS (
-			SELECT 1 FROM backup.daily_stats b
-			WHERE b.endpoint_name = daily_stats.endpoint_name
-			AND b.date = daily_stats.date
-			AND b.device_id = daily_stats.device_id
-		)
-	`)
-	if err != nil {
+		// Step 2: Insert backup data directly (no accumulation)
+		_, err = tx.Exec(`
+			INSERT INTO daily_stats
+			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
+			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
+			FROM backup.daily_stats
+		`)
 		return err
+	default:
+		return fmt.Errorf("unknown merge strategy: %s", strategy)
 	}
-
-	// Step 3: Insert merged stats
-	_, err = tx.Exec(`
-		INSERT INTO daily_stats
-		(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
-		SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
-		FROM merged_stats
-	`)
-	if err != nil {
-		return err
-	}
-
-	// Step 4: Clean up temp table
-	_, err = tx.Exec(`DROP TABLE merged_stats`)
-	return err
 }

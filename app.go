@@ -586,15 +586,15 @@ func (a *App) GetStatsTrend() string {
 
 	result := map[string]interface{}{
 		"daily": map[string]interface{}{
-			"current":       todayRequests,
-			"previous":      yesterdayRequests,
-			"trend":         requestsTrend,
-			"currentErrors": todayErrors,
+			"current":        todayRequests,
+			"previous":       yesterdayRequests,
+			"trend":          requestsTrend,
+			"currentErrors":  todayErrors,
 			"previousErrors": yesterdayErrors,
-			"errorsTrend":   errorsTrend,
-			"currentTokens": todayInputTokens + todayOutputTokens,
+			"errorsTrend":    errorsTrend,
+			"currentTokens":  todayInputTokens + todayOutputTokens,
 			"previousTokens": yesterdayInputTokens + yesterdayOutputTokens,
-			"tokensTrend":   tokensTrend,
+			"tokensTrend":    tokensTrend,
 		},
 	}
 
@@ -1202,10 +1202,6 @@ func (a *App) GetTheme() string {
 
 // SetTheme sets the UI theme
 func (a *App) SetTheme(theme string) error {
-	if theme != "light" && theme != "dark" {
-		return fmt.Errorf("invalid theme: %s (must be 'light' or 'dark')", theme)
-	}
-
 	a.config.UpdateTheme(theme)
 
 	// Save to SQLite storage
@@ -1217,6 +1213,79 @@ func (a *App) SetTheme(theme string) error {
 	}
 
 	logger.Info("Theme changed to: %s", theme)
+	return nil
+}
+
+// GetThemeAuto returns whether auto theme switching is enabled
+func (a *App) GetThemeAuto() bool {
+	return a.config.GetThemeAuto()
+}
+
+// SetThemeAuto enables or disables auto theme switching
+func (a *App) SetThemeAuto(auto bool) error {
+	a.config.UpdateThemeAuto(auto)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save theme auto setting: %w", err)
+		}
+	}
+
+	logger.Info("Theme auto mode changed to: %v", auto)
+	return nil
+}
+
+// GetAutoLightTheme returns the theme to use in daytime when auto mode is on
+func (a *App) GetAutoLightTheme() string {
+	theme := a.config.GetAutoLightTheme()
+	if theme == "" {
+		// Default to light theme
+		return "light"
+	}
+	return theme
+}
+
+// SetAutoLightTheme sets the theme to use in daytime when auto mode is on
+func (a *App) SetAutoLightTheme(theme string) error {
+	a.config.UpdateAutoLightTheme(theme)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save auto light theme: %w", err)
+		}
+	}
+
+	logger.Info("Auto light theme changed to: %s", theme)
+	return nil
+}
+
+// GetAutoDarkTheme returns the theme to use in nighttime when auto mode is on
+func (a *App) GetAutoDarkTheme() string {
+	theme := a.config.GetAutoDarkTheme()
+	if theme == "" {
+		// Default to dark theme
+		return "dark"
+	}
+	return theme
+}
+
+// SetAutoDarkTheme sets the theme to use in nighttime when auto mode is on
+func (a *App) SetAutoDarkTheme(theme string) error {
+	a.config.UpdateAutoDarkTheme(theme)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save auto dark theme: %w", err)
+		}
+	}
+
+	logger.Info("Auto dark theme changed to: %s", theme)
 	return nil
 }
 
@@ -1671,7 +1740,7 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	}
 
 	// If user chose to keep local config, do nothing
-	if choice == "local" {
+	if choice == "keep_local" {
 		logger.Info("User chose to keep local configuration")
 		return nil
 	}
@@ -1695,8 +1764,8 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 		return fmt.Errorf("创建临时目录失败: %w", err)
 	}
 	tempRestorePath := filepath.Join(tempDir, "restore_temp.db")
-	defer os.Remove(tempRestorePath)  // Clean up temp file
-	defer os.RemoveAll(tempDir)       // Clean up temp directory
+	defer os.Remove(tempRestorePath) // Clean up temp file
+	defer os.RemoveAll(tempDir)      // Clean up temp directory
 
 	// Download and restore database from WebDAV
 	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
@@ -1878,8 +1947,8 @@ func (a *App) DetectWebDAVConflict(filename string) string {
 		return string(data)
 	}
 	tempRestorePath := filepath.Join(tempDir, "conflict_check_temp.db")
-	defer os.Remove(tempRestorePath)  // Clean up temp file
-	defer os.RemoveAll(tempDir)       // Clean up temp directory
+	defer os.Remove(tempRestorePath) // Clean up temp file
+	defer os.RemoveAll(tempDir)      // Clean up temp directory
 
 	// Download database from WebDAV
 	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
@@ -2060,8 +2129,8 @@ func (a *App) GetArchiveTrend(month string) string {
 		// Previous month may not exist, return flat trend
 		logger.Debug("Previous month %s has no data, returning flat trend", previousMonth)
 		result := map[string]interface{}{
-			"success": true,
-			"trend":    0.0,
+			"success":     true,
+			"trend":       0.0,
 			"errorsTrend": 0.0,
 			"tokensTrend": 0.0,
 		}
@@ -2091,10 +2160,10 @@ func (a *App) GetArchiveTrend(month string) string {
 	tokensTrend := calculateTrend(currentTokens, previousTokens)
 
 	result := map[string]interface{}{
-		"success":      true,
-		"trend":        requestsTrend,
-		"errorsTrend":  errorsTrend,
-		"tokensTrend":  tokensTrend,
+		"success":     true,
+		"trend":       requestsTrend,
+		"errorsTrend": errorsTrend,
+		"tokensTrend": tokensTrend,
 	}
 
 	data, _ := json.Marshal(result)
@@ -2112,4 +2181,3 @@ func (a *App) GenerateMockArchives(monthsCount int) string {
 	data, _ := json.Marshal(result)
 	return string(data)
 }
-
