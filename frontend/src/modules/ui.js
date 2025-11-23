@@ -456,17 +456,6 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>🎨 ${t('settings.closeWindowBehavior')}</label>
-                        <select id="settingsCloseWindowBehavior">
-                            <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
-                            <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
-                            <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
-                        </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('settings.closeWindowBehaviorHelp')}
-                        </p>
-                    </div>
-                    <div class="form-group">
                         <label>🌍 ${t('settings.language')}</label>
                         <select id="settingsLanguage">
                             <option value="zh-CN">${t('settings.languages.zh-CN')}</option>
@@ -474,6 +463,27 @@ export function initUI() {
                         </select>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.languageHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>🌓 ${t('settings.theme')}</label>
+                        <select id="settingsTheme">
+                            <option value="light">${t('settings.themes.light')}</option>
+                            <option value="dark">${t('settings.themes.dark')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.themeHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>✨ ${t('settings.closeWindowBehavior')}</label>
+                        <select id="settingsCloseWindowBehavior">
+                            <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
+                            <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
+                            <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.closeWindowBehaviorHelp')}
                         </p>
                     </div>
                 </div>

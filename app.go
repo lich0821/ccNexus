@@ -1190,6 +1190,36 @@ func (a *App) SetLanguage(language string) error {
 	return nil
 }
 
+// GetTheme returns the current theme setting
+func (a *App) GetTheme() string {
+	theme := a.config.GetTheme()
+	if theme == "" {
+		// Default to light theme
+		return "light"
+	}
+	return theme
+}
+
+// SetTheme sets the UI theme
+func (a *App) SetTheme(theme string) error {
+	if theme != "light" && theme != "dark" {
+		return fmt.Errorf("invalid theme: %s (must be 'light' or 'dark')", theme)
+	}
+
+	a.config.UpdateTheme(theme)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save theme: %w", err)
+		}
+	}
+
+	logger.Info("Theme changed to: %s", theme)
+	return nil
+}
+
 // TestEndpoint tests an endpoint by sending a simple request
 func (a *App) TestEndpoint(index int) string {
 	endpoints := a.config.GetEndpoints()

@@ -45,6 +45,8 @@ export function GetStatsYesterday():Promise<string>;
 
 export function GetSystemLanguage():Promise<string>;
 
+export function GetTheme():Promise<string>;
+
 export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
@@ -68,6 +70,8 @@ export function SetCloseWindowBehavior(arg1:string):Promise<void>;
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
+
+export function SetTheme(arg1:string):Promise<void>;
 
 export function ShowWindow():Promise<void>;
 

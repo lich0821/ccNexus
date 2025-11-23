@@ -109,6 +109,12 @@ export default {
             en: 'English',
             'zh-CN': '简体中文'
         },
+        theme: 'Theme',
+        themes: {
+            light: 'Light Theme',
+            dark: 'Dark Theme'
+        },
+        themeHelp: 'Select the interface theme appearance',
         closeWindowBehavior: 'Close Window Behavior',
         closeWindowBehaviorHelp: 'Choose the default action when clicking the close button',
         closeWindowOptions: {

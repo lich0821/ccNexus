@@ -1,0 +1,874 @@
+/**
+ * Dark Theme Styles
+ * 暗黑主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="dark-theme" 即可启用暗黑主题
+ */
+
+/* Dark Theme Variables */
+body.dark-theme {
+    --bg-gradient-start: #121212;
+    --bg-gradient-end: #1a1a1a;
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #2a2a2a;
+    --bg-tertiary: #333333;
+    --text-primary: #e0e0e0;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #808080;
+    --border-color: #444;
+    --border-light: #3a3a3a;
+    --card-bg: #252525;
+    --modal-bg: #2a2a2a;
+    --input-bg: #333333;
+    --hover-bg: #2f2f2f;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --primary-color: #7c8adb;
+    --primary-hover: #6a7acf;
+}
+
+/* Dark Theme Specific Styles */
+body.dark-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.dark-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.dark-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.dark-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.dark-theme .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.dark-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.dark-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.dark-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.dark-theme .stats-tab-btn.active {
+    background: #52525b;
+    color: #ffffff;
+    border-color: #71717a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.dark-theme .stat-box {
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.dark-theme .stat-box:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.dark-theme .stat-box .stat-label {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .stat-box .stat-value {
+    color: var(--primary-color);
+}
+
+body.dark-theme .stat-box .stat-primary {
+    color: var(--primary-color);
+}
+
+body.dark-theme .stat-box .stat-secondary {
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .stat-box .stat-detail {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .stat-box .stat-text {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .trend {
+    background: var(--bg-tertiary);
+}
+
+body.dark-theme .trend-up {
+    background: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+}
+
+body.dark-theme .trend-down {
+    background: rgba(245, 101, 101, 0.2);
+    color: #fc8181;
+}
+
+body.dark-theme .trend-flat {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .endpoint-item {
+    background: var(--bg-secondary);
+}
+
+body.dark-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.dark-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.dark-theme .form-group input,
+body.dark-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237c8adb' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.dark-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.dark-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.dark-theme #endpointModal .modal-header h2,
+body.dark-theme #portModal .modal-header h2,
+body.dark-theme #historyModal .modal-header h2,
+body.dark-theme #settingsModal .modal-header h2,
+body.dark-theme #welcomeModal .modal-header h2,
+body.dark-theme #testResultModal .modal-header h2,
+body.dark-theme #genericModal .modal-header h2,
+body.dark-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.dark-theme .confirm-dialog-content .confirm-title,
+body.dark-theme #confirmDialog .confirm-title,
+body.dark-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.dark-theme .modal-close,
+body.dark-theme #historyModal .modal-close,
+body.dark-theme #endpointModal .modal-close,
+body.dark-theme #portModal .modal-close,
+body.dark-theme #genericModal .modal-close,
+body.dark-theme #subModal .modal-close,
+body.dark-theme #settingsModal .modal-close,
+body.dark-theme #welcomeModal .modal-close,
+body.dark-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.dark-theme .modal-close:hover,
+body.dark-theme #historyModal .modal-close:hover,
+body.dark-theme #endpointModal .modal-close:hover,
+body.dark-theme #portModal .modal-close:hover,
+body.dark-theme #genericModal .modal-close:hover,
+body.dark-theme #subModal .modal-close:hover,
+body.dark-theme #settingsModal .modal-close:hover,
+body.dark-theme #welcomeModal .modal-close:hover,
+body.dark-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.dark-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.dark-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.dark-theme .header-link {
+    background: rgba(124, 138, 219, 0.15);
+    color: var(--primary-color);
+}
+
+body.dark-theme .header-link:hover {
+    background: rgba(124, 138, 219, 0.25);
+}
+
+body.dark-theme .port-display {
+    background: rgba(124, 138, 219, 0.15);
+    border-color: rgba(124, 138, 219, 0.3);
+}
+
+body.dark-theme .port-display:hover {
+    background: rgba(124, 138, 219, 0.25);
+    border-color: rgba(124, 138, 219, 0.5);
+}
+
+body.dark-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.dark-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.dark-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.dark-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.dark-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.dark-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.dark-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.dark-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.dark-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.dark-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.dark-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.dark-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.dark-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.dark-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.dark-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.dark-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.dark-theme .backup-table th,
+body.dark-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.dark-theme .data-sync-section h3 {
+    color: var(--text-secondary);
+    border-bottom-color: var(--primary-color);
+}
+
+body.dark-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.dark-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.dark-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-value-local code,
+body.dark-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.dark-theme #genericModal .modal-header::after,
+body.dark-theme #subModal .modal-header::after,
+body.dark-theme #settingsModal .modal-header::after,
+body.dark-theme #endpointModal .modal-header::after,
+body.dark-theme #portModal .modal-header::after,
+body.dark-theme #historyModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.dark-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.dark-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.dark-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.dark-theme .btn-primary {
+    background: #52525b;
+    color: #fafafa;
+    border-color: #52525b;
+}
+
+body.dark-theme .btn-primary:hover {
+    background: #71717a;
+    border-color: #71717a;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.dark-theme .btn-secondary {
+    background: #3f3f46;
+    color: #d4d4d8;
+    border-color: #52525b;
+}
+
+body.dark-theme .btn-secondary:hover {
+    background: #52525b;
+    border-color: #71717a;
+}
+
+/* Danger button - 危险操作按钮 */
+body.dark-theme .btn-danger {
+    background: #c53030;
+    color: #ffffff;
+    border-color: #c53030;
+}
+
+body.dark-theme .btn-danger:hover {
+    background: #9b2c2c;
+    border-color: #9b2c2c;
+}
+
+/* Card button - 卡片内按钮 */
+body.dark-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.dark-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.dark-theme .btn-card.btn-danger {
+    background: #c53030;
+    color: #ffffff;
+    border-color: #c53030;
+}
+
+/* Small button - 小按钮 */
+body.dark-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.dark-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.dark-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.dark-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.dark-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.dark-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e0e0e0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.dark-theme .log-level-select-btn:hover,
+body.dark-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.dark-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.dark-theme .log-textarea {
+    background: #1a1a1a;
+    color: #d4d4d4;
+}
+
+/* ========== Toggle Switch ========== */
+body.dark-theme .toggle-slider {
+    background-color: #4a4a4a;
+}
+
+body.dark-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.dark-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.dark-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.dark-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.dark-theme .copy-btn:hover {
+    background: rgba(124, 138, 219, 0.15);
+}
+
+/* ========== Badges ========== */
+body.dark-theme .current-badge {
+    background: #2f855a;
+}
+
+body.dark-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.dark-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.dark-theme .btn-switch:disabled {
+    background: #4a4a4a;
+}
+
+/* ========== Error Toast ========== */
+body.dark-theme .error-toast {
+    background: #c53030;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ========== Loading State ========== */
+body.dark-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.dark-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.dark-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.dark-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.dark-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.dark-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.dark-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.dark-theme #testResultModal .modal-body,
+body.dark-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.dark-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: rgba(72, 187, 120, 0.2) !important;
+    border-color: rgba(72, 187, 120, 0.3) !important;
+}
+
+body.dark-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: #68d391 !important;
+}
+
+/* Test result error message */
+body.dark-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: rgba(245, 101, 101, 0.2) !important;
+    border-color: rgba(245, 101, 101, 0.3) !important;
+}
+
+body.dark-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #fc8181 !important;
+}
+
+/* Test result details box */
+body.dark-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.dark-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.dark-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(124, 138, 219, 0.2);
+}
+
+/* ========== Prompt Dialog ========== */
+body.dark-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.dark-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.dark-theme .notification-success {
+    background: #059669;
+}
+
+body.dark-theme .notification-error {
+    background: #dc2626;
+}
+
+body.dark-theme .notification-warning {
+    background: #d97706;
+}
+
+body.dark-theme .notification-info {
+    background: #2563eb;
+}
+
+/* ========== Error Message ========== */
+body.dark-theme .error-message {
+    background: rgba(197, 48, 48, 0.2);
+    border-color: #c53030;
+    color: #fc8181;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.dark-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.dark-theme .conflict-strategy-info {
+    background: rgba(124, 138, 219, 0.15);
+    border-color: var(--primary-color);
+}
+
+body.dark-theme .conflict-strategy-info p {
+    color: var(--primary-color);
+}
+
+body.dark-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.dark-theme .conflict-value-local {
+    background: rgba(59, 130, 246, 0.2);
+    border-color: #3b82f6;
+}
+
+body.dark-theme .conflict-value-remote {
+    background: rgba(245, 158, 11, 0.2);
+    border-color: #f59e0b;
+}
+
+body.dark-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.dark-theme .conflict-badge {
+    background: rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
+}
+
+/* ========== Data Sync Dialog ========== */
+body.dark-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.dark-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.dark-theme [style*="color: #666"],
+body.dark-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.dark-theme [style*="color: #555"],
+body.dark-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.dark-theme [style*="color: #333"],
+body.dark-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.dark-theme [style*="color: #999"],
+body.dark-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.dark-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.dark-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.dark-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Dark Theme ========== */
+body.dark-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.dark-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.dark-theme ::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 5px;
+}
+
+body.dark-theme ::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.dark-theme #confirmModal .modal-content,
+body.dark-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.dark-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.dark-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(124, 138, 219, 0.4),
+        0 0 10px rgba(124, 138, 219, 0.5),
+        0 0 20px rgba(124, 138, 219, 0.3),
+        0 8px 24px var(--shadow-color);
+}
+
+body.dark-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(124, 138, 219, 0.1);
+}
+
+/* ========== History Modal Fixes ========== */
+body.dark-theme #historyModal .modal-content {
+    background: var(--modal-bg) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.dark-theme #genericModal .modal-content,
+body.dark-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Dark Theme ========== */
+body.dark-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.dark-theme .required-mark {
+    color: #fc8181;
+}
+
+/* ========== Footer Left Text ========== */
+body.dark-theme .footer-left span {
+    color: var(--text-secondary);
+}

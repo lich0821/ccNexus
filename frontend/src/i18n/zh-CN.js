@@ -109,6 +109,12 @@ export default {
             en: 'English',
             'zh-CN': '简体中文'
         },
+        theme: '主题',
+        themes: {
+            light: '浅色主题',
+            dark: '暗黑主题'
+        },
+        themeHelp: '选择界面主题外观',
         closeWindowBehavior: '窗口关闭行为',
         closeWindowBehaviorHelp: '选择点击关闭按钮时的默认操作',
         closeWindowOptions: {
