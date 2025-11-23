@@ -1,0 +1,1019 @@
+/**
+ * Quantum Theme Styles
+ * 量子紫主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="quantum-theme" 即可启用量子紫主题
+ */
+
+/* Quantum Theme Variables */
+body.quantum-theme {
+    --bg-gradient-start: #1A0B2E;
+    --bg-gradient-end: #251533;
+    --bg-primary: #160E30;
+    --bg-secondary: #1F1635;
+    --bg-tertiary: #2A1E47;
+    --text-primary: #F3E8FF;
+    --text-secondary: #DDD6FE;
+    --text-tertiary: #C4B5FD;
+    --border-color: #A855F7;
+    --border-light: #3F2A5C;
+    --card-bg: rgba(31, 22, 53, 0.7);
+    --modal-bg: rgba(31, 22, 53, 0.95);
+    --input-bg: rgba(42, 30, 71, 0.8);
+    --hover-bg: rgba(168, 85, 247, 0.15);
+    --shadow-color: rgba(168, 85, 247, 0.25);
+    --primary-color: #A855F7;
+    --primary-hover: #9333EA;
+    --quantum-purple: #A855F7;
+    --quantum-violet: #7C3AED;
+    --quantum-fuchsia: #D946EF;
+    --quantum-pink: #E879F9;
+    --quantum-glow: 0 0 10px rgba(168, 85, 247, 0.4), 0 0 20px rgba(124, 58, 237, 0.3);
+    --quantum-glow-strong: 0 0 15px rgba(168, 85, 247, 0.6), 0 0 30px rgba(124, 58, 237, 0.4), 0 0 45px rgba(217, 70, 239, 0.3);
+}
+
+/* Quantum Theme Specific Styles */
+body.quantum-theme .header {
+    background: linear-gradient(135deg, rgba(22, 14, 48, 0.95) 0%, rgba(31, 22, 53, 0.95) 100%);
+    box-shadow: 0 2px 10px var(--shadow-color), var(--quantum-glow);
+    border-bottom: 2px solid var(--quantum-purple);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .header h1 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .footer {
+    background: linear-gradient(135deg, rgba(22, 14, 48, 0.95) 0%, rgba(31, 22, 53, 0.95) 100%);
+    border-top: 1px solid var(--border-light);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .footer-right {
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(168, 85, 247, 0.2), 0 0 20px rgba(168, 85, 247, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .card h2 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .stats-tab-btn {
+    background: rgba(42, 30, 71, 0.6);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+    border-color: var(--quantum-purple);
+}
+
+body.quantum-theme .stats-tab-btn.active {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%);
+    color: var(--quantum-pink);
+    font-weight: 600;
+    border-color: var(--quantum-purple);
+    box-shadow: var(--quantum-glow);
+}
+
+/* ========== Statistics Cards ========== */
+body.quantum-theme .stat-box {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(124, 58, 237, 0.2) 50%, rgba(217, 70, 239, 0.2) 100%);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.3), 0 0 30px rgba(124, 58, 237, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .stat-box:hover {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.4), 0 0 40px rgba(124, 58, 237, 0.3), 0 0 60px rgba(217, 70, 239, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    border-color: var(--quantum-pink);
+}
+
+body.quantum-theme .stat-box .stat-label {
+    color: var(--quantum-pink);
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(232, 121, 249, 0.5);
+}
+
+body.quantum-theme .stat-box .stat-value {
+    color: var(--quantum-purple);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.6), 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .stat-box .stat-primary {
+    color: var(--quantum-purple);
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+body.quantum-theme .stat-box .stat-secondary {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .stat-box .stat-detail {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .stat-box .stat-text {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.quantum-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.quantum-theme .trend {
+    background: rgba(168, 85, 247, 0.2);
+    color: var(--quantum-purple);
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .trend-up {
+    background: rgba(168, 85, 247, 0.25);
+    color: var(--quantum-pink);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(232, 121, 249, 0.5);
+}
+
+body.quantum-theme .trend-down {
+    background: rgba(168, 85, 247, 0.25);
+    color: var(--quantum-pink);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(232, 121, 249, 0.5);
+}
+
+body.quantum-theme .trend-flat {
+    background: rgba(168, 85, 247, 0.25);
+    color: var(--quantum-pink);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(232, 121, 249, 0.5);
+}
+
+body.quantum-theme .endpoint-item {
+    background: rgba(31, 22, 53, 0.7);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .endpoint-info h3 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .form-group input,
+body.quantum-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .form-group input:focus,
+body.quantum-theme .form-group select:focus {
+    border-color: var(--quantum-purple);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), var(--quantum-glow);
+}
+
+body.quantum-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A855F7' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.quantum-theme .modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--quantum-purple);
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.3), 0 0 60px rgba(124, 58, 237, 0.2);
+    backdrop-filter: blur(20px);
+}
+
+body.quantum-theme .modal-header h2 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* ========== All Modal Titles ========== */
+body.quantum-theme #endpointModal .modal-header h2,
+body.quantum-theme #portModal .modal-header h2,
+body.quantum-theme #historyModal .modal-header h2,
+body.quantum-theme #settingsModal .modal-header h2,
+body.quantum-theme #welcomeModal .modal-header h2,
+body.quantum-theme #testResultModal .modal-header h2,
+body.quantum-theme #genericModal .modal-header h2,
+body.quantum-theme #subModal .modal-header h2 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.quantum-theme .confirm-dialog-content .confirm-title,
+body.quantum-theme #confirmDialog .confirm-title,
+body.quantum-theme #closeActionDialog .confirm-title {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.quantum-theme .modal-close,
+body.quantum-theme #historyModal .modal-close,
+body.quantum-theme #endpointModal .modal-close,
+body.quantum-theme #portModal .modal-close,
+body.quantum-theme #genericModal .modal-close,
+body.quantum-theme #subModal .modal-close,
+body.quantum-theme #settingsModal .modal-close,
+body.quantum-theme #welcomeModal .modal-close,
+body.quantum-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.quantum-theme .modal-close:hover,
+body.quantum-theme #historyModal .modal-close:hover,
+body.quantum-theme #endpointModal .modal-close:hover,
+body.quantum-theme #portModal .modal-close:hover,
+body.quantum-theme #genericModal .modal-close:hover,
+body.quantum-theme #subModal .modal-close:hover,
+body.quantum-theme #settingsModal .modal-close:hover,
+body.quantum-theme #welcomeModal .modal-close:hover,
+body.quantum-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--quantum-purple) !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+body.quantum-theme .btn-primary {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    border: 1px solid var(--quantum-purple);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4), 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+body.quantum-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--quantum-fuchsia) 0%, var(--quantum-purple) 100%);
+    box-shadow: var(--quantum-glow-strong);
+}
+
+body.quantum-theme .header-link {
+    background: rgba(168, 85, 247, 0.15);
+    color: var(--quantum-purple);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .header-link:hover {
+    background: rgba(168, 85, 247, 0.25);
+    box-shadow: var(--quantum-glow);
+}
+
+body.quantum-theme .port-display {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: var(--quantum-purple);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .port-display:hover {
+    background: rgba(168, 85, 247, 0.25);
+    border-color: var(--quantum-pink);
+    box-shadow: var(--quantum-glow);
+}
+
+body.quantum-theme .port-number {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .history-details h3 {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme #historyDailyTable {
+    background: rgba(31, 22, 53, 0.7);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.quantum-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.quantum-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+body.quantum-theme .confirm-title {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .confirm-footer {
+    background: rgba(42, 30, 71, 0.6);
+}
+
+body.quantum-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+    border-color: var(--quantum-purple);
+}
+
+body.quantum-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+body.quantum-theme .conflict-title {
+    color: var(--quantum-purple);
+    text-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.quantum-theme .conflict-card-header {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.quantum-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .backup-table thead {
+    background: rgba(42, 30, 71, 0.8);
+}
+
+body.quantum-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.quantum-theme .backup-table th,
+body.quantum-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.quantum-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.quantum-theme .data-sync-section h3 {
+    color: var(--quantum-purple);
+    border-bottom-color: var(--border-color);
+    text-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .conflict-endpoint {
+    background: rgba(31, 22, 53, 0.7);
+    border-color: var(--border-light);
+}
+
+body.quantum-theme .conflict-endpoint-header {
+    background: rgba(42, 30, 71, 0.8);
+    border-bottom-color: var(--border-light);
+}
+
+body.quantum-theme .conflict-endpoint-header strong {
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .conflict-value-local code,
+body.quantum-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme #genericModal .modal-header::after,
+body.quantum-theme #subModal .modal-header::after,
+body.quantum-theme #settingsModal .modal-header::after,
+body.quantum-theme #endpointModal .modal-header::after,
+body.quantum-theme #portModal .modal-header::after,
+body.quantum-theme #historyModal .modal-header::after,
+body.quantum-theme #testResultModal .modal-header::after {
+    background: linear-gradient(90deg, transparent 0%, var(--quantum-purple) 50%, transparent 100%);
+}
+
+body.quantum-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.quantum-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.quantum-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.quantum-theme .btn-primary {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    border: 1px solid var(--quantum-purple);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4), 0 0 20px rgba(168, 85, 247, 0.2);
+}
+
+body.quantum-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--quantum-fuchsia) 0%, var(--quantum-purple) 100%);
+    box-shadow: var(--quantum-glow-strong);
+}
+
+/* Secondary button - 次要操作按钮 */
+body.quantum-theme .btn-secondary {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--quantum-purple);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+}
+
+/* Danger button - 危险操作按钮 */
+body.quantum-theme .btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+body.quantum-theme .btn-danger:hover {
+    background: #991B1B;
+    border-color: #991B1B;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.7);
+}
+
+/* Card button - 卡片内按钮 */
+body.quantum-theme .btn-card {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--quantum-purple);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+}
+
+body.quantum-theme .btn-card.btn-primary {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    border-color: var(--quantum-purple);
+}
+
+body.quantum-theme .btn-card.btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+}
+
+/* Small button - 小按钮 */
+body.quantum-theme .btn-sm {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--quantum-purple);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+}
+
+body.quantum-theme .btn-sm.btn-secondary {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--text-primary);
+}
+
+body.quantum-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.quantum-theme .endpoint-toggle-btn {
+    background: rgba(42, 30, 71, 0.8);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.quantum-theme .endpoint-toggle-btn:hover {
+    border-color: var(--quantum-purple);
+    background: var(--hover-bg);
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.2);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.quantum-theme .log-level-select-btn {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23A855F7' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.quantum-theme .log-level-select-btn:hover,
+body.quantum-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+/* ========== Log Panel ========== */
+body.quantum-theme .log-panel {
+    background: rgba(31, 22, 53, 0.7);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .log-textarea {
+    background: rgba(22, 14, 48, 0.8);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+/* ========== Toggle Switch ========== */
+body.quantum-theme .toggle-slider {
+    background-color: #3F2A5C;
+}
+
+body.quantum-theme .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    box-shadow: var(--quantum-glow);
+}
+
+/* ========== Password Toggle ========== */
+body.quantum-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .password-toggle:hover {
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.quantum-theme .copy-btn {
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .copy-btn:hover {
+    background: rgba(168, 85, 247, 0.15);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+}
+
+/* ========== Badges ========== */
+body.quantum-theme .current-badge {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+}
+
+body.quantum-theme .btn-switch {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme .btn-switch:hover {
+    background: linear-gradient(135deg, var(--quantum-fuchsia) 0%, var(--quantum-purple) 100%);
+    box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+}
+
+body.quantum-theme .btn-switch:disabled {
+    background: #3F2A5C;
+    box-shadow: none;
+}
+
+/* ========== Error Toast ========== */
+body.quantum-theme .error-toast {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* ========== Loading State ========== */
+body.quantum-theme .loading {
+    color: var(--quantum-purple);
+}
+
+/* ========== Confirm Dialog ========== */
+body.quantum-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.quantum-theme .confirm-body {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Table ========== */
+body.quantum-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.quantum-theme #historyDailyTable th {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.quantum-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color), var(--quantum-glow);
+}
+
+/* ========== Test Result Modal ========== */
+body.quantum-theme #testResultModal .modal-body,
+body.quantum-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.quantum-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: rgba(42, 30, 71, 0.8) !important;
+    border-color: var(--quantum-purple) !important;
+}
+
+body.quantum-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: var(--quantum-purple) !important;
+}
+
+/* Test result error message */
+body.quantum-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: rgba(42, 30, 71, 0.8) !important;
+    border-color: #DC2626 !important;
+}
+
+body.quantum-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #FC8181 !important;
+}
+
+/* Test result details box */
+body.quantum-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: rgba(42, 30, 71, 0.8) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.quantum-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.quantum-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.quantum-theme .form-input:focus {
+    border-color: var(--quantum-purple);
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2), var(--quantum-glow);
+}
+
+/* ========== Prompt Dialog ========== */
+body.quantum-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.quantum-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color), var(--quantum-glow);
+    border: 1px solid var(--quantum-purple);
+    backdrop-filter: blur(10px);
+}
+
+body.quantum-theme .notification-success {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4), 0 0 20px rgba(5, 150, 105, 0.3);
+}
+
+body.quantum-theme .notification-error {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+body.quantum-theme .notification-warning {
+    background: #D97706;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4), 0 0 20px rgba(217, 119, 6, 0.3);
+}
+
+body.quantum-theme .notification-info {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.95) 0%, rgba(124, 58, 237, 0.95) 100%);
+    color: #FFFFFF;
+    font-weight: 600;
+    box-shadow: var(--quantum-glow-strong);
+}
+
+/* ========== Error Message ========== */
+body.quantum-theme .error-message {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: #DC2626;
+    color: #FC8181;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.quantum-theme .conflict-details-container {
+    background: rgba(42, 30, 71, 0.8);
+}
+
+body.quantum-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.quantum-theme .conflict-strategy-info {
+    background: rgba(42, 30, 71, 0.8);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .conflict-strategy-info strong {
+    color: var(--quantum-purple);
+}
+
+body.quantum-theme .conflict-value-local {
+    background: rgba(31, 22, 53, 0.7);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .conflict-value-remote {
+    background: rgba(31, 22, 53, 0.7);
+    border-color: var(--border-color);
+}
+
+body.quantum-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.quantum-theme .conflict-badge {
+    background: rgba(42, 30, 71, 0.8);
+    color: var(--quantum-purple);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.quantum-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.quantum-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.quantum-theme [style*="color: #666"],
+body.quantum-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.quantum-theme [style*="color: #555"],
+body.quantum-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.quantum-theme [style*="color: #333"],
+body.quantum-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.quantum-theme [style*="color: #999"],
+body.quantum-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.quantum-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.quantum-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.quantum-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Quantum Theme ========== */
+body.quantum-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.quantum-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.quantum-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--quantum-purple) 0%, var(--quantum-violet) 100%);
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+}
+
+body.quantum-theme ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--quantum-fuchsia) 0%, var(--quantum-purple) 100%);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.quantum-theme #confirmModal .modal-content,
+body.quantum-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.quantum-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color), 0 0 15px rgba(168, 85, 247, 0.2);
+}
+
+body.quantum-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(168, 85, 247, 0.7),
+        0 0 10px rgba(168, 85, 247, 0.6),
+        0 0 20px rgba(124, 58, 237, 0.5),
+        0 0 30px rgba(217, 70, 239, 0.4),
+        0 8px 24px var(--shadow-color);
+    animation: quantum-drag 1.5s ease-in-out infinite;
+}
+
+@keyframes quantum-drag {
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px rgba(168, 85, 247, 0.7),
+            0 0 10px rgba(168, 85, 247, 0.6),
+            0 0 20px rgba(124, 58, 237, 0.5),
+            0 0 30px rgba(217, 70, 239, 0.4),
+            0 8px 24px var(--shadow-color);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(168, 85, 247, 0.9),
+            0 0 15px rgba(168, 85, 247, 0.8),
+            0 0 30px rgba(124, 58, 237, 0.7),
+            0 0 45px rgba(217, 70, 239, 0.6),
+            0 8px 24px var(--shadow-color);
+    }
+}
+
+body.quantum-theme .endpoint-item.drag-over {
+    border-color: var(--quantum-purple);
+    background: rgba(168, 85, 247, 0.1);
+    box-shadow: var(--quantum-glow);
+}
+
+/* ========== History Modal Fixes ========== */
+body.quantum-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.quantum-theme #genericModal .modal-content,
+body.quantum-theme #subModal .modal-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Select Dropdown in Quantum Theme ========== */
+body.quantum-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.quantum-theme .required-mark {
+    color: #FC8181;
+}
+
+/* ========== Footer Left Text ========== */
+body.quantum-theme .footer-left span {
+    color: var(--text-secondary);
+}

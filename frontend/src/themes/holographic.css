@@ -1,0 +1,1018 @@
+/**
+ * Holographic Theme Styles
+ * 全息蓝主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="holographic-theme" 即可启用全息蓝主题
+ */
+
+/* Holographic Theme Variables */
+body.holographic-theme {
+    --bg-gradient-start: #0A1628;
+    --bg-gradient-end: #0F1F3A;
+    --bg-primary: #0D1B2A;
+    --bg-secondary: #1B2838;
+    --bg-tertiary: #273649;
+    --text-primary: #E0F2FE;
+    --text-secondary: #BAE6FD;
+    --text-tertiary: #7DD3FC;
+    --border-color: #38BDF8;
+    --border-light: #334E68;
+    --card-bg: rgba(27, 40, 56, 0.6);
+    --modal-bg: rgba(27, 40, 56, 0.9);
+    --input-bg: rgba(39, 54, 73, 0.8);
+    --hover-bg: rgba(56, 189, 248, 0.1);
+    --shadow-color: rgba(0, 217, 255, 0.2);
+    --primary-color: #00D9FF;
+    --primary-hover: #0EA5E9;
+    --holo-blue: #00D9FF;
+    --holo-cyan: #06B6D4;
+    --holo-light: #60E5FF;
+    --holo-glow: 0 0 10px rgba(0, 217, 255, 0.3), 0 0 20px rgba(14, 165, 233, 0.2);
+    --holo-glow-strong: 0 0 15px rgba(0, 217, 255, 0.5), 0 0 30px rgba(14, 165, 233, 0.3), 0 0 45px rgba(56, 189, 248, 0.2);
+}
+
+/* Holographic Theme Specific Styles */
+body.holographic-theme .header {
+    background: linear-gradient(135deg, rgba(13, 27, 42, 0.95) 0%, rgba(27, 40, 56, 0.95) 100%);
+    box-shadow: 0 2px 10px var(--shadow-color), var(--holo-glow);
+    border-bottom: 2px solid var(--holo-blue);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .header h1 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5), 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .footer {
+    background: linear-gradient(135deg, rgba(13, 27, 42, 0.95) 0%, rgba(27, 40, 56, 0.95) 100%);
+    border-top: 1px solid var(--border-light);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .footer-right {
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(0, 217, 255, 0.15), 0 0 20px rgba(0, 217, 255, 0.05);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .card h2 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .stats-tab-btn {
+    background: rgba(39, 54, 73, 0.6);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+    border-color: var(--holo-blue);
+}
+
+body.holographic-theme .stats-tab-btn.active {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.2) 0%, rgba(14, 165, 233, 0.2) 100%);
+    color: var(--holo-light);
+    font-weight: 600;
+    border-color: var(--holo-blue);
+    box-shadow: var(--holo-glow);
+}
+
+/* ========== Statistics Cards ========== */
+body.holographic-theme .stat-box {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(14, 165, 233, 0.15) 50%, rgba(6, 182, 212, 0.15) 100%);
+    box-shadow: 0 0 15px rgba(0, 217, 255, 0.3), 0 0 30px rgba(14, 165, 233, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(0, 217, 255, 0.5);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .stat-box:hover {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.4), 0 0 40px rgba(14, 165, 233, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    border-color: var(--holo-light);
+}
+
+body.holographic-theme .stat-box .stat-label {
+    color: var(--holo-light);
+    font-weight: 600;
+    text-shadow: 0 0 8px rgba(96, 229, 255, 0.5);
+}
+
+body.holographic-theme .stat-box .stat-value {
+    color: var(--holo-blue);
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.6), 0 0 20px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .stat-box .stat-primary {
+    color: var(--holo-blue);
+    font-weight: 700;
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.5);
+}
+
+body.holographic-theme .stat-box .stat-secondary {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .stat-box .stat-detail {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .stat-box .stat-text {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.holographic-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.holographic-theme .trend {
+    background: rgba(0, 217, 255, 0.15);
+    color: var(--holo-blue);
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .trend-up {
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--holo-light);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(96, 229, 255, 0.5);
+}
+
+body.holographic-theme .trend-down {
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--holo-light);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(96, 229, 255, 0.5);
+}
+
+body.holographic-theme .trend-flat {
+    background: rgba(0, 217, 255, 0.2);
+    color: var(--holo-light);
+    font-weight: 700;
+    text-shadow: 0 0 5px rgba(96, 229, 255, 0.5);
+}
+
+body.holographic-theme .endpoint-item {
+    background: rgba(27, 40, 56, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .endpoint-info h3 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .form-group input,
+body.holographic-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .form-group input:focus,
+body.holographic-theme .form-group select:focus {
+    border-color: var(--holo-blue);
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.2), var(--holo-glow);
+}
+
+body.holographic-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300D9FF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.holographic-theme .modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--holo-blue);
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.3), 0 0 60px rgba(14, 165, 233, 0.2);
+    backdrop-filter: blur(20px);
+}
+
+body.holographic-theme .modal-header h2 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+/* ========== All Modal Titles ========== */
+body.holographic-theme #endpointModal .modal-header h2,
+body.holographic-theme #portModal .modal-header h2,
+body.holographic-theme #historyModal .modal-header h2,
+body.holographic-theme #settingsModal .modal-header h2,
+body.holographic-theme #welcomeModal .modal-header h2,
+body.holographic-theme #testResultModal .modal-header h2,
+body.holographic-theme #genericModal .modal-header h2,
+body.holographic-theme #subModal .modal-header h2 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.holographic-theme .confirm-dialog-content .confirm-title,
+body.holographic-theme #confirmDialog .confirm-title,
+body.holographic-theme #closeActionDialog .confirm-title {
+    color: var(--holo-blue);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.holographic-theme .modal-close,
+body.holographic-theme #historyModal .modal-close,
+body.holographic-theme #endpointModal .modal-close,
+body.holographic-theme #portModal .modal-close,
+body.holographic-theme #genericModal .modal-close,
+body.holographic-theme #subModal .modal-close,
+body.holographic-theme #settingsModal .modal-close,
+body.holographic-theme #welcomeModal .modal-close,
+body.holographic-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.holographic-theme .modal-close:hover,
+body.holographic-theme #historyModal .modal-close:hover,
+body.holographic-theme #endpointModal .modal-close:hover,
+body.holographic-theme #portModal .modal-close:hover,
+body.holographic-theme #genericModal .modal-close:hover,
+body.holographic-theme #subModal .modal-close:hover,
+body.holographic-theme #settingsModal .modal-close:hover,
+body.holographic-theme #welcomeModal .modal-close:hover,
+body.holographic-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--holo-blue) !important;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .btn-primary {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    border: 1px solid var(--holo-blue);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3), 0 0 20px rgba(0, 217, 255, 0.2);
+}
+
+body.holographic-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--holo-light) 0%, var(--holo-blue) 100%);
+    box-shadow: var(--holo-glow-strong);
+}
+
+body.holographic-theme .header-link {
+    background: rgba(0, 217, 255, 0.15);
+    color: var(--holo-blue);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .header-link:hover {
+    background: rgba(0, 217, 255, 0.25);
+    box-shadow: var(--holo-glow);
+}
+
+body.holographic-theme .port-display {
+    background: rgba(0, 217, 255, 0.15);
+    border-color: var(--holo-blue);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .port-display:hover {
+    background: rgba(0, 217, 255, 0.25);
+    border-color: var(--holo-light);
+    box-shadow: var(--holo-glow);
+}
+
+body.holographic-theme .port-number {
+    color: var(--holo-blue);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .history-details h3 {
+    color: var(--holo-blue);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme #historyDailyTable {
+    background: rgba(27, 40, 56, 0.6);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.holographic-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.holographic-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+body.holographic-theme .confirm-title {
+    color: var(--holo-blue);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+}
+
+body.holographic-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .confirm-footer {
+    background: rgba(39, 54, 73, 0.6);
+}
+
+body.holographic-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+    border-color: var(--holo-blue);
+}
+
+body.holographic-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+body.holographic-theme .conflict-title {
+    color: var(--holo-blue);
+    text-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+}
+
+body.holographic-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.holographic-theme .conflict-card-header {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.holographic-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .backup-table thead {
+    background: rgba(39, 54, 73, 0.8);
+}
+
+body.holographic-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.holographic-theme .backup-table th,
+body.holographic-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.holographic-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.holographic-theme .data-sync-section h3 {
+    color: var(--holo-blue);
+    border-bottom-color: var(--border-color);
+    text-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .conflict-endpoint {
+    background: rgba(27, 40, 56, 0.6);
+    border-color: var(--border-light);
+}
+
+body.holographic-theme .conflict-endpoint-header {
+    background: rgba(39, 54, 73, 0.8);
+    border-bottom-color: var(--border-light);
+}
+
+body.holographic-theme .conflict-endpoint-header strong {
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .conflict-value-local code,
+body.holographic-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--holo-blue);
+}
+
+body.holographic-theme #genericModal .modal-header::after,
+body.holographic-theme #subModal .modal-header::after,
+body.holographic-theme #settingsModal .modal-header::after,
+body.holographic-theme #endpointModal .modal-header::after,
+body.holographic-theme #portModal .modal-header::after,
+body.holographic-theme #historyModal .modal-header::after,
+body.holographic-theme #testResultModal .modal-header::after {
+    background: linear-gradient(90deg, transparent 0%, var(--holo-blue) 50%, transparent 100%);
+}
+
+body.holographic-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.holographic-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.holographic-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.holographic-theme .btn-primary {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    border: 1px solid var(--holo-blue);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3), 0 0 20px rgba(0, 217, 255, 0.2);
+}
+
+body.holographic-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--holo-light) 0%, var(--holo-blue) 100%);
+    box-shadow: var(--holo-glow-strong);
+}
+
+/* Secondary button - 次要操作按钮 */
+body.holographic-theme .btn-secondary {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--holo-blue);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.25);
+}
+
+/* Danger button - 危险操作按钮 */
+body.holographic-theme .btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+body.holographic-theme .btn-danger:hover {
+    background: #991B1B;
+    border-color: #991B1B;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.7);
+}
+
+/* Card button - 卡片内按钮 */
+body.holographic-theme .btn-card {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--holo-blue);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.25);
+}
+
+body.holographic-theme .btn-card.btn-primary {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    border-color: var(--holo-blue);
+}
+
+body.holographic-theme .btn-card.btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+}
+
+/* Small button - 小按钮 */
+body.holographic-theme .btn-sm {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--holo-blue);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.25);
+}
+
+body.holographic-theme .btn-sm.btn-secondary {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--text-primary);
+}
+
+body.holographic-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.holographic-theme .endpoint-toggle-btn {
+    background: rgba(39, 54, 73, 0.8);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.holographic-theme .endpoint-toggle-btn:hover {
+    border-color: var(--holo-blue);
+    background: var(--hover-bg);
+    box-shadow: 0 0 5px rgba(0, 217, 255, 0.2);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.holographic-theme .log-level-select-btn {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300D9FF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.holographic-theme .log-level-select-btn:hover,
+body.holographic-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.3);
+}
+
+/* ========== Log Panel ========== */
+body.holographic-theme .log-panel {
+    background: rgba(27, 40, 56, 0.6);
+    border: 1px solid var(--border-light);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .log-textarea {
+    background: rgba(13, 27, 42, 0.8);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+/* ========== Toggle Switch ========== */
+body.holographic-theme .toggle-slider {
+    background-color: #334E68;
+}
+
+body.holographic-theme .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    box-shadow: var(--holo-glow);
+}
+
+/* ========== Password Toggle ========== */
+body.holographic-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .password-toggle:hover {
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.holographic-theme .copy-btn {
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .copy-btn:hover {
+    background: rgba(0, 217, 255, 0.15);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+/* ========== Badges ========== */
+body.holographic-theme .current-badge {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(0, 217, 255, 0.4);
+}
+
+body.holographic-theme .btn-switch {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme .btn-switch:hover {
+    background: linear-gradient(135deg, var(--holo-light) 0%, var(--holo-blue) 100%);
+    box-shadow: 0 0 12px rgba(0, 217, 255, 0.4);
+}
+
+body.holographic-theme .btn-switch:disabled {
+    background: #334E68;
+    box-shadow: none;
+}
+
+/* ========== Error Toast ========== */
+body.holographic-theme .error-toast {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* ========== Loading State ========== */
+body.holographic-theme .loading {
+    color: var(--holo-blue);
+}
+
+/* ========== Confirm Dialog ========== */
+body.holographic-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.holographic-theme .confirm-body {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Table ========== */
+body.holographic-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.holographic-theme #historyDailyTable th {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.holographic-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color), var(--holo-glow);
+}
+
+/* ========== Test Result Modal ========== */
+body.holographic-theme #testResultModal .modal-body,
+body.holographic-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.holographic-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: rgba(39, 54, 73, 0.8) !important;
+    border-color: var(--holo-blue) !important;
+}
+
+body.holographic-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: var(--holo-blue) !important;
+}
+
+/* Test result error message */
+body.holographic-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: rgba(39, 54, 73, 0.8) !important;
+    border-color: #DC2626 !important;
+}
+
+body.holographic-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #FC8181 !important;
+}
+
+/* Test result details box */
+body.holographic-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: rgba(39, 54, 73, 0.8) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.holographic-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.holographic-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+}
+
+body.holographic-theme .form-input:focus {
+    border-color: var(--holo-blue);
+    box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.2), var(--holo-glow);
+}
+
+/* ========== Prompt Dialog ========== */
+body.holographic-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.holographic-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color), var(--holo-glow);
+    border: 1px solid var(--holo-blue);
+    backdrop-filter: blur(10px);
+}
+
+body.holographic-theme .notification-success {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4), 0 0 20px rgba(5, 150, 105, 0.3);
+}
+
+body.holographic-theme .notification-error {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+body.holographic-theme .notification-warning {
+    background: #D97706;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4), 0 0 20px rgba(217, 119, 6, 0.3);
+}
+
+body.holographic-theme .notification-info {
+    background: linear-gradient(135deg, rgba(0, 217, 255, 0.9) 0%, rgba(14, 165, 233, 0.9) 100%);
+    color: #0D1B2A;
+    font-weight: 600;
+    box-shadow: var(--holo-glow-strong);
+}
+
+/* ========== Error Message ========== */
+body.holographic-theme .error-message {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: #DC2626;
+    color: #FC8181;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.holographic-theme .conflict-details-container {
+    background: rgba(39, 54, 73, 0.8);
+}
+
+body.holographic-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.holographic-theme .conflict-strategy-info {
+    background: rgba(39, 54, 73, 0.8);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .conflict-strategy-info strong {
+    color: var(--holo-blue);
+}
+
+body.holographic-theme .conflict-value-local {
+    background: rgba(27, 40, 56, 0.6);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .conflict-value-remote {
+    background: rgba(27, 40, 56, 0.6);
+    border-color: var(--border-color);
+}
+
+body.holographic-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.holographic-theme .conflict-badge {
+    background: rgba(39, 54, 73, 0.8);
+    color: var(--holo-blue);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.holographic-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.holographic-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.holographic-theme [style*="color: #666"],
+body.holographic-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.holographic-theme [style*="color: #555"],
+body.holographic-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.holographic-theme [style*="color: #333"],
+body.holographic-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.holographic-theme [style*="color: #999"],
+body.holographic-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.holographic-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.holographic-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.holographic-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Holographic Theme ========== */
+body.holographic-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.holographic-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.holographic-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--holo-blue) 0%, var(--holo-cyan) 100%);
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 217, 255, 0.3);
+}
+
+body.holographic-theme ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--holo-light) 0%, var(--holo-blue) 100%);
+    box-shadow: 0 0 8px rgba(0, 217, 255, 0.4);
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.holographic-theme #confirmModal .modal-content,
+body.holographic-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.holographic-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color), 0 0 15px rgba(0, 217, 255, 0.2);
+}
+
+body.holographic-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(0, 217, 255, 0.6),
+        0 0 10px rgba(0, 217, 255, 0.5),
+        0 0 20px rgba(14, 165, 233, 0.4),
+        0 0 30px rgba(6, 182, 212, 0.3),
+        0 8px 24px var(--shadow-color);
+    animation: holo-drag 1.5s ease-in-out infinite;
+}
+
+@keyframes holo-drag {
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px rgba(0, 217, 255, 0.6),
+            0 0 10px rgba(0, 217, 255, 0.5),
+            0 0 20px rgba(14, 165, 233, 0.4),
+            0 0 30px rgba(6, 182, 212, 0.3),
+            0 8px 24px var(--shadow-color);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(0, 217, 255, 0.8),
+            0 0 15px rgba(0, 217, 255, 0.7),
+            0 0 30px rgba(14, 165, 233, 0.6),
+            0 0 45px rgba(6, 182, 212, 0.5),
+            0 8px 24px var(--shadow-color);
+    }
+}
+
+body.holographic-theme .endpoint-item.drag-over {
+    border-color: var(--holo-blue);
+    background: rgba(0, 217, 255, 0.1);
+    box-shadow: var(--holo-glow);
+}
+
+/* ========== History Modal Fixes ========== */
+body.holographic-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.holographic-theme #genericModal .modal-content,
+body.holographic-theme #subModal .modal-content {
+    background: var(--modal-bg);
+    backdrop-filter: blur(20px);
+}
+
+/* ========== Select Dropdown in Holographic Theme ========== */
+body.holographic-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.holographic-theme .required-mark {
+    color: #FC8181;
+}
+
+/* ========== Footer Left Text ========== */
+body.holographic-theme .footer-left span {
+    color: var(--text-secondary);
+}

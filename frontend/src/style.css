@@ -8,6 +8,8 @@
 @import './themes/mocha.css';
 @import './themes/cyberpunk.css';
 @import './themes/aurora.css';
+@import './themes/holographic.css';
+@import './themes/quantum.css';
 
 * {
     margin: 0;

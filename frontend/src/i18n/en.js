@@ -123,7 +123,9 @@ export default {
             ocean: 'Ocean Blue',
             mocha: 'Mocha Brown',
             cyberpunk: 'Cyberpunk',
-            aurora: 'Aurora Night'
+            aurora: 'Aurora Night',
+            holographic: 'Holographic Blue',
+            quantum: 'Quantum Purple'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',
