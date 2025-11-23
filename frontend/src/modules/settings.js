@@ -7,7 +7,7 @@ let autoThemeIntervalId = null;
 // Apply theme to body element
 export function applyTheme(theme) {
     // Remove all theme classes first
-    document.body.classList.remove('dark-theme', 'green-theme', 'starry-theme', 'sakura-theme', 'sunset-theme', 'ocean-theme', 'mocha-theme', 'cyberpunk-theme');
+    document.body.classList.remove('dark-theme', 'green-theme', 'starry-theme', 'sakura-theme', 'sunset-theme', 'ocean-theme', 'mocha-theme', 'cyberpunk-theme', 'aurora-theme');
 
     // Apply the selected theme
     if (theme === 'dark') {
@@ -26,6 +26,8 @@ export function applyTheme(theme) {
         document.body.classList.add('mocha-theme');
     } else if (theme === 'cyberpunk') {
         document.body.classList.add('cyberpunk-theme');
+    } else if (theme === 'aurora') {
+        document.body.classList.add('aurora-theme');
     }
     // 'light' theme uses default styles, no class needed
 }

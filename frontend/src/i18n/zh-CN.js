@@ -122,7 +122,8 @@ export default {
             sunset: '暖阳橙',
             ocean: '海洋蓝',
             mocha: '摩卡棕',
-            cyberpunk: '赛博朋克'
+            cyberpunk: '赛博朋克',
+            aurora: '暗夜极光'
         },
         themeHelp: '选择界面主题外观',
         themeAuto: '自动模式',

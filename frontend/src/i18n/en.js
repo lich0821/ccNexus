@@ -122,7 +122,8 @@ export default {
             sunset: 'Sunset Orange',
             ocean: 'Ocean Blue',
             mocha: 'Mocha Brown',
-            cyberpunk: 'Cyberpunk'
+            cyberpunk: 'Cyberpunk',
+            aurora: 'Aurora Night'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',

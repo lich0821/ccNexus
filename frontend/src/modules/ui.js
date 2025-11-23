@@ -476,6 +476,7 @@ export function initUI() {
                                 <option value="ocean">${t('settings.themes.ocean')}</option>
                                 <option value="mocha">${t('settings.themes.mocha')}</option>
                                 <option value="cyberpunk">${t('settings.themes.cyberpunk')}</option>
+                                <option value="aurora">${t('settings.themes.aurora')}</option>
                             </select>
                             <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;" title="${t('settings.themeAutoHelp')}">
                                 <span style="font-size: 13px; color: var(--text-secondary);">${t('settings.themeAuto')}</span>
