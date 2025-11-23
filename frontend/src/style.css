@@ -711,8 +711,8 @@ body {
 .error-toast {
     position: fixed;
     top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
+    right: 20px;
+    transform: translateX(100px);
     background: #ff4444;
     color: white;
     padding: 15px 25px;
@@ -725,7 +725,7 @@ body {
 }
 
 .error-toast.show {
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(0);
     opacity: 1;
 }
 
@@ -755,6 +755,13 @@ body {
 
 .modal.active {
     display: flex;
+}
+
+/* Welcome/About Modal with blur background */
+#welcomeModal {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 #endpointModal {
@@ -977,6 +984,18 @@ body {
 .toggle-switch input:disabled + .toggle-slider {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Small Toggle Switch for Settings */
+.toggle-switch[style*="width: 40px"] .toggle-slider:before {
+    height: 14px;
+    width: 14px;
+    left: 3px;
+    bottom: 3px;
+}
+
+.toggle-switch[style*="width: 40px"] input:checked + .toggle-slider:before {
+    transform: translateX(20px);
 }
 
 /* Header Link Styles */
@@ -2260,5 +2279,63 @@ body {
 }
 
 #settingsModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
+/* Test Result Modal Styles */
+#testResultModal {
+    backdrop-filter: blur(4px);
+}
+
+#testResultModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#testResultModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#testResultModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#testResultModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#testResultModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#testResultModal .modal-body {
     padding: 25px 30px 30px 30px;
 }

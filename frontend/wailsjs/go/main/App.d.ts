@@ -47,6 +47,8 @@ export function GetSystemLanguage():Promise<string>;
 
 export function GetTheme():Promise<string>;
 
+export function GetThemeAuto():Promise<boolean>;
+
 export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
@@ -72,6 +74,8 @@ export function SetLanguage(arg1:string):Promise<void>;
 export function SetLogLevel(arg1:number):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
+
+export function SetThemeAuto(arg1:boolean):Promise<void>;
 
 export function ShowWindow():Promise<void>;
 

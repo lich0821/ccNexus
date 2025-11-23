@@ -1220,6 +1220,27 @@ func (a *App) SetTheme(theme string) error {
 	return nil
 }
 
+// GetThemeAuto returns whether auto theme switching is enabled
+func (a *App) GetThemeAuto() bool {
+	return a.config.GetThemeAuto()
+}
+
+// SetThemeAuto enables or disables auto theme switching
+func (a *App) SetThemeAuto(auto bool) error {
+	a.config.UpdateThemeAuto(auto)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save theme auto setting: %w", err)
+		}
+	}
+
+	logger.Info("Theme auto mode changed to: %v", auto)
+	return nil
+}
+
 // TestEndpoint tests an endpoint by sending a simple request
 func (a *App) TestEndpoint(index int) string {
 	endpoints := a.config.GetEndpoints()
@@ -1671,7 +1692,7 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	}
 
 	// If user chose to keep local config, do nothing
-	if choice == "local" {
+	if choice == "keep_local" {
 		logger.Info("User chose to keep local configuration")
 		return nil
 	}
