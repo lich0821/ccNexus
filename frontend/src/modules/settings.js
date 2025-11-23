@@ -50,9 +50,9 @@ export async function checkAndApplyAutoTheme() {
 }
 
 // Start auto theme checking (check every minute)
-export function startAutoThemeCheck() {
-    // Apply immediately
-    checkAndApplyAutoTheme();
+export async function startAutoThemeCheck() {
+    // Apply immediately and wait for it to complete
+    await checkAndApplyAutoTheme();
 
     // Clear existing interval if any
     if (autoThemeIntervalId) {
@@ -175,22 +175,24 @@ export async function saveSettings() {
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
 
-        // Update theme auto setting
+        // Step 1: Save theme if changed
+        if (config.theme !== theme) {
+            await window.go.main.App.SetTheme(theme);
+        }
+
+        // Step 2: Save auto mode setting if changed
         if (config.themeAuto !== themeAuto) {
             await window.go.main.App.SetThemeAuto(themeAuto);
+        }
 
-            if (themeAuto) {
-                // Enable auto mode - start checking and apply time-based theme
-                startAutoThemeCheck();
-            } else {
-                // Disable auto mode - stop checking and apply selected theme
-                stopAutoThemeCheck();
-                await window.go.main.App.SetTheme(theme);
-                applyTheme(theme);
-            }
-        } else if (!themeAuto && config.theme !== theme) {
-            // Auto mode not changed, but theme changed (only when auto is off)
-            await window.go.main.App.SetTheme(theme);
+        // Step 3: Apply theme based on final settings
+        // Always apply to ensure theme takes effect immediately
+        stopAutoThemeCheck();
+        if (themeAuto) {
+            // Auto mode: apply time-based theme
+            await startAutoThemeCheck();
+        } else {
+            // Manual mode: apply selected theme directly
             applyTheme(theme);
         }
 
