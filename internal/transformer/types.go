@@ -190,10 +190,12 @@ type StreamContext struct {
 	ToolIndex            int // Current tool_use content block index (from OpenAI)
 	LastToolIndex        int // Last assigned Anthropic tool block index (incremental counter)
 	FinishReasonSent     bool
-	EnableThinking       bool            // Whether thinking is enabled for this request
-	CurrentToolCall      *OpenAIToolCall // Current tool call being processed
-	ToolCallBuffer       string          // Buffer for accumulating tool call arguments
-	State                interface{}     // V3 architecture state (openai.StreamState)
+	EnableThinking       bool              // Whether thinking is enabled for this request
+	CurrentToolCall      *OpenAIToolCall   // Current tool call being processed
+	ToolCallBuffer       string            // Buffer for accumulating tool call arguments
+	State                interface{}       // V3 architecture state (openai.StreamState)
+	ToolCallIDMap        map[string]string // tool_use_id -> function_name mapping for Gemini
+	ToolCallCounter      int               // Counter for generating unique tool IDs
 }
 
 // NewStreamContext creates a new stream context with default values
@@ -216,6 +218,8 @@ func NewStreamContext() *StreamContext {
 		EnableThinking:       false,
 		CurrentToolCall:      nil,
 		ToolCallBuffer:       "",
+		ToolCallIDMap:        make(map[string]string),
+		ToolCallCounter:      0,
 	}
 }
 
@@ -224,6 +228,8 @@ func NewStreamContext() *StreamContext {
 // GeminiPart represents a part in Gemini format
 type GeminiPart struct {
 	Text             string                  `json:"text,omitempty"`
+	Thought          bool                    `json:"thought,omitempty"`
+	ThoughtSignature string                  `json:"thoughtSignature,omitempty"`
 	FunctionCall     *GeminiFunctionCall     `json:"functionCall,omitempty"`
 	FunctionResponse *GeminiFunctionResponse `json:"functionResponse,omitempty"`
 }

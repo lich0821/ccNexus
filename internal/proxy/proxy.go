@@ -486,6 +486,18 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
+	// Check if thinking parameter is present in request
+	var claudeReq struct {
+		Thinking interface{} `json:"thinking"`
+	}
+	hasThinking := false
+	if err := json.Unmarshal(bodyBytes, &claudeReq); err == nil {
+		hasThinking = claudeReq.Thinking != nil
+		if hasThinking {
+			logger.Debug("Request has thinking parameter enabled")
+		}
+	}
+
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
 		logger.Error("No enabled endpoints available")
@@ -672,6 +684,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		case "gemini":
 			q := proxyReq.URL.Query()
 			q.Set("key", endpoint.APIKey)
+			q.Set("alt", "sse") // Required for streaming responses
 			proxyReq.URL.RawQuery = q.Encode()
 		default:
 			// Set both x-api-key and Authorization headers for compatibility

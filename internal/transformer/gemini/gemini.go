@@ -5,7 +5,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/transformer"
@@ -29,7 +31,7 @@ func cleanGeminiSchema(schema map[string]interface{}) map[string]interface{} {
 
 	for key, value := range schema {
 		// Remove unsupported fields
-		if key == "additionalProperties" || key == "default" {
+		if key == "additionalProperties" || key == "default" || key == "$schema" {
 			continue
 		}
 
@@ -37,7 +39,8 @@ func cleanGeminiSchema(schema map[string]interface{}) map[string]interface{} {
 		if key == "format" {
 			if schemaType, ok := schema["type"].(string); ok && schemaType == "string" {
 				if format, ok := value.(string); ok {
-					if format != "enum" && format != "date-time" {
+					// Gemini only supports date and date-time formats
+					if format != "date" && format != "date-time" {
 						continue
 					}
 				}
@@ -119,6 +122,9 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 					case "tool_result":
 						toolUseID, _ := blockMap["tool_use_id"].(string)
 
+						// Extract function name from tool_use_id
+						functionName := extractFunctionNameFromToolID(toolUseID)
+
 						// Extract tool result content
 						var resultContent map[string]interface{}
 						if content, ok := blockMap["content"].(string); ok {
@@ -144,10 +150,10 @@ func (t *GeminiTransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 							resultContent = contentMap
 						}
 
-						// Use tool_use_id as the function name for response
+						// Use function name instead of tool_use_id
 						geminiContent.Parts = append(geminiContent.Parts, transformer.GeminiPart{
 							FunctionResponse: &transformer.GeminiFunctionResponse{
-								Name:     toolUseID,
+								Name:     functionName,
 								Response: resultContent,
 							},
 						})
@@ -272,7 +278,8 @@ func (t *GeminiTransformer) transformNonStreamingResponse(geminiResp []byte) ([]
 
 		// Process parts
 		for _, part := range candidate.Content.Parts {
-			if part.Text != "" {
+			// Skip parts that are marked as thought-only (no actual text content)
+			if part.Text != "" && !part.Thought {
 				content = append(content, map[string]interface{}{
 					"type": "text",
 					"text": part.Text,
@@ -280,9 +287,12 @@ func (t *GeminiTransformer) transformNonStreamingResponse(geminiResp []byte) ([]
 			}
 
 			if part.FunctionCall != nil {
+				// Generate unique ID: toolu_<timestamp>_<random>
+				toolID := fmt.Sprintf("toolu_%d_%s", time.Now().UnixNano(), generateShortID())
+
 				content = append(content, map[string]interface{}{
 					"type":  "tool_use",
-					"id":    fmt.Sprintf("toolu_%s", part.FunctionCall.Name),
+					"id":    toolID,
 					"name":  part.FunctionCall.Name,
 					"input": part.FunctionCall.Args,
 				})
@@ -459,8 +469,8 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 
 			// Process parts
 			for _, part := range candidate.Content.Parts {
-				// Handle text content
-				if part.Text != "" {
+				// Handle text content (skip parts marked as thought-only)
+				if part.Text != "" && !part.Thought {
 					if ctx.ContentBlockStarted {
 						deltaEvent := map[string]interface{}{
 							"type":  "content_block_delta",
@@ -496,7 +506,12 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 					ctx.LastToolIndex++
 					toolIndex := ctx.LastToolIndex
 
-					toolID := fmt.Sprintf("toolu_%s", part.FunctionCall.Name)
+					// Generate unique ID
+					ctx.ToolCallCounter++
+					toolID := fmt.Sprintf("toolu_%d_%s", ctx.ToolCallCounter, part.FunctionCall.Name)
+
+					// Save mapping
+					ctx.ToolCallIDMap[toolID] = part.FunctionCall.Name
 
 					// Send content_block_start for tool_use
 					toolStartEvent := map[string]interface{}{
@@ -613,4 +628,32 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 // Name returns the transformer name
 func (t *GeminiTransformer) Name() string {
 	return "gemini"
+}
+
+// extractFunctionNameFromToolID extracts function name from tool_use_id
+// If ID format is toolu_<counter>_<name>, extract name
+// Otherwise return ID itself as fallback
+func extractFunctionNameFromToolID(toolID string) string {
+	// Remove toolu_ prefix
+	if strings.HasPrefix(toolID, "toolu_") {
+		parts := strings.SplitN(toolID[6:], "_", 2)
+		if len(parts) == 2 {
+			return parts[1]
+		}
+	}
+	return toolID
+}
+
+// generateShortID generates a short random ID
+func generateShortID() string {
+	const charset = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, 8)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
 }
