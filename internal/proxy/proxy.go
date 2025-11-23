@@ -16,6 +16,9 @@ import (
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/tokencount"
 	"github.com/lich0821/ccNexus/internal/transformer"
+	"github.com/lich0821/ccNexus/internal/transformer/claude"
+	"github.com/lich0821/ccNexus/internal/transformer/gemini"
+	"github.com/lich0821/ccNexus/internal/transformer/openai"
 )
 
 // SSEEvent represents a Server-Sent Event
@@ -537,7 +540,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
-			trans = transformer.NewOpenAITransformer(endpoint.Model)
+			trans = openai.NewOpenAITransformer(endpoint.Model)
 		} else if transformerName == "gemini" {
 			if endpoint.Model == "" {
 				logger.Error("[%s] Gemini transformer requires model field", endpoint.Name)
@@ -550,14 +553,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
-			trans = transformer.NewGeminiTransformer(endpoint.Model)
+			trans = gemini.NewGeminiTransformer(endpoint.Model)
 		} else if transformerName == "claude" {
 			// For Claude transformer, create instance with optional model
 			if endpoint.Model != "" {
-				trans = transformer.NewClaudeTransformerWithModel(endpoint.Model)
+				trans = claude.NewClaudeTransformerWithModel(endpoint.Model)
 				logger.Debug("[%s] Using Claude transformer with model override: %s", endpoint.Name, endpoint.Model)
 			} else {
-				trans = transformer.NewClaudeTransformer()
+				trans = claude.NewClaudeTransformer()
 				logger.Debug("[%s] Using Claude transformer with model passthrough", endpoint.Name)
 			}
 		} else {
@@ -773,9 +776,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					var err error
 					switch transformerName {
 					case "openai":
-						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+						transformedEvent, err = trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
 					case "gemini":
-						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+						transformedEvent, err = trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 					default:
 						transformedEvent, err = trans.TransformResponse(eventData, true)
 					}
@@ -808,9 +811,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					// Transform based on transformer type
 					switch transformerName {
 					case "openai":
-						transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+						transformedEvent, err = trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
 					case "gemini":
-						transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+						transformedEvent, err = trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 					default:
 						transformedEvent, err = trans.TransformResponse(eventData, true)
 					}
@@ -930,9 +933,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				// Transform based on transformer type
 				switch transformerName {
 				case "openai":
-					transformedEvent, err = trans.(*transformer.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					transformedEvent, err = trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
 				case "gemini":
-					transformedEvent, err = trans.(*transformer.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+					transformedEvent, err = trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 				default:
 					transformedEvent, err = trans.TransformResponse(eventData, true)
 				}
