@@ -1,6 +1,9 @@
 /* Import Theme Styles */
 @import './themes/dark.css';
 @import './themes/green.css';
+@import './themes/starry.css';
+@import './themes/sakura.css';
+@import './themes/sunset.css';
 
 * {
     margin: 0;

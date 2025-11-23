@@ -113,7 +113,10 @@ export default {
         themes: {
             light: 'Light Theme',
             dark: 'Dark Theme',
-            green: 'Eye Protection'
+            green: 'Eye Protection',
+            starry: 'Starry Night',
+            sakura: 'Sakura Pink',
+            sunset: 'Sunset Orange'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',

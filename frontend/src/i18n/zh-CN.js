@@ -113,7 +113,10 @@ export default {
         themes: {
             light: '浅色模式',
             dark: '深色模式',
-            green: '护眼模式'
+            green: '护眼模式',
+            starry: '星空主题',
+            sakura: '樱花粉',
+            sunset: '暖阳橙'
         },
         themeHelp: '选择界面主题外观',
         themeAuto: '自动模式',

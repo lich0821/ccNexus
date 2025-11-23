@@ -7,13 +7,19 @@ let autoThemeIntervalId = null;
 // Apply theme to body element
 export function applyTheme(theme) {
     // Remove all theme classes first
-    document.body.classList.remove('dark-theme', 'green-theme');
+    document.body.classList.remove('dark-theme', 'green-theme', 'starry-theme', 'sakura-theme', 'sunset-theme');
 
     // Apply the selected theme
     if (theme === 'dark') {
         document.body.classList.add('dark-theme');
     } else if (theme === 'green') {
         document.body.classList.add('green-theme');
+    } else if (theme === 'starry') {
+        document.body.classList.add('starry-theme');
+    } else if (theme === 'sakura') {
+        document.body.classList.add('sakura-theme');
+    } else if (theme === 'sunset') {
+        document.body.classList.add('sunset-theme');
     }
     // 'light' theme uses default styles, no class needed
 }

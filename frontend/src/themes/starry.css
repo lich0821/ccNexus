@@ -1,0 +1,884 @@
+/**
+ * Starry Night Theme Styles
+ * 星空主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="starry-theme" 即可启用星空主题
+ * 深邃星空蓝配色，比纯黑更有层次感
+ */
+
+/* Starry Theme Variables */
+body.starry-theme {
+    --bg-gradient-start: #0f0f1a;
+    --bg-gradient-end: #1a1a2e;
+    --bg-primary: #121225;
+    --bg-secondary: #1a1a35;
+    --bg-tertiary: #252545;
+    --text-primary: #e8e8f0;
+    --text-secondary: #a0a0c0;
+    --text-tertiary: #7070a0;
+    --border-color: #3a3a5a;
+    --border-light: #2a2a4a;
+    --card-bg: #181830;
+    --modal-bg: #1a1a35;
+    --input-bg: #202040;
+    --hover-bg: #252550;
+    --shadow-color: rgba(0, 0, 50, 0.4);
+    --primary-color: #6c63ff;
+    --primary-hover: #5a52e0;
+}
+
+/* Starry Theme Specific Styles */
+body.starry-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.starry-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.starry-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.starry-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.starry-theme .card {
+    background: var(--bg-primary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.starry-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.starry-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.starry-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.starry-theme .stats-tab-btn.active {
+    background: #4a4a6a;
+    color: #ffffff;
+    border-color: #5a5a7a;
+    box-shadow: 0 2px 8px rgba(108, 99, 255, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.starry-theme .stat-box {
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.starry-theme .stat-box:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.starry-theme .stat-box .stat-label {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .stat-box .stat-value {
+    color: var(--primary-color);
+}
+
+body.starry-theme .stat-box .stat-primary {
+    color: var(--primary-color);
+}
+
+body.starry-theme .stat-box .stat-secondary {
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .stat-box .stat-detail {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .stat-box .stat-text {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .trend {
+    background: var(--bg-tertiary);
+}
+
+body.starry-theme .trend-up {
+    background: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+}
+
+body.starry-theme .trend-down {
+    background: rgba(245, 101, 101, 0.2);
+    color: #fc8181;
+}
+
+body.starry-theme .trend-flat {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .endpoint-item {
+    background: var(--bg-secondary);
+}
+
+body.starry-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.starry-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.starry-theme .form-group input,
+body.starry-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.starry-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236c63ff' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.starry-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.starry-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.starry-theme #endpointModal .modal-header h2,
+body.starry-theme #portModal .modal-header h2,
+body.starry-theme #historyModal .modal-header h2,
+body.starry-theme #settingsModal .modal-header h2,
+body.starry-theme #welcomeModal .modal-header h2,
+body.starry-theme #testResultModal .modal-header h2,
+body.starry-theme #genericModal .modal-header h2,
+body.starry-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.starry-theme .confirm-dialog-content .confirm-title,
+body.starry-theme #confirmDialog .confirm-title,
+body.starry-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.starry-theme .modal-close,
+body.starry-theme #historyModal .modal-close,
+body.starry-theme #endpointModal .modal-close,
+body.starry-theme #portModal .modal-close,
+body.starry-theme #genericModal .modal-close,
+body.starry-theme #subModal .modal-close,
+body.starry-theme #settingsModal .modal-close,
+body.starry-theme #welcomeModal .modal-close,
+body.starry-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.starry-theme .modal-close:hover,
+body.starry-theme #historyModal .modal-close:hover,
+body.starry-theme #endpointModal .modal-close:hover,
+body.starry-theme #portModal .modal-close:hover,
+body.starry-theme #genericModal .modal-close:hover,
+body.starry-theme #subModal .modal-close:hover,
+body.starry-theme #settingsModal .modal-close:hover,
+body.starry-theme #welcomeModal .modal-close:hover,
+body.starry-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.starry-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.starry-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.starry-theme .header-link {
+    background: rgba(108, 99, 255, 0.15);
+    color: var(--primary-color);
+}
+
+body.starry-theme .header-link:hover {
+    background: rgba(108, 99, 255, 0.25);
+}
+
+body.starry-theme .port-display {
+    background: rgba(108, 99, 255, 0.15);
+    border-color: rgba(108, 99, 255, 0.3);
+}
+
+body.starry-theme .port-display:hover {
+    background: rgba(108, 99, 255, 0.25);
+    border-color: rgba(108, 99, 255, 0.5);
+}
+
+body.starry-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.starry-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.starry-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.starry-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.starry-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.starry-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.starry-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.starry-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.starry-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.starry-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.starry-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.starry-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.starry-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.starry-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.starry-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.starry-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.starry-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.starry-theme .backup-table th,
+body.starry-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.starry-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.starry-theme .data-sync-section h3 {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+body.starry-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.starry-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.starry-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-value-local code,
+body.starry-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.starry-theme #genericModal .modal-header::after,
+body.starry-theme #subModal .modal-header::after,
+body.starry-theme #settingsModal .modal-header::after,
+body.starry-theme #endpointModal .modal-header::after,
+body.starry-theme #portModal .modal-header::after,
+body.starry-theme #historyModal .modal-header::after,
+body.starry-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.starry-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.starry-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.starry-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.starry-theme .btn-primary {
+    background: #4a4a6a;
+    color: #fafafa;
+    border-color: #4a4a6a;
+}
+
+body.starry-theme .btn-primary:hover {
+    background: #5a5a7a;
+    border-color: #5a5a7a;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.starry-theme .btn-secondary {
+    background: #2a2a4a;
+    color: #c0c0d8;
+    border-color: #3a3a5a;
+}
+
+body.starry-theme .btn-secondary:hover {
+    background: #3a3a5a;
+    border-color: #4a4a6a;
+}
+
+/* Danger button - 危险操作按钮 */
+body.starry-theme .btn-danger {
+    background: #c53030;
+    color: #ffffff;
+    border-color: #c53030;
+}
+
+body.starry-theme .btn-danger:hover {
+    background: #9b2c2c;
+    border-color: #9b2c2c;
+}
+
+/* Card button - 卡片内按钮 */
+body.starry-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.starry-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.starry-theme .btn-card.btn-danger {
+    background: #c53030;
+    color: #ffffff;
+    border-color: #c53030;
+}
+
+/* Small button - 小按钮 */
+body.starry-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.starry-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.starry-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.starry-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.starry-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.starry-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e8e8f0' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.starry-theme .log-level-select-btn:hover,
+body.starry-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.starry-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.starry-theme .log-textarea {
+    background: #0a0a15;
+    color: #c0c0e0;
+}
+
+/* ========== Toggle Switch ========== */
+body.starry-theme .toggle-slider {
+    background-color: #3a3a5a;
+}
+
+body.starry-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.starry-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.starry-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.starry-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.starry-theme .copy-btn:hover {
+    background: rgba(108, 99, 255, 0.15);
+}
+
+/* ========== Badges ========== */
+body.starry-theme .current-badge {
+    background: #2f855a;
+}
+
+body.starry-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.starry-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.starry-theme .btn-switch:disabled {
+    background: #3a3a5a;
+}
+
+/* ========== Error Toast ========== */
+body.starry-theme .error-toast {
+    background: #c53030;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* ========== Loading State ========== */
+body.starry-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.starry-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.starry-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.starry-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.starry-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.starry-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.starry-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.starry-theme #testResultModal .modal-body,
+body.starry-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.starry-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.starry-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: var(--text-primary) !important;
+}
+
+/* Test result error message */
+body.starry-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--border-color) !important;
+}
+
+body.starry-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: var(--text-primary) !important;
+}
+
+/* Test result details box */
+body.starry-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.starry-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.starry-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.starry-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.2);
+}
+
+/* ========== Prompt Dialog ========== */
+body.starry-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.starry-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.starry-theme .notification-success {
+    background: #059669;
+}
+
+body.starry-theme .notification-error {
+    background: #dc2626;
+}
+
+body.starry-theme .notification-warning {
+    background: #d97706;
+}
+
+body.starry-theme .notification-info {
+    background: #6c63ff;
+}
+
+/* ========== Error Message ========== */
+body.starry-theme .error-message {
+    background: rgba(197, 48, 48, 0.2);
+    border-color: #c53030;
+    color: #fc8181;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.starry-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.starry-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.starry-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.starry-theme .conflict-value-local {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .conflict-value-remote {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.starry-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.starry-theme .conflict-badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.starry-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.starry-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.starry-theme [style*="color: #666"],
+body.starry-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.starry-theme [style*="color: #555"],
+body.starry-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.starry-theme [style*="color: #333"],
+body.starry-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.starry-theme [style*="color: #999"],
+body.starry-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.starry-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.starry-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.starry-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Starry Theme ========== */
+body.starry-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.starry-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.starry-theme ::-webkit-scrollbar-thumb {
+    background: #4a4a6a;
+    border-radius: 5px;
+}
+
+body.starry-theme ::-webkit-scrollbar-thumb:hover {
+    background: #5a5a7a;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.starry-theme #confirmModal .modal-content,
+body.starry-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.starry-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.starry-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(108, 99, 255, 0.4),
+        0 0 10px rgba(108, 99, 255, 0.5),
+        0 0 20px rgba(108, 99, 255, 0.3),
+        0 8px 24px var(--shadow-color);
+}
+
+body.starry-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(108, 99, 255, 0.1);
+}
+
+/* ========== History Modal Fixes ========== */
+body.starry-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.starry-theme #genericModal .modal-content,
+body.starry-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Starry Theme ========== */
+body.starry-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.starry-theme .required-mark {
+    color: #fc8181;
+}
+
+/* ========== Footer Left Text ========== */
+body.starry-theme .footer-left span {
+    color: var(--text-secondary);
+}
