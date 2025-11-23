@@ -61,6 +61,9 @@ export default {
         changePort: 'Change Port',
         port: 'Port',
         portNote: 'Note: Changing port requires application restart',
+        portInvalid: 'Please enter a valid port number (1-65535)',
+        portUpdateSuccess: 'Port updated successfully! Please restart the application for changes to take effect.',
+        portUpdateFailed: 'Failed to update port: {error}',
         requiredFields: 'Please fill in all required fields',
         modelRequired: 'Model field is required for {transformer} transformer',
         saveFailed: 'Failed to save: {error}',
@@ -118,7 +121,8 @@ export default {
             sakura: 'Sakura Pink',
             sunset: 'Sunset Orange',
             ocean: 'Ocean Blue',
-            mocha: 'Mocha Brown'
+            mocha: 'Mocha Brown',
+            cyberpunk: 'Cyberpunk'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',

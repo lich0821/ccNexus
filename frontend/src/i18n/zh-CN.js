@@ -61,6 +61,9 @@ export default {
         changePort: '修改端口',
         port: '端口',
         portNote: '注意：修改端口需要重启应用',
+        portInvalid: '请输入有效的端口号（1-65535）',
+        portUpdateSuccess: '端口修改成功！请重启应用以使更改生效。',
+        portUpdateFailed: '端口修改失败：{error}',
         requiredFields: '请填写所有必填项',
         modelRequired: '使用 {transformer} 转换器时，模型字段为必填项',
         saveFailed: '保存失败：{error}',
@@ -118,7 +121,8 @@ export default {
             sakura: '樱花粉',
             sunset: '暖阳橙',
             ocean: '海洋蓝',
-            mocha: '摩卡棕'
+            mocha: '摩卡棕',
+            cyberpunk: '赛博朋克'
         },
         themeHelp: '选择界面主题外观',
         themeAuto: '自动模式',

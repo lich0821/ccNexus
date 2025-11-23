@@ -6,6 +6,7 @@
 @import './themes/sunset.css';
 @import './themes/ocean.css';
 @import './themes/mocha.css';
+@import './themes/cyberpunk.css';
 
 * {
     margin: 0;

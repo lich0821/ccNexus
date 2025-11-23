@@ -18,6 +18,26 @@ function showError(message) {
     }, 3000);
 }
 
+// Show notification
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+
+    // Add to body
+    document.body.appendChild(notification);
+
+    // Show notification
+    setTimeout(() => notification.classList.add('show'), 10);
+
+    // Hide and remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
 // Confirm dialog
 let confirmResolve = null;
 
@@ -207,7 +227,7 @@ export async function savePort() {
     const port = parseInt(document.getElementById('portInput').value);
 
     if (!port || port < 1 || port > 65535) {
-        alert('Please enter a valid port number (1-65535)');
+        showNotification(t('modal.portInvalid'), 'error');
         return;
     }
 
@@ -215,9 +235,9 @@ export async function savePort() {
         await updatePort(port);
         closePortModal();
         window.loadConfig();
-        alert('Port updated successfully! Please restart the application for changes to take effect.');
+        showNotification(t('modal.portUpdateSuccess'), 'success');
     } catch (error) {
-        alert('Failed to update port: ' + error);
+        showNotification(t('modal.portUpdateFailed').replace('{error}', error), 'error');
     }
 }
 
