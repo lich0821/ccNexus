@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-${{ hashFiles('go.mod') }}
+          key: ${{ runner.os }}-wails-${{ hashFiles('**/go.mod') }}
 
       - name: Get version
         id: get_version
