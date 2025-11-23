@@ -510,6 +510,53 @@ export function initUI() {
                 </div>
             </div>
         </div>
+
+        <!-- Auto Theme Config Modal -->
+        <div id="autoThemeConfigModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🌓 ${t('settings.autoThemeConfigTitle')}</h2>
+                    <button class="modal-close" onclick="window.closeAutoThemeConfigModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">
+                        ${t('settings.autoThemeConfigDesc')}
+                    </p>
+                    <div class="form-group">
+                        <label>☀️ ${t('settings.lightThemeLabel')}</label>
+                        <select id="autoLightTheme">
+                            <option value="light">${t('settings.themes.light')}</option>
+                            <option value="green">${t('settings.themes.green')}</option>
+                            <option value="sakura">${t('settings.themes.sakura')}</option>
+                            <option value="sunset">${t('settings.themes.sunset')}</option>
+                            <option value="ocean">${t('settings.themes.ocean')}</option>
+                            <option value="mocha">${t('settings.themes.mocha')}</option>
+                        </select>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 5px;">
+                            ${t('settings.lightThemeHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>🌙 ${t('settings.darkThemeLabel')}</label>
+                        <select id="autoDarkTheme">
+                            <option value="dark">${t('settings.themes.dark')}</option>
+                            <option value="starry">${t('settings.themes.starry')}</option>
+                            <option value="cyberpunk">${t('settings.themes.cyberpunk')}</option>
+                            <option value="aurora">${t('settings.themes.aurora')}</option>
+                            <option value="holographic">${t('settings.themes.holographic')}</option>
+                            <option value="quantum">${t('settings.themes.quantum')}</option>
+                        </select>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 5px;">
+                            ${t('settings.darkThemeHelp')}
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.closeAutoThemeConfigModal()">${t('settings.cancel')}</button>
+                    <button class="btn btn-primary" onclick="window.saveAutoThemeConfig()">${t('settings.save')}</button>
+                </div>
+            </div>
+        </div>
     `;
 
     setupModalEventListeners();

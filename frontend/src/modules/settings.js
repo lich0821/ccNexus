@@ -36,28 +36,35 @@ export function applyTheme(theme) {
     // 'light' theme uses default styles, no class needed
 }
 
-// Get theme based on current time and user's selected theme
-// Day (7:00-19:00): use selected theme (if selected is dark, default to light)
-// Night: always use dark theme
-function getTimeBasedTheme(selectedTheme) {
+// Get theme based on current time and user's auto theme settings
+// Day (7:00-19:00): use auto light theme
+// Night: use auto dark theme
+async function getTimeBasedTheme() {
     const hour = new Date().getHours();
     const isDaytime = hour >= 7 && hour < 19;
 
-    if (isDaytime) {
-        // Daytime: use selected theme, but if selected is dark, default to light
-        return selectedTheme === 'dark' ? 'light' : selectedTheme;
-    } else {
-        // Nighttime: always dark
-        return 'dark';
+    try {
+        if (isDaytime) {
+            // Daytime: use auto light theme
+            const lightTheme = await window.go.main.App.GetAutoLightTheme();
+            return lightTheme || 'light';
+        } else {
+            // Nighttime: use auto dark theme
+            const darkTheme = await window.go.main.App.GetAutoDarkTheme();
+            return darkTheme || 'dark';
+        }
+    } catch (error) {
+        console.error('Failed to get auto theme settings:', error);
+        // Fallback to simple light/dark switching
+        return isDaytime ? 'light' : 'dark';
     }
 }
 
 // Check and apply auto theme
 export async function checkAndApplyAutoTheme() {
     try {
-        // Get user's selected theme from config
-        const selectedTheme = await window.go.main.App.GetTheme();
-        const theme = getTimeBasedTheme(selectedTheme);
+        // Get theme based on time and auto theme settings
+        const theme = await getTimeBasedTheme();
         applyTheme(theme);
     } catch (error) {
         console.error('Failed to check auto theme:', error);
@@ -114,6 +121,12 @@ export async function showSettingsModal() {
     // Load current config
     await loadCurrentSettings();
 
+    // Clear confirmed flag when opening settings
+    const themeAutoCheckbox = document.getElementById('settingsThemeAuto');
+    if (themeAutoCheckbox) {
+        delete themeAutoCheckbox.dataset.confirmed;
+    }
+
     // Show modal
     modal.classList.add('active');
 }
@@ -166,14 +179,91 @@ async function loadCurrentSettings() {
 
         // Add event listener for auto checkbox
         if (themeAutoCheckbox) {
-            themeAutoCheckbox.onchange = function() {
+            themeAutoCheckbox.onchange = async function() {
                 if (themeSelect) {
                     themeSelect.disabled = this.checked;
+                }
+
+                // If user enables auto mode, show config modal immediately
+                if (this.checked) {
+                    await showAutoThemeConfigModal();
                 }
             };
         }
     } catch (error) {
         console.error('Failed to load settings:', error);
+    }
+}
+
+// Show auto theme config modal
+export async function showAutoThemeConfigModal() {
+    const modal = document.getElementById('autoThemeConfigModal');
+    if (!modal) return;
+
+    try {
+        // Load current auto theme settings
+        const lightTheme = await window.go.main.App.GetAutoLightTheme();
+        const darkTheme = await window.go.main.App.GetAutoDarkTheme();
+
+        const lightSelect = document.getElementById('autoLightTheme');
+        const darkSelect = document.getElementById('autoDarkTheme');
+
+        if (lightSelect) lightSelect.value = lightTheme || 'light';
+        if (darkSelect) darkSelect.value = darkTheme || 'dark';
+    } catch (error) {
+        console.error('Failed to load auto theme settings:', error);
+    }
+
+    // Show modal
+    modal.classList.add('active');
+}
+
+// Close auto theme config modal
+export function closeAutoThemeConfigModal() {
+    const modal = document.getElementById('autoThemeConfigModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+
+    // If user cancels, uncheck the auto mode checkbox
+    const themeAutoCheckbox = document.getElementById('settingsThemeAuto');
+    const themeSelect = document.getElementById('settingsTheme');
+    if (themeAutoCheckbox && !themeAutoCheckbox.dataset.confirmed) {
+        themeAutoCheckbox.checked = false;
+        if (themeSelect) {
+            themeSelect.disabled = false;
+        }
+    }
+}
+
+// Save auto theme config
+export async function saveAutoThemeConfig() {
+    try {
+        const lightTheme = document.getElementById('autoLightTheme').value;
+        const darkTheme = document.getElementById('autoDarkTheme').value;
+
+        // Save both themes
+        await window.go.main.App.SetAutoLightTheme(lightTheme);
+        await window.go.main.App.SetAutoDarkTheme(darkTheme);
+
+        // Enable auto mode
+        await window.go.main.App.SetThemeAuto(true);
+
+        // Mark checkbox as confirmed so it won't be unchecked when closing modal
+        const themeAutoCheckbox = document.getElementById('settingsThemeAuto');
+        if (themeAutoCheckbox) {
+            themeAutoCheckbox.dataset.confirmed = 'true';
+        }
+
+        // Close the config modal
+        closeAutoThemeConfigModal();
+
+        // Apply theme immediately based on current time
+        stopAutoThemeCheck();
+        await startAutoThemeCheck();
+    } catch (error) {
+        console.error('Failed to save auto theme config:', error);
+        showNotification(t('settings.saveFailed') + ': ' + error, 'error');
     }
 }
 
@@ -193,18 +283,17 @@ export async function saveSettings() {
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
 
-        // Step 1: Save theme if changed
+        // Save theme if changed
         if (config.theme !== theme) {
             await window.go.main.App.SetTheme(theme);
         }
 
-        // Step 2: Save auto mode setting if changed
+        // Handle auto mode changes
         if (config.themeAuto !== themeAuto) {
             await window.go.main.App.SetThemeAuto(themeAuto);
         }
 
-        // Step 3: Apply theme based on final settings
-        // Always apply to ensure theme takes effect immediately
+        // Apply theme based on final settings
         stopAutoThemeCheck();
         if (themeAuto) {
             // Auto mode: apply time-based theme

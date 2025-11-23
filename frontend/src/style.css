@@ -2263,7 +2263,7 @@ body {
 #settingsModal .modal-header h2 {
     margin: 0;
     font-size: 20px;
-    color: #333;
+    color: var(--text-primary);
 }
 
 #settingsModal .modal-close {
@@ -2290,6 +2290,69 @@ body {
 }
 
 #settingsModal .modal-body {
+    padding: 25px 30px 30px 30px;
+}
+
+/* Auto Theme Config Modal Styles */
+#autoThemeConfigModal {
+    backdrop-filter: blur(4px);
+}
+
+#autoThemeConfigModal .modal-content {
+    max-width: min(420px, 90vw);
+    width: 420px;
+}
+
+#autoThemeConfigModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#autoThemeConfigModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#autoThemeConfigModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary);
+}
+
+#autoThemeConfigModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#autoThemeConfigModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#autoThemeConfigModal .modal-body {
     padding: 25px 30px 30px 30px;
 }
 

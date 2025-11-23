@@ -17,6 +17,10 @@ export function GetArchiveData(arg1:string):Promise<string>;
 
 export function GetArchiveTrend(arg1:string):Promise<string>;
 
+export function GetAutoDarkTheme():Promise<string>;
+
+export function GetAutoLightTheme():Promise<string>;
+
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;
@@ -66,6 +70,10 @@ export function RemoveEndpoint(arg1:number):Promise<void>;
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
+
+export function SetAutoDarkTheme(arg1:string):Promise<void>;
+
+export function SetAutoLightTheme(arg1:string):Promise<void>;
 
 export function SetCloseWindowBehavior(arg1:string):Promise<void>;
 

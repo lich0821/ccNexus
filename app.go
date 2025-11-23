@@ -1237,6 +1237,58 @@ func (a *App) SetThemeAuto(auto bool) error {
 	return nil
 }
 
+// GetAutoLightTheme returns the theme to use in daytime when auto mode is on
+func (a *App) GetAutoLightTheme() string {
+	theme := a.config.GetAutoLightTheme()
+	if theme == "" {
+		// Default to light theme
+		return "light"
+	}
+	return theme
+}
+
+// SetAutoLightTheme sets the theme to use in daytime when auto mode is on
+func (a *App) SetAutoLightTheme(theme string) error {
+	a.config.UpdateAutoLightTheme(theme)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save auto light theme: %w", err)
+		}
+	}
+
+	logger.Info("Auto light theme changed to: %s", theme)
+	return nil
+}
+
+// GetAutoDarkTheme returns the theme to use in nighttime when auto mode is on
+func (a *App) GetAutoDarkTheme() string {
+	theme := a.config.GetAutoDarkTheme()
+	if theme == "" {
+		// Default to dark theme
+		return "dark"
+	}
+	return theme
+}
+
+// SetAutoDarkTheme sets the theme to use in nighttime when auto mode is on
+func (a *App) SetAutoDarkTheme(theme string) error {
+	a.config.UpdateAutoDarkTheme(theme)
+
+	// Save to SQLite storage
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save auto dark theme: %w", err)
+		}
+	}
+
+	logger.Info("Auto dark theme changed to: %s", theme)
+	return nil
+}
+
 // TestEndpoint tests an endpoint by sending a simple request
 func (a *App) TestEndpoint(index int) string {
 	endpoints := a.config.GetEndpoints()
