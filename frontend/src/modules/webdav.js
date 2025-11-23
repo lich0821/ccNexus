@@ -57,7 +57,7 @@ function showSubModal(title, content) {
         <div class="modal-content">
             <div class="modal-header">
                 <h2>${title}</h2>
-                <button class="modal-close" onclick="window.closeBackupManager()">&times;</button>
+                <button class="modal-close" onclick="window.closeSubModal()">&times;</button>
             </div>
             <div class="modal-body">
                 ${content}
@@ -111,6 +111,11 @@ function hideSubModal() {
         setTimeout(() => modal.remove(), 300);
     }
 }
+
+// Global function to close sub modal
+window.closeSubModal = function() {
+    hideSubModal();
+};
 
 // Hide the generic modal
 function hideModal() {

@@ -8,7 +8,7 @@ import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
-import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme } from './modules/settings.js'
+import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme } from './modules/settings.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -45,9 +45,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const lang = await window.go.main.App.GetLanguage();
     setLanguage(lang);
 
-    // Initialize theme
-    const theme = await window.go.main.App.GetTheme();
-    applyTheme(theme);
+    // Initialize theme (supports auto mode)
+    await initTheme();
 
     // Initialize UI
     initUI();

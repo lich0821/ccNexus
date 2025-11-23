@@ -94,6 +94,10 @@ export function GetTheme() {
   return window['go']['main']['App']['GetTheme']();
 }
 
+export function GetThemeAuto() {
+  return window['go']['main']['App']['GetThemeAuto']();
+}
+
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
@@ -144,6 +148,10 @@ export function SetLogLevel(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function SetThemeAuto(arg1) {
+  return window['go']['main']['App']['SetThemeAuto'](arg1);
 }
 
 export function ShowWindow() {

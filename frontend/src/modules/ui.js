@@ -383,14 +383,12 @@ export function initUI() {
             <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2 id="testResultTitle">🧪 ${t('test.title')}</h2>
+                    <button class="modal-close" onclick="window.closeTestResultModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
                         <!-- Test result will be inserted here -->
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="window.closeTestResultModal()">${t('modal.close')}</button>
                 </div>
             </div>
         </div>
@@ -467,10 +465,19 @@ export function initUI() {
                     </div>
                     <div class="form-group">
                         <label>🌓 ${t('settings.theme')}</label>
-                        <select id="settingsTheme">
-                            <option value="light">${t('settings.themes.light')}</option>
-                            <option value="dark">${t('settings.themes.dark')}</option>
-                        </select>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="settingsTheme" style="flex: 1;">
+                                <option value="light">${t('settings.themes.light')}</option>
+                                <option value="dark">${t('settings.themes.dark')}</option>
+                            </select>
+                            <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;" title="${t('settings.themeAutoHelp')}">
+                                <span style="font-size: 13px; color: var(--text-secondary);">${t('settings.themeAuto')}</span>
+                                <label class="toggle-switch" style="width: 40px; height: 20px; margin-top: 7px;">
+                                    <input type="checkbox" id="settingsThemeAuto">
+                                    <span class="toggle-slider" style="border-radius: 20px;"></span>
+                                </label>
+                            </div>
+                        </div>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.themeHelp')}
                         </p>

@@ -36,6 +36,7 @@ type Config struct {
 	LogLevel             int           `json:"logLevel"`                     // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
 	Language             string        `json:"language"`                     // UI language: en, zh-CN
 	Theme                string        `json:"theme"`                        // UI theme: light, dark
+	ThemeAuto            bool          `json:"themeAuto"`                    // Auto switch theme based on time
 	WindowWidth          int           `json:"windowWidth"`                  // Window width in pixels
 	WindowHeight         int           `json:"windowHeight"`                 // Window height in pixels
 	CloseWindowBehavior  string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
@@ -202,6 +203,20 @@ func (c *Config) UpdateTheme(theme string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Theme = theme
+}
+
+// GetThemeAuto returns whether auto theme switching is enabled (thread-safe)
+func (c *Config) GetThemeAuto() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.ThemeAuto
+}
+
+// UpdateThemeAuto updates the auto theme setting (thread-safe)
+func (c *Config) UpdateThemeAuto(auto bool) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.ThemeAuto = auto
 }
 
 // GetConfigPath returns the default config file path
@@ -378,6 +393,11 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.Theme = "light"
 	}
 
+	// Load themeAuto
+	if themeAuto, err := storage.GetConfig("themeAuto"); err == nil && themeAuto != "" {
+		config.ThemeAuto = themeAuto == "true"
+	}
+
 	// Load WebDAV config if exists
 	if url, err := storage.GetConfig("webdav_url"); err == nil && url != "" {
 		username, _ := storage.GetConfig("webdav_username")
@@ -450,6 +470,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 	storage.SetConfig("logLevel", strconv.Itoa(c.LogLevel))
 	storage.SetConfig("language", c.Language)
 	storage.SetConfig("theme", c.Theme)
+	storage.SetConfig("themeAuto", strconv.FormatBool(c.ThemeAuto))
 	storage.SetConfig("windowWidth", strconv.Itoa(c.WindowWidth))
 	storage.SetConfig("windowHeight", strconv.Itoa(c.WindowHeight))
 	storage.SetConfig("closeWindowBehavior", c.CloseWindowBehavior)
