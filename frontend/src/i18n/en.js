@@ -116,7 +116,9 @@ export default {
             green: 'Eye Protection',
             starry: 'Starry Night',
             sakura: 'Sakura Pink',
-            sunset: 'Sunset Orange'
+            sunset: 'Sunset Orange',
+            ocean: 'Ocean Blue',
+            mocha: 'Mocha Brown'
         },
         themeHelp: 'Select the interface theme appearance',
         themeAuto: 'Auto Mode',

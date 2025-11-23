@@ -4,6 +4,8 @@
 @import './themes/starry.css';
 @import './themes/sakura.css';
 @import './themes/sunset.css';
+@import './themes/ocean.css';
+@import './themes/mocha.css';
 
 * {
     margin: 0;

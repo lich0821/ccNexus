@@ -1,0 +1,839 @@
+/**
+ * Mocha Brown Theme Styles
+ * 摩卡棕主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="mocha-theme" 即可启用摩卡棕主题
+ */
+
+/* Mocha Brown Theme Variables */
+body.mocha-theme {
+    --bg-gradient-start: #F5EEE6;
+    --bg-gradient-end: #E8D7C3;
+    --bg-primary: #FAF6F1;
+    --bg-secondary: #F5EEE6;
+    --bg-tertiary: #EFEBE3;
+    --text-primary: #3E2723;
+    --text-secondary: #5D4037;
+    --text-tertiary: #795548;
+    --border-color: #D7CCC8;
+    --border-light: #E8D7C3;
+    --card-bg: #FFFBF5;
+    --modal-bg: #FAF6F1;
+    --input-bg: #FFFFFF;
+    --hover-bg: #F5EEE6;
+    --shadow-color: rgba(62, 39, 35, 0.12);
+    --primary-color: #8D6E63;
+    --primary-hover: #6D4C41;
+}
+
+/* Mocha Brown Theme Specific Styles */
+body.mocha-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.mocha-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.mocha-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.mocha-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.mocha-theme .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.mocha-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.mocha-theme .stats-tab-btn.active {
+    background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(141, 110, 99, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.mocha-theme .stat-box {
+    background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.mocha-theme .stat-box:hover {
+    box-shadow: 0 4px 12px rgba(141, 110, 99, 0.25);
+}
+
+body.mocha-theme .stat-box .stat-label {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+body.mocha-theme .stat-box .stat-value {
+    color: #FFFFFF;
+}
+
+body.mocha-theme .stat-box .stat-primary {
+    color: #FFFFFF;
+}
+
+body.mocha-theme .stat-box .stat-secondary {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.mocha-theme .stat-box .stat-detail {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.mocha-theme .stat-box .stat-text {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+body.mocha-theme .stat-separator {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.mocha-theme .stat-total {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+body.mocha-theme .stat-divider {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+body.mocha-theme .trend {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+body.mocha-theme .trend-up {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+}
+
+body.mocha-theme .trend-down {
+    background: rgba(255, 255, 255, 0.2);
+    color: #EFEBE3;
+}
+
+body.mocha-theme .trend-flat {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+body.mocha-theme .endpoint-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+body.mocha-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .form-group input,
+body.mocha-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238D6E63' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.mocha-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.mocha-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.mocha-theme #endpointModal .modal-header h2,
+body.mocha-theme #portModal .modal-header h2,
+body.mocha-theme #historyModal .modal-header h2,
+body.mocha-theme #settingsModal .modal-header h2,
+body.mocha-theme #welcomeModal .modal-header h2,
+body.mocha-theme #testResultModal .modal-header h2,
+body.mocha-theme #genericModal .modal-header h2,
+body.mocha-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.mocha-theme .confirm-dialog-content .confirm-title,
+body.mocha-theme #confirmDialog .confirm-title,
+body.mocha-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.mocha-theme .modal-close,
+body.mocha-theme #historyModal .modal-close,
+body.mocha-theme #endpointModal .modal-close,
+body.mocha-theme #portModal .modal-close,
+body.mocha-theme #genericModal .modal-close,
+body.mocha-theme #subModal .modal-close,
+body.mocha-theme #settingsModal .modal-close,
+body.mocha-theme #welcomeModal .modal-close,
+body.mocha-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.mocha-theme .modal-close:hover,
+body.mocha-theme #historyModal .modal-close:hover,
+body.mocha-theme #endpointModal .modal-close:hover,
+body.mocha-theme #portModal .modal-close:hover,
+body.mocha-theme #genericModal .modal-close:hover,
+body.mocha-theme #subModal .modal-close:hover,
+body.mocha-theme #settingsModal .modal-close:hover,
+body.mocha-theme #welcomeModal .modal-close:hover,
+body.mocha-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.mocha-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.mocha-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.mocha-theme .header-link {
+    background: rgba(141, 110, 99, 0.1);
+    color: var(--primary-color);
+}
+
+body.mocha-theme .header-link:hover {
+    background: rgba(141, 110, 99, 0.2);
+}
+
+body.mocha-theme .port-display {
+    background: rgba(141, 110, 99, 0.1);
+    border-color: rgba(141, 110, 99, 0.3);
+}
+
+body.mocha-theme .port-display:hover {
+    background: rgba(141, 110, 99, 0.15);
+    border-color: rgba(141, 110, 99, 0.5);
+}
+
+body.mocha-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.mocha-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.mocha-theme #historyDailyTable {
+    background: var(--card-bg);
+}
+
+body.mocha-theme #historyDailyTable th {
+    background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+    color: white;
+}
+
+body.mocha-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.mocha-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.mocha-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.mocha-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.mocha-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.mocha-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.mocha-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .conflict-card {
+    border-color: var(--border-light);
+    background: var(--card-bg);
+}
+
+body.mocha-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.mocha-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.mocha-theme .backup-table th {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.mocha-theme .backup-table th,
+body.mocha-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.mocha-theme .data-sync-section h3 {
+    color: var(--text-primary);
+    border-bottom-color: var(--primary-color);
+}
+
+body.mocha-theme .conflict-endpoint {
+    background: var(--card-bg);
+    border-color: var(--border-light);
+}
+
+body.mocha-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.mocha-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-value-local code,
+body.mocha-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.mocha-theme #genericModal .modal-header::after,
+body.mocha-theme #subModal .modal-header::after,
+body.mocha-theme #settingsModal .modal-header::after,
+body.mocha-theme #endpointModal .modal-header::after,
+body.mocha-theme #portModal .modal-header::after,
+body.mocha-theme #historyModal .modal-header::after,
+body.mocha-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.mocha-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.mocha-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.mocha-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.mocha-theme .btn-primary {
+    background: #8D6E63;
+    color: #ffffff;
+    border-color: #8D6E63;
+}
+
+body.mocha-theme .btn-primary:hover {
+    background: #6D4C41;
+    border-color: #6D4C41;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.mocha-theme .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+/* Danger button - 危险操作按钮 */
+body.mocha-theme .btn-danger {
+    background: #D32F2F;
+    color: #ffffff;
+    border-color: #D32F2F;
+}
+
+body.mocha-theme .btn-danger:hover {
+    background: #B71C1C;
+    border-color: #B71C1C;
+}
+
+/* Card button - 卡片内按钮 */
+body.mocha-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.mocha-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.mocha-theme .btn-card.btn-danger {
+    background: #D32F2F;
+    color: #ffffff;
+    border-color: #D32F2F;
+}
+
+/* Small button - 小按钮 */
+body.mocha-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.mocha-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.mocha-theme .endpoint-toggle-btn {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.mocha-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238D6E63' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.mocha-theme .log-level-select-btn:hover,
+body.mocha-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.mocha-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.mocha-theme .log-textarea {
+    background: #FFFFFF;
+    color: #3E2723;
+    border-color: var(--border-color);
+}
+
+/* ========== Toggle Switch ========== */
+body.mocha-theme .toggle-slider {
+    background-color: #D7CCC8;
+}
+
+body.mocha-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.mocha-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.mocha-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.mocha-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.mocha-theme .copy-btn:hover {
+    background: rgba(141, 110, 99, 0.1);
+}
+
+/* ========== Badges ========== */
+body.mocha-theme .current-badge {
+    background: #689F38;
+}
+
+body.mocha-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.mocha-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.mocha-theme .btn-switch:disabled {
+    background: #D7CCC8;
+}
+
+/* ========== Error Toast ========== */
+body.mocha-theme .error-toast {
+    background: #D32F2F;
+    box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+}
+
+/* ========== Loading State ========== */
+body.mocha-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.mocha-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.mocha-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.mocha-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Welcome Modal ========== */
+body.mocha-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.mocha-theme #testResultModal .modal-body,
+body.mocha-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* ========== Port Display Text ========== */
+body.mocha-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.mocha-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.mocha-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(141, 110, 99, 0.1);
+}
+
+/* ========== Prompt Dialog ========== */
+body.mocha-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.mocha-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.mocha-theme .notification-success {
+    background: #689F38;
+}
+
+body.mocha-theme .notification-error {
+    background: #D32F2F;
+}
+
+body.mocha-theme .notification-warning {
+    background: #F57C00;
+}
+
+body.mocha-theme .notification-info {
+    background: #8D6E63;
+}
+
+/* ========== Error Message ========== */
+body.mocha-theme .error-message {
+    background: #FFEBEE;
+    border-color: #FFCDD2;
+    color: #C62828;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.mocha-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.mocha-theme .conflict-divider {
+    background: linear-gradient(90deg, #8D6E63 0%, #6D4C41 100%);
+}
+
+body.mocha-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.mocha-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.mocha-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-value-local {
+    background: #F1F8E9;
+    border-color: #C5E1A5;
+}
+
+body.mocha-theme .conflict-value-remote {
+    background: #FFF3E0;
+    border-color: #FFCC80;
+}
+
+body.mocha-theme .conflict-value-label {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .conflict-badge {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+/* ========== Data Sync Dialog ========== */
+body.mocha-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.mocha-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.mocha-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.mocha-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.mocha-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Mocha Theme ========== */
+body.mocha-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.mocha-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.mocha-theme ::-webkit-scrollbar-thumb {
+    background: #BCAAA4;
+    border-radius: 5px;
+}
+
+body.mocha-theme ::-webkit-scrollbar-thumb:hover {
+    background: #A1887F;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.mocha-theme #confirmModal .modal-content,
+body.mocha-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.mocha-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.mocha-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(141, 110, 99, 0.4),
+        0 0 10px rgba(141, 110, 99, 0.5),
+        0 0 20px rgba(141, 110, 99, 0.3),
+        0 0 30px rgba(141, 110, 99, 0.2),
+        0 8px 24px var(--shadow-color);
+}
+
+body.mocha-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(141, 110, 99, 0.05);
+}
+
+/* ========== History Modal Fixes ========== */
+body.mocha-theme #historyModal .modal-content {
+    background: var(--modal-bg) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.mocha-theme #genericModal .modal-content,
+body.mocha-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Mocha Theme ========== */
+body.mocha-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.mocha-theme .required-mark {
+    color: #D32F2F;
+}
+
+/* ========== Footer Left Text ========== */
+body.mocha-theme .footer-left span {
+    color: var(--text-secondary);
+}
