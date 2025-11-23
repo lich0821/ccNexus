@@ -24,6 +24,10 @@ function renderLogs(logs) {
         return;
     }
 
+    // Check if user is at the bottom before updating content
+    // Allow 50px tolerance for "near bottom" detection
+    const isAtBottom = textarea.scrollHeight - textarea.scrollTop - textarea.clientHeight < 50;
+
     const logText = logs.map(log => {
         const date = new Date(log.timestamp);
         const year = date.getFullYear();
@@ -38,7 +42,11 @@ function renderLogs(logs) {
     }).join('\n');
 
     textarea.value = logText;
-    textarea.scrollTop = textarea.scrollHeight;
+
+    // Only auto-scroll to bottom if user was already at the bottom
+    if (isAtBottom) {
+        textarea.scrollTop = textarea.scrollHeight;
+    }
 }
 
 export function toggleLogPanel() {

@@ -1154,9 +1154,9 @@ body {
     width: 100%;
     height: 300px;
     padding: 12px;
-    border: none;
-    background: #1e1e1e;
-    color: #d4d4d4;
+    border: 1px solid #e0e0e0;
+    background: #fafbfc;
+    color: #24292e;
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
     font-size: 13px;
     line-height: 1.6;
@@ -1166,7 +1166,8 @@ body {
 
 .log-textarea:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
 }
 
 /* Scrollbar styling for textarea */
@@ -1175,16 +1176,16 @@ body {
 }
 
 .log-textarea::-webkit-scrollbar-track {
-    background: #2d2d2d;
+    background: #f1f1f1;
 }
 
 .log-textarea::-webkit-scrollbar-thumb {
-    background: #555;
+    background: #c1c1c1;
     border-radius: 5px;
 }
 
 .log-textarea::-webkit-scrollbar-thumb:hover {
-    background: #777;
+    background: #a8a8a8;
 }
 
 /* Language Switcher */
