@@ -3,8 +3,10 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/singleinstance"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -20,18 +22,18 @@ var trayIcon []byte
 
 func main() {
 	// Check for single instance
-	// mutex, err := singleinstance.CreateMutex("Global\\ccNexus-SingleInstance-Mutex")
-	// if err != nil {
-	// 	// Another instance is already running, try to show it
-	// 	log.Printf("Another instance is already running, attempting to show existing window...")
-	// 	if singleinstance.FindAndShowExistingWindow("ccNexus") {
-	// 		log.Printf("Successfully brought existing window to foreground")
-	// 	} else {
-	// 		log.Printf("Could not find existing window, but another instance is running")
-	// 	}
-	// 	os.Exit(0)
-	// }
-	// defer mutex.Release()
+	mutex, err := singleinstance.CreateMutex("Global\\ccNexus-SingleInstance-Mutex")
+	if err != nil {
+		// Another instance is already running, try to show it
+		log.Printf("Another instance is already running, attempting to show existing window...")
+		if singleinstance.FindAndShowExistingWindow("ccNexus") {
+			log.Printf("Successfully brought existing window to foreground")
+		} else {
+			log.Printf("Could not find existing window, but another instance is running")
+		}
+		os.Exit(0)
+	}
+	defer mutex.Release()
 
 	app := NewApp(trayIcon)
 

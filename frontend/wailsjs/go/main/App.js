@@ -6,8 +6,32 @@ export function AddEndpoint(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['main']['App']['AddEndpoint'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function BackupToWebDAV(arg1) {
+  return window['go']['main']['App']['BackupToWebDAV'](arg1);
+}
+
 export function ClearLogs() {
   return window['go']['main']['App']['ClearLogs']();
+}
+
+export function DeleteWebDAVBackups(arg1) {
+  return window['go']['main']['App']['DeleteWebDAVBackups'](arg1);
+}
+
+export function DetectWebDAVConflict(arg1) {
+  return window['go']['main']['App']['DetectWebDAVConflict'](arg1);
+}
+
+export function GenerateMockArchives(arg1) {
+  return window['go']['main']['App']['GenerateMockArchives'](arg1);
+}
+
+export function GetArchiveData(arg1) {
+  return window['go']['main']['App']['GetArchiveData'](arg1);
+}
+
+export function GetArchiveTrend(arg1) {
+  return window['go']['main']['App']['GetArchiveTrend'](arg1);
 }
 
 export function GetConfig() {
@@ -38,8 +62,36 @@ export function GetStats() {
   return window['go']['main']['App']['GetStats']();
 }
 
+export function GetStatsDaily() {
+  return window['go']['main']['App']['GetStatsDaily']();
+}
+
+export function GetStatsMonthly() {
+  return window['go']['main']['App']['GetStatsMonthly']();
+}
+
+export function GetStatsTrend() {
+  return window['go']['main']['App']['GetStatsTrend']();
+}
+
+export function GetStatsTrendByPeriod(arg1) {
+  return window['go']['main']['App']['GetStatsTrendByPeriod'](arg1);
+}
+
+export function GetStatsWeekly() {
+  return window['go']['main']['App']['GetStatsWeekly']();
+}
+
+export function GetStatsYesterday() {
+  return window['go']['main']['App']['GetStatsYesterday']();
+}
+
 export function GetSystemLanguage() {
   return window['go']['main']['App']['GetSystemLanguage']();
+}
+
+export function GetTheme() {
+  return window['go']['main']['App']['GetTheme']();
 }
 
 export function GetVersion() {
@@ -48,6 +100,14 @@ export function GetVersion() {
 
 export function HideWindow() {
   return window['go']['main']['App']['HideWindow']();
+}
+
+export function ListArchives() {
+  return window['go']['main']['App']['ListArchives']();
+}
+
+export function ListWebDAVBackups() {
+  return window['go']['main']['App']['ListWebDAVBackups']();
 }
 
 export function OpenURL(arg1) {
@@ -62,12 +122,28 @@ export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }
 
+export function ReorderEndpoints(arg1) {
+  return window['go']['main']['App']['ReorderEndpoints'](arg1);
+}
+
+export function RestoreFromWebDAV(arg1, arg2) {
+  return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
+}
+
+export function SetCloseWindowBehavior(arg1) {
+  return window['go']['main']['App']['SetCloseWindowBehavior'](arg1);
+}
+
 export function SetLanguage(arg1) {
   return window['go']['main']['App']['SetLanguage'](arg1);
 }
 
 export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
+}
+
+export function SetTheme(arg1) {
+  return window['go']['main']['App']['SetTheme'](arg1);
 }
 
 export function ShowWindow() {
@@ -80,6 +156,10 @@ export function SwitchToEndpoint(arg1) {
 
 export function TestEndpoint(arg1) {
   return window['go']['main']['App']['TestEndpoint'](arg1);
+}
+
+export function TestWebDAVConnection(arg1, arg2, arg3) {
+  return window['go']['main']['App']['TestWebDAVConnection'](arg1, arg2, arg3);
 }
 
 export function ToggleEndpoint(arg1, arg2) {
@@ -96,4 +176,8 @@ export function UpdateEndpoint(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
 
 export function UpdatePort(arg1) {
   return window['go']['main']['App']['UpdatePort'](arg1);
+}
+
+export function UpdateWebDAVConfig(arg1, arg2, arg3) {
+  return window['go']['main']['App']['UpdateWebDAVConfig'](arg1, arg2, arg3);
 }

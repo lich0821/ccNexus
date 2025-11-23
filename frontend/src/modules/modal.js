@@ -45,6 +45,33 @@ export function cancelConfirm() {
     }
 }
 
+// Close action dialog
+export function showCloseActionDialog() {
+    document.getElementById('closeActionDialog').classList.add('active');
+}
+
+export async function quitApplication() {
+    document.getElementById('closeActionDialog').classList.remove('active');
+    // Save user preference ("quit" = quit directly)
+    try {
+        await window.go.main.App.SetCloseWindowBehavior('quit');
+    } catch (error) {
+        console.error('Failed to save close window behavior:', error);
+    }
+    window.go.main.App.Quit();
+}
+
+export async function minimizeToTray() {
+    document.getElementById('closeActionDialog').classList.remove('active');
+    // Save user preference ("minimize" = minimize to tray)
+    try {
+        await window.go.main.App.SetCloseWindowBehavior('minimize');
+    } catch (error) {
+        console.error('Failed to save close window behavior:', error);
+    }
+    window.go.main.App.HideWindow();
+}
+
 // Toggle password visibility
 export function togglePasswordVisibility() {
     const input = document.getElementById('endpointKey');
@@ -62,7 +89,7 @@ export function togglePasswordVisibility() {
 // Endpoint Modal
 export function showAddEndpointModal() {
     currentEditIndex = -1;
-    document.getElementById('modalTitle').textContent = t('modal.addEndpoint');
+    document.getElementById('modalTitle').textContent = '➕ ' + t('modal.addEndpoint');
     document.getElementById('endpointName').value = '';
     document.getElementById('endpointUrl').value = '';
     document.getElementById('endpointKey').value = '';
@@ -79,7 +106,7 @@ export async function editEndpoint(index) {
     const config = JSON.parse(configStr);
     const ep = config.endpoints[index];
 
-    document.getElementById('modalTitle').textContent = t('modal.editEndpoint');
+    document.getElementById('modalTitle').textContent = '✏️ ' + t('modal.editEndpoint');
     document.getElementById('endpointName').value = ep.name;
     document.getElementById('endpointUrl').value = ep.apiUrl;
     document.getElementById('endpointKey').value = ep.apiKey;
@@ -106,6 +133,18 @@ export async function saveEndpoint() {
 
     if (transformer !== 'claude' && !model) {
         showError(t('modal.modelRequired').replace('{transformer}', transformer));
+        return;
+    }
+
+    // Check for duplicate endpoint name
+    const configStr = await window.go.main.App.GetConfig();
+    const config = JSON.parse(configStr);
+    const existingEndpoint = config.endpoints.find((ep, idx) =>
+        ep.name === name && idx !== currentEditIndex
+    );
+
+    if (existingEndpoint) {
+        showError(`Endpoint name "${name}" already exists. Please use a different name.`);
         return;
     }
 
@@ -204,7 +243,7 @@ export async function showWelcomeModal() {
 
     try {
         const version = await window.go.main.App.GetVersion();
-        document.querySelector('#welcomeModal .modal-header h2').textContent = `👋 Welcome to ccNexus v${version}`;
+        document.querySelector('#welcomeModal .modal-header h2').textContent = t('welcome.titleWithVersion').replace('{version}', version);
     } catch (error) {
         console.error('Failed to load version:', error);
     }

@@ -29,10 +29,12 @@
 - 🔐 **Secure API Key Display** - Shows only last 4 characters of API keys
 - 🚦 **Smart Load Balancing** - Distributes requests only to enabled endpoints
 - 📋 **Comprehensive Logging** - Multi-level logging (DEBUG/INFO/WARN/ERROR) with real-time viewing
+- 📈 **Historical Statistics** - View monthly archived statistics with SQLite storage
 - 🖥️ **Desktop GUI** - Beautiful cross-platform interface built with Wails
 - 🚀 **Single Binary** - No dependencies, just download and run
 - 🔧 **Easy Configuration** - Manage endpoints through GUI or config file
-- 💾 **Persistent Config** - Automatically saves configuration and preferences
+- 💾 **Persistent Storage** - SQLite database for configuration and statistics
+- 🔄 **Auto Migration** - Seamlessly migrates from JSON to SQLite on first run
 - 🔒 **Local First** - All data stays on your machine
 
 ## 🚀 Quick Start
@@ -101,11 +103,16 @@ Claude Code → Proxy (localhost:3000) → Endpoint #1 (non-200 response)
 4. **Auto Retry**: Switches endpoint and retries on non-200 responses
 5. **Round Robin**: Cycles through all endpoints
 
-## 🔧 Configuration File
+## 🔧 Configuration and Data Storage
 
-Configuration is stored at:
-- **Windows**: `%USERPROFILE%\.ccNexus\config.json`
-- **macOS/Linux**: `~/.ccNexus/config.json`
+Data is stored at:
+- **Windows**: `%USERPROFILE%\.ccNexus\`
+- **macOS/Linux**: `~/.ccNexus/`
+
+Files:
+- `config.json` - Legacy configuration (auto-migrated to SQLite on first run)
+- `ccnexus.db` - SQLite database (configuration and statistics)
+- `backup/` - Backup of legacy JSON files after migration
 
 Example:
 
@@ -158,16 +165,36 @@ Example:
 
 - Go 1.22+
 - Node.js 18+
-- Wails CLI v2
+- Wails CLI v2 (will be auto-installed if not present)
 
-### Setup
+### Quick Start
+
+The project includes a smart `run.mjs` script that automatically handles dependencies and setup:
 
 ```bash
 # Clone repository
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
 
-# Install Wails
+# Run in development mode (auto-installs Wails if needed)
+node run.mjs
+
+# Or use npm
+npm start
+# or
+npm run dev
+```
+
+**Features of run.mjs:**
+- ✅ Auto-installs Wails CLI if not found
+- ✅ Auto-installs frontend dependencies
+- ✅ Uses China mirrors for faster downloads (GOPROXY, npm registry)
+- ✅ Simple command-line interface
+
+### Manual Setup (Alternative)
+
+```bash
+# Install Wails manually
 go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
 # Install dependencies
@@ -181,14 +208,34 @@ wails dev
 ### Build
 
 ```bash
-# Build for current platform
-wails build
+# Standard build
+node run.mjs -b
+# or
+npm run build
+
+# Production build (optimized + compressed)
+node run.mjs -b -p
+# or
+npm run build:prod
 
 # Build for specific platform
-wails build -platform windows/amd64
-wails build -platform darwin/amd64
-wails build -platform darwin/arm64
-wails build -platform linux/amd64
+node run.mjs -b --platform windows/amd64
+node run.mjs -b --platform darwin/universal
+node run.mjs -b --platform linux/amd64
+
+# Or use npm scripts
+npm run build:windows
+npm run build:macos
+npm run build:linux
+```
+
+### Script Options
+
+```bash
+node run.mjs              # Development mode (default)
+node run.mjs -b           # Build mode
+node run.mjs -b -p        # Production build (optimized)
+node run.mjs --help       # Show help
 ```
 
 ## 📚 Project Structure
@@ -203,6 +250,13 @@ ccNexus/
 │   │   └── stats.go       # Statistics tracking
 │   ├── config/            # Configuration management
 │   │   └── config.go      # Config structure
+│   ├── storage/           # Data persistence layer
+│   │   ├── interface.go   # Storage interface
+│   │   ├── sqlite.go      # SQLite implementation
+│   │   ├── migration.go   # JSON to SQLite migration
+│   │   ├── legacy.go      # Legacy JSON support
+│   │   ├── adapter.go     # Config storage adapter
+│   │   └── stats_adapter.go # Stats storage adapter
 │   ├── transformer/       # API format transformers
 │   │   ├── transformer.go # Transformer interface
 │   │   ├── claude.go      # Claude API format

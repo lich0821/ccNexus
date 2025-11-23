@@ -3,9 +3,12 @@ import '../wailsjs/runtime/runtime.js'
 import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
-import { loadStats } from './modules/stats.js'
-import { renderEndpoints } from './modules/endpoints.js'
+import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
+import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
+import { showDataSyncDialog } from './modules/webdav.js'
+import { initTips } from './modules/tips.js'
+import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme } from './modules/settings.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -25,7 +28,10 @@ import {
     openArticle,
     togglePasswordVisibility,
     acceptConfirm,
-    cancelConfirm
+    cancelConfirm,
+    showCloseActionDialog,
+    quitApplication,
+    minimizeToTray
 } from './modules/modal.js'
 
 // Load data on startup
@@ -38,6 +44,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Initialize language
     const lang = await window.go.main.App.GetLanguage();
     setLanguage(lang);
+
+    // Initialize theme
+    const theme = await window.go.main.App.GetTheme();
+    applyTheme(theme);
 
     // Initialize UI
     initUI();
@@ -52,7 +62,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Load initial data
     await loadConfigAndRender();
-    loadStats();
+    loadStatsByPeriod('daily'); // Load today's stats by default
 
     // Restore log level from config
     try {
@@ -64,20 +74,32 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     loadLogs();
 
-    // Refresh stats every 5 seconds
+    // Initialize tips
+    initTips();
+
+    // Refresh stats every 3 seconds
     setInterval(async () => {
-        await loadStats();
+        await loadStats(); // Refresh cumulative stats for endpoint cards
+        const currentPeriod = getCurrentPeriod(); // Get current selected period
+        await loadStatsByPeriod(currentPeriod); // Refresh period stats (daily/weekly/monthly)
         const config = await window.go.main.App.GetConfig();
         if (config) {
             renderEndpoints(JSON.parse(config).endpoints);
         }
-    }, 5000);
+    }, 3000);
 
     // Refresh logs every 2 seconds
     setInterval(loadLogs, 2000);
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
+
+    // Listen for close dialog event from backend
+    if (window.runtime) {
+        window.runtime.EventsOn('show-close-dialog', () => {
+            showCloseActionDialog();
+        });
+    }
 
     // Handle Cmd/Ctrl+W to hide window
     window.addEventListener('keydown', (e) => {
@@ -121,3 +143,18 @@ window.changeLanguage = changeLanguage;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.acceptConfirm = acceptConfirm;
 window.cancelConfirm = cancelConfirm;
+window.showCloseActionDialog = showCloseActionDialog;
+window.quitApplication = quitApplication;
+window.minimizeToTray = minimizeToTray;
+window.showDataSyncDialog = showDataSyncDialog;
+window.switchStatsPeriod = switchStatsPeriod;
+window.toggleEndpointPanel = toggleEndpointPanel;
+window.showSettingsModal = showSettingsModal;
+window.closeSettingsModal = closeSettingsModal;
+window.saveSettings = saveSettings;
+
+// History modal functions
+window.closeHistoryModal = async () => {
+    const { closeHistoryModal } = await import('./modules/history.js');
+    closeHistoryModal();
+};
