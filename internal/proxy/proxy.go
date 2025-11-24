@@ -340,7 +340,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			inputTokens, outputTokens, _ := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 			p.markRequestInactive(endpoint.Name)
-			logger.Info("[%s] Request completed successfully (streaming)", endpoint.Name)
+			logger.Debug("[%s] Request completed successfully (streaming)", endpoint.Name)
 			return
 		}
 
@@ -349,7 +349,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 				p.markRequestInactive(endpoint.Name)
-				logger.Info("[%s] Request completed successfully", endpoint.Name)
+				logger.Debug("[%s] Request completed successfully", endpoint.Name)
 				return
 			}
 		}

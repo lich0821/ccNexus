@@ -228,11 +228,6 @@ func (t *OpenAITransformer) TransformRequest(claudeReq []byte) ([]byte, error) {
 			openaiTools = append(openaiTools, openaiTool)
 		}
 		openaiReq.Tools = openaiTools
-
-		// Debug: log tool definitions
-		if toolsJSON, err := json.Marshal(openaiTools); err == nil {
-			logger.Debug("OpenAI tools: " + string(toolsJSON))
-		}
 	}
 
 	// Convert tool_choice to OpenAI format
