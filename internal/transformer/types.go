@@ -99,7 +99,7 @@ type OpenAIStreamChunk struct {
 // ClaudeMessage represents a message in Claude format
 type ClaudeMessage struct {
 	Role         string      `json:"role"`
-	Content      interface{} `json:"content"` // Can be string or array of content blocks
+	Content      interface{} `json:"content"`                 // Can be string or array of content blocks
 	CacheControl interface{} `json:"cache_control,omitempty"` // Prompt caching (ignored in transformation)
 }
 
@@ -110,7 +110,7 @@ type ClaudeRequest struct {
 	MaxTokens   int             `json:"max_tokens,omitempty"`
 	Temperature float64         `json:"temperature,omitempty"`
 	Stream      bool            `json:"stream,omitempty"`
-	System      interface{}     `json:"system,omitempty"`  // Can be string or array of system messages
+	System      interface{}     `json:"system,omitempty"`   // Can be string or array of system messages
 	Thinking    interface{}     `json:"thinking,omitempty"` // Claude's thinking/extended thinking parameter
 	Tools       []ClaudeTool    `json:"tools,omitempty"`
 	ToolChoice  interface{}     `json:"tool_choice,omitempty"`
@@ -186,13 +186,16 @@ type StreamContext struct {
 	InputTokens          int
 	OutputTokens         int
 	ContentIndex         int
-	ThinkingIndex        int   // Index for thinking content block
-	ToolIndex            int   // Current tool_use content block index (from OpenAI)
-	LastToolIndex        int   // Last assigned Anthropic tool block index (incremental counter)
+	ThinkingIndex        int // Index for thinking content block
+	ToolIndex            int // Current tool_use content block index (from OpenAI)
+	LastToolIndex        int // Last assigned Anthropic tool block index (incremental counter)
 	FinishReasonSent     bool
-	EnableThinking       bool            // Whether thinking is enabled for this request
-	CurrentToolCall      *OpenAIToolCall // Current tool call being processed
-	ToolCallBuffer       string          // Buffer for accumulating tool call arguments
+	EnableThinking       bool              // Whether thinking is enabled for this request
+	CurrentToolCall      *OpenAIToolCall   // Current tool call being processed
+	ToolCallBuffer       string            // Buffer for accumulating tool call arguments
+	State                interface{}       // V3 architecture state (openai.StreamState)
+	ToolCallIDMap        map[string]string // tool_use_id -> function_name mapping for Gemini
+	ToolCallCounter      int               // Counter for generating unique tool IDs
 }
 
 // NewStreamContext creates a new stream context with default values
@@ -215,6 +218,8 @@ func NewStreamContext() *StreamContext {
 		EnableThinking:       false,
 		CurrentToolCall:      nil,
 		ToolCallBuffer:       "",
+		ToolCallIDMap:        make(map[string]string),
+		ToolCallCounter:      0,
 	}
 }
 
@@ -222,8 +227,10 @@ func NewStreamContext() *StreamContext {
 
 // GeminiPart represents a part in Gemini format
 type GeminiPart struct {
-	Text         string                 `json:"text,omitempty"`
-	FunctionCall *GeminiFunctionCall    `json:"functionCall,omitempty"`
+	Text             string                  `json:"text,omitempty"`
+	Thought          bool                    `json:"thought,omitempty"`
+	ThoughtSignature string                  `json:"thoughtSignature,omitempty"`
+	FunctionCall     *GeminiFunctionCall     `json:"functionCall,omitempty"`
 	FunctionResponse *GeminiFunctionResponse `json:"functionResponse,omitempty"`
 }
 
@@ -259,10 +266,10 @@ type GeminiFunctionDeclaration struct {
 
 // GeminiRequest represents a Gemini API request
 type GeminiRequest struct {
-	Contents         []GeminiContent        `json:"contents"`
-	SystemInstruction *GeminiContent        `json:"systemInstruction,omitempty"`
-	Tools            []GeminiTool           `json:"tools,omitempty"`
-	GenerationConfig *GeminiGenerationConfig `json:"generationConfig,omitempty"`
+	Contents          []GeminiContent         `json:"contents"`
+	SystemInstruction *GeminiContent          `json:"systemInstruction,omitempty"`
+	Tools             []GeminiTool            `json:"tools,omitempty"`
+	GenerationConfig  *GeminiGenerationConfig `json:"generationConfig,omitempty"`
 }
 
 // GeminiGenerationConfig represents generation configuration in Gemini format

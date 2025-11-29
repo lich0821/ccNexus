@@ -1,0 +1,190 @@
+package proxy
+
+import (
+	"bufio"
+	"bytes"
+	"compress/gzip"
+	"encoding/json"
+	"io"
+	"net/http"
+	"strings"
+
+	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/transformer"
+	"github.com/lich0821/ccNexus/internal/transformer/gemini"
+	"github.com/lich0821/ccNexus/internal/transformer/openai"
+)
+
+// handleStreamingResponse processes streaming SSE responses
+func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, error) {
+	// Copy response headers
+	for key, values := range resp.Header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+	w.WriteHeader(resp.StatusCode)
+
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		logger.Error("[%s] ResponseWriter does not support flushing", endpoint.Name)
+		resp.Body.Close()
+		return 0, 0, nil
+	}
+
+	var streamCtx *transformer.StreamContext
+	if transformerName == "openai" || transformerName == "gemini" {
+		streamCtx = transformer.NewStreamContext()
+		if transformerName == "openai" {
+			streamCtx.EnableThinking = thinkingEnabled
+		}
+	}
+
+	scanner := bufio.NewScanner(resp.Body)
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
+	var inputTokens, outputTokens int
+	var buffer bytes.Buffer
+	var outputText strings.Builder
+	eventCount := 0
+	streamDone := false
+
+	for scanner.Scan() && !streamDone {
+		line := scanner.Text()
+
+		if !p.isCurrentEndpoint(endpoint.Name) {
+			logger.Warn("[%s] Endpoint switched during streaming, terminating stream gracefully", endpoint.Name)
+			streamDone = true
+			break
+		}
+
+		if strings.Contains(line, "data: [DONE]") {
+			streamDone = true
+			buffer.WriteString(line + "\n")
+			eventData := buffer.Bytes()
+			logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount+1, string(eventData))
+
+			transformedEvent, err := p.transformStreamEvent(eventData, trans, transformerName, streamCtx)
+			if err == nil {
+				logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount+1, string(transformedEvent))
+				w.Write(transformedEvent)
+				flusher.Flush()
+			}
+			break
+		}
+
+		buffer.WriteString(line + "\n")
+
+		if line == "" {
+			eventCount++
+			eventData := buffer.Bytes()
+			logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount, string(eventData))
+
+			transformedEvent, err := p.transformStreamEvent(eventData, trans, transformerName, streamCtx)
+			if err != nil {
+				logger.Error("[%s] Failed to transform SSE event: %v", endpoint.Name, err)
+			} else {
+				logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
+
+				p.extractTokensFromEvent(eventData, &inputTokens, &outputTokens)
+				p.extractTextFromEvent(transformedEvent, &outputText)
+
+				if _, writeErr := w.Write(transformedEvent); writeErr != nil {
+					logger.Error("[%s] Failed to write transformed event: %v", endpoint.Name, writeErr)
+					streamDone = true
+					break
+				}
+				flusher.Flush()
+			}
+			buffer.Reset()
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		logger.Error("[%s] Scanner error: %v", endpoint.Name, err)
+	}
+
+	resp.Body.Close()
+	return inputTokens, outputTokens, nil
+}
+
+// transformStreamEvent transforms a single SSE event
+func (p *Proxy) transformStreamEvent(eventData []byte, trans transformer.Transformer, transformerName string, streamCtx *transformer.StreamContext) ([]byte, error) {
+	switch transformerName {
+	case "openai":
+		return trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "gemini":
+		return trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	default:
+		return trans.TransformResponse(eventData, true)
+	}
+}
+
+// extractTokensFromEvent extracts token counts from SSE event
+func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputTokens *int) {
+	scanner := bufio.NewScanner(bytes.NewReader(eventData))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+
+		jsonData := strings.TrimPrefix(line, "data: ")
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
+			continue
+		}
+
+		eventType, _ := event["type"].(string)
+		if eventType == "message_start" {
+			if message, ok := event["message"].(map[string]interface{}); ok {
+				if usage, ok := message["usage"].(map[string]interface{}); ok {
+					if input, ok := usage["input_tokens"].(float64); ok {
+						*inputTokens = int(input)
+					}
+				}
+			}
+		} else if eventType == "message_delta" {
+			if usage, ok := event["usage"].(map[string]interface{}); ok {
+				if output, ok := usage["output_tokens"].(float64); ok {
+					*outputTokens = int(output)
+				}
+			}
+		}
+	}
+}
+
+// extractTextFromEvent extracts text content from transformed event
+func (p *Proxy) extractTextFromEvent(transformedEvent []byte, outputText *strings.Builder) {
+	scanner := bufio.NewScanner(bytes.NewReader(transformedEvent))
+	for scanner.Scan() {
+		line := scanner.Text()
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+
+		jsonData := strings.TrimPrefix(line, "data: ")
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
+			continue
+		}
+
+		if delta, ok := event["delta"].(map[string]interface{}); ok {
+			if text, ok := delta["text"].(string); ok {
+				outputText.WriteString(text)
+			}
+		}
+	}
+}
+
+// decompressGzip decompresses gzip-encoded response body
+func decompressGzip(body io.ReadCloser) ([]byte, error) {
+	gzipReader, err := gzip.NewReader(body)
+	if err != nil {
+		return nil, err
+	}
+	defer gzipReader.Close()
+	return io.ReadAll(gzipReader)
+}

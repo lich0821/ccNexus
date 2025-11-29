@@ -8,7 +8,7 @@ import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
-import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme } from './modules/settings.js'
+import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -45,9 +45,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const lang = await window.go.main.App.GetLanguage();
     setLanguage(lang);
 
-    // Initialize theme
-    const theme = await window.go.main.App.GetTheme();
-    applyTheme(theme);
+    // Initialize theme (supports auto mode)
+    await initTheme();
 
     // Initialize UI
     initUI();
@@ -152,6 +151,9 @@ window.toggleEndpointPanel = toggleEndpointPanel;
 window.showSettingsModal = showSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.saveSettings = saveSettings;
+window.showAutoThemeConfigModal = showAutoThemeConfigModal;
+window.closeAutoThemeConfigModal = closeAutoThemeConfigModal;
+window.saveAutoThemeConfig = saveAutoThemeConfig;
 
 // History modal functions
 window.closeHistoryModal = async () => {

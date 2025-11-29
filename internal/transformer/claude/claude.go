@@ -1,4 +1,4 @@
-package transformer
+package claude
 
 import (
 	"encoding/json"
@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/transformer"
 )
 
 // ClaudeTransformer handles Claude API with optional model override
@@ -79,5 +80,5 @@ func (t *ClaudeTransformer) Name() string {
 }
 
 func init() {
-	Register(NewClaudeTransformer())
+	transformer.Register(NewClaudeTransformer())
 }

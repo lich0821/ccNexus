@@ -1,0 +1,906 @@
+/**
+ * Sakura Pink Theme Styles
+ * 樱花粉主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="sakura-theme" 即可启用樱花粉主题
+ * 温柔浪漫的粉色系配色，如春日樱花般温馨
+ */
+
+/* Sakura Theme Variables */
+body.sakura-theme {
+    --bg-gradient-start: #FFE4E6;
+    --bg-gradient-end: #FFC0CB;
+    --bg-primary: #FFF5F6;
+    --bg-secondary: #FFE8EC;
+    --bg-tertiary: #FFD9E0;
+    --text-primary: #5C4A4D;
+    --text-secondary: #8B7377;
+    --text-tertiary: #A8959A;
+    --border-color: #F0C0C8;
+    --border-light: #F8D0D8;
+    --card-bg: #FFF0F2;
+    --modal-bg: #FFF5F6;
+    --input-bg: #FFFAFA;
+    --hover-bg: #FFE0E5;
+    --shadow-color: rgba(255, 107, 138, 0.12);
+    --primary-color: #FF6B8A;
+    --primary-hover: #FF5277;
+}
+
+/* Sakura Theme Specific Styles */
+body.sakura-theme .header {
+    background: var(--bg-primary);
+    box-shadow: 0 2px 10px var(--shadow-color);
+}
+
+body.sakura-theme .header h1 {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .footer {
+    background: var(--bg-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.sakura-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .footer-right {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .card {
+    background: var(--bg-primary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.sakura-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+}
+
+body.sakura-theme .stats-tab-btn.active {
+    background: #FFB6C1;
+    color: #8B3A4A;
+    border-color: #FF9AAA;
+    box-shadow: 0 2px 8px rgba(255, 107, 138, 0.3);
+}
+
+/* ========== Statistics Cards ========== */
+body.sakura-theme .stat-box {
+    background: var(--bg-secondary);
+    box-shadow: 0 4px 6px var(--shadow-color);
+}
+
+body.sakura-theme .stat-box:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sakura-theme .stat-box .stat-label {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .stat-box .stat-value {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .stat-box .stat-primary {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .stat-box .stat-secondary {
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .stat-box .stat-detail {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .stat-box .stat-text {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .stat-separator {
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .stat-total {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .stat-divider {
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .trend {
+    background: var(--bg-tertiary);
+}
+
+body.sakura-theme .trend-up {
+    background: rgba(72, 187, 120, 0.2);
+    color: #2F855A;
+}
+
+body.sakura-theme .trend-down {
+    background: rgba(229, 62, 62, 0.15);
+    color: #C53030;
+}
+
+body.sakura-theme .trend-flat {
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .endpoint-item {
+    background: var(--bg-secondary);
+}
+
+body.sakura-theme .endpoint-info h3 {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .form-group input,
+body.sakura-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23FF6B8A' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.sakura-theme .modal-content {
+    background: var(--modal-bg);
+}
+
+body.sakura-theme .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* ========== All Modal Titles ========== */
+body.sakura-theme #endpointModal .modal-header h2,
+body.sakura-theme #portModal .modal-header h2,
+body.sakura-theme #historyModal .modal-header h2,
+body.sakura-theme #settingsModal .modal-header h2,
+body.sakura-theme #autoThemeConfigModal .modal-header h2,
+body.sakura-theme #welcomeModal .modal-header h2,
+body.sakura-theme #testResultModal .modal-header h2,
+body.sakura-theme #genericModal .modal-header h2,
+body.sakura-theme #subModal .modal-header h2 {
+    color: var(--text-primary);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.sakura-theme .confirm-dialog-content .confirm-title,
+body.sakura-theme #confirmDialog .confirm-title,
+body.sakura-theme #closeActionDialog .confirm-title {
+    color: var(--text-primary);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.sakura-theme .modal-close,
+body.sakura-theme #historyModal .modal-close,
+body.sakura-theme #endpointModal .modal-close,
+body.sakura-theme #portModal .modal-close,
+body.sakura-theme #genericModal .modal-close,
+body.sakura-theme #subModal .modal-close,
+body.sakura-theme #settingsModal .modal-close,
+body.sakura-theme #autoThemeConfigModal .modal-close,
+body.sakura-theme #welcomeModal .modal-close,
+body.sakura-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.sakura-theme .modal-close:hover,
+body.sakura-theme #historyModal .modal-close:hover,
+body.sakura-theme #endpointModal .modal-close:hover,
+body.sakura-theme #portModal .modal-close:hover,
+body.sakura-theme #genericModal .modal-close:hover,
+body.sakura-theme #subModal .modal-close:hover,
+body.sakura-theme #settingsModal .modal-close:hover,
+body.sakura-theme #autoThemeConfigModal .modal-close:hover,
+body.sakura-theme #welcomeModal .modal-close:hover,
+body.sakura-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--text-primary) !important;
+}
+
+body.sakura-theme .btn-primary {
+    background: var(--primary-color);
+}
+
+body.sakura-theme .btn-primary:hover {
+    background: var(--primary-hover);
+}
+
+body.sakura-theme .header-link {
+    background: rgba(255, 107, 138, 0.15);
+    color: var(--primary-color);
+}
+
+body.sakura-theme .header-link:hover {
+    background: rgba(255, 107, 138, 0.25);
+}
+
+body.sakura-theme .port-display {
+    background: rgba(255, 107, 138, 0.15);
+    border-color: rgba(255, 107, 138, 0.3);
+}
+
+body.sakura-theme .port-display:hover {
+    background: rgba(255, 107, 138, 0.25);
+    border-color: rgba(255, 107, 138, 0.5);
+}
+
+body.sakura-theme .port-number {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .history-details h3 {
+    color: var(--text-primary);
+}
+
+body.sakura-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.sakura-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.sakura-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.sakura-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.sakura-theme .confirm-title {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.sakura-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+}
+
+body.sakura-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.sakura-theme .conflict-title {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.sakura-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.sakura-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.sakura-theme .backup-table th,
+body.sakura-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.sakura-theme .data-sync-section h3 {
+    color: var(--text-secondary);
+    border-bottom-color: var(--border-color);
+}
+
+body.sakura-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.sakura-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.sakura-theme .conflict-endpoint-header strong {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-value-local code,
+body.sakura-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.sakura-theme #genericModal .modal-header::after,
+body.sakura-theme #subModal .modal-header::after,
+body.sakura-theme #settingsModal .modal-header::after,
+body.sakura-theme #autoThemeConfigModal .modal-header::after,
+body.sakura-theme #endpointModal .modal-header::after,
+body.sakura-theme #portModal .modal-header::after,
+body.sakura-theme #historyModal .modal-header::after,
+body.sakura-theme #testResultModal .modal-header::after {
+    background: var(--border-light);
+}
+
+body.sakura-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.sakura-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.sakura-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.sakura-theme .btn-primary {
+    background: #FF6B8A;
+    color: #ffffff;
+    border-color: #FF6B8A;
+}
+
+body.sakura-theme .btn-primary:hover {
+    background: #FF5277;
+    border-color: #FF5277;
+}
+
+/* Secondary button - 次要操作按钮 */
+body.sakura-theme .btn-secondary {
+    background: #FFD0D8;
+    color: #8B4A5A;
+    border-color: #FFC0C8;
+}
+
+body.sakura-theme .btn-secondary:hover {
+    background: #FFC0C8;
+    border-color: #FFB0B8;
+}
+
+/* Danger button - 危险操作按钮 */
+body.sakura-theme .btn-danger {
+    background: #E53E3E;
+    color: #ffffff;
+    border-color: #E53E3E;
+}
+
+body.sakura-theme .btn-danger:hover {
+    background: #C53030;
+    border-color: #C53030;
+}
+
+/* Card button - 卡片内按钮 */
+body.sakura-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.sakura-theme .btn-card.btn-primary {
+    background: var(--primary-color);
+    color: #ffffff;
+    border-color: var(--primary-color);
+}
+
+body.sakura-theme .btn-card.btn-danger {
+    background: #E53E3E;
+    color: #ffffff;
+    border-color: #E53E3E;
+}
+
+/* Small button - 小按钮 */
+body.sakura-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+}
+
+body.sakura-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.sakura-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .endpoint-toggle-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--hover-bg);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.sakura-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235C4A4D' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.sakura-theme .log-level-select-btn:hover,
+body.sakura-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+}
+
+/* ========== Log Panel ========== */
+body.sakura-theme .log-panel {
+    background: var(--bg-secondary);
+}
+
+body.sakura-theme .log-textarea {
+    background: #FFF8F9;
+    color: #5C4A4D;
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .log-textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 138, 0.15);
+}
+
+body.sakura-theme .log-textarea::-webkit-scrollbar-track {
+    background: #FFE8EC;
+}
+
+body.sakura-theme .log-textarea::-webkit-scrollbar-thumb {
+    background: #FFB0C0;
+}
+
+body.sakura-theme .log-textarea::-webkit-scrollbar-thumb:hover {
+    background: #FF90A8;
+}
+
+/* ========== Toggle Switch ========== */
+body.sakura-theme .toggle-slider {
+    background-color: #FFB0C0;
+}
+
+body.sakura-theme .toggle-switch input:checked + .toggle-slider {
+    background-color: var(--primary-color);
+}
+
+/* ========== Password Toggle ========== */
+body.sakura-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .password-toggle:hover {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.sakura-theme .copy-btn {
+    color: var(--primary-color);
+}
+
+body.sakura-theme .copy-btn:hover {
+    background: rgba(255, 107, 138, 0.15);
+}
+
+/* ========== Badges ========== */
+body.sakura-theme .current-badge {
+    background: #48BB78;
+}
+
+body.sakura-theme .btn-switch {
+    background: var(--primary-color);
+}
+
+body.sakura-theme .btn-switch:hover {
+    background: var(--primary-hover);
+}
+
+body.sakura-theme .btn-switch:disabled {
+    background: #FFB0C0;
+}
+
+/* ========== Error Toast ========== */
+body.sakura-theme .error-toast {
+    background: #E53E3E;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ========== Loading State ========== */
+body.sakura-theme .loading {
+    color: var(--text-secondary);
+}
+
+/* ========== Confirm Dialog ========== */
+body.sakura-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.sakura-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.sakura-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.sakura-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.sakura-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+/* ========== Test Result Modal ========== */
+body.sakura-theme #testResultModal .modal-body,
+body.sakura-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.sakura-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: #E6FFED !important;
+    border-color: #A3E4B2 !important;
+}
+
+body.sakura-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: #276749 !important;
+}
+
+/* Test result error message */
+body.sakura-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: #FFF0F0 !important;
+    border-color: #FFC0C0 !important;
+}
+
+body.sakura-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #C53030 !important;
+}
+
+/* Test result details box */
+body.sakura-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.sakura-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.sakura-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.sakura-theme .form-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(255, 107, 138, 0.15);
+}
+
+/* ========== Prompt Dialog ========== */
+body.sakura-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.sakura-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sakura-theme .notification-success {
+    background: #48BB78;
+}
+
+body.sakura-theme .notification-error {
+    background: #E53E3E;
+}
+
+body.sakura-theme .notification-warning {
+    background: #ED8936;
+}
+
+body.sakura-theme .notification-info {
+    background: #FF6B8A;
+}
+
+/* ========== Error Message ========== */
+body.sakura-theme .error-message {
+    background: rgba(229, 62, 62, 0.15);
+    border-color: #E53E3E;
+    color: #C53030;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.sakura-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.sakura-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.sakura-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .conflict-strategy-info strong {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .conflict-value-local {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .conflict-value-remote {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.sakura-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.sakura-theme .conflict-badge {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.sakura-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.sakura-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.sakura-theme [style*="color: #666"],
+body.sakura-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.sakura-theme [style*="color: #555"],
+body.sakura-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.sakura-theme [style*="color: #333"],
+body.sakura-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.sakura-theme [style*="color: #999"],
+body.sakura-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.sakura-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.sakura-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.sakura-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Sakura Theme ========== */
+body.sakura-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.sakura-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.sakura-theme ::-webkit-scrollbar-thumb {
+    background: #FFB0C0;
+    border-radius: 5px;
+}
+
+body.sakura-theme ::-webkit-scrollbar-thumb:hover {
+    background: #FF90A8;
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.sakura-theme #confirmModal .modal-content,
+body.sakura-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.sakura-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+body.sakura-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(255, 107, 138, 0.4),
+        0 0 10px rgba(255, 107, 138, 0.5),
+        0 0 20px rgba(255, 107, 138, 0.3),
+        0 8px 24px var(--shadow-color);
+}
+
+body.sakura-theme .endpoint-item.drag-over {
+    border-color: var(--primary-color);
+    background: rgba(255, 107, 138, 0.1);
+}
+
+/* ========== History Modal Fixes ========== */
+body.sakura-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.sakura-theme #genericModal .modal-content,
+body.sakura-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Sakura Theme ========== */
+body.sakura-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.sakura-theme .required-mark {
+    color: #E53E3E;
+}
+
+/* ========== Footer Left Text ========== */
+body.sakura-theme .footer-left span {
+    color: var(--text-secondary);
+}

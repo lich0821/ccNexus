@@ -1,0 +1,981 @@
+/**
+ * Aurora Theme Styles
+ * 暗夜极光主题样式文件
+ *
+ * 使用方法: 在 body 元素上添加 class="aurora-theme" 即可启用暗夜极光主题
+ */
+
+/* Aurora Theme Variables */
+body.aurora-theme {
+    --bg-gradient-start: #0A0E27;
+    --bg-gradient-end: #1A1F3A;
+    --bg-primary: #0F1429;
+    --bg-secondary: #1A1F3A;
+    --bg-tertiary: #242B4A;
+    --text-primary: #E0E7FF;
+    --text-secondary: #C7D2FE;
+    --text-tertiary: #A5B4FC;
+    --border-color: #60A5FA;
+    --border-light: #3B4A6B;
+    --card-bg: #1A1F3A;
+    --modal-bg: #1A1F3A;
+    --input-bg: #242B4A;
+    --hover-bg: #2A3150;
+    --shadow-color: rgba(0, 255, 198, 0.2);
+    --primary-color: #00FFC6;
+    --primary-hover: #00D9B5;
+    --aurora-cyan: #00FFC6;
+    --aurora-purple: #B794F6;
+    --aurora-blue: #60A5FA;
+    --aurora-glow: 0 0 10px rgba(0, 255, 198, 0.3), 0 0 20px rgba(96, 165, 250, 0.2);
+}
+
+/* Aurora Theme Specific Styles */
+body.aurora-theme .header {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    box-shadow: 0 2px 10px var(--shadow-color), var(--aurora-glow);
+    border-bottom: 1px solid var(--aurora-cyan);
+}
+
+body.aurora-theme .header h1 {
+    color: var(--aurora-cyan);
+    text-shadow: 0 0 10px rgba(0, 255, 198, 0.5);
+}
+
+body.aurora-theme .header p {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .footer {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+    border-top: 1px solid var(--border-light);
+}
+
+body.aurora-theme .footer-content {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .footer-right {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .card {
+    background: var(--bg-primary);
+    box-shadow: 0 4px 12px rgba(0, 255, 198, 0.15);
+    border: 1px solid var(--border-light);
+}
+
+body.aurora-theme .card h2 {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .stats-tab-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+body.aurora-theme .stats-tab-btn:hover {
+    background: var(--hover-bg);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.3);
+    border-color: var(--aurora-cyan);
+}
+
+body.aurora-theme .stats-tab-btn.active {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    border-color: var(--aurora-cyan);
+    box-shadow: var(--aurora-glow);
+}
+
+/* ========== Statistics Cards ========== */
+body.aurora-theme .stat-box {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 50%, var(--aurora-purple) 100%);
+    box-shadow: 0 0 15px rgba(0, 255, 198, 0.3), 0 0 30px rgba(96, 165, 250, 0.2);
+    border: 1px solid var(--aurora-cyan);
+}
+
+body.aurora-theme .stat-box:hover {
+    box-shadow: 0 0 20px rgba(0, 255, 198, 0.4), 0 0 40px rgba(96, 165, 250, 0.3);
+    transform: translateY(-3px);
+}
+
+body.aurora-theme .stat-box .stat-label {
+    color: rgba(10, 14, 39, 0.95);
+    font-weight: 600;
+}
+
+body.aurora-theme .stat-box .stat-value {
+    color: #0A0E27;
+    font-weight: 700;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+body.aurora-theme .stat-box .stat-primary {
+    color: #0A0E27;
+    font-weight: 700;
+}
+
+body.aurora-theme .stat-box .stat-secondary {
+    color: rgba(10, 14, 39, 0.8);
+}
+
+body.aurora-theme .stat-box .stat-detail {
+    color: rgba(10, 14, 39, 0.85);
+}
+
+body.aurora-theme .stat-box .stat-text {
+    color: rgba(10, 14, 39, 0.85);
+}
+
+body.aurora-theme .stat-separator {
+    color: rgba(10, 14, 39, 0.6);
+}
+
+body.aurora-theme .stat-total {
+    color: rgba(10, 14, 39, 0.8);
+}
+
+body.aurora-theme .stat-divider {
+    color: rgba(10, 14, 39, 0.6);
+}
+
+body.aurora-theme .trend {
+    background: rgba(10, 14, 39, 0.3);
+    color: #0A0E27;
+    font-weight: 600;
+}
+
+body.aurora-theme .trend-up {
+    background: rgba(10, 14, 39, 0.4);
+    color: #0A0E27;
+    font-weight: 700;
+}
+
+body.aurora-theme .trend-down {
+    background: rgba(10, 14, 39, 0.4);
+    color: #0A0E27;
+    font-weight: 700;
+}
+
+body.aurora-theme .trend-flat {
+    background: rgba(10, 14, 39, 0.4);
+    color: #0A0E27;
+    font-weight: 700;
+}
+
+body.aurora-theme .endpoint-item {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.1);
+}
+
+body.aurora-theme .endpoint-info h3 {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .endpoint-info p {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .form-group label {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .form-group input,
+body.aurora-theme .form-group select {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .form-group input:focus,
+body.aurora-theme .form-group select:focus {
+    border-color: var(--aurora-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 255, 198, 0.2), var(--aurora-glow);
+}
+
+body.aurora-theme .form-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300FFC6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.aurora-theme .modal-content {
+    background: var(--modal-bg);
+    border: 1px solid var(--aurora-cyan);
+    box-shadow: 0 0 30px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme .modal-header h2 {
+    color: var(--aurora-cyan);
+}
+
+/* ========== All Modal Titles ========== */
+body.aurora-theme #endpointModal .modal-header h2,
+body.aurora-theme #portModal .modal-header h2,
+body.aurora-theme #historyModal .modal-header h2,
+body.aurora-theme #settingsModal .modal-header h2,
+body.aurora-theme #autoThemeConfigModal .modal-header h2,
+body.aurora-theme #welcomeModal .modal-header h2,
+body.aurora-theme #testResultModal .modal-header h2,
+body.aurora-theme #genericModal .modal-header h2,
+body.aurora-theme #subModal .modal-header h2 {
+    color: var(--aurora-cyan);
+}
+
+/* Confirm Dialog Titles (uses h4) */
+body.aurora-theme .confirm-dialog-content .confirm-title,
+body.aurora-theme #confirmDialog .confirm-title,
+body.aurora-theme #closeActionDialog .confirm-title {
+    color: var(--aurora-cyan);
+}
+
+/* ========== Modal Close Buttons ========== */
+body.aurora-theme .modal-close,
+body.aurora-theme #historyModal .modal-close,
+body.aurora-theme #endpointModal .modal-close,
+body.aurora-theme #portModal .modal-close,
+body.aurora-theme #genericModal .modal-close,
+body.aurora-theme #subModal .modal-close,
+body.aurora-theme #settingsModal .modal-close,
+body.aurora-theme #autoThemeConfigModal .modal-close,
+body.aurora-theme #welcomeModal .modal-close,
+body.aurora-theme #testResultModal .modal-close {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+body.aurora-theme .modal-close:hover,
+body.aurora-theme #historyModal .modal-close:hover,
+body.aurora-theme #endpointModal .modal-close:hover,
+body.aurora-theme #portModal .modal-close:hover,
+body.aurora-theme #genericModal .modal-close:hover,
+body.aurora-theme #subModal .modal-close:hover,
+body.aurora-theme #settingsModal .modal-close:hover,
+body.aurora-theme #autoThemeConfigModal .modal-close:hover,
+body.aurora-theme #welcomeModal .modal-close:hover,
+body.aurora-theme #testResultModal .modal-close:hover {
+    background: var(--hover-bg) !important;
+    color: var(--aurora-cyan) !important;
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme .btn-primary {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    border: 1px solid var(--aurora-cyan);
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--aurora-blue) 0%, var(--aurora-cyan) 100%);
+    box-shadow: 0 0 15px rgba(0, 255, 198, 0.4), 0 0 25px rgba(96, 165, 250, 0.3);
+}
+
+body.aurora-theme .header-link {
+    background: rgba(0, 255, 198, 0.15);
+    color: var(--aurora-cyan);
+    border: 1px solid var(--border-light);
+}
+
+body.aurora-theme .header-link:hover {
+    background: rgba(0, 255, 198, 0.25);
+    box-shadow: var(--aurora-glow);
+}
+
+body.aurora-theme .port-display {
+    background: rgba(0, 255, 198, 0.15);
+    border-color: var(--aurora-cyan);
+}
+
+body.aurora-theme .port-display:hover {
+    background: rgba(0, 255, 198, 0.25);
+    border-color: var(--aurora-cyan);
+    box-shadow: var(--aurora-glow);
+}
+
+body.aurora-theme .port-number {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .history-selector label {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .history-selector select {
+    background: var(--input-bg);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .history-details h3 {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme #historyDailyTable {
+    background: var(--bg-secondary);
+}
+
+body.aurora-theme #historyDailyTable td {
+    color: var(--text-primary);
+    border-top: 1px solid var(--border-light);
+}
+
+body.aurora-theme #historyDailyTable tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.aurora-theme .log-level-select {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.aurora-theme .confirm-title {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .confirm-message {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .confirm-footer {
+    background: var(--bg-tertiary);
+}
+
+body.aurora-theme .btn-confirm-cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .btn-confirm-cancel:hover {
+    background: var(--hover-bg);
+    border-color: var(--aurora-cyan);
+}
+
+body.aurora-theme .webdav-settings input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .conflict-dialog-content {
+    background: var(--modal-bg);
+}
+
+body.aurora-theme .conflict-title {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .conflict-message {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .conflict-card {
+    border-color: var(--border-light);
+}
+
+body.aurora-theme .conflict-card-header {
+    background: var(--bg-tertiary);
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .conflict-label {
+    color: var(--text-tertiary);
+}
+
+body.aurora-theme .conflict-value {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .conflict-question {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .conflict-close-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .conflict-close-btn:hover {
+    background: var(--hover-bg);
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .backup-table thead {
+    background: var(--bg-tertiary);
+}
+
+body.aurora-theme .backup-table th {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .backup-table tbody tr:hover {
+    background: var(--hover-bg);
+}
+
+body.aurora-theme .backup-table th,
+body.aurora-theme .backup-table td {
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .backup-manager-header {
+    border-bottom-color: var(--border-light);
+}
+
+body.aurora-theme .data-sync-section h3 {
+    color: var(--aurora-cyan);
+    border-bottom-color: var(--border-color);
+}
+
+body.aurora-theme .conflict-endpoint {
+    background: var(--bg-secondary);
+    border-color: var(--border-light);
+}
+
+body.aurora-theme .conflict-endpoint-header {
+    background: var(--bg-tertiary);
+    border-bottom-color: var(--border-light);
+}
+
+body.aurora-theme .conflict-endpoint-header strong {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .conflict-value-local code,
+body.aurora-theme .conflict-value-remote code {
+    background: var(--input-bg);
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme #genericModal .modal-header::after,
+body.aurora-theme #subModal .modal-header::after,
+body.aurora-theme #settingsModal .modal-header::after,
+body.aurora-theme #autoThemeConfigModal .modal-header::after,
+body.aurora-theme #endpointModal .modal-header::after,
+body.aurora-theme #portModal .modal-header::after,
+body.aurora-theme #historyModal .modal-header::after,
+body.aurora-theme #testResultModal .modal-header::after {
+    background: var(--aurora-cyan);
+}
+
+body.aurora-theme .tip-scroll {
+    color: var(--text-tertiary);
+}
+
+body.aurora-theme .empty-state {
+    color: var(--text-tertiary);
+}
+
+/* ========== Buttons ========== */
+/* Base button */
+body.aurora-theme .btn {
+    border: 1px solid transparent;
+}
+
+/* Primary button - 主要操作按钮 */
+body.aurora-theme .btn-primary {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    border: 1px solid var(--aurora-cyan);
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme .btn-primary:hover {
+    background: linear-gradient(135deg, var(--aurora-blue) 0%, var(--aurora-cyan) 100%);
+    box-shadow: 0 0 15px rgba(0, 255, 198, 0.4), 0 0 25px rgba(96, 165, 250, 0.3);
+}
+
+/* Secondary button - 次要操作按钮 */
+body.aurora-theme .btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .btn-secondary:hover {
+    background: var(--hover-bg);
+    border-color: var(--aurora-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.25);
+}
+
+/* Danger button - 危险操作按钮 */
+body.aurora-theme .btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.5);
+}
+
+body.aurora-theme .btn-danger:hover {
+    background: #991B1B;
+    border-color: #991B1B;
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.7);
+}
+
+/* Card button - 卡片内按钮 */
+body.aurora-theme .btn-card {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .btn-card:hover {
+    background: var(--hover-bg);
+    border-color: var(--aurora-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.25);
+}
+
+body.aurora-theme .btn-card.btn-primary {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    border-color: var(--aurora-cyan);
+}
+
+body.aurora-theme .btn-card.btn-danger {
+    background: #DC2626;
+    color: #ffffff;
+    border-color: #DC2626;
+}
+
+/* Small button - 小按钮 */
+body.aurora-theme .btn-sm {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .btn-sm:hover {
+    background: var(--hover-bg);
+    border-color: var(--aurora-cyan);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.25);
+}
+
+body.aurora-theme .btn-sm.btn-secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .btn-sm.btn-secondary:hover {
+    background: var(--hover-bg);
+}
+
+/* Endpoint toggle button - 端点折叠按钮 */
+body.aurora-theme .endpoint-toggle-btn {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .endpoint-toggle-btn:hover {
+    border-color: var(--aurora-cyan);
+    background: var(--hover-bg);
+    box-shadow: 0 0 5px rgba(0, 255, 198, 0.2);
+}
+
+/* Log level select button - 日志级别按钮 */
+body.aurora-theme .log-level-select-btn {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300FFC6' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+}
+
+body.aurora-theme .log-level-select-btn:hover,
+body.aurora-theme .log-level-select-btn:focus {
+    background-color: var(--hover-bg);
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.3);
+}
+
+/* ========== Log Panel ========== */
+body.aurora-theme .log-panel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+body.aurora-theme .log-textarea {
+    background: #0F1429;
+    color: var(--text-primary);
+}
+
+/* ========== Toggle Switch ========== */
+body.aurora-theme .toggle-slider {
+    background-color: #3B4A6B;
+}
+
+body.aurora-theme .toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    box-shadow: var(--aurora-glow);
+}
+
+/* ========== Password Toggle ========== */
+body.aurora-theme .password-toggle {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .password-toggle:hover {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .password-input-wrapper input {
+    background-color: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+/* ========== Copy Button ========== */
+body.aurora-theme .copy-btn {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .copy-btn:hover {
+    background: rgba(0, 255, 198, 0.15);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.3);
+}
+
+/* ========== Badges ========== */
+body.aurora-theme .current-badge {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    box-shadow: 0 0 10px rgba(0, 255, 198, 0.4);
+}
+
+body.aurora-theme .btn-switch {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme .btn-switch:hover {
+    background: linear-gradient(135deg, var(--aurora-blue) 0%, var(--aurora-cyan) 100%);
+    box-shadow: 0 0 12px rgba(0, 255, 198, 0.4);
+}
+
+body.aurora-theme .btn-switch:disabled {
+    background: #3B4A6B;
+    box-shadow: none;
+}
+
+/* ========== Error Toast ========== */
+body.aurora-theme .error-toast {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+}
+
+/* ========== Loading State ========== */
+body.aurora-theme .loading {
+    color: var(--aurora-cyan);
+}
+
+/* ========== Confirm Dialog ========== */
+body.aurora-theme .confirm-divider {
+    background: var(--border-light);
+}
+
+body.aurora-theme .confirm-body {
+    background: var(--modal-bg);
+}
+
+/* ========== Table ========== */
+body.aurora-theme .table-container {
+    box-shadow: 0 2px 8px var(--shadow-color);
+}
+
+body.aurora-theme #historyDailyTable th {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+/* ========== Welcome Modal ========== */
+body.aurora-theme #welcomeModal .modal-body p {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme #welcomeModal img {
+    box-shadow: 0 2px 8px var(--shadow-color), var(--aurora-glow);
+}
+
+/* ========== Test Result Modal ========== */
+body.aurora-theme #testResultModal .modal-body,
+body.aurora-theme #testResultContent {
+    color: var(--text-secondary);
+}
+
+/* Test result success message */
+body.aurora-theme #testResultContent > div[style*="background: #d4edda"] {
+    background: var(--bg-tertiary) !important;
+    border-color: var(--aurora-cyan) !important;
+}
+
+body.aurora-theme #testResultContent > div[style*="background: #d4edda"] strong {
+    color: var(--aurora-cyan) !important;
+}
+
+/* Test result error message */
+body.aurora-theme #testResultContent > div[style*="background: #f8d7da"] {
+    background: var(--bg-tertiary) !important;
+    border-color: #DC2626 !important;
+}
+
+body.aurora-theme #testResultContent > div[style*="background: #f8d7da"] strong {
+    color: #FC8181 !important;
+}
+
+/* Test result details box */
+body.aurora-theme #testResultContent > div[style*="background: #f8f9fa"] {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Port Display Text ========== */
+body.aurora-theme .port-display span {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Input ========== */
+body.aurora-theme .form-input {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+body.aurora-theme .form-input:focus {
+    border-color: var(--aurora-cyan);
+    box-shadow: 0 0 0 3px rgba(0, 255, 198, 0.2), var(--aurora-glow);
+}
+
+/* ========== Prompt Dialog ========== */
+body.aurora-theme .prompt-dialog p {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .prompt-body {
+    color: var(--text-secondary);
+}
+
+/* ========== Notifications ========== */
+body.aurora-theme .notification {
+    box-shadow: 0 4px 12px var(--shadow-color), var(--aurora-glow);
+    border: 1px solid var(--aurora-cyan);
+}
+
+body.aurora-theme .notification-success {
+    background: #059669;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.4), 0 0 20px rgba(5, 150, 105, 0.3);
+}
+
+body.aurora-theme .notification-error {
+    background: #DC2626;
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4), 0 0 20px rgba(220, 38, 38, 0.3);
+}
+
+body.aurora-theme .notification-warning {
+    background: #D97706;
+    box-shadow: 0 4px 12px rgba(217, 119, 6, 0.4), 0 0 20px rgba(217, 119, 6, 0.3);
+}
+
+body.aurora-theme .notification-info {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    color: #0A0E27;
+    font-weight: 600;
+    box-shadow: var(--aurora-glow);
+}
+
+/* ========== Error Message ========== */
+body.aurora-theme .error-message {
+    background: rgba(220, 38, 38, 0.2);
+    border-color: #DC2626;
+    color: #FC8181;
+}
+
+/* ========== Conflict Dialog Enhanced ========== */
+body.aurora-theme .conflict-details-container {
+    background: var(--bg-tertiary);
+}
+
+body.aurora-theme .conflict-divider {
+    background: var(--border-color);
+}
+
+body.aurora-theme .conflict-strategy-info {
+    background: var(--bg-tertiary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .conflict-strategy-info p {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .conflict-strategy-info strong {
+    color: var(--aurora-cyan);
+}
+
+body.aurora-theme .conflict-value-local {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .conflict-value-remote {
+    background: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+body.aurora-theme .conflict-value-label {
+    color: var(--text-secondary);
+}
+
+body.aurora-theme .conflict-badge {
+    background: var(--bg-tertiary);
+    color: var(--aurora-cyan);
+}
+
+/* ========== Data Sync Dialog ========== */
+body.aurora-theme .data-sync-dialog {
+    color: var(--text-primary);
+}
+
+body.aurora-theme .data-sync-actions .btn {
+    border: none;
+}
+
+/* ========== Inline Style Overrides ========== */
+/* These target inline styles that use hardcoded colors */
+body.aurora-theme [style*="color: #666"],
+body.aurora-theme [style*="color:#666"] {
+    color: var(--text-secondary) !important;
+}
+
+body.aurora-theme [style*="color: #555"],
+body.aurora-theme [style*="color:#555"] {
+    color: var(--text-secondary) !important;
+}
+
+body.aurora-theme [style*="color: #333"],
+body.aurora-theme [style*="color:#333"] {
+    color: var(--text-primary) !important;
+}
+
+body.aurora-theme [style*="color: #999"],
+body.aurora-theme [style*="color:#999"] {
+    color: var(--text-tertiary) !important;
+}
+
+/* ========== Modal Body Paragraph Text ========== */
+body.aurora-theme .modal-body p {
+    color: var(--text-secondary);
+}
+
+/* ========== Form Row ========== */
+body.aurora-theme .form-row {
+    color: var(--text-primary);
+}
+
+/* ========== Checkbox Label ========== */
+body.aurora-theme #welcomeModal label span {
+    color: var(--text-secondary) !important;
+}
+
+/* ========== Scrollbar Styling for Aurora Theme ========== */
+body.aurora-theme ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+body.aurora-theme ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+body.aurora-theme ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, var(--aurora-cyan) 0%, var(--aurora-blue) 100%);
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 255, 198, 0.3);
+}
+
+body.aurora-theme ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, var(--aurora-blue) 0%, var(--aurora-purple) 100%);
+    box-shadow: 0 0 8px rgba(0, 255, 198, 0.4);
+}
+
+/* ========== Additional Modal Fixes ========== */
+body.aurora-theme #confirmModal .modal-content,
+body.aurora-theme #confirmModal .confirm-dialog-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Endpoint Item Hover State ========== */
+body.aurora-theme .endpoint-item:hover {
+    box-shadow: 0 4px 12px var(--shadow-color), 0 0 15px rgba(0, 255, 198, 0.2);
+}
+
+body.aurora-theme .endpoint-item.dragging {
+    box-shadow:
+        0 0 0 1px rgba(0, 255, 198, 0.6),
+        0 0 10px rgba(0, 255, 198, 0.5),
+        0 0 20px rgba(96, 165, 250, 0.4),
+        0 0 30px rgba(183, 148, 246, 0.3),
+        0 8px 24px var(--shadow-color);
+    animation: aurora-drag 1.5s ease-in-out infinite;
+}
+
+@keyframes aurora-drag {
+    0%, 100% {
+        box-shadow:
+            0 0 0 1px rgba(0, 255, 198, 0.6),
+            0 0 10px rgba(0, 255, 198, 0.5),
+            0 0 20px rgba(96, 165, 250, 0.4),
+            0 0 30px rgba(183, 148, 246, 0.3),
+            0 8px 24px var(--shadow-color);
+    }
+    50% {
+        box-shadow:
+            0 0 0 1px rgba(0, 255, 198, 0.8),
+            0 0 15px rgba(0, 255, 198, 0.7),
+            0 0 30px rgba(96, 165, 250, 0.6),
+            0 0 45px rgba(183, 148, 246, 0.5),
+            0 8px 24px var(--shadow-color);
+    }
+}
+
+body.aurora-theme .endpoint-item.drag-over {
+    border-color: var(--aurora-cyan);
+    background: rgba(0, 255, 198, 0.1);
+    box-shadow: var(--aurora-glow);
+}
+
+/* ========== History Modal Fixes ========== */
+body.aurora-theme #historyModal .modal-content {
+    background: var(--bg-primary) !important;
+}
+
+/* ========== Generic Modal & Sub Modal ========== */
+body.aurora-theme #genericModal .modal-content,
+body.aurora-theme #subModal .modal-content {
+    background: var(--modal-bg);
+}
+
+/* ========== Select Dropdown in Aurora Theme ========== */
+body.aurora-theme select option {
+    background: var(--input-bg);
+    color: var(--text-primary);
+}
+
+/* ========== Required Field Indicator ========== */
+body.aurora-theme .required-mark {
+    color: #FC8181;
+}
+
+/* ========== Footer Left Text ========== */
+body.aurora-theme .footer-left span {
+    color: var(--text-secondary);
+}

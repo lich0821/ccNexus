@@ -383,14 +383,12 @@ export function initUI() {
             <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2 id="testResultTitle">🧪 ${t('test.title')}</h2>
+                    <button class="modal-close" onclick="window.closeTestResultModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
                         <!-- Test result will be inserted here -->
                     </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="window.closeTestResultModal()">${t('modal.close')}</button>
                 </div>
             </div>
         </div>
@@ -413,14 +411,14 @@ export function initUI() {
                         </svg>
                     </div>
                     <div class="confirm-content">
-                        <h4 class="confirm-title">确认删除</h4>
+                        <h4 class="confirm-title">${t('common.confirmDeleteTitle')}</h4>
                         <p id="confirmMessage" class="confirm-message"></p>
                     </div>
                 </div>
                 <div class="confirm-divider"></div>
                 <div class="confirm-footer">
-                    <button class="btn-confirm-delete" onclick="window.acceptConfirm()">删除</button>
-                    <button class="btn-confirm-cancel" onclick="window.cancelConfirm()">取消</button>
+                    <button class="btn-confirm-delete" onclick="window.acceptConfirm()">${t('common.delete')}</button>
+                    <button class="btn-confirm-cancel" onclick="window.cancelConfirm()">${t('common.cancel')}</button>
                 </div>
             </div>
         </div>
@@ -467,10 +465,29 @@ export function initUI() {
                     </div>
                     <div class="form-group">
                         <label>🌓 ${t('settings.theme')}</label>
-                        <select id="settingsTheme">
-                            <option value="light">${t('settings.themes.light')}</option>
-                            <option value="dark">${t('settings.themes.dark')}</option>
-                        </select>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="settingsTheme" style="flex: 1;">
+                                <option value="light">${t('settings.themes.light')}</option>
+                                <option value="dark">${t('settings.themes.dark')}</option>
+                                <option value="green">${t('settings.themes.green')}</option>
+                                <option value="starry">${t('settings.themes.starry')}</option>
+                                <option value="sakura">${t('settings.themes.sakura')}</option>
+                                <option value="sunset">${t('settings.themes.sunset')}</option>
+                                <option value="ocean">${t('settings.themes.ocean')}</option>
+                                <option value="mocha">${t('settings.themes.mocha')}</option>
+                                <option value="cyberpunk">${t('settings.themes.cyberpunk')}</option>
+                                <option value="aurora">${t('settings.themes.aurora')}</option>
+                                <option value="holographic">${t('settings.themes.holographic')}</option>
+                                <option value="quantum">${t('settings.themes.quantum')}</option>
+                            </select>
+                            <div style="display: flex; align-items: center; gap: 8px; white-space: nowrap;" title="${t('settings.themeAutoHelp')}">
+                                <span style="font-size: 13px; color: var(--text-secondary);">${t('settings.themeAuto')}</span>
+                                <label class="toggle-switch" style="width: 40px; height: 20px; margin-top: 7px;">
+                                    <input type="checkbox" id="settingsThemeAuto">
+                                    <span class="toggle-slider" style="border-radius: 20px;"></span>
+                                </label>
+                            </div>
+                        </div>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.themeHelp')}
                         </p>
@@ -490,6 +507,53 @@ export function initUI() {
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeSettingsModal()">${t('settings.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.saveSettings()">${t('settings.save')}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Theme Config Modal -->
+        <div id="autoThemeConfigModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🌓 ${t('settings.autoThemeConfigTitle')}</h2>
+                    <button class="modal-close" onclick="window.closeAutoThemeConfigModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px;">
+                        ${t('settings.autoThemeConfigDesc')}
+                    </p>
+                    <div class="form-group">
+                        <label>☀️ ${t('settings.lightThemeLabel')}</label>
+                        <select id="autoLightTheme">
+                            <option value="light">${t('settings.themes.light')}</option>
+                            <option value="green">${t('settings.themes.green')}</option>
+                            <option value="sakura">${t('settings.themes.sakura')}</option>
+                            <option value="sunset">${t('settings.themes.sunset')}</option>
+                            <option value="ocean">${t('settings.themes.ocean')}</option>
+                            <option value="mocha">${t('settings.themes.mocha')}</option>
+                        </select>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 5px;">
+                            ${t('settings.lightThemeHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>🌙 ${t('settings.darkThemeLabel')}</label>
+                        <select id="autoDarkTheme">
+                            <option value="dark">${t('settings.themes.dark')}</option>
+                            <option value="starry">${t('settings.themes.starry')}</option>
+                            <option value="cyberpunk">${t('settings.themes.cyberpunk')}</option>
+                            <option value="aurora">${t('settings.themes.aurora')}</option>
+                            <option value="holographic">${t('settings.themes.holographic')}</option>
+                            <option value="quantum">${t('settings.themes.quantum')}</option>
+                        </select>
+                        <p style="color: var(--text-secondary); font-size: 12px; margin-top: 5px;">
+                            ${t('settings.darkThemeHelp')}
+                        </p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="window.closeAutoThemeConfigModal()">${t('settings.cancel')}</button>
+                    <button class="btn btn-primary" onclick="window.saveAutoThemeConfig()">${t('settings.save')}</button>
                 </div>
             </div>
         </div>
