@@ -150,12 +150,10 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
-		// Return empty endpoint if no enabled endpoints
 		return config.Endpoint{}
 	}
 
-	oldIndex := p.currentIndex
-	oldEndpoint := endpoints[oldIndex%len(endpoints)]
+	oldEndpoint := endpoints[p.currentIndex%len(endpoints)]
 
 	// Check if there are active requests on the current endpoint
 	// Wait a short time for them to complete (max 500ms)
@@ -171,16 +169,19 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 		}
 
 		p.mu.Lock() // Re-acquire lock
-		if p.hasActiveRequests(oldEndpoint.Name) {
-			logger.Warn("[SWITCH] Active requests still present on %s after waiting, forcing switch", oldEndpoint.Name)
+
+		// Re-fetch endpoints after re-acquiring lock (may have changed)
+		endpoints = p.getEnabledEndpoints()
+		if len(endpoints) == 0 {
+			return config.Endpoint{}
 		}
 	}
 
+	// Calculate next index based on current state (currentIndex may have been modified by other goroutines)
 	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
-	logger.Debug("[SWITCH] %s (#%d) → %s (#%d)",
-		oldEndpoint.Name, oldIndex+1, newEndpoint.Name, p.currentIndex+1)
+	logger.Debug("[SWITCH] %s → %s (#%d)", oldEndpoint.Name, newEndpoint.Name, p.currentIndex+1)
 
 	return newEndpoint
 }

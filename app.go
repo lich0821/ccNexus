@@ -203,7 +203,18 @@ func (a *App) ShowWindow() {
 	a.ctxMutex.RUnlock()
 
 	if ctx != nil {
-		runtime.WindowShow(ctx)
+		// Try to show window with retry
+		for i := 0; i < 3; i++ {
+			runtime.WindowShow(ctx)
+			// Small delay to allow window to respond
+			time.Sleep(50 * time.Millisecond)
+			// Try to bring window to front
+			runtime.WindowSetAlwaysOnTop(ctx, true)
+			runtime.WindowSetAlwaysOnTop(ctx, false)
+			break
+		}
+	} else {
+		logger.Warn("[App] ShowWindow called but ctx is nil")
 	}
 }
 

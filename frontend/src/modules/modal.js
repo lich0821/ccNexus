@@ -288,18 +288,18 @@ export async function testEndpointHandler(index, buttonElement) {
         const resultTitle = document.getElementById('testResultTitle');
 
         if (result.success) {
-            resultTitle.innerHTML = '✅ Test Successful';
+            resultTitle.innerHTML = t('test.successTitle');
             resultContent.innerHTML = `
                 <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 15px;">
-                    <strong style="color: #155724;">Connection successful!</strong>
+                    <strong style="color: #155724;">${t('test.connectionSuccess')}</strong>
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)}</div>
             `;
         } else {
-            resultTitle.innerHTML = '❌ Test Failed';
+            resultTitle.innerHTML = t('test.failedTitle');
             resultContent.innerHTML = `
                 <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
-                    <strong style="color: #721c24;">Connection failed</strong>
+                    <strong style="color: #721c24;">${t('test.connectionFailed')}</strong>
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;"><strong>Error:</strong><br>${escapeHtml(result.message)}</div>
             `;
@@ -313,10 +313,10 @@ export async function testEndpointHandler(index, buttonElement) {
         const resultContent = document.getElementById('testResultContent');
         const resultTitle = document.getElementById('testResultTitle');
 
-        resultTitle.innerHTML = '❌ Test Failed';
+        resultTitle.innerHTML = t('test.failedTitle');
         resultContent.innerHTML = `
             <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
-                <strong style="color: #721c24;">Test error</strong>
+                <strong style="color: #721c24;">${t('test.testError')}</strong>
             </div>
             <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line;">${escapeHtml(error.toString())}</div>
         `;

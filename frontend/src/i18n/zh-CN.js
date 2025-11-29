@@ -88,7 +88,12 @@ export default {
         title: '测试结果',
         testing: '测试中...',
         success: '成功',
-        failed: '失败'
+        failed: '失败',
+        successTitle: '✅ 测试成功',
+        failedTitle: '❌ 测试失败',
+        connectionSuccess: '连接成功！',
+        connectionFailed: '连接失败',
+        testError: '测试出错'
     },
     welcome: {
         title: '欢迎使用 ccNexus！',

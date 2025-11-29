@@ -50,8 +50,8 @@ type Config struct {
 func DefaultConfig() *Config {
 	return &Config{
 		Port:         3000,
-		LogLevel:     1,    // Default to INFO level
-		Language:     "",   // Empty means auto-detect
+		LogLevel:     1,       // Default to INFO level
+		Language:     "zh-CN", // Default to Chinese
 		WindowWidth:  1024, // Default window width
 		WindowHeight: 768,  // Default window height
 		Endpoints: []Endpoint{
