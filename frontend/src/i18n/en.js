@@ -107,6 +107,7 @@ export default {
         getStarted: 'Get Started',
         dontShow: "Don't show this again",
         qrCodeTip: 'Scan to follow the official account for more',
+        chatGroupTip: 'Join the group for feedback, pure open source',
         readArticle: '📖 Read Introduction',
         githubRepo: '🔗 GitHub Repository'
     },

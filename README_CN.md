@@ -13,11 +13,26 @@
 
 </div>
 
-## 📸 截图
+## 📸 应用界面
 
 <p align="center">
   <img src="docs/images/CN-Light.png" alt="明亮" width="45%">
+  <br/>默认主题
+</p>
+<p align="center">
   <img src="docs/images/CN-Dark.png" alt="暗黑" width="45%">
+  <br/>暗黑主题
+</p>
+
+## 📖 需要帮助
+
+<p align="center">
+  <img src="frontend/public/chat.jpg" alt="明亮" width="45%">
+  <br/>问题反馈请加群
+</p>
+<p align="center">
+  <img src="docs/images/ME.png" alt="暗黑" width="45%">
+  <br/>若群聊过期，请加好友拉你入群
 </p>
 
 ## ✨ 功能特性

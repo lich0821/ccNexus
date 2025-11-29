@@ -107,6 +107,7 @@ export default {
         getStarted: '开始使用',
         dontShow: '不再显示',
         qrCodeTip: '扫码关注公众号，了解更多',
+        chatGroupTip: '问题反馈请加群，纯公益开源',
         readArticle: '📖 阅读介绍',
         githubRepo: '🔗 GitHub 仓库'
     },

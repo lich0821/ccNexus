@@ -13,11 +13,26 @@
 
 </div>
 
-## 📸 Screenshot
+## 📸 Application interface
 
 <p align="center">
   <img src="docs/images/EN-Light.png" alt="Light" width="45%">
+  <br/>Light Theme
+</p>
+<p align="center">
   <img src="docs/images/EN-Dark.png" alt="Dark" width="45%">
+  <br/>Dark Theme
+</p>
+
+## 📖 Help
+
+<p align="center">
+  <img src="frontend/public/chat.jpg" width="45%">
+  <br/>Please join the group for problem feedback
+</p>
+<p align="center">
+  <img src="docs/images/ME.png" width="45%">
+  <br/>If the group chat expires, please add you as a friend to join the group
 </p>
 
 ## ✨ Features

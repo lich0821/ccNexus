@@ -354,9 +354,15 @@ export function initUI() {
                         ${t('welcome.message')}
                     </p>
 
-                    <div style="text-align: center; margin: 30px 0;">
-                        <img src="/WeChat.jpg" alt="WeChat QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
+                    <div style="display: flex; justify-content: center; gap: 30px; margin: 30px 0;">
+                        <div style="text-align: center;">
+                            <img src="/WeChat.jpg" alt="WeChat QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="/chat.jpg" alt="Chat Group QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupTip')}</p>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
