@@ -26,6 +26,12 @@ import (
 //go:embed wails.json
 var wailsJSON []byte
 
+//go:embed CHANGELOG_CN.json
+var changelogZH []byte
+
+//go:embed CHANGELOG.json
+var changelogEN []byte
+
 // WailsInfo represents the info section from wails.json
 type WailsInfo struct {
 	Info struct {
@@ -339,6 +345,14 @@ func (a *App) GetVersion() string {
 		return "unknown"
 	}
 	return info.Info.ProductVersion
+}
+
+// GetChangelog returns the changelog content based on language
+func (a *App) GetChangelog(lang string) string {
+	if lang == "zh-CN" {
+		return string(changelogZH)
+	}
+	return string(changelogEN)
 }
 
 // UpdateConfig updates the configuration

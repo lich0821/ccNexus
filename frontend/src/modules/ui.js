@@ -369,6 +369,9 @@ export function initUI() {
                         <button class="btn btn-primary" onclick="window.openArticle()">
                             ${t('welcome.readArticle')}
                         </button>
+                        <button class="btn btn-secondary" onclick="window.showChangelogModal()">
+                            ${t('welcome.changelog')}
+                        </button>
                         <button class="btn btn-secondary" onclick="window.openGitHub()">
                             ${t('welcome.githubRepo')}
                         </button>
@@ -394,6 +397,20 @@ export function initUI() {
                 <div class="modal-body">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
                         <!-- Test result will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changelog Modal -->
+        <div id="changelogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📋 ${t('changelog.title')}</h2>
+                    <button class="modal-close" onclick="window.closeChangelogModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="changelogContent" style="font-size: 14px; line-height: 1.8;">
                     </div>
                 </div>
             </div>

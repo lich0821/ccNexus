@@ -265,6 +265,60 @@ export function closeWelcomeModal() {
     document.getElementById('welcomeModal').classList.remove('active');
 }
 
+// Changelog Modal
+export async function showChangelogModal() {
+    const modal = document.getElementById('changelogModal');
+    const content = document.getElementById('changelogContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `<p>${t('changelog.loading')}</p>`;
+    modal.classList.add('active');
+
+    try {
+        const lang = await window.go.main.App.GetLanguage();
+        const changelogJson = await window.go.main.App.GetChangelog(lang);
+        const changelog = JSON.parse(changelogJson);
+
+        let html = '<div class="changelog-timeline">';
+        changelog.forEach((item, index) => {
+            const position = index % 2 === 0 ? 'left' : 'right';
+            html += `
+                <div class="timeline-item ${position}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-version">${item.version}</span>
+                            <span class="timeline-date">${item.date}</span>
+                        </div>
+                        <ul class="timeline-changes">
+                            ${item.changes.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load changelog:', error);
+        content.innerHTML = `<p style="color: #e74c3c;">${t('changelog.error')}</p>`;
+    }
+}
+
+export function closeChangelogModal() {
+    document.getElementById('changelogModal').classList.remove('active');
+}
+
+export async function showChangelogIfNewVersion() {
+    const currentVersion = await window.go.main.App.GetVersion();
+    const lastVersion = localStorage.getItem('ccNexus_lastVersion');
+
+    if (lastVersion && lastVersion !== currentVersion) {
+        setTimeout(() => showChangelogModal(), 600);
+    }
+    localStorage.setItem('ccNexus_lastVersion', currentVersion);
+}
+
 export function showWelcomeModalIfFirstTime() {
     const hasShown = localStorage.getItem('ccNexus_welcomeShown');
     if (!hasShown) {
