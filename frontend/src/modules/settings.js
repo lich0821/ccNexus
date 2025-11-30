@@ -305,9 +305,6 @@ export async function saveSettings() {
 
         // Update language if changed
         if (config.language !== language) {
-            config.language = language;
-            await window.go.main.App.UpdateConfig(JSON.stringify(config));
-
             // Apply language change immediately (will reload page)
             changeLanguage(language);
         }

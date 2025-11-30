@@ -22,6 +22,9 @@ import {
     showWelcomeModal,
     closeWelcomeModal,
     showWelcomeModalIfFirstTime,
+    showChangelogModal,
+    closeChangelogModal,
+    showChangelogIfNewVersion,
     testEndpointHandler,
     closeTestResultModal,
     openGitHub,
@@ -92,6 +95,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
+    showChangelogIfNewVersion();
 
     // Listen for close dialog event from backend
     if (window.runtime) {
@@ -130,6 +134,8 @@ window.savePort = savePort;
 window.closePortModal = closePortModal;
 window.showWelcomeModal = showWelcomeModal;
 window.closeWelcomeModal = closeWelcomeModal;
+window.showChangelogModal = showChangelogModal;
+window.closeChangelogModal = closeChangelogModal;
 window.testEndpoint = testEndpointHandler;
 window.closeTestResultModal = closeTestResultModal;
 window.openGitHub = openGitHub;

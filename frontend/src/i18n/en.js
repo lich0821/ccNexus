@@ -4,12 +4,12 @@ export default {
         version: 'Version'
     },
     header: {
-        title: 'ccNexus - API Endpoint Round-Robin Proxy',
+        title: 'API Endpoint Round-Robin Proxy, Auto-switch to Available Endpoints for Seamless Failover',
         port: 'Port',
         addEndpoint: 'Add Endpoint',
         github: 'GitHub',
         githubRepo: 'GitHub Repository',
-        about: 'About ccNexus'
+        about: 'About'
     },
     endpoints: {
         title: 'Endpoints',
@@ -88,12 +88,17 @@ export default {
         title: 'Test Result',
         testing: 'Testing...',
         success: 'Success',
-        failed: 'Failed'
+        failed: 'Failed',
+        successTitle: '✅ Test Successful',
+        failedTitle: '❌ Test Failed',
+        connectionSuccess: 'Connection successful!',
+        connectionFailed: 'Connection failed',
+        testError: 'Test error'
     },
     welcome: {
         title: 'Welcome to ccNexus!',
         titleWithVersion: '👋 Welcome to ccNexus v{version}',
-        message: 'ccNexus is a smart API endpoint round-robin proxy for Claude Code.',
+        message: 'ccNexus is a smart API endpoint round-robin proxy for Claude Code',
         features: 'Features',
         feature1: 'Automatic failover between multiple API endpoints',
         feature2: 'Support for Claude, OpenAI, and Gemini API formats',
@@ -102,8 +107,15 @@ export default {
         getStarted: 'Get Started',
         dontShow: "Don't show this again",
         qrCodeTip: 'Scan to follow the official account for more',
+        chatGroupTip: 'Join the group for feedback, pure open source',
         readArticle: '📖 Read Introduction',
-        githubRepo: '🔗 GitHub Repository'
+        githubRepo: '🔗 GitHub Repository',
+        changelog: '📋 Changelog'
+    },
+    changelog: {
+        title: 'Changelog',
+        loading: 'Loading...',
+        error: 'Failed to load changelog'
     },
     settings: {
         title: 'Settings',

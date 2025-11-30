@@ -354,14 +354,23 @@ export function initUI() {
                         ${t('welcome.message')}
                     </p>
 
-                    <div style="text-align: center; margin: 30px 0;">
-                        <img src="/WeChat.jpg" alt="WeChat QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
+                    <div style="display: flex; justify-content: center; gap: 30px; margin: 30px 0;">
+                        <div style="text-align: center;">
+                            <img src="/WeChat.jpg" alt="WeChat QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="/chat.jpg" alt="Chat Group QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupTip')}</p>
+                        </div>
                     </div>
 
                     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
                         <button class="btn btn-primary" onclick="window.openArticle()">
                             ${t('welcome.readArticle')}
+                        </button>
+                        <button class="btn btn-secondary" onclick="window.showChangelogModal()">
+                            ${t('welcome.changelog')}
                         </button>
                         <button class="btn btn-secondary" onclick="window.openGitHub()">
                             ${t('welcome.githubRepo')}
@@ -388,6 +397,20 @@ export function initUI() {
                 <div class="modal-body">
                     <div id="testResultContent" style="font-size: 14px; line-height: 1.6;">
                         <!-- Test result will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changelog Modal -->
+        <div id="changelogModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>📋 ${t('changelog.title')}</h2>
+                    <button class="modal-close" onclick="window.closeChangelogModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="changelogContent" style="font-size: 14px; line-height: 1.8;">
                     </div>
                 </div>
             </div>

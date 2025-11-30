@@ -65,6 +65,8 @@ type Logger struct {
 	consoleLevel LogLevel // Minimum level to print to console
 	debugFile    *os.File // Debug log file (only in debug mode)
 	debugMu      sync.Mutex
+	logFile      *os.File   // Unified log file
+	logFileMu    sync.Mutex // Mutex for log file
 }
 
 var (
@@ -137,6 +139,14 @@ func (l *Logger) Log(level LogLevel, format string, args ...interface{}) {
 	if level >= l.consoleLevel {
 		fmt.Printf("%s [%s] %s\n", entry.Icon, entry.LevelStr, entry.Message)
 	}
+
+	// Write to unified log file
+	l.logFileMu.Lock()
+	if l.logFile != nil {
+		timestamp := entry.Timestamp.Format("2006-01-02 15:04:05")
+		fmt.Fprintf(l.logFile, "[%s] [%s] %s\n", timestamp, entry.LevelStr, entry.Message)
+	}
+	l.logFileMu.Unlock()
 }
 
 // GetLogs returns all log entries
@@ -220,15 +230,44 @@ func (l *Logger) DebugLog(format string, args ...interface{}) {
 	fmt.Fprintf(l.debugFile, "[%s] %s\n", timestamp, message)
 }
 
-// Close closes the debug log file
+// Close closes the debug log file and unified log file
 func (l *Logger) Close() {
 	l.debugMu.Lock()
-	defer l.debugMu.Unlock()
-
 	if l.debugFile != nil {
 		l.debugFile.Close()
 		l.debugFile = nil
 	}
+	l.debugMu.Unlock()
+
+	l.logFileMu.Lock()
+	if l.logFile != nil {
+		l.logFile.Close()
+		l.logFile = nil
+	}
+	l.logFileMu.Unlock()
+}
+
+// InitLogFile initializes the unified log file in config directory
+func (l *Logger) InitLogFile(configDir string) error {
+	l.logFileMu.Lock()
+	defer l.logFileMu.Unlock()
+
+	if l.logFile != nil {
+		l.logFile.Close()
+	}
+
+	logPath := configDir + string(os.PathSeparator) + "ccnexus.log"
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	l.logFile = f
+	return nil
+}
+
+// InitLogFile initializes the unified log file (convenience function)
+func InitLogFile(configDir string) error {
+	return GetLogger().InitLogFile(configDir)
 }
 
 // DebugLog writes to debug.log file (convenience function)

@@ -26,6 +26,12 @@ import (
 //go:embed wails.json
 var wailsJSON []byte
 
+//go:embed CHANGELOG_CN.json
+var changelogZH []byte
+
+//go:embed CHANGELOG.json
+var changelogEN []byte
+
 // WailsInfo represents the info section from wails.json
 type WailsInfo struct {
 	Info struct {
@@ -91,6 +97,11 @@ func (a *App) startup(ctx context.Context) {
 	configDir := filepath.Join(homeDir, ".ccNexus")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		logger.Error("Failed to create config directory: %v", err)
+	}
+
+	// Initialize unified log file
+	if err := logger.InitLogFile(configDir); err != nil {
+		logger.Warn("Failed to initialize log file: %v", err)
 	}
 
 	// Setup paths
@@ -203,7 +214,18 @@ func (a *App) ShowWindow() {
 	a.ctxMutex.RUnlock()
 
 	if ctx != nil {
-		runtime.WindowShow(ctx)
+		// Try to show window with retry
+		for i := 0; i < 3; i++ {
+			runtime.WindowShow(ctx)
+			// Small delay to allow window to respond
+			time.Sleep(50 * time.Millisecond)
+			// Try to bring window to front
+			runtime.WindowSetAlwaysOnTop(ctx, true)
+			runtime.WindowSetAlwaysOnTop(ctx, false)
+			break
+		}
+	} else {
+		logger.Warn("[App] ShowWindow called but ctx is nil")
 	}
 }
 
@@ -323,6 +345,14 @@ func (a *App) GetVersion() string {
 		return "unknown"
 	}
 	return info.Info.ProductVersion
+}
+
+// GetChangelog returns the changelog content based on language
+func (a *App) GetChangelog(lang string) string {
+	if lang == "zh-CN" {
+		return string(changelogZH)
+	}
+	return string(changelogEN)
 }
 
 // UpdateConfig updates the configuration

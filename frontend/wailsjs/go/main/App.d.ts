@@ -21,6 +21,8 @@ export function GetAutoDarkTheme():Promise<string>;
 
 export function GetAutoLightTheme():Promise<string>;
 
+export function GetChangelog(arg1:string):Promise<string>;
+
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;
