@@ -244,7 +244,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxRetries := len(endpoints) * 2
+	retryCount := p.config.GetRetryCount()
+	retryDelaySec := p.config.GetRetryDelaySec()
+	maxRetries := len(endpoints) * retryCount
+	if maxRetries == 0 {
+		maxRetries = len(endpoints)
+	}
 	endpointAttempts := 0
 
 	for retry := 0; retry < maxRetries; retry++ {
@@ -263,9 +268,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -280,9 +287,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -312,9 +321,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -324,9 +335,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -358,9 +371,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Warn("[%s] Request failed with status %d, retrying...", endpoint.Name, resp.StatusCode)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
