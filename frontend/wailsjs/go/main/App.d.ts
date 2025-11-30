@@ -35,6 +35,10 @@ export function GetLogs():Promise<string>;
 
 export function GetLogsByLevel(arg1:number):Promise<string>;
 
+export function GetRetryCount():Promise<number>;
+
+export function GetRetryDelaySec():Promise<number>;
+
 export function GetStats():Promise<string>;
 
 export function GetStatsDaily():Promise<string>;
@@ -82,6 +86,8 @@ export function SetCloseWindowBehavior(arg1:string):Promise<void>;
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
+
+export function SetRetrySettings(arg1:number,arg2:number):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
 

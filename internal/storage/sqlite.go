@@ -45,6 +45,8 @@ func (s *SQLiteStorage) initSchema() error {
 		model TEXT,
 		remark TEXT,
 		sort_order INTEGER DEFAULT 0,
+		retry_count INTEGER DEFAULT 2,
+		retry_delay_sec INTEGER DEFAULT 0,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -82,6 +84,11 @@ func (s *SQLiteStorage) initSchema() error {
 		return err
 	}
 
+	// Migration: Add retry settings columns if they don't exist
+	if err := s.migrateRetrySettings(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -103,6 +110,39 @@ func (s *SQLiteStorage) migrateSortOrder() error {
 
 		// Set sort_order for existing endpoints based on their current ID order
 		if _, err := s.db.Exec(`UPDATE endpoints SET sort_order = id WHERE sort_order = 0`); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+// migrateRetrySettings adds retry_count and retry_delay_sec columns when missing
+func (s *SQLiteStorage) migrateRetrySettings() error {
+	var count int
+
+	// retry_count
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('endpoints') WHERE name='retry_count'`).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		if _, err := s.db.Exec(`ALTER TABLE endpoints ADD COLUMN retry_count INTEGER DEFAULT 2`); err != nil {
+			return err
+		}
+		if _, err := s.db.Exec(`UPDATE endpoints SET retry_count = 2 WHERE retry_count IS NULL`); err != nil {
+			return err
+		}
+	}
+
+	// retry_delay_sec
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('endpoints') WHERE name='retry_delay_sec'`).Scan(&count); err != nil {
+		return err
+	}
+	if count == 0 {
+		if _, err := s.db.Exec(`ALTER TABLE endpoints ADD COLUMN retry_delay_sec INTEGER DEFAULT 0`); err != nil {
+			return err
+		}
+		if _, err := s.db.Exec(`UPDATE endpoints SET retry_delay_sec = 0 WHERE retry_delay_sec IS NULL`); err != nil {
 			return err
 		}
 	}
@@ -614,8 +654,8 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 		// Insert only new endpoints (ignore conflicts)
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, enabled, transformer, model, remark, sort_order, retry_count, retry_delay_sec)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0), COALESCE(retry_count, 2), COALESCE(retry_delay_sec, 0)
 			FROM backup.endpoints
 		`)
 		return err
@@ -623,8 +663,8 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 		// Replace existing endpoints
 		_, err := tx.Exec(`
 			INSERT OR REPLACE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, enabled, transformer, model, remark, sort_order, retry_count, retry_delay_sec)
+			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0), COALESCE(retry_count, 2), COALESCE(retry_delay_sec, 0)
 			FROM backup.endpoints
 		`)
 		return err
