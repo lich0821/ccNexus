@@ -42,6 +42,10 @@ export function GetAutoLightTheme() {
   return window['go']['main']['App']['GetAutoLightTheme']();
 }
 
+export function GetChangelog(arg1) {
+  return window['go']['main']['App']['GetChangelog'](arg1);
+}
+
 export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }

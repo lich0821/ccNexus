@@ -1,0 +1,141 @@
+[
+  {
+    "version": "v3.2.1",
+    "date": "2025-11-25",
+    "changes": ["Support Gemini API", "Bug fixes"]
+  },
+  {
+    "version": "v3.1.0",
+    "date": "2025-11-23",
+    "changes": [
+      "Dark theme style optimization",
+      "Add eye-care theme",
+      "Add starry theme",
+      "Add multiple new themes, now 12 themes available",
+      "Add auto theme switching feature",
+      "Data backup and restore bug fixes"
+    ]
+  },
+  {
+    "version": "v2.2.1",
+    "date": "2025-11-20",
+    "changes": ["Bug fixes and improvements", "Change local storage to SQLite"]
+  },
+  {
+    "version": "v1.5.0",
+    "date": "2025-11-19",
+    "changes": [
+      "Add historical data statistics dimension",
+      "Change popups to modal dialogs to prevent accidental closing",
+      "Add scrolling tips feature",
+      "Optimize UI for better appearance",
+      "Fix known bugs"
+    ]
+  },
+  {
+    "version": "v1.4.0",
+    "date": "2025-11-13",
+    "changes": ["Add daily/weekly/monthly statistics dimension"]
+  },
+  {
+    "version": "v1.3.0",
+    "date": "2025-11-09",
+    "changes": ["Add WebDAV feature for cross-device data sync", "Add smart build and dev scripts"]
+  },
+  {
+    "version": "v1.2.0",
+    "date": "2025-11-09",
+    "changes": ["Add drag-and-drop sorting for manual proxy priority control"]
+  },
+  {
+    "version": "v1.1.2",
+    "date": "2025-11-09",
+    "changes": ["Add dynamic window resizing with size memory", "UI beautification"]
+  },
+  {
+    "version": "v1.1.1",
+    "date": "2025-11-06",
+    "changes": [
+      "Add current endpoint display and manual switch feature",
+      "Show 'Current' label in endpoint list",
+      "Add 'Switch' button for manual endpoint switching",
+      "Auto sync status using existing refresh mechanism",
+      "Support Chinese and English interface"
+    ]
+  },
+  {
+    "version": "v1.1.0",
+    "date": "2025-11-05",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v1.0.0",
+    "date": "2025-11-02",
+    "changes": ["First official release"]
+  },
+  {
+    "version": "v0.9.0",
+    "date": "2025-11-01",
+    "changes": ["Feature improvements"]
+  },
+  {
+    "version": "v0.8.0",
+    "date": "2025-10-31",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.7.0",
+    "date": "2025-10-30",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.6.2",
+    "date": "2025-10-30",
+    "changes": ["Bug fixes"]
+  },
+  {
+    "version": "v0.6.0",
+    "date": "2025-10-30",
+    "changes": ["Support Bearer authentication for more API providers"]
+  },
+  {
+    "version": "v0.5.3",
+    "date": "2025-10-30",
+    "changes": ["Bug fixes"]
+  },
+  {
+    "version": "v0.5.2",
+    "date": "2025-10-29",
+    "changes": ["Bug fixes"]
+  },
+  {
+    "version": "v0.5.1",
+    "date": "2025-10-28",
+    "changes": ["Bug fixes"]
+  },
+  {
+    "version": "v0.5.0",
+    "date": "2025-10-28",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.4.0",
+    "date": "2025-10-25",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.3.0",
+    "date": "2025-10-25",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.2.0",
+    "date": "2025-10-25",
+    "changes": ["Feature update"]
+  },
+  {
+    "version": "v0.1.0",
+    "date": "2025-10-24",
+    "changes": ["Initial release"]
+  }
+]

@@ -265,6 +265,60 @@ export function closeWelcomeModal() {
     document.getElementById('welcomeModal').classList.remove('active');
 }
 
+// Changelog Modal
+export async function showChangelogModal() {
+    const modal = document.getElementById('changelogModal');
+    const content = document.getElementById('changelogContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `<p>${t('changelog.loading')}</p>`;
+    modal.classList.add('active');
+
+    try {
+        const lang = await window.go.main.App.GetLanguage();
+        const changelogJson = await window.go.main.App.GetChangelog(lang);
+        const changelog = JSON.parse(changelogJson);
+
+        let html = '<div class="changelog-timeline">';
+        changelog.forEach((item, index) => {
+            const position = index % 2 === 0 ? 'left' : 'right';
+            html += `
+                <div class="timeline-item ${position}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <div class="timeline-header">
+                            <span class="timeline-version">${item.version}</span>
+                            <span class="timeline-date">${item.date}</span>
+                        </div>
+                        <ul class="timeline-changes">
+                            ${item.changes.map(c => `<li>${c}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        content.innerHTML = html;
+    } catch (error) {
+        console.error('Failed to load changelog:', error);
+        content.innerHTML = `<p style="color: #e74c3c;">${t('changelog.error')}</p>`;
+    }
+}
+
+export function closeChangelogModal() {
+    document.getElementById('changelogModal').classList.remove('active');
+}
+
+export async function showChangelogIfNewVersion() {
+    const currentVersion = await window.go.main.App.GetVersion();
+    const lastVersion = localStorage.getItem('ccNexus_lastVersion');
+
+    if (lastVersion && lastVersion !== currentVersion) {
+        setTimeout(() => showChangelogModal(), 600);
+    }
+    localStorage.setItem('ccNexus_lastVersion', currentVersion);
+}
+
 export function showWelcomeModalIfFirstTime() {
     const hasShown = localStorage.getItem('ccNexus_welcomeShown');
     if (!hasShown) {
@@ -288,18 +342,18 @@ export async function testEndpointHandler(index, buttonElement) {
         const resultTitle = document.getElementById('testResultTitle');
 
         if (result.success) {
-            resultTitle.innerHTML = '✅ Test Successful';
+            resultTitle.innerHTML = t('test.successTitle');
             resultContent.innerHTML = `
                 <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 15px;">
-                    <strong style="color: #155724;">Connection successful!</strong>
+                    <strong style="color: #155724;">${t('test.connectionSuccess')}</strong>
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)}</div>
             `;
         } else {
-            resultTitle.innerHTML = '❌ Test Failed';
+            resultTitle.innerHTML = t('test.failedTitle');
             resultContent.innerHTML = `
                 <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
-                    <strong style="color: #721c24;">Connection failed</strong>
+                    <strong style="color: #721c24;">${t('test.connectionFailed')}</strong>
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;"><strong>Error:</strong><br>${escapeHtml(result.message)}</div>
             `;
@@ -313,10 +367,10 @@ export async function testEndpointHandler(index, buttonElement) {
         const resultContent = document.getElementById('testResultContent');
         const resultTitle = document.getElementById('testResultTitle');
 
-        resultTitle.innerHTML = '❌ Test Failed';
+        resultTitle.innerHTML = t('test.failedTitle');
         resultContent.innerHTML = `
             <div style="padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 5px; margin-bottom: 15px;">
-                <strong style="color: #721c24;">Test error</strong>
+                <strong style="color: #721c24;">${t('test.testError')}</strong>
             </div>
             <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line;">${escapeHtml(error.toString())}</div>
         `;

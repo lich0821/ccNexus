@@ -26,6 +26,12 @@ import (
 //go:embed wails.json
 var wailsJSON []byte
 
+//go:embed CHANGELOG_CN.json
+var changelogZH []byte
+
+//go:embed CHANGELOG.json
+var changelogEN []byte
+
 // WailsInfo represents the info section from wails.json
 type WailsInfo struct {
 	Info struct {
@@ -91,6 +97,11 @@ func (a *App) startup(ctx context.Context) {
 	configDir := filepath.Join(homeDir, ".ccNexus")
 	if err := os.MkdirAll(configDir, 0755); err != nil {
 		logger.Error("Failed to create config directory: %v", err)
+	}
+
+	// Initialize unified log file
+	if err := logger.InitLogFile(configDir); err != nil {
+		logger.Warn("Failed to initialize log file: %v", err)
 	}
 
 	// Setup paths
@@ -203,7 +214,18 @@ func (a *App) ShowWindow() {
 	a.ctxMutex.RUnlock()
 
 	if ctx != nil {
-		runtime.WindowShow(ctx)
+		// Try to show window with retry
+		for i := 0; i < 3; i++ {
+			runtime.WindowShow(ctx)
+			// Small delay to allow window to respond
+			time.Sleep(50 * time.Millisecond)
+			// Try to bring window to front
+			runtime.WindowSetAlwaysOnTop(ctx, true)
+			runtime.WindowSetAlwaysOnTop(ctx, false)
+			break
+		}
+	} else {
+		logger.Warn("[App] ShowWindow called but ctx is nil")
 	}
 }
 
@@ -323,6 +345,14 @@ func (a *App) GetVersion() string {
 		return "unknown"
 	}
 	return info.Info.ProductVersion
+}
+
+// GetChangelog returns the changelog content based on language
+func (a *App) GetChangelog(lang string) string {
+	if lang == "zh-CN" {
+		return string(changelogZH)
+	}
+	return string(changelogEN)
 }
 
 // UpdateConfig updates the configuration
@@ -752,9 +782,9 @@ func (a *App) getTrendWeeklyVsLastWeek() string {
 	thisWeekStartStr := thisWeekStart.Format("2006-01-02")
 	todayStr := now.Format("2006-01-02")
 
-	// Calculate last week same period (last Monday to last same weekday)
+	// Calculate last week (full week: Monday to Sunday)
 	lastWeekStart := thisWeekStart.AddDate(0, 0, -7)
-	lastWeekEnd := now.AddDate(0, 0, -7)
+	lastWeekEnd := thisWeekStart.AddDate(0, 0, -1)
 	lastWeekStartStr := lastWeekStart.Format("2006-01-02")
 	lastWeekEndStr := lastWeekEnd.Format("2006-01-02")
 
@@ -809,21 +839,9 @@ func (a *App) getTrendMonthlyVsLastMonth() string {
 	thisMonthStartStr := thisMonthStart.Format("2006-01-02")
 	todayStr := now.Format("2006-01-02")
 
-	// Calculate last month same period (last month 1st to same day)
+	// Calculate last month (full month: 1st to last day)
 	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
-	dayOfMonth := now.Day()
-	lastMonth := lastMonthStart.Month()
-	lastMonthYear := lastMonthStart.Year()
-
-	// Get the last day of last month
-	lastDayOfLastMonth := time.Date(lastMonthYear, lastMonth+1, 0, 0, 0, 0, 0, now.Location()).Day()
-
-	// If current day is greater than last month's last day, use last day of last month
-	if dayOfMonth > lastDayOfLastMonth {
-		dayOfMonth = lastDayOfLastMonth
-	}
-
-	lastMonthEnd := time.Date(lastMonthYear, lastMonth, dayOfMonth, 0, 0, 0, 0, now.Location())
+	lastMonthEnd := thisMonthStart.AddDate(0, 0, -1)
 	lastMonthStartStr := lastMonthStart.Format("2006-01-02")
 	lastMonthEndStr := lastMonthEnd.Format("2006-01-02")
 

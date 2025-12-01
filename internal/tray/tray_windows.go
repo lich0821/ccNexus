@@ -4,19 +4,21 @@
 package tray
 
 import (
+	"time"
+
 	"github.com/getlantern/systray"
 	"github.com/lich0821/ccNexus/internal/logger"
 )
 
 var (
-	showWindow  func()
-	hideWindow  func()
-	quitApp     func()
-	mShow       *systray.MenuItem
-	mQuit       *systray.MenuItem
-	currentLang string
-	// Add a channel to serialize window operations
+	showWindow   func()
+	hideWindow   func()
+	quitApp      func()
+	mShow        *systray.MenuItem
+	mQuit        *systray.MenuItem
+	currentLang  string
 	windowOpChan chan func()
+	trayIconData []byte
 )
 
 // Tray menu texts
@@ -72,7 +74,7 @@ func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func(), langu
 	}()
 }
 
-// windowOperationWorker is a single worker that processes window operations serially
+// windowOperationWorker processes window operations serially with timeout
 func windowOperationWorker() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -84,20 +86,26 @@ func windowOperationWorker() {
 
 	for op := range windowOpChan {
 		if op != nil {
-			func() {
+			done := make(chan struct{})
+			go func() {
 				defer func() {
-					if r := recover(); r != nil {
-						logger.Error("Window operation panic: %v", r)
-					}
+					recover()
+					close(done)
 				}()
 				op()
 			}()
+
+			select {
+			case <-done:
+			case <-time.After(3 * time.Second):
+			}
 		}
 	}
 }
 
 func onReady(icon []byte) {
 	if len(icon) > 0 {
+		trayIconData = icon
 		systray.SetIcon(icon)
 	}
 	systray.SetTitle("ccNexus")
@@ -122,7 +130,6 @@ func onReady(icon []byte) {
 				go handleMenuEvents()
 			}
 		}()
-
 		handleMenuEvents()
 	}()
 }
@@ -131,10 +138,12 @@ func onReady(icon []byte) {
 func handleMenuEvents() {
 	// Add panic recovery for this handler as well
 	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("Menu event handler panic: %v", r)
-		}
+		recover()
 	}()
+
+	// Refresh tray icon periodically to keep Windows message loop active
+	heartbeat := time.NewTicker(30 * time.Second)
+	defer heartbeat.Stop()
 
 	for {
 		select {
@@ -156,6 +165,11 @@ func handleMenuEvents() {
 			}
 			systray.Quit()
 			return
+
+		case <-heartbeat.C:
+			if len(trayIconData) > 0 {
+				systray.SetIcon(trayIconData)
+			}
 		}
 	}
 }
@@ -174,9 +188,7 @@ func Quit() {
 // UpdateLanguage updates the tray menu language
 func UpdateLanguage(language string) {
 	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("UpdateLanguage panic: %v", r)
-		}
+		recover()
 	}()
 
 	currentLang = language

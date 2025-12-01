@@ -4,12 +4,12 @@ export default {
         version: '版本'
     },
     header: {
-        title: 'ccNexus - API 端点轮询代理',
+        title: 'API 端点轮询代理工具，自动切换可用端点，实现无缝故障转移',
         port: '端口',
         addEndpoint: '添加端点',
         github: 'GitHub',
         githubRepo: 'GitHub 仓库',
-        about: '关于 ccNexus'
+        about: '关于'
     },
     endpoints: {
         title: '端点列表',
@@ -88,12 +88,17 @@ export default {
         title: '测试结果',
         testing: '测试中...',
         success: '成功',
-        failed: '失败'
+        failed: '失败',
+        successTitle: '✅ 测试成功',
+        failedTitle: '❌ 测试失败',
+        connectionSuccess: '连接成功！',
+        connectionFailed: '连接失败',
+        testError: '测试出错'
     },
     welcome: {
         title: '欢迎使用 ccNexus！',
         titleWithVersion: '👋 欢迎使用 ccNexus v{version}',
-        message: 'ccNexus 是一个为 Claude Code 设计的智能 API 端点轮询代理。',
+        message: 'ccNexus 是一个为 Claude Code 设计的智能 API 端点轮询代理工具',
         features: '功能特性',
         feature1: '多个 API 端点之间自动故障转移',
         feature2: '支持 Claude、OpenAI 和 Gemini API 格式',
@@ -102,8 +107,15 @@ export default {
         getStarted: '开始使用',
         dontShow: '不再显示',
         qrCodeTip: '扫码关注公众号，了解更多',
+        chatGroupTip: '问题反馈请加群，纯公益开源',
         readArticle: '📖 阅读介绍',
-        githubRepo: '🔗 GitHub 仓库'
+        githubRepo: '🔗 GitHub 仓库',
+        changelog: '📋 更新日志'
+    },
+    changelog: {
+        title: '更新日志',
+        loading: '加载中...',
+        error: '加载更新日志失败'
     },
     settings: {
         title: '设置',
