@@ -221,6 +221,7 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 // handleProxy handles the main proxy logic
 // handleProxy handles the main proxy logic
 func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
+	requestID := fmt.Sprintf("%d", time.Now().UnixNano())
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error("Failed to read request body: %v", err)
@@ -229,7 +230,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	logger.DebugLog("=== Proxy Request ===")
+	logger.DebugLog("=== Proxy Request [%s] ===", requestID)
 	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
@@ -370,7 +371,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if shouldRetry(resp.StatusCode) {
-			logger.Warn("[%s] Request failed with status %d, retrying...", endpoint.Name, resp.StatusCode)
+			logger.Warn("[%s][Req:%s] Request failed with status %d, retrying...", endpoint.Name, requestID, resp.StatusCode)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= retryCount {

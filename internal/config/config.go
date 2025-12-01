@@ -79,9 +79,7 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("invalid port: %d", c.Port)
 	}
 
-	if c.RetryCount <= 0 {
-		c.RetryCount = 2
-	} else if c.RetryCount > 10 {
+	if c.RetryCount < 1 || c.RetryCount > 10 {
 		return fmt.Errorf("retryCount out of range (1-10)")
 	}
 	if c.RetryDelaySec < 0 || c.RetryDelaySec > 300 {

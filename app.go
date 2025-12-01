@@ -1089,17 +1089,11 @@ func (a *App) GetRetryDelaySec() int {
 
 // SetRetrySettings updates global retry settings
 func (a *App) SetRetrySettings(retryCount, retryDelaySec int) error {
-	if retryCount <= 0 {
-		retryCount = 2
+	if retryCount < 1 || retryCount > 10 {
+		return fmt.Errorf("retryCount must be between 1 and 10, got %d", retryCount)
 	}
-	if retryCount > 10 {
-		retryCount = 10
-	}
-	if retryDelaySec < 0 {
-		retryDelaySec = 0
-	}
-	if retryDelaySec > 300 {
-		retryDelaySec = 300
+	if retryDelaySec < 0 || retryDelaySec > 300 {
+		return fmt.Errorf("retryDelaySec must be between 0 and 300, got %d", retryDelaySec)
 	}
 
 	a.config.UpdateRetrySettings(retryCount, retryDelaySec)
