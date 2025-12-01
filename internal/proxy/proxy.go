@@ -153,7 +153,8 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 		return config.Endpoint{}
 	}
 
-	oldEndpoint := endpoints[p.currentIndex%len(endpoints)]
+	oldIndex := p.currentIndex % len(endpoints)
+	oldEndpoint := endpoints[oldIndex]
 
 	// Check if there are active requests on the current endpoint
 	// Wait a short time for them to complete (max 500ms)
@@ -177,8 +178,8 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 		}
 	}
 
-	// Calculate next index based on current state (currentIndex may have been modified by other goroutines)
-	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
+	// Use oldIndex to calculate next, avoiding skip if currentIndex was modified during wait
+	p.currentIndex = (oldIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
 	logger.Debug("[SWITCH] %s → %s (#%d)", oldEndpoint.Name, newEndpoint.Name, p.currentIndex+1)
