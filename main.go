@@ -17,8 +17,11 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed build/windows/icon.ico
+var trayIconWindows []byte
+
 //go:embed build/appicon.png
-var trayIcon []byte
+var trayIconOther []byte
 
 func main() {
 	// Check for single instance
@@ -34,6 +37,16 @@ func main() {
 		os.Exit(0)
 	}
 	defer mutex.Release()
+
+	// Select appropriate tray icon based on OS
+	var trayIcon []byte
+	if os.PathSeparator == '\\' {
+		// Windows
+		trayIcon = trayIconWindows
+	} else {
+		// macOS, Linux, etc.
+		trayIcon = trayIconOther
+	}
 
 	app := NewApp(trayIcon)
 
