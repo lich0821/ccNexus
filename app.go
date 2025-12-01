@@ -782,9 +782,9 @@ func (a *App) getTrendWeeklyVsLastWeek() string {
 	thisWeekStartStr := thisWeekStart.Format("2006-01-02")
 	todayStr := now.Format("2006-01-02")
 
-	// Calculate last week same period (last Monday to last same weekday)
+	// Calculate last week (full week: Monday to Sunday)
 	lastWeekStart := thisWeekStart.AddDate(0, 0, -7)
-	lastWeekEnd := now.AddDate(0, 0, -7)
+	lastWeekEnd := thisWeekStart.AddDate(0, 0, -1)
 	lastWeekStartStr := lastWeekStart.Format("2006-01-02")
 	lastWeekEndStr := lastWeekEnd.Format("2006-01-02")
 
@@ -839,21 +839,9 @@ func (a *App) getTrendMonthlyVsLastMonth() string {
 	thisMonthStartStr := thisMonthStart.Format("2006-01-02")
 	todayStr := now.Format("2006-01-02")
 
-	// Calculate last month same period (last month 1st to same day)
+	// Calculate last month (full month: 1st to last day)
 	lastMonthStart := thisMonthStart.AddDate(0, -1, 0)
-	dayOfMonth := now.Day()
-	lastMonth := lastMonthStart.Month()
-	lastMonthYear := lastMonthStart.Year()
-
-	// Get the last day of last month
-	lastDayOfLastMonth := time.Date(lastMonthYear, lastMonth+1, 0, 0, 0, 0, 0, now.Location()).Day()
-
-	// If current day is greater than last month's last day, use last day of last month
-	if dayOfMonth > lastDayOfLastMonth {
-		dayOfMonth = lastDayOfLastMonth
-	}
-
-	lastMonthEnd := time.Date(lastMonthYear, lastMonth, dayOfMonth, 0, 0, 0, 0, now.Location())
+	lastMonthEnd := thisMonthStart.AddDate(0, 0, -1)
 	lastMonthStartStr := lastMonthStart.Format("2006-01-02")
 	lastMonthEndStr := lastMonthEnd.Format("2006-01-02")
 
