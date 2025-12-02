@@ -192,11 +192,18 @@ export function initUI() {
             <!-- Endpoints -->
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
-                        <button class="endpoint-toggle-btn" onclick="window.toggleEndpointPanel()">
-                            <span id="endpointToggleIcon">🔼</span> <span id="endpointToggleText">${t('endpoints.collapse')}</span>
-                        </button>
+                    <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <h2 style="margin: 0;">🔗 ${t('endpoints.title')}</h2>
+                            <button class="endpoint-toggle-btn" onclick="window.toggleEndpointPanel()">
+                                <span id="endpointToggleIcon">🔼</span> <span id="endpointToggleText">${t('endpoints.collapse')}</span>
+                            </button>
+                        </div>
+                        <div id="endpointFilterTabs" style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            <button class="btn btn-secondary endpoint-filter-btn active" data-transformer="claude" onclick="window.setTransformerFilter('claude')">Claude</button>
+                            <button class="btn btn-secondary endpoint-filter-btn" data-transformer="openai" onclick="window.setTransformerFilter('openai')">OpenAI</button>
+                            <button class="btn btn-secondary endpoint-filter-btn" data-transformer="gemini" onclick="window.setTransformerFilter('gemini')">Gemini</button>
+                        </div>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
@@ -484,6 +491,20 @@ export function initUI() {
                         </select>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.languageHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>🔁 ${t('settings.retryCount')} (1-10)</label>
+                        <input type="number" id="settingsRetryCount" min="1" max="10" placeholder="2" value="2">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.retryCountHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>⏳ ${t('settings.retryDelaySec')} (0-300s)</label>
+                        <input type="number" id="settingsRetryDelaySec" min="0" max="300" placeholder="0" value="0">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.retryDelaySecHelp')}
                         </p>
                     </div>
                     <div class="form-group">
