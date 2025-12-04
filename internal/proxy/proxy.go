@@ -353,7 +353,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		isStreaming := contentType == "text/event-stream" || (claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, _ := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+
+			// Fallback: estimate tokens when usage is 0
+			if inputTokens == 0 || outputTokens == 0 {
+				inputTokens, outputTokens = p.estimateTokens(bodyBytes, outputText, inputTokens, outputTokens, endpoint.Name)
+			}
+
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 			p.markRequestInactive(endpoint.Name)
 			logger.Debug("[%s] Request completed successfully (streaming)", endpoint.Name)

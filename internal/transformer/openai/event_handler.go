@@ -24,6 +24,16 @@ func (h *MessageStartHandler) Handle(event *SSEEvent, state *StreamState) ([]*SS
 		return []*SSEEvent{event}, nil
 	}
 
+	// Extract usage from first event
+	if usage, ok := event.Data["usage"].(map[string]interface{}); ok {
+		if promptTokens, ok := usage["prompt_tokens"].(float64); ok {
+			state.InputTokens = int(promptTokens)
+		}
+		if completionTokens, ok := usage["completion_tokens"].(float64); ok {
+			state.OutputTokens = int(completionTokens)
+		}
+	}
+
 	if !state.MessageStarted {
 		if id, ok := event.Data["id"].(string); ok {
 			state.MessageID = id
@@ -46,8 +56,8 @@ func (h *MessageStartHandler) Handle(event *SSEEvent, state *StreamState) ([]*SS
 					"content": []interface{}{},
 					"model":   state.ModelName,
 					"usage": map[string]interface{}{
-						"input_tokens":  0,
-						"output_tokens": 0,
+						"input_tokens":  state.InputTokens,
+						"output_tokens": state.OutputTokens,
 					},
 				},
 			},
@@ -63,6 +73,16 @@ type ContentDeltaHandler struct{}
 func (h *ContentDeltaHandler) Handle(event *SSEEvent, state *StreamState) ([]*SSEEvent, error) {
 	if event.Data == nil {
 		return nil, nil
+	}
+
+	// Extract usage from every event
+	if usage, ok := event.Data["usage"].(map[string]interface{}); ok {
+		if promptTokens, ok := usage["prompt_tokens"].(float64); ok {
+			state.InputTokens = int(promptTokens)
+		}
+		if completionTokens, ok := usage["completion_tokens"].(float64); ok {
+			state.OutputTokens = int(completionTokens)
+		}
 	}
 
 	choices, ok := event.Data["choices"].([]interface{})

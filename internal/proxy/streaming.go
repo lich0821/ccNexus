@@ -17,7 +17,7 @@ import (
 )
 
 // handleStreamingResponse processes streaming SSE responses
-func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, error) {
+func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, string) {
 	// Copy response headers except Content-Length (streaming response length is unknown)
 	for key, values := range resp.Header {
 		if key == "Content-Length" {
@@ -33,7 +33,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 	if !ok {
 		logger.Error("[%s] ResponseWriter does not support flushing", endpoint.Name)
 		resp.Body.Close()
-		return 0, 0, nil
+		return 0, 0, ""
 	}
 
 	var streamCtx *transformer.StreamContext
@@ -110,7 +110,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 	}
 
 	resp.Body.Close()
-	return inputTokens, outputTokens, nil
+	return inputTokens, outputTokens, outputText.String()
 }
 
 // transformStreamEvent transforms a single SSE event
@@ -134,7 +134,7 @@ func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputToke
 			continue
 		}
 
-		jsonData := strings.TrimPrefix(line, "data:")
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue
@@ -168,7 +168,7 @@ func (p *Proxy) extractTextFromEvent(transformedEvent []byte, outputText *string
 			continue
 		}
 
-		jsonData := strings.TrimPrefix(line, "data:")
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue

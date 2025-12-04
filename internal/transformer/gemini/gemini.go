@@ -410,6 +410,12 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 			continue
 		}
 
+		// Extract usage metadata from chunk
+		if chunk.UsageMetadata != nil {
+			ctx.InputTokens = chunk.UsageMetadata.PromptTokenCount
+			ctx.OutputTokens = chunk.UsageMetadata.CandidatesTokenCount
+		}
+
 		// Send message_start on first chunk
 		if !ctx.MessageStartSent {
 			ctx.MessageID = fmt.Sprintf("msg_%d", 0)
@@ -425,8 +431,8 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 					"content": []interface{}{},
 					"model":   ctx.ModelName,
 					"usage": map[string]interface{}{
-						"input_tokens":  0,
-						"output_tokens": 0,
+						"input_tokens":  ctx.InputTokens,
+						"output_tokens": ctx.OutputTokens,
 					},
 				},
 			}
@@ -609,12 +615,6 @@ func (t *GeminiTransformer) transformStreamingResponse(geminiStream []byte, ctx 
 				result.WriteString("data: " + string(stopJSON) + "\n")
 				result.WriteString("\n")
 			}
-		}
-
-		// Update usage metadata
-		if chunk.UsageMetadata != nil {
-			ctx.InputTokens = chunk.UsageMetadata.PromptTokenCount
-			ctx.OutputTokens = chunk.UsageMetadata.CandidatesTokenCount
 		}
 	}
 
