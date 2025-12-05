@@ -66,8 +66,6 @@ export default {
         portUpdateFailed: 'Failed to update port: {error}',
         requiredFields: 'Please fill in all required fields',
         modelRequired: 'Model field is required for {transformer} transformer',
-        retryCountInvalid: 'Retry count must be between 1 and 10',
-        retryDelayInvalid: 'Retry delay must be between 0 and 300 seconds',
         saveFailed: 'Failed to save: {error}',
         confirmDelete: 'Are you sure you want to delete endpoint "{name}"?',
         deleteFailed: 'Failed to delete: {error}'
@@ -157,12 +155,6 @@ export default {
             minimize: 'Minimize to Tray',
             ask: 'Ask Every Time'
         },
-        retryCount: 'Retry Count',
-        retryCountHelp: 'Global retries per endpoint before switching (1-10)',
-        retryDelaySec: 'Retry Delay (seconds)',
-        retryDelaySecHelp: 'Global wait time between retries (0-300 seconds)',
-        retryCountInvalid: 'Retry count must be between 1 and 10',
-        retryDelayInvalid: 'Retry delay must be between 0 and 300 seconds',
         languageHelp: 'Select the interface display language',
         save: 'Save',
         cancel: 'Cancel',

@@ -70,14 +70,6 @@ export function GetLogsByLevel(arg1) {
   return window['go']['main']['App']['GetLogsByLevel'](arg1);
 }
 
-export function GetRetryCount() {
-  return window['go']['main']['App']['GetRetryCount']();
-}
-
-export function GetRetryDelaySec() {
-  return window['go']['main']['App']['GetRetryDelaySec']();
-}
-
 export function GetStats() {
   return window['go']['main']['App']['GetStats']();
 }
@@ -172,10 +164,6 @@ export function SetLanguage(arg1) {
 
 export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
-}
-
-export function SetRetrySettings(arg1, arg2) {
-  return window['go']['main']['App']['SetRetrySettings'](arg1, arg2);
 }
 
 export function SetTheme(arg1) {

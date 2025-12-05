@@ -66,8 +66,6 @@ export default {
         portUpdateFailed: '端口修改失败：{error}',
         requiredFields: '请填写所有必填项',
         modelRequired: '使用 {transformer} 转换器时，模型字段为必填项',
-        retryCountInvalid: '重试次数需在 1-10 之间',
-        retryDelayInvalid: '重试间隔需在 0-300 秒之间',
         saveFailed: '保存失败：{error}',
         confirmDelete: '确认删除端点 "{name}" 吗？',
         deleteFailed: '删除失败：{error}'
@@ -157,12 +155,6 @@ export default {
             minimize: '最小化到托盘',
             ask: '每次询问'
         },
-        retryCount: '重试次数',
-        retryCountHelp: '全局每个端点的连续重试次数，超出后切换(1-10)',
-        retryDelaySec: '重试间隔（秒）',
-        retryDelaySecHelp: '全局每次重试前等待时间（0-300 秒）',
-        retryCountInvalid: '重试次数需在 1-10 之间',
-        retryDelayInvalid: '重试间隔需在 0-300 秒之间',
         languageHelp: '选择界面显示语言',
         save: '保存',
         cancel: '取消',

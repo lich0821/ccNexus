@@ -1077,46 +1077,6 @@ func (a *App) UpdatePort(port int) error {
 	return nil
 }
 
-// GetRetryCount returns global retry count
-func (a *App) GetRetryCount() int {
-	return a.config.GetRetryCount()
-}
-
-// GetRetryDelaySec returns global retry delay in seconds
-func (a *App) GetRetryDelaySec() int {
-	return a.config.GetRetryDelaySec()
-}
-
-// SetRetrySettings updates global retry settings
-func (a *App) SetRetrySettings(retryCount, retryDelaySec int) error {
-	if retryCount < 1 || retryCount > 10 {
-		return fmt.Errorf("retryCount must be between 1 and 10, got %d", retryCount)
-	}
-	if retryDelaySec < 0 || retryDelaySec > 300 {
-		return fmt.Errorf("retryDelaySec must be between 0 and 300, got %d", retryDelaySec)
-	}
-
-	a.config.UpdateRetrySettings(retryCount, retryDelaySec)
-
-	if err := a.config.Validate(); err != nil {
-		return err
-	}
-
-	if err := a.proxy.UpdateConfig(a.config); err != nil {
-		return err
-	}
-
-	if a.storage != nil {
-		configAdapter := storage.NewConfigStorageAdapter(a.storage)
-		if err := a.config.SaveToStorage(configAdapter); err != nil {
-			return fmt.Errorf("failed to save retry settings: %w", err)
-		}
-	}
-
-	logger.Info("Retry settings updated: count=%d, delay=%ds", retryCount, retryDelaySec)
-	return nil
-}
-
 // ToggleEndpoint toggles the enabled state of an endpoint
 func (a *App) ToggleEndpoint(index int, enabled bool) error {
 	endpoints := a.config.GetEndpoints()
