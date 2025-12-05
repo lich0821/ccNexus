@@ -19,7 +19,7 @@ function showError(message) {
 }
 
 // Show notification
-function showNotification(message, type = 'info') {
+export function showNotification(message, type = 'info') {
     // Create notification element
     const notification = document.createElement('div');
     notification.className = `notification notification-${type}`;

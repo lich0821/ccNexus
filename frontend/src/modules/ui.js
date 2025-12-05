@@ -530,13 +530,13 @@ export function initUI() {
                         <label>🔄 ${t('update.autoCheck')}</label>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="check-interval" style="flex: 1;">
-                                <option value="0">${t('update.noAutoCheck')}</option>
                                 <option value="1">${t('update.everyHour')}</option>
                                 <option value="6">${t('update.every6Hours')}</option>
                                 <option value="24">${t('update.everyDay')}</option>
                                 <option value="168">${t('update.everyWeek')}</option>
+                                <option value="0">${t('update.noAutoCheck')}</option>
                             </select>
-                            <button id="btn-check-updates" class="btn btn-secondary" style="flex: 0 0 auto;" onclick="window.checkForUpdates()">${t('update.checkForUpdates')}</button>
+                            <button id="btn-check-updates" class="btn btn-secondary" style="flex: 0 0 auto; padding: 9px 16px;" onclick="window.checkForUpdates()">${t('update.checkForUpdates')}</button>
                         </div>
                     </div>
                 </div>

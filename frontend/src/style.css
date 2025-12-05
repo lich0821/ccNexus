@@ -2595,3 +2595,161 @@ body {
     color: var(--text-primary, #333);
     line-height: 1.7;
 }
+
+/* Update Modal Styles */
+#updateModal {
+    backdrop-filter: blur(4px);
+}
+
+#updateModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#updateModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: #e9ecef;
+}
+
+#updateModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary, #333);
+}
+
+#updateModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#updateModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#updateModal .modal-body {
+    padding: 25px 30px 10px 30px;
+}
+
+#updateModal .update-modal-content {
+    max-width: min(480px, 90vw);
+}
+
+.update-version-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.update-version-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.update-version-label {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+}
+
+.update-version-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.update-version-new {
+    color: #667eea;
+}
+
+.update-version-arrow {
+    font-size: 24px;
+    color: #667eea;
+}
+
+.update-release-date {
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.update-changelog {
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.update-changelog-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    margin-bottom: 10px;
+}
+
+.update-changelog-content {
+    font-size: 13px;
+    color: var(--text-secondary, #555);
+    line-height: 1.6;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.update-changelog-content li {
+    margin-bottom: 5px;
+}
+
+.update-progress-bar {
+    height: 8px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.update-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transition: width 0.3s;
+    width: 0%;
+}
+
+.update-progress-text {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+    margin: 0;
+}
+
