@@ -19,6 +19,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/lich0821/ccNexus/internal/storage"
 	"github.com/lich0821/ccNexus/internal/tray"
+	"github.com/lich0821/ccNexus/internal/updater"
 	"github.com/lich0821/ccNexus/internal/webdav"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -62,6 +63,7 @@ type App struct {
 	configPath string
 	ctxMutex   sync.RWMutex
 	trayIcon   []byte
+	updater    *updater.Updater
 }
 
 // NewApp creates a new App application struct
@@ -2238,4 +2240,131 @@ func (a *App) GenerateMockArchives(monthsCount int) string {
 	}
 	data, _ := json.Marshal(result)
 	return string(data)
+}
+
+// CheckForUpdates checks if a new version is available
+func (a *App) CheckForUpdates() string {
+	logger.Info("CheckForUpdates called, current version: %s", a.GetVersion())
+	if a.updater == nil {
+		a.updater = updater.New(a.GetVersion())
+	}
+	info, err := a.updater.CheckForUpdates()
+	if err != nil {
+		logger.Error("CheckForUpdates failed: %v", err)
+		result := map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	logger.Info("Update check result: hasUpdate=%v, latest=%s", info.HasUpdate, info.LatestVersion)
+
+	// Update last check time
+	updateCfg := a.config.GetUpdate()
+	updateCfg.LastCheckTime = time.Now().Format(time.RFC3339)
+	a.config.UpdateUpdate(updateCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		a.config.SaveToStorage(configAdapter)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"info":    info,
+	}
+	data, _ := json.Marshal(result)
+	logger.Debug("CheckForUpdates response: %s", string(data))
+	return string(data)
+}
+
+// GetUpdateSettings returns update settings
+func (a *App) GetUpdateSettings() string {
+	updateCfg := a.config.GetUpdate()
+	data, _ := json.Marshal(updateCfg)
+	return string(data)
+}
+
+// SetUpdateSettings updates update settings
+func (a *App) SetUpdateSettings(autoCheck bool, checkInterval int) error {
+	updateCfg := a.config.GetUpdate()
+	updateCfg.AutoCheck = autoCheck
+	updateCfg.CheckInterval = checkInterval
+
+	a.config.UpdateUpdate(updateCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save update settings: %w", err)
+		}
+	}
+
+	logger.Info("Update settings changed: autoCheck=%v, interval=%d hours", autoCheck, checkInterval)
+	return nil
+}
+
+// SkipVersion skips a specific version
+func (a *App) SkipVersion(version string) error {
+	updateCfg := a.config.GetUpdate()
+	updateCfg.SkippedVersion = version
+
+	a.config.UpdateUpdate(updateCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save skipped version: %w", err)
+		}
+	}
+
+	logger.Info("Version skipped: %s", version)
+	return nil
+}
+
+// DownloadUpdate downloads the update file
+func (a *App) DownloadUpdate(url, filename string) error {
+	if a.updater == nil {
+		a.updater = updater.New(a.GetVersion())
+	}
+	return a.updater.DownloadUpdate(url, filename)
+}
+
+// GetDownloadProgress returns download progress
+func (a *App) GetDownloadProgress() string {
+	if a.updater == nil {
+		a.updater = updater.New(a.GetVersion())
+	}
+	progress := a.updater.GetDownloadProgress()
+	data, _ := json.Marshal(progress)
+	return string(data)
+}
+
+// InstallUpdate installs the downloaded update
+func (a *App) InstallUpdate(filePath string) string {
+	if a.updater == nil {
+		a.updater = updater.New(a.GetVersion())
+	}
+	result, err := a.updater.InstallUpdate(filePath)
+	if err != nil {
+		errorResult := map[string]interface{}{
+			"success": false,
+			"error":   err.Error(),
+		}
+		data, _ := json.Marshal(errorResult)
+		return string(data)
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// SendUpdateNotification sends a system notification for updates
+func (a *App) SendUpdateNotification(title, message string) error {
+	err := updater.SendNotification(title, message)
+	if err != nil {
+		logger.Error("Failed to send notification: %v", err)
+	}
+	return err
 }

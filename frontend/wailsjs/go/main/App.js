@@ -10,6 +10,10 @@ export function BackupToWebDAV(arg1) {
   return window['go']['main']['App']['BackupToWebDAV'](arg1);
 }
 
+export function CheckForUpdates() {
+  return window['go']['main']['App']['CheckForUpdates']();
+}
+
 export function ClearLogs() {
   return window['go']['main']['App']['ClearLogs']();
 }
@@ -20,6 +24,10 @@ export function DeleteWebDAVBackups(arg1) {
 
 export function DetectWebDAVConflict(arg1) {
   return window['go']['main']['App']['DetectWebDAVConflict'](arg1);
+}
+
+export function DownloadUpdate(arg1, arg2) {
+  return window['go']['main']['App']['DownloadUpdate'](arg1, arg2);
 }
 
 export function GenerateMockArchives(arg1) {
@@ -52,6 +60,10 @@ export function GetConfig() {
 
 export function GetCurrentEndpoint() {
   return window['go']['main']['App']['GetCurrentEndpoint']();
+}
+
+export function GetDownloadProgress() {
+  return window['go']['main']['App']['GetDownloadProgress']();
 }
 
 export function GetLanguage() {
@@ -118,12 +130,20 @@ export function GetThemeAuto() {
   return window['go']['main']['App']['GetThemeAuto']();
 }
 
+export function GetUpdateSettings() {
+  return window['go']['main']['App']['GetUpdateSettings']();
+}
+
 export function GetVersion() {
   return window['go']['main']['App']['GetVersion']();
 }
 
 export function HideWindow() {
   return window['go']['main']['App']['HideWindow']();
+}
+
+export function InstallUpdate(arg1) {
+  return window['go']['main']['App']['InstallUpdate'](arg1);
 }
 
 export function ListArchives() {
@@ -152,6 +172,10 @@ export function ReorderEndpoints(arg1) {
 
 export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
+}
+
+export function SendUpdateNotification(arg1, arg2) {
+  return window['go']['main']['App']['SendUpdateNotification'](arg1, arg2);
 }
 
 export function SetAutoDarkTheme(arg1) {
@@ -186,8 +210,16 @@ export function SetThemeAuto(arg1) {
   return window['go']['main']['App']['SetThemeAuto'](arg1);
 }
 
+export function SetUpdateSettings(arg1, arg2) {
+  return window['go']['main']['App']['SetUpdateSettings'](arg1, arg2);
+}
+
 export function ShowWindow() {
   return window['go']['main']['App']['ShowWindow']();
+}
+
+export function SkipVersion(arg1) {
+  return window['go']['main']['App']['SkipVersion'](arg1);
 }
 
 export function SwitchToEndpoint(arg1) {
