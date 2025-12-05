@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/tokencount"
 )
 
 // normalizeAPIUrl ensures the API URL has a protocol prefix
@@ -87,4 +88,22 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 
 	req["messages"] = messages
 	return json.Marshal(req)
+}
+
+// estimateTokens estimates tokens when API doesn't provide usage
+func (p *Proxy) estimateTokens(bodyBytes []byte, outputText string, inputTokens, outputTokens int, endpointName string) (int, int) {
+	if inputTokens == 0 {
+		var req tokencount.CountTokensRequest
+		if json.Unmarshal(bodyBytes, &req) == nil {
+			inputTokens = tokencount.EstimateInputTokens(&req)
+			logger.Debug("[%s] Estimated input tokens: %d", endpointName, inputTokens)
+		}
+	}
+
+	if outputTokens == 0 && outputText != "" {
+		outputTokens = tokencount.EstimateOutputTokens(outputText)
+		logger.Debug("[%s] Estimated output tokens: %d", endpointName, outputTokens)
+	}
+
+	return inputTokens, outputTokens
 }

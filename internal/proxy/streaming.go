@@ -17,9 +17,12 @@ import (
 )
 
 // handleStreamingResponse processes streaming SSE responses
-func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, error) {
-	// Copy response headers
+func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, string) {
+	// Copy response headers except Content-Length (streaming response length is unknown)
 	for key, values := range resp.Header {
+		if key == "Content-Length" {
+			continue
+		}
 		for _, value := range values {
 			w.Header().Add(key, value)
 		}
@@ -30,7 +33,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 	if !ok {
 		logger.Error("[%s] ResponseWriter does not support flushing", endpoint.Name)
 		resp.Body.Close()
-		return 0, 0, nil
+		return 0, 0, ""
 	}
 
 	var streamCtx *transformer.StreamContext
@@ -88,7 +91,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 			} else {
 				logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
 
-				p.extractTokensFromEvent(eventData, &inputTokens, &outputTokens)
+				p.extractTokensFromEvent(transformedEvent, &inputTokens, &outputTokens)
 				p.extractTextFromEvent(transformedEvent, &outputText)
 
 				if _, writeErr := w.Write(transformedEvent); writeErr != nil {
@@ -107,7 +110,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 	}
 
 	resp.Body.Close()
-	return inputTokens, outputTokens, nil
+	return inputTokens, outputTokens, outputText.String()
 }
 
 // transformStreamEvent transforms a single SSE event
@@ -127,11 +130,11 @@ func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputToke
 	scanner := bufio.NewScanner(bytes.NewReader(eventData))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
+		if !strings.HasPrefix(line, "data:") {
 			continue
 		}
 
-		jsonData := strings.TrimPrefix(line, "data: ")
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue
@@ -161,11 +164,11 @@ func (p *Proxy) extractTextFromEvent(transformedEvent []byte, outputText *string
 	scanner := bufio.NewScanner(bytes.NewReader(transformedEvent))
 	for scanner.Scan() {
 		line := scanner.Text()
-		if !strings.HasPrefix(line, "data: ") {
+		if !strings.HasPrefix(line, "data:") {
 			continue
 		}
 
-		jsonData := strings.TrimPrefix(line, "data: ")
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue

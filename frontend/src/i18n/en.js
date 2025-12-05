@@ -4,12 +4,12 @@ export default {
         version: 'Version'
     },
     header: {
-        title: 'ccNexus - API Endpoint Round-Robin Proxy',
+        title: 'API Endpoint Round-Robin Proxy, Auto-switch to Available Endpoints for Seamless Failover',
         port: 'Port',
         addEndpoint: 'Add Endpoint',
         github: 'GitHub',
         githubRepo: 'GitHub Repository',
-        about: 'About ccNexus'
+        about: 'About'
     },
     endpoints: {
         title: 'Endpoints',
@@ -66,6 +66,8 @@ export default {
         portUpdateFailed: 'Failed to update port: {error}',
         requiredFields: 'Please fill in all required fields',
         modelRequired: 'Model field is required for {transformer} transformer',
+        retryCountInvalid: 'Retry count must be between 1 and 10',
+        retryDelayInvalid: 'Retry delay must be between 0 and 300 seconds',
         saveFailed: 'Failed to save: {error}',
         confirmDelete: 'Are you sure you want to delete endpoint "{name}"?',
         deleteFailed: 'Failed to delete: {error}'
@@ -88,12 +90,17 @@ export default {
         title: 'Test Result',
         testing: 'Testing...',
         success: 'Success',
-        failed: 'Failed'
+        failed: 'Failed',
+        successTitle: '✅ Test Successful',
+        failedTitle: '❌ Test Failed',
+        connectionSuccess: 'Connection successful!',
+        connectionFailed: 'Connection failed',
+        testError: 'Test error'
     },
     welcome: {
         title: 'Welcome to ccNexus!',
         titleWithVersion: '👋 Welcome to ccNexus v{version}',
-        message: 'ccNexus is a smart API endpoint round-robin proxy for Claude Code.',
+        message: 'ccNexus is a smart API endpoint round-robin proxy for Claude Code',
         features: 'Features',
         feature1: 'Automatic failover between multiple API endpoints',
         feature2: 'Support for Claude, OpenAI, and Gemini API formats',
@@ -102,8 +109,15 @@ export default {
         getStarted: 'Get Started',
         dontShow: "Don't show this again",
         qrCodeTip: 'Scan to follow the official account for more',
+        chatGroupTip: 'Join the group for feedback, pure open source',
         readArticle: '📖 Read Introduction',
-        githubRepo: '🔗 GitHub Repository'
+        githubRepo: '🔗 GitHub Repository',
+        changelog: '📋 Changelog'
+    },
+    changelog: {
+        title: 'Changelog',
+        loading: 'Loading...',
+        error: 'Failed to load changelog'
     },
     settings: {
         title: 'Settings',
@@ -143,6 +157,12 @@ export default {
             minimize: 'Minimize to Tray',
             ask: 'Ask Every Time'
         },
+        retryCount: 'Retry Count',
+        retryCountHelp: 'Global retries per endpoint before switching (1-10)',
+        retryDelaySec: 'Retry Delay (seconds)',
+        retryDelaySecHelp: 'Global wait time between retries (0-300 seconds)',
+        retryCountInvalid: 'Retry count must be between 1 and 10',
+        retryDelayInvalid: 'Retry delay must be between 0 and 300 seconds',
         languageHelp: 'Select the interface display language',
         save: 'Save',
         cancel: 'Cancel',

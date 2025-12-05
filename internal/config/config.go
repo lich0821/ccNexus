@@ -31,29 +31,33 @@ type WebDAVConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port                 int           `json:"port"`
-	Endpoints            []Endpoint    `json:"endpoints"`
-	LogLevel             int           `json:"logLevel"`                     // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language             string        `json:"language"`                     // UI language: en, zh-CN
-	Theme                string        `json:"theme"`                        // UI theme: light, dark
-	ThemeAuto            bool          `json:"themeAuto"`                    // Auto switch theme based on time
-	AutoLightTheme       string        `json:"autoLightTheme,omitempty"`     // Theme to use in daytime when auto mode is on
-	AutoDarkTheme        string        `json:"autoDarkTheme,omitempty"`      // Theme to use in nighttime when auto mode is on
-	WindowWidth          int           `json:"windowWidth"`                  // Window width in pixels
-	WindowHeight         int           `json:"windowHeight"`                 // Window height in pixels
-	CloseWindowBehavior  string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
-	WebDAV               *WebDAVConfig `json:"webdav,omitempty"`             // WebDAV synchronization config
-	mu                   sync.RWMutex
+	Port                int           `json:"port"`
+	Endpoints           []Endpoint    `json:"endpoints"`
+	LogLevel            int           `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language            string        `json:"language"`                      // UI language: en, zh-CN
+	RetryCount          int           `json:"retryCount,omitempty"`          // Global retry attempts per endpoint
+	RetryDelaySec       int           `json:"retryDelaySec,omitempty"`       // Global retry delay between attempts (seconds)
+	Theme               string        `json:"theme"`                         // UI theme: light, dark
+	ThemeAuto           bool          `json:"themeAuto"`                     // Auto switch theme based on time
+	AutoLightTheme      string        `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
+	AutoDarkTheme       string        `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
+	WindowWidth         int           `json:"windowWidth"`                   // Window width in pixels
+	WindowHeight        int           `json:"windowHeight"`                  // Window height in pixels
+	CloseWindowBehavior string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
+	WebDAV              *WebDAVConfig `json:"webdav,omitempty"`              // WebDAV synchronization config
+	mu                  sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() *Config {
 	return &Config{
-		Port:         3000,
-		LogLevel:     1,    // Default to INFO level
-		Language:     "",   // Empty means auto-detect
-		WindowWidth:  1024, // Default window width
-		WindowHeight: 768,  // Default window height
+		Port:          3000,
+		LogLevel:      1,       // Default to INFO level
+		Language:      "zh-CN", // Default to Chinese
+		RetryCount:    2,
+		RetryDelaySec: 0,
+		WindowWidth:   1024, // Default window width
+		WindowHeight:  768,  // Default window height
 		Endpoints: []Endpoint{
 			{
 				Name:        "Claude Official",
@@ -73,6 +77,13 @@ func (c *Config) Validate() error {
 
 	if c.Port < 1 || c.Port > 65535 {
 		return fmt.Errorf("invalid port: %d", c.Port)
+	}
+
+	if c.RetryCount < 1 || c.RetryCount > 10 {
+		return fmt.Errorf("retryCount out of range (1-10)")
+	}
+	if c.RetryDelaySec < 0 || c.RetryDelaySec > 300 {
+		return fmt.Errorf("retryDelaySec out of range (0-300)")
 	}
 
 	if len(c.Endpoints) == 0 {
@@ -118,6 +129,26 @@ func (c *Config) GetPort() int {
 	return c.Port
 }
 
+// GetRetryCount returns the global retry count (thread-safe)
+func (c *Config) GetRetryCount() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.RetryCount <= 0 {
+		return 2
+	}
+	return c.RetryCount
+}
+
+// GetRetryDelaySec returns the global retry delay in seconds (thread-safe)
+func (c *Config) GetRetryDelaySec() int {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.RetryDelaySec < 0 {
+		return 0
+	}
+	return c.RetryDelaySec
+}
+
 // GetLogLevel returns the configured log level (thread-safe)
 func (c *Config) GetLogLevel() int {
 	c.mu.RLock()
@@ -130,6 +161,14 @@ func (c *Config) UpdateEndpoints(endpoints []Endpoint) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Endpoints = endpoints
+}
+
+// UpdateRetrySettings updates global retry settings
+func (c *Config) UpdateRetrySettings(retryCount, retryDelaySec int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.RetryCount = retryCount
+	c.RetryDelaySec = retryDelaySec
 }
 
 // UpdatePort updates the port (thread-safe)
@@ -377,6 +416,24 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.Port = 3000
 	}
 
+	if retryCountStr, err := storage.GetConfig("retryCount"); err == nil && retryCountStr != "" {
+		if cnt, err := strconv.Atoi(retryCountStr); err == nil {
+			config.RetryCount = cnt
+		}
+	}
+	if config.RetryCount <= 0 {
+		config.RetryCount = 2
+	}
+
+	if retryDelayStr, err := storage.GetConfig("retryDelaySec"); err == nil && retryDelayStr != "" {
+		if d, err := strconv.Atoi(retryDelayStr); err == nil {
+			config.RetryDelaySec = d
+		}
+	}
+	if config.RetryDelaySec < 0 {
+		config.RetryDelaySec = 0
+	}
+
 	if logLevelStr, err := storage.GetConfig("logLevel"); err == nil && logLevelStr != "" {
 		if logLevel, err := strconv.Atoi(logLevelStr); err == nil {
 			config.LogLevel = logLevel
@@ -515,6 +572,8 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 
 	// Save app config
 	storage.SetConfig("port", strconv.Itoa(c.Port))
+	storage.SetConfig("retryCount", strconv.Itoa(c.RetryCount))
+	storage.SetConfig("retryDelaySec", strconv.Itoa(c.RetryDelaySec))
 	storage.SetConfig("logLevel", strconv.Itoa(c.LogLevel))
 	storage.SetConfig("language", c.Language)
 	storage.SetConfig("theme", c.Theme)

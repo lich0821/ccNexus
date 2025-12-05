@@ -4,7 +4,7 @@ import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
 import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
-import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
+import { renderEndpoints, toggleEndpointPanel, setTransformerFilter } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
@@ -22,6 +22,9 @@ import {
     showWelcomeModal,
     closeWelcomeModal,
     showWelcomeModalIfFirstTime,
+    showChangelogModal,
+    closeChangelogModal,
+    showChangelogIfNewVersion,
     testEndpointHandler,
     closeTestResultModal,
     openGitHub,
@@ -92,6 +95,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
+    showChangelogIfNewVersion();
 
     // Listen for close dialog event from backend
     if (window.runtime) {
@@ -130,6 +134,8 @@ window.savePort = savePort;
 window.closePortModal = closePortModal;
 window.showWelcomeModal = showWelcomeModal;
 window.closeWelcomeModal = closeWelcomeModal;
+window.showChangelogModal = showChangelogModal;
+window.closeChangelogModal = closeChangelogModal;
 window.testEndpoint = testEndpointHandler;
 window.closeTestResultModal = closeTestResultModal;
 window.openGitHub = openGitHub;
@@ -148,6 +154,7 @@ window.minimizeToTray = minimizeToTray;
 window.showDataSyncDialog = showDataSyncDialog;
 window.switchStatsPeriod = switchStatsPeriod;
 window.toggleEndpointPanel = toggleEndpointPanel;
+window.setTransformerFilter = setTransformerFilter;
 window.showSettingsModal = showSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.saveSettings = saveSettings;

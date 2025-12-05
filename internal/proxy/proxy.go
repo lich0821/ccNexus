@@ -150,12 +150,11 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
-		// Return empty endpoint if no enabled endpoints
 		return config.Endpoint{}
 	}
 
-	oldIndex := p.currentIndex
-	oldEndpoint := endpoints[oldIndex%len(endpoints)]
+	oldIndex := p.currentIndex % len(endpoints)
+	oldEndpoint := endpoints[oldIndex]
 
 	// Check if there are active requests on the current endpoint
 	// Wait a short time for them to complete (max 500ms)
@@ -171,16 +170,19 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 		}
 
 		p.mu.Lock() // Re-acquire lock
-		if p.hasActiveRequests(oldEndpoint.Name) {
-			logger.Warn("[SWITCH] Active requests still present on %s after waiting, forcing switch", oldEndpoint.Name)
+
+		// Re-fetch endpoints after re-acquiring lock (may have changed)
+		endpoints = p.getEnabledEndpoints()
+		if len(endpoints) == 0 {
+			return config.Endpoint{}
 		}
 	}
 
-	p.currentIndex = (p.currentIndex + 1) % len(endpoints)
+	// Use oldIndex to calculate next, avoiding skip if currentIndex was modified during wait
+	p.currentIndex = (oldIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
-	logger.Debug("[SWITCH] %s (#%d) → %s (#%d)",
-		oldEndpoint.Name, oldIndex+1, newEndpoint.Name, p.currentIndex+1)
+	logger.Debug("[SWITCH] %s → %s (#%d)", oldEndpoint.Name, newEndpoint.Name, p.currentIndex+1)
 
 	return newEndpoint
 }
@@ -219,6 +221,7 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 // handleProxy handles the main proxy logic
 // handleProxy handles the main proxy logic
 func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
+	requestID := fmt.Sprintf("%d", time.Now().UnixNano())
 	bodyBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error("Failed to read request body: %v", err)
@@ -227,7 +230,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	logger.DebugLog("=== Proxy Request ===")
+	logger.DebugLog("=== Proxy Request [%s] ===", requestID)
 	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
@@ -244,7 +247,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxRetries := len(endpoints) * 2
+	retryCount := p.config.GetRetryCount()
+	retryDelaySec := p.config.GetRetryDelaySec()
+	maxRetries := len(endpoints) * retryCount
+	if maxRetries == 0 {
+		maxRetries = len(endpoints)
+	}
 	endpointAttempts := 0
 
 	for retry := 0; retry < maxRetries; retry++ {
@@ -263,9 +271,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -280,9 +290,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to transform request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -312,9 +324,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -324,9 +338,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
@@ -337,7 +353,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		isStreaming := contentType == "text/event-stream" || (claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, _ := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+
+			// Fallback: estimate tokens when usage is 0
+			if inputTokens == 0 || outputTokens == 0 {
+				inputTokens, outputTokens = p.estimateTokens(bodyBytes, outputText, inputTokens, outputTokens, endpoint.Name)
+			}
+
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 			p.markRequestInactive(endpoint.Name)
 			logger.Debug("[%s] Request completed successfully (streaming)", endpoint.Name)
@@ -355,12 +377,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if shouldRetry(resp.StatusCode) {
-			logger.Warn("[%s] Request failed with status %d, retrying...", endpoint.Name, resp.StatusCode)
+			logger.Warn("[%s][Req:%s] Request failed with status %d, retrying...", endpoint.Name, requestID, resp.StatusCode)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
-			if endpointAttempts >= 2 {
+			if endpointAttempts >= retryCount {
 				p.rotateEndpoint()
 				endpointAttempts = 0
+			} else if retryDelaySec > 0 {
+				time.Sleep(time.Duration(retryDelaySec) * time.Second)
 			}
 			continue
 		}
