@@ -1,5 +1,25 @@
 [
   {
+    "version": "v3.5.0",
+    "date": "2025-12-05",
+    "changes": ["Add online update feature"]
+  },
+  {
+    "version": "v3.4.1",
+    "date": "2025-12-05",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v3.4.0",
+    "date": "2025-12-04",
+    "changes": ["Optimize token statistics"]
+  },
+  {
+    "version": "v3.3.1",
+    "date": "2025-12-01",
+    "changes": ["Fix tray icon display issue"]
+  },
+  {
     "version": "v3.2.1",
     "date": "2025-11-25",
     "changes": ["Support Gemini API", "Bug fixes"]

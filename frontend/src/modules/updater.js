@@ -1,5 +1,6 @@
 import { CheckForUpdates, GetUpdateSettings, SetUpdateSettings, SkipVersion, DownloadUpdate, GetDownloadProgress, InstallUpdate, SendUpdateNotification } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
+import { showNotification } from './modal.js';
 
 let downloadInterval = null;
 let updateCheckInterval = null;
@@ -77,13 +78,13 @@ export async function checkForUpdates(silent = false) {
             showUpdateNotification(info);
         } else {
             if (!silent) {
-                alert(t('update.upToDate'));
+                showNotification(t('update.upToDate'), 'success');
             }
         }
     } catch (error) {
         console.error('[Updater] Failed to check for updates:', error);
         if (!silent) {
-            alert(t('update.checkFailed') + ': ' + error.message);
+            showNotification(t('update.checkFailed') + ': ' + error.message, 'error');
         }
     }
 }
@@ -102,32 +103,41 @@ function showUpdateNotification(info) {
     modal.id = 'updateModal';
     modal.className = 'modal active';
     modal.innerHTML = `
-        <div class="modal-content">
+        <div class="modal-content update-modal-content">
             <div class="modal-header">
-                <h2>${t('update.newVersionAvailable')}</h2>
+                <h2>🎉 ${t('update.newVersionAvailable')}</h2>
                 <button class="modal-close">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="version-comparison">
-                    <p><strong>${t('update.currentVersion')}:</strong> ${info.currentVersion}</p>
-                    <p><strong>${t('update.latestVersion')}:</strong> ${info.latestVersion}</p>
-                    <p><strong>${t('update.releaseDate')}:</strong> ${info.releaseDate}</p>
-                </div>
-                <div class="changelog">
-                    <h4>${t('update.changelog')}:</h4>
-                    <div class="changelog-content">${formatChangelog(info.changelog)}</div>
-                </div>
-                <div id="download-progress-container" class="hidden">
-                    <div class="progress-bar">
-                        <div id="progress-fill" class="progress-fill" style="width: 0%; height: 20px; background: #4CAF50; transition: width 0.3s;"></div>
+                <div class="update-version-info">
+                    <div class="update-version-item">
+                        <span class="update-version-label">${t('update.currentVersion')}</span>
+                        <span class="update-version-value">v${info.currentVersion}</span>
                     </div>
-                    <p id="progress-text">0%</p>
+                    <div class="update-version-arrow">→</div>
+                    <div class="update-version-item">
+                        <span class="update-version-label">${t('update.latestVersion')}</span>
+                        <span class="update-version-value update-version-new">${info.latestVersion}</span>
+                    </div>
+                </div>
+                <div class="update-release-date">
+                    📅 ${t('update.releaseDate')}: ${info.releaseDate}
+                </div>
+                <div class="update-changelog">
+                    <div class="update-changelog-title">${t('update.changelog')}</div>
+                    <div class="update-changelog-content">${formatChangelog(info.changelog)}</div>
+                </div>
+                <div id="download-progress-container" style="display: none;">
+                    <div class="update-progress-bar">
+                        <div id="progress-fill" class="update-progress-fill"></div>
+                    </div>
+                    <p id="progress-text" class="update-progress-text">0%</p>
                 </div>
             </div>
             <div class="modal-footer">
-                <button id="btn-download-update" class="btn btn-primary">${t('update.downloadUpdate')}</button>
                 <button id="btn-skip-version" class="btn btn-secondary">${t('update.skipVersion')}</button>
                 <button id="btn-remind-later" class="btn btn-secondary">${t('update.remindLater')}</button>
+                <button id="btn-download-update" class="btn btn-primary">${t('update.downloadUpdate')}</button>
             </div>
         </div>
     `;
@@ -155,13 +165,18 @@ function showUpdateNotification(info) {
 
 // Format changelog from markdown
 function formatChangelog(markdown) {
+    if (!markdown || markdown.trim() === '') {
+        return `<p style="color: #999;">${t('update.noChangelog')}</p>`;
+    }
     // Simple markdown to HTML conversion
     return markdown
+        .replace(/\*\*Full Changelog\*\*:\s*/gm, '')
         .replace(/^### (.+)$/gm, '<h5>$1</h5>')
         .replace(/^## (.+)$/gm, '<h4>$1</h4>')
         .replace(/^# (.+)$/gm, '<h3>$1</h3>')
         .replace(/^\* (.+)$/gm, '<li>$1</li>')
         .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" style="color: #667eea;">$1</a>')
         .replace(/\n\n/g, '</p><p>')
         .replace(/^(.+)$/gm, '<p>$1</p>');
 }
@@ -177,7 +192,7 @@ async function startDownload(info) {
     downloadBtn.style.display = 'none';
     skipBtn.style.display = 'none';
     remindBtn.style.display = 'none';
-    progressContainer.classList.remove('hidden');
+    progressContainer.style.display = 'block';
 
     try {
         // Extract filename from URL

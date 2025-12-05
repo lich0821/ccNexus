@@ -4,9 +4,11 @@ import (
 	"embed"
 	"log"
 	"os"
+	"path/filepath"
+	"strconv"
 
-	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/singleinstance"
+	"github.com/lich0821/ccNexus/internal/storage"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -50,27 +52,24 @@ func main() {
 
 	app := NewApp(trayIcon)
 
-	// Load configuration to get window size
-	configPath, err := config.GetConfigPath()
-	if err != nil {
-		log.Printf("Warning: Failed to get config path: %v, using defaults", err)
-		configPath = "config.json"
-	}
-
-	cfg, err := config.Load(configPath)
-	if err != nil {
-		log.Printf("Warning: Failed to load config: %v, using defaults", err)
-		cfg = config.DefaultConfig()
-	}
-
-	// Get window size from config
-	windowWidth, windowHeight := cfg.GetWindowSize()
-	// Use defaults if not set or invalid
-	if windowWidth <= 0 {
-		windowWidth = 1024
-	}
-	if windowHeight <= 0 {
-		windowHeight = 768
+	// Load window size from SQLite storage
+	windowWidth, windowHeight := 1024, 768 // defaults
+	homeDir, err := os.UserHomeDir()
+	if err == nil {
+		dbPath := filepath.Join(homeDir, ".ccNexus", "ccnexus.db")
+		if sqliteStorage, err := storage.NewSQLiteStorage(dbPath); err == nil {
+			if w, err := sqliteStorage.GetConfig("windowWidth"); err == nil && w != "" {
+				if width, err := strconv.Atoi(w); err == nil && width > 0 {
+					windowWidth = width
+				}
+			}
+			if h, err := sqliteStorage.GetConfig("windowHeight"); err == nil && h != "" {
+				if height, err := strconv.Atoi(h); err == nil && height > 0 {
+					windowHeight = height
+				}
+			}
+			sqliteStorage.Close()
+		}
 	}
 
 	err = wails.Run(&options.App{
