@@ -1,8 +1,6 @@
 package proxy
 
 import (
-	"os"
-	"path/filepath"
 	"reflect"
 	"sync"
 	"time"
@@ -69,7 +67,6 @@ type Stats struct {
 	storage       StatsStorage
 	deviceID      string
 	mu            sync.RWMutex
-	statsPath     string // Path to stats file (for backward compatibility)
 
 	// Save optimization
 	savePending   bool
@@ -86,13 +83,6 @@ func NewStats(storage StatsStorage, deviceID string) *Stats {
 		deviceID:     deviceID,
 		saveDebounce: 2 * time.Second, // Debounce save operations by 2 seconds
 	}
-}
-
-// SetStatsPath sets the path for stats persistence (for backward compatibility)
-func (s *Stats) SetStatsPath(path string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.statsPath = path
 }
 
 // RecordRequest records a request for an endpoint
@@ -228,20 +218,6 @@ func (s *Stats) Load() error {
 	return nil
 }
 
-// GetStatsPath returns the stats file path
-func GetStatsPath() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	configDir := filepath.Join(homeDir, ".ccNexus")
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", err
-	}
-
-	return filepath.Join(configDir, "stats.json"), nil
-}
 
 // GetPeriodStats returns aggregated statistics for a time period
 func (s *Stats) GetPeriodStats(startDate, endDate string) map[string]*DailyStats {

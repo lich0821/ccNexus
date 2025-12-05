@@ -7,7 +7,6 @@ let currentTestButton = null;
 let currentTestButtonOriginalText = '';
 let currentTestIndex = -1;
 let endpointPanelExpanded = true;
-let currentTransformerFilter = 'claude';
 
 function copyToClipboard(text, button) {
     navigator.clipboard.writeText(text).then(() => {
@@ -39,15 +38,6 @@ export function setTestState(button, index) {
 
 export async function renderEndpoints(endpoints) {
     const container = document.getElementById('endpointList');
-    const filterTabs = document.getElementById('endpointFilterTabs');
-    if (filterTabs) {
-        filterTabs.querySelectorAll('.endpoint-filter-btn').forEach((btn) => {
-            const isActive = btn.dataset.transformer === currentTransformerFilter;
-            btn.classList.toggle('active', isActive);
-            btn.classList.toggle('btn-primary', isActive);
-            btn.classList.toggle('btn-secondary', !isActive);
-        });
-    }
 
     // Get current endpoint
     let currentEndpointName = '';
@@ -70,16 +60,11 @@ export async function renderEndpoints(endpoints) {
 
     const endpointStats = getEndpointStats();
     // Display endpoints in config file order (no sorting by enabled status)
-    const sortedEndpoints = endpoints
-        .map((ep, index) => {
-            const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
-            const enabled = ep.enabled !== undefined ? ep.enabled : true;
-            return { endpoint: ep, originalIndex: index, stats, enabled };
-        })
-        .filter(({ endpoint: ep }) => {
-            const transformer = ep.transformer || 'claude';
-            return transformer === currentTransformerFilter;
-        });
+    const sortedEndpoints = endpoints.map((ep, index) => {
+        const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+        const enabled = ep.enabled !== undefined ? ep.enabled : true;
+        return { endpoint: ep, originalIndex: index, stats, enabled };
+    });
 
     sortedEndpoints.forEach(({ endpoint: ep, originalIndex: index, stats }) => {
         const totalTokens = stats.inputTokens + stats.outputTokens;
@@ -206,11 +191,6 @@ export function toggleEndpointPanel() {
         icon.textContent = '🔽';
         text.textContent = t('endpoints.expand');
     }
-}
-
-export function setTransformerFilter(transformer) {
-    currentTransformerFilter = transformer || 'claude';
-    window.loadConfig(); // re-render with new filter
 }
 
 // Drag and drop state

@@ -110,8 +110,6 @@ func (s *SQLiteStorage) migrateSortOrder() error {
 	return nil
 }
 
-
-
 func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

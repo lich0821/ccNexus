@@ -152,13 +152,6 @@ async function loadCurrentSettings() {
             behaviorSelect.value = closeWindowBehavior;
         }
 
-        const retryCount = config.retryCount ?? 2;
-        const retryDelaySec = config.retryDelaySec ?? 0;
-        const retryCountInput = document.getElementById('settingsRetryCount');
-        const retryDelayInput = document.getElementById('settingsRetryDelaySec');
-        if (retryCountInput) retryCountInput.value = retryCount;
-        if (retryDelayInput) retryDelayInput.value = retryDelaySec;
-
         // Set language
         const language = config.language || 'zh-CN';
         const languageSelect = document.getElementById('settingsLanguage');
@@ -282,19 +275,6 @@ export async function saveSettings() {
         const language = document.getElementById('settingsLanguage').value;
         const theme = document.getElementById('settingsTheme').value;
         const themeAuto = document.getElementById('settingsThemeAuto').checked;
-        const retryCountInput = document.getElementById('settingsRetryCount');
-        const retryDelayInput = document.getElementById('settingsRetryDelaySec');
-        const retryCount = parseInt(retryCountInput?.value ?? '2', 10);
-        const retryDelaySec = parseInt(retryDelayInput?.value ?? '0', 10);
-
-        if (Number.isNaN(retryCount) || retryCount < 1 || retryCount > 10) {
-            showNotification(t('settings.retryCountInvalid'), 'error');
-            return;
-        }
-        if (Number.isNaN(retryDelaySec) || retryDelaySec < 0 || retryDelaySec > 300) {
-            showNotification(t('settings.retryDelayInvalid'), 'error');
-            return;
-        }
 
         // Save close window behavior
         await window.go.main.App.SetCloseWindowBehavior(closeWindowBehavior);
@@ -311,11 +291,6 @@ export async function saveSettings() {
         // Handle auto mode changes
         if (config.themeAuto !== themeAuto) {
             await window.go.main.App.SetThemeAuto(themeAuto);
-        }
-
-        // Save retry settings if changed
-        if (config.retryCount !== retryCount || config.retryDelaySec !== retryDelaySec) {
-            await window.go.main.App.SetRetrySettings(retryCount, retryDelaySec);
         }
 
         // Apply theme based on final settings
