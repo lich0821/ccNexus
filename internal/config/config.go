@@ -29,6 +29,14 @@ type WebDAVConfig struct {
 	StatsPath  string `json:"statsPath"`  // Stats backup path (default /ccNexus/stats)
 }
 
+// UpdateConfig represents update configuration
+type UpdateConfig struct {
+	AutoCheck      bool   `json:"autoCheck"`      // Auto check for updates
+	CheckInterval  int    `json:"checkInterval"`  // Check interval in hours
+	LastCheckTime  string `json:"lastCheckTime"`  // Last check time (RFC3339)
+	SkippedVersion string `json:"skippedVersion"` // Skipped version
+}
+
 // Config represents the application configuration
 type Config struct {
 	Port                int           `json:"port"`
@@ -45,6 +53,7 @@ type Config struct {
 	WindowHeight        int           `json:"windowHeight"`                  // Window height in pixels
 	CloseWindowBehavior string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	WebDAV              *WebDAVConfig `json:"webdav,omitempty"`              // WebDAV synchronization config
+	Update              *UpdateConfig `json:"update,omitempty"`              // Update configuration
 	mu                  sync.RWMutex
 }
 
@@ -66,6 +75,10 @@ func DefaultConfig() *Config {
 				Enabled:     true,
 				Transformer: "claude",
 			},
+		},
+		Update: &UpdateConfig{
+			AutoCheck:     true,
+			CheckInterval: 24,
 		},
 	}
 }
@@ -356,6 +369,26 @@ func (c *Config) UpdateWebDAV(webdav *WebDAVConfig) {
 	c.WebDAV = webdav
 }
 
+// GetUpdate returns the Update configuration (thread-safe)
+func (c *Config) GetUpdate() *UpdateConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.Update == nil {
+		return &UpdateConfig{
+			AutoCheck:     true,
+			CheckInterval: 24,
+		}
+	}
+	return c.Update
+}
+
+// UpdateUpdate updates the Update configuration (thread-safe)
+func (c *Config) UpdateUpdate(update *UpdateConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Update = update
+}
+
 // StorageAdapter defines the interface needed for loading/saving config
 type StorageAdapter interface {
 	GetEndpoints() ([]StorageEndpoint, error)
@@ -519,6 +552,26 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		}
 	}
 
+	// Load Update config
+	config.Update = &UpdateConfig{
+		AutoCheck:     true,
+		CheckInterval: 24,
+	}
+	if autoCheckStr, err := storage.GetConfig("update_autoCheck"); err == nil && autoCheckStr != "" {
+		config.Update.AutoCheck = autoCheckStr == "true"
+	}
+	if intervalStr, err := storage.GetConfig("update_checkInterval"); err == nil && intervalStr != "" {
+		if interval, err := strconv.Atoi(intervalStr); err == nil {
+			config.Update.CheckInterval = interval
+		}
+	}
+	if lastCheck, err := storage.GetConfig("update_lastCheckTime"); err == nil {
+		config.Update.LastCheckTime = lastCheck
+	}
+	if skipped, err := storage.GetConfig("update_skippedVersion"); err == nil {
+		config.Update.SkippedVersion = skipped
+	}
+
 	return config, nil
 }
 
@@ -591,6 +644,14 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		storage.SetConfig("webdav_password", c.WebDAV.Password)
 		storage.SetConfig("webdav_configPath", c.WebDAV.ConfigPath)
 		storage.SetConfig("webdav_statsPath", c.WebDAV.StatsPath)
+	}
+
+	// Save Update config
+	if c.Update != nil {
+		storage.SetConfig("update_autoCheck", strconv.FormatBool(c.Update.AutoCheck))
+		storage.SetConfig("update_checkInterval", strconv.Itoa(c.Update.CheckInterval))
+		storage.SetConfig("update_lastCheckTime", c.Update.LastCheckTime)
+		storage.SetConfig("update_skippedVersion", c.Update.SkippedVersion)
 	}
 
 	return nil

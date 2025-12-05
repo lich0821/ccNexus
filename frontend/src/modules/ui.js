@@ -547,6 +547,19 @@ export function initUI() {
                             ${t('settings.closeWindowBehaviorHelp')}
                         </p>
                     </div>
+                    <div class="form-group">
+                        <label>🔄 ${t('update.autoCheck')}</label>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <select id="check-interval" style="flex: 1;">
+                                <option value="0">${t('update.noAutoCheck')}</option>
+                                <option value="1">${t('update.everyHour')}</option>
+                                <option value="6">${t('update.every6Hours')}</option>
+                                <option value="24">${t('update.everyDay')}</option>
+                                <option value="168">${t('update.everyWeek')}</option>
+                            </select>
+                            <button id="btn-check-updates" class="btn btn-secondary" style="flex: 0 0 auto;" onclick="window.checkForUpdates()">${t('update.checkForUpdates')}</button>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeSettingsModal()">${t('settings.cancel')}</button>

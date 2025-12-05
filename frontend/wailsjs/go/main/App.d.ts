@@ -5,11 +5,15 @@ export function AddEndpoint(arg1:string,arg2:string,arg3:string,arg4:string,arg5
 
 export function BackupToWebDAV(arg1:string):Promise<void>;
 
+export function CheckForUpdates():Promise<string>;
+
 export function ClearLogs():Promise<void>;
 
 export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
 
 export function DetectWebDAVConflict(arg1:string):Promise<string>;
+
+export function DownloadUpdate(arg1:string,arg2:string):Promise<void>;
 
 export function GenerateMockArchives(arg1:number):Promise<string>;
 
@@ -26,6 +30,8 @@ export function GetChangelog(arg1:string):Promise<string>;
 export function GetConfig():Promise<string>;
 
 export function GetCurrentEndpoint():Promise<string>;
+
+export function GetDownloadProgress():Promise<string>;
 
 export function GetLanguage():Promise<string>;
 
@@ -59,9 +65,13 @@ export function GetTheme():Promise<string>;
 
 export function GetThemeAuto():Promise<boolean>;
 
+export function GetUpdateSettings():Promise<string>;
+
 export function GetVersion():Promise<string>;
 
 export function HideWindow():Promise<void>;
+
+export function InstallUpdate(arg1:string):Promise<string>;
 
 export function ListArchives():Promise<string>;
 
@@ -76,6 +86,8 @@ export function RemoveEndpoint(arg1:number):Promise<void>;
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
+
+export function SendUpdateNotification(arg1:string,arg2:string):Promise<void>;
 
 export function SetAutoDarkTheme(arg1:string):Promise<void>;
 
@@ -93,7 +105,11 @@ export function SetTheme(arg1:string):Promise<void>;
 
 export function SetThemeAuto(arg1:boolean):Promise<void>;
 
+export function SetUpdateSettings(arg1:boolean,arg2:number):Promise<void>;
+
 export function ShowWindow():Promise<void>;
+
+export function SkipVersion(arg1:string):Promise<void>;
 
 export function SwitchToEndpoint(arg1:string):Promise<void>;
 

@@ -9,6 +9,7 @@ import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from '.
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
+import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -97,6 +98,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     showWelcomeModalIfFirstTime();
     showChangelogIfNewVersion();
 
+    // Check for updates on startup
+    checkUpdatesOnStartup();
+
+    // Initialize update settings
+    initUpdateSettings();
+
     // Listen for close dialog event from backend
     if (window.runtime) {
         window.runtime.EventsOn('show-close-dialog', () => {
@@ -147,6 +154,7 @@ window.clearLogs = clearLogs;
 window.changeLanguage = changeLanguage;
 window.togglePasswordVisibility = togglePasswordVisibility;
 window.acceptConfirm = acceptConfirm;
+window.checkForUpdates = checkForUpdates;
 window.cancelConfirm = cancelConfirm;
 window.showCloseActionDialog = showCloseActionDialog;
 window.quitApplication = quitApplication;

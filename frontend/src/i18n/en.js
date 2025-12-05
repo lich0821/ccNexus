@@ -268,6 +268,36 @@ export default {
         useRemoteDesc: 'Remote configuration will overwrite local conflicting endpoints',
         keepLocalDesc: 'Keep local configuration, only add new endpoints from remote'
     },
+    update: {
+        checkForUpdates: 'Check for Updates',
+        newVersionAvailable: 'New Version Available',
+        currentVersion: 'Current Version',
+        latestVersion: 'Latest Version',
+        releaseDate: 'Release Date',
+        changelog: 'Changelog',
+        downloadUpdate: 'Download Update',
+        installUpdate: 'Install Update',
+        skipVersion: 'Skip This Version',
+        remindLater: 'Remind Me Later',
+        downloading: 'Downloading',
+        downloadComplete: 'Download Complete',
+        downloadFailed: 'Download Failed',
+        installFailed: 'Installation Failed',
+        autoCheck: 'Auto Check for Updates',
+        checkInterval: 'Check Interval',
+        upToDate: 'You are up to date',
+        checkFailed: 'Failed to check for updates',
+        noAutoCheck: "No Auto Check",
+        everyHour: 'Every Hour',
+        every6Hours: 'Every 6 Hours',
+        everyDay: 'Every Day',
+        everyWeek: 'Every Week',
+        extractComplete: 'Extraction Complete',
+        extractPath: 'File Location',
+        install_instructions_windows: '1. Close current ccNexus application<br>2. Run the new ccNexus.exe',
+        install_instructions_macos: '1. Close current ccNexus application<br>2. Drag the new ccNexus.app to Applications folder',
+        install_instructions_linux: '1. Close current ccNexus application<br>2. Run the new ccNexus executable'
+    },
     common: {
         ok: 'OK',
         cancel: 'Cancel',
@@ -275,7 +305,8 @@ export default {
         no: 'No',
         confirm: 'Confirm',
         delete: 'Delete',
-        confirmDeleteTitle: 'Confirm Deletion'
+        confirmDeleteTitle: 'Confirm Deletion',
+        close: 'Close'
     },
     tips: [
         'Tip: You can add multiple API endpoints for automatic failover',

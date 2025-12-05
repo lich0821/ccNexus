@@ -268,6 +268,36 @@ export default {
         keepLocalDesc: '保留本地配置，仅从远程添加新端点',
         inputFilename: '输入文件名'
     },
+    update: {
+        checkForUpdates: '检查更新',
+        newVersionAvailable: '发现新版本',
+        currentVersion: '当前版本',
+        latestVersion: '最新版本',
+        releaseDate: '发布日期',
+        changelog: '更新内容',
+        downloadUpdate: '下载更新',
+        installUpdate: '安装更新',
+        skipVersion: '跳过此版本',
+        remindLater: '稍后提醒',
+        downloading: '正在下载',
+        downloadComplete: '下载完成',
+        downloadFailed: '下载失败',
+        installFailed: '安装失败',
+        autoCheck: '自动检查更新',
+        checkInterval: '检查间隔',
+        upToDate: '已是最新版本',
+        checkFailed: '检查更新失败',
+        noAutoCheck: "不自动检查",
+        everyHour: '每小时',
+        every6Hours: '每 6 小时',
+        everyDay: '每天',
+        everyWeek: '每周',
+        extractComplete: '解压完成',
+        extractPath: '文件位置',
+        install_instructions_windows: '1. 关闭当前 ccNexus 应用<br>2. 运行新版本的 ccNexus.exe',
+        install_instructions_macos: '1. 关闭当前 ccNexus 应用<br>2. 将新版本的 ccNexus.app 拖到应用程序文件夹',
+        install_instructions_linux: '1. 关闭当前 ccNexus 应用<br>2. 运行新版本的 ccNexus 可执行文件'
+    },
     common: {
         ok: '确定',
         cancel: '取消',
@@ -275,7 +305,8 @@ export default {
         no: '否',
         confirm: '确认',
         delete: '删除',
-        confirmDeleteTitle: '确认删除'
+        confirmDeleteTitle: '确认删除',
+        close: '关闭'
     },
     tips: [
         '小贴士：您可以添加多个 API 端点实现自动故障转移',
