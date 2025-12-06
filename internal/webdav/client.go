@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"path"
 	"sort"
 	"strings"
@@ -212,9 +213,9 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 			continue
 		}
 
-		// 提取文件名
-		filename := path.Base(resp.Href)
-		if filename == "" || filename == "/" {
+		// 提取文件名并进行 URL 解码（处理中文文件名）
+		filename, err := url.PathUnescape(path.Base(resp.Href))
+		if err != nil || filename == "" || filename == "/" {
 			continue
 		}
 
