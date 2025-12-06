@@ -356,7 +356,18 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if shouldRetry(resp.StatusCode) {
-			logger.Warn("[%s] Request failed with status %d, retrying...", endpoint.Name, resp.StatusCode)
+			var errBody []byte
+			if resp.Header.Get("Content-Encoding") == "gzip" {
+				errBody, _ = decompressGzip(resp.Body)
+			} else {
+				errBody, _ = io.ReadAll(resp.Body)
+			}
+			resp.Body.Close()
+			errMsg := string(errBody)
+			if len(errMsg) > 200 {
+				errMsg = errMsg[:200] + "..."
+			}
+			logger.Warn("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
