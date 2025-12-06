@@ -372,8 +372,8 @@ export function initUI() {
                         <button class="btn btn-secondary" onclick="window.showChangelogModal()">
                             ${t('welcome.changelog')}
                         </button>
-                        <button class="btn btn-secondary" onclick="window.openGitHub()">
-                            ${t('welcome.githubRepo')}
+                        <button class="btn btn-secondary" onclick="window.checkForUpdates()">
+                            🔄 ${t('update.checkForUpdates')}
                         </button>
                     </div>
                 </div>
@@ -528,16 +528,16 @@ export function initUI() {
                     </div>
                     <div class="form-group">
                         <label>🔄 ${t('update.autoCheck')}</label>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <select id="check-interval" style="flex: 1;">
-                                <option value="1">${t('update.everyHour')}</option>
-                                <option value="6">${t('update.every6Hours')}</option>
-                                <option value="24">${t('update.everyDay')}</option>
-                                <option value="168">${t('update.everyWeek')}</option>
-                                <option value="0">${t('update.noAutoCheck')}</option>
-                            </select>
-                            <button id="btn-check-updates" class="btn btn-secondary" style="flex: 0 0 auto; padding: 9px 16px;" onclick="window.checkForUpdates()">${t('update.checkForUpdates')}</button>
-                        </div>
+                        <select id="check-interval">
+                            <option value="1">${t('update.everyHour')}</option>
+                            <option value="24">${t('update.everyDay')}</option>
+                            <option value="168">${t('update.everyWeek')}</option>
+                            <option value="720">${t('update.everyMonth')}</option>
+                            <option value="0">${t('update.noAutoCheck')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('update.autoCheckHelp')}
+                        </p>
                     </div>
                 </div>
                 <div class="modal-footer">

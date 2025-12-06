@@ -1491,9 +1491,10 @@ body {
 .conflict-dialog-content {
     background: white;
     border-radius: 8px;
-    max-width: 500px;
+    max-width: 550px;
     width: 90%;
     min-height: 479px;
+    max-height: 120vh;
     padding: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: confirmSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2002,8 +2003,8 @@ body {
 
 /* Backup manager in sub-modal should be narrow and tall */
 #subModal:has(.backup-manager) .modal-content {
-    max-width: 520px !important;
-    width: 520px !important;
+    max-width: 535px !important;
+    width: 535px !important;
     max-height: 70vh;
 }
 
@@ -2091,7 +2092,7 @@ body {
 
 /* Enhanced Conflict Dialog Styles */
 .conflict-details-container {
-    max-height: 500px;
+    max-height: 50vh;
     overflow-y: auto;
     margin-bottom: 15px;
     padding: 10px;
@@ -2230,10 +2231,6 @@ body {
     color: #1e3a8a;
 }
 
-/* Update conflict dialog content max width */
-.conflict-dialog-content {
-    max-width: 520px;
-}
 
 /* Settings Modal Styles */
 #settingsModal {
@@ -2290,7 +2287,7 @@ body {
 }
 
 #settingsModal .modal-body {
-    padding: 25px 30px 30px 30px;
+    padding: 25px 30px 15px 30px;
 }
 
 /* Auto Theme Config Modal Styles */

@@ -26,25 +26,29 @@ ccNexus is a smart API endpoint rotation proxy designed for Claude Code. It help
 
 ## 📸 Application Interface
 
-<p align="center">
-  <img src="docs/images/EN-Light.png" alt="Light Theme" width="45%">
-  <br/>Light Theme
-</p>
-<p align="center">
-  <img src="docs/images/EN-Dark.png" alt="Dark Theme" width="45%">
-  <br/>Dark Theme
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/EN-Light.png" alt="Light Theme" width="400"></td>
+    <td align="center"><img src="docs/images/EN-Dark.png" alt="Dark Theme" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center">Light Theme</td>
+    <td align="center">Dark Theme</td>
+  </tr>
+</table>
 
 ## 📖 Help
 
-<p align="center">
-  <img src="frontend/public/chat.jpg" width="45%">
-  <br/>Please join the group for problem feedback
-</p>
-<p align="center">
-  <img src="docs/images/ME.png" width="45%">
-  <br/>If the group chat expires, please add as friend to join
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="frontend/public/chat.jpg" width="300"></td>
+    <td align="center"><img src="docs/images/ME.png" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center">Please join the group for problem feedback</td>
+    <td align="center">If the group chat expires, please add as friend to join</td>
+  </tr>
+</table>
 
 ## ✨ Features
 
@@ -242,24 +246,71 @@ ccNexus supports syncing configuration and statistics via WebDAV protocol, compa
 
 ## 🛠️ Development
 
-### Requirements
+### 1. Environment Setup
 
-- Go 1.22+
-- Node.js 18+
-- Wails CLI v2
+#### Install Go
 
-### Development Mode
+1. Download Go 1.22+ from [Go official website](https://go.dev/dl/)
+2. Verify installation:
+```bash
+go version
+# Example output: go version go1.22.0 windows/amd64
+```
+
+#### Install Node.js
+
+1. Download LTS version (18+) from [Node.js official website](https://nodejs.org/)
+2. Verify installation:
+```bash
+node -v
+# Example output: v18.19.0
+
+npm -v
+# Example output: 10.2.3
+```
+
+#### Install Wails CLI
 
 ```bash
-# Clone repository
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+Verify installation:
+```bash
+wails version
+# Example output: v2.10.1
+```
+
+Check development dependencies:
+```bash
+wails doctor
+```
+> Follow the prompts from `wails doctor` to install missing dependencies (e.g., WebView2 for Windows, GTK3 for Linux)
+
+### 2. Clone Repository
+
+```bash
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
+```
 
-# Run in dev mode (auto-installs dependencies)
+### 3. Development Mode
+
+```bash
+# Auto-install dependencies and start dev mode
 node run.mjs
 ```
 
-### Build
+Or manually:
+```bash
+# Install frontend dependencies
+cd frontend && npm install && cd ..
+
+# Start dev mode (with hot reload)
+wails dev
+```
+
+### 4. Build
 
 ```bash
 # Build for current platform
@@ -273,6 +324,8 @@ npm run build:windows    # Windows
 npm run build:macos      # macOS
 npm run build:linux      # Linux
 ```
+
+Build output is located in `build/bin/` directory.
 
 ### Project Structure
 
