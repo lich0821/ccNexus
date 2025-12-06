@@ -96,7 +96,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Show welcome modal on first launch
     showWelcomeModalIfFirstTime();
-    showChangelogIfNewVersion();
+    // showChangelogIfNewVersion(); // 暂时禁用自动弹窗
 
     // Check for updates on startup
     checkUpdatesOnStartup();

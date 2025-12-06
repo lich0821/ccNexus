@@ -154,49 +154,42 @@ export async function showDataSyncDialog() {
 
     const content = `
         <div class="data-sync-dialog">
-            <div class="data-sync-section">
-                <h3>🌐 ${t('webdav.serverConfig')}</h3>
-                <div class="webdav-settings">
-                    <div class="form-group">
-                        <label><span class="required-mark">*</span>${t('webdav.serverUrl')}</label>
-                        <input type="text" id="dataSyncUrl" class="form-input"
-                               placeholder="https://dav.example.com/remote.php/dav/files/username/"
-                               value="${currentWebDAVConfig.url}">
-                        <small style="color: #888; font-size: 12px; margin-top: 5px;">${t('webdav.serverUrlHelp')}</small>
+            <div class="webdav-settings">
+                <div class="form-group">
+                    <label><span class="required-mark">*</span>${t('webdav.serverUrl')}</label>
+                    <input type="text" id="dataSyncUrl" class="form-input"
+                           placeholder="https://dav.example.com/remote.php/dav/files/username/"
+                           value="${currentWebDAVConfig.url}">
+                    <small style="color: #888; font-size: 12px; margin-top: 5px;">${t('webdav.serverUrlHelp')}</small>
+                </div>
+                <div class="form-row" style="gap: 10px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label><span class="required-mark">*</span>${t('webdav.username')}</label>
+                        <input type="text" id="dataSyncUsername" class="form-input"
+                               placeholder="${t('webdav.usernamePlaceholder')}"
+                               value="${currentWebDAVConfig.username}">
                     </div>
-                    <div class="form-row" style="gap: 20px;">
-                        <div class="form-group" style="flex: 1;">
-                            <label><span class="required-mark">*</span>${t('webdav.username')}</label>
-                            <input type="text" id="dataSyncUsername" class="form-input"
-                                   placeholder="${t('webdav.usernamePlaceholder')}"
-                                   value="${currentWebDAVConfig.username}">
-                        </div>
-                        <div class="form-group" style="flex: 1;">
-                            <label><span class="required-mark">*</span>${t('webdav.password')}</label>
-                            <input type="password" id="dataSyncPassword" class="form-input"
-                                   placeholder="${t('webdav.passwordPlaceholder')}"
-                                   value="${currentWebDAVConfig.password}">
-                        </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label><span class="required-mark">*</span>${t('webdav.password')}</label>
+                        <input type="password" id="dataSyncPassword" class="form-input"
+                               placeholder="${t('webdav.passwordPlaceholder')}"
+                               value="${currentWebDAVConfig.password}">
                     </div>
                 </div>
             </div>
-
-            <div class="data-sync-section">
-                <h3>🔧 ${t('webdav.operations')}</h3>
-                <div class="data-sync-actions">
-                    <button class="btn btn-secondary" onclick="window.testDataSyncConnection()">
-                        🔍 ${t('webdav.testConnection')}
-                    </button>
-                    <button class="btn btn-secondary" onclick="window.saveDataSyncConfig()">
-                        💾 ${t('webdav.saveConfig')}
-                    </button>
-                    <button class="btn btn-primary" onclick="window.backupToWebDAVFromDialog()">
-                        📤 ${t('webdav.backup')}
-                    </button>
-                    <button class="btn btn-primary" onclick="window.openBackupManagerFromDialog()">
-                        📂 ${t('webdav.backupManager')}
-                    </button>
-                </div>
+            <div class="data-sync-actions">
+                <button class="btn btn-secondary" onclick="window.testDataSyncConnection()">
+                    🔍 ${t('webdav.testConnection')}
+                </button>
+                <button class="btn btn-secondary" onclick="window.saveDataSyncConfig()">
+                    💾 ${t('webdav.saveConfig')}
+                </button>
+                <button class="btn btn-primary" onclick="window.backupToWebDAVFromDialog()">
+                    📤 ${t('webdav.backup')}
+                </button>
+                <button class="btn btn-primary" onclick="window.openBackupManagerFromDialog()">
+                    📂 ${t('webdav.backupManager')}
+                </button>
             </div>
         </div>
     `;
@@ -213,6 +206,11 @@ window.saveDataSyncConfig = async function() {
     // Validate required fields
     if (!url) {
         showNotification(t('webdav.urlRequired'), 'error');
+        return;
+    }
+    // Only allow Nutstore WebDAV
+    if (!url.includes('dav.jianguoyun.com')) {
+        showNotification(t('webdav.onlyNutstore'), 'error');
         return;
     }
     if (!username) {
@@ -249,6 +247,11 @@ window.testDataSyncConnection = async function() {
     // Validate required fields
     if (!url) {
         showNotification(t('webdav.urlRequired'), 'error');
+        return;
+    }
+    // Only allow Nutstore WebDAV
+    if (!url.includes('dav.jianguoyun.com')) {
+        showNotification(t('webdav.onlyNutstore'), 'error');
         return;
     }
     if (!username) {
