@@ -118,24 +118,21 @@ func (t *OpenAI2Transformer) convertContentBlocks(blocks []interface{}, role str
 			parts = append(parts, transformer.OpenAI2ContentPart{Type: contentType, Text: text})
 
 		case "tool_use":
-			id, _ := blockMap["id"].(string)
+			// Convert tool_use to output_text representation for Responses API
 			name, _ := blockMap["name"].(string)
 			input, _ := blockMap["input"].(map[string]interface{})
 			args, _ := json.Marshal(input)
 			parts = append(parts, transformer.OpenAI2ContentPart{
-				Type:      "tool_use",
-				ID:        id,
-				Name:      name,
-				Arguments: string(args),
+				Type: "output_text",
+				Text: fmt.Sprintf("[Tool Call: %s(%s)]", name, string(args)),
 			})
 
 		case "tool_result":
-			toolUseID, _ := blockMap["tool_use_id"].(string)
+			// Convert tool_result to input_text representation for Responses API
 			output := extractToolResultContent(blockMap["content"])
 			parts = append(parts, transformer.OpenAI2ContentPart{
-				Type:      "tool_result",
-				ToolUseID: toolUseID,
-				Output:    output,
+				Type: "input_text",
+				Text: fmt.Sprintf("[Tool Result: %s]", output),
 			})
 		}
 	}
@@ -386,7 +383,7 @@ func (t *OpenAI2Transformer) handleStreamEvent(event *transformer.OpenAI2StreamE
 		}
 
 	case "response.function_call_arguments.delta":
-		if !ctx.ToolBlockStarted {
+		if !ctx.ToolBlockStarted && event.Item != nil {
 			ctx.ToolBlockStarted = true
 			events = append(events, map[string]interface{}{
 				"type":  "content_block_start",
