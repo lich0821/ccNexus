@@ -1114,6 +1114,40 @@ body {
     height: 20px;
 }
 
+/* About Button with Badge */
+.about-btn,
+.check-update-btn {
+    position: relative;
+}
+
+.update-badge {
+    display: none;
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 10px;
+    height: 10px;
+    background: linear-gradient(135deg, #ff6b6b, #ee5a5a);
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(238, 90, 90, 0.4);
+    animation: badge-pulse 2s ease-in-out infinite;
+}
+
+.update-badge.show {
+    display: block;
+}
+
+@keyframes badge-pulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 4px rgba(238, 90, 90, 0.4);
+    }
+    50% {
+        transform: scale(1.15);
+        box-shadow: 0 2px 8px rgba(238, 90, 90, 0.6);
+    }
+}
+
 /* Port Display Styles */
 .port-display {
     padding: 8px 16px;

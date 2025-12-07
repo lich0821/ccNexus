@@ -5,6 +5,22 @@ import { showNotification } from './modal.js';
 let downloadInterval = null;
 let updateCheckInterval = null;
 
+// 显示更新红点
+function showUpdateBadge() {
+    document.getElementById('updateBadge')?.classList.add('show');
+    document.getElementById('checkUpdateBadge')?.classList.add('show');
+}
+
+// 隐藏关于按钮红点
+export function hideAboutBadge() {
+    document.getElementById('updateBadge')?.classList.remove('show');
+}
+
+// 隐藏检查更新按钮红点
+function hideCheckUpdateBadge() {
+    document.getElementById('checkUpdateBadge')?.classList.remove('show');
+}
+
 // Check for updates on startup
 export async function checkUpdatesOnStartup() {
     try {
@@ -54,6 +70,7 @@ function stopAutoCheck() {
 
 // Check for updates manually
 export async function checkForUpdates(silent = false) {
+    hideCheckUpdateBadge();
     try {
         const resultStr = await CheckForUpdates();
         const result = JSON.parse(resultStr);
@@ -75,6 +92,8 @@ export async function checkForUpdates(silent = false) {
                 return;
             }
 
+            // 显示红点提示
+            showUpdateBadge();
             showUpdateNotification(info);
         } else {
             if (!silent) {
