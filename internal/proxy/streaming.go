@@ -14,6 +14,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/transformer"
 	"github.com/lich0821/ccNexus/internal/transformer/gemini"
 	"github.com/lich0821/ccNexus/internal/transformer/openai"
+	"github.com/lich0821/ccNexus/internal/transformer/openai2"
 )
 
 // handleStreamingResponse processes streaming SSE responses
@@ -37,7 +38,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 	}
 
 	var streamCtx *transformer.StreamContext
-	if transformerName == "openai" || transformerName == "gemini" {
+	if transformerName == "openai" || transformerName == "openai2" || transformerName == "gemini" {
 		streamCtx = transformer.NewStreamContext()
 		if transformerName == "openai" {
 			streamCtx.EnableThinking = thinkingEnabled
@@ -118,6 +119,8 @@ func (p *Proxy) transformStreamEvent(eventData []byte, trans transformer.Transfo
 	switch transformerName {
 	case "openai":
 		return trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "openai2":
+		return trans.(*openai2.OpenAI2Transformer).TransformResponseWithContext(eventData, true, streamCtx)
 	case "gemini":
 		return trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 	default:

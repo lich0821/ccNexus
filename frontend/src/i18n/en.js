@@ -52,6 +52,7 @@ export default {
         modelHelp: 'Optional: Override the model specified in requests',
         modelHelpClaude: 'Optional: Override the model specified in requests',
         modelHelpOpenAI: 'Required: Specify the OpenAI model to use',
+        modelHelpOpenAI2: 'Required: Specify the OpenAI model (Responses API)',
         modelHelpGemini: 'Required: Specify the Gemini model to use',
         remark: 'Remark',
         remarkHelp: 'Optional: Add a remark for this endpoint',

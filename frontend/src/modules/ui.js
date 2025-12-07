@@ -296,6 +296,7 @@ export function initUI() {
                         <select id="endpointTransformer" onchange="window.handleTransformerChange()">
                             <option value="claude">Claude (Default)</option>
                             <option value="openai">OpenAI</option>
+                            <option value="openai2">OpenAI2 (Responses API)</option>
                             <option value="gemini">Gemini</option>
                         </select>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">

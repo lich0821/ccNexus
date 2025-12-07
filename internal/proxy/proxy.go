@@ -326,8 +326,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		logger.DebugLog("[%s] Response Status: %d", endpoint.Name, resp.StatusCode)
-
 		contentType := resp.Header.Get("Content-Type")
 		isStreaming := contentType == "text/event-stream" || (claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
@@ -380,6 +378,15 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		p.markRequestInactive(endpoint.Name)
+		// Log non-200 responses for debugging
+		if resp.StatusCode != http.StatusOK {
+			errMsg := string(bodyBytes)
+			if len(errMsg) > 500 {
+				errMsg = errMsg[:500] + "..."
+			}
+			logger.Warn("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
+			logger.DebugLog("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
+		}
 		w.WriteHeader(resp.StatusCode)
 		w.Write(bodyBytes)
 		return

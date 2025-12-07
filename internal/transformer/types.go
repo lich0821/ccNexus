@@ -312,3 +312,80 @@ type GeminiStreamChunk struct {
 		TotalTokenCount      int `json:"totalTokenCount"`
 	} `json:"usageMetadata,omitempty"`
 }
+
+// OpenAI Responses API structures (/v1/responses)
+
+// OpenAI2InputItem represents an input item for Responses API
+type OpenAI2InputItem struct {
+	Type    string              `json:"type"`              // "message"
+	Role    string              `json:"role,omitempty"`    // "user", "assistant", "system"
+	Content []OpenAI2ContentPart `json:"content,omitempty"` // content parts
+}
+
+// OpenAI2ContentPart represents a content part in Responses API
+type OpenAI2ContentPart struct {
+	Type string `json:"type"` // "input_text", "output_text", "tool_use", "tool_result"
+	Text string `json:"text,omitempty"`
+	// Tool use fields
+	ID        string                 `json:"id,omitempty"`
+	Name      string                 `json:"name,omitempty"`
+	Arguments string                 `json:"arguments,omitempty"`
+	// Tool result fields
+	ToolUseID string `json:"tool_use_id,omitempty"`
+	Output    string `json:"output,omitempty"`
+}
+
+// OpenAI2Tool represents a tool in Responses API
+type OpenAI2Tool struct {
+	Type        string                 `json:"type"` // "function"
+	Name        string                 `json:"name"`
+	Description string                 `json:"description,omitempty"`
+	Parameters  map[string]interface{} `json:"parameters,omitempty"`
+}
+
+// OpenAI2Request represents an OpenAI Responses API request
+type OpenAI2Request struct {
+	Model        string             `json:"model"`
+	Input        interface{}        `json:"input"`                   // string or []OpenAI2InputItem
+	Instructions string             `json:"instructions,omitempty"`  // system prompt
+	Tools        []OpenAI2Tool      `json:"tools,omitempty"`
+	Stream       bool               `json:"stream,omitempty"`
+	MaxOutputTokens int             `json:"max_output_tokens,omitempty"`
+	Temperature  *float64           `json:"temperature,omitempty"`
+}
+
+// OpenAI2OutputItem represents an output item in Responses API response
+type OpenAI2OutputItem struct {
+	Type    string              `json:"type"`              // "message", "function_call"
+	ID      string              `json:"id,omitempty"`
+	Role    string              `json:"role,omitempty"`
+	Content []OpenAI2ContentPart `json:"content,omitempty"`
+	// Function call fields
+	Name      string `json:"name,omitempty"`
+	CallID    string `json:"call_id,omitempty"`
+	Arguments string `json:"arguments,omitempty"`
+}
+
+// OpenAI2Response represents an OpenAI Responses API response
+type OpenAI2Response struct {
+	ID     string              `json:"id"`
+	Object string              `json:"object"` // "response"
+	Status string              `json:"status"` // "completed", "failed", etc.
+	Output []OpenAI2OutputItem `json:"output"`
+	Usage  struct {
+		InputTokens  int `json:"input_tokens"`
+		OutputTokens int `json:"output_tokens"`
+		TotalTokens  int `json:"total_tokens"`
+	} `json:"usage"`
+}
+
+// OpenAI2StreamEvent represents a streaming event from Responses API
+type OpenAI2StreamEvent struct {
+	Type         string             `json:"type"` // "response.created", "response.output_item.added", "response.content_part.delta", etc.
+	Response     *OpenAI2Response   `json:"response,omitempty"`
+	OutputIndex  int                `json:"output_index,omitempty"`
+	ContentIndex int                `json:"content_index,omitempty"`
+	Item         *OpenAI2OutputItem `json:"item,omitempty"`
+	Part         *OpenAI2ContentPart `json:"part,omitempty"`
+	Delta        string             `json:"delta,omitempty"` // Direct string for text delta
+}

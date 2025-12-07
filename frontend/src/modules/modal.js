@@ -211,6 +211,10 @@ export function handleTransformerChange() {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gpt-4-turbo';
         modelHelpText.textContent = t('modal.modelHelpOpenAI');
+    } else if (transformer === 'openai2') {
+        modelRequired.style.display = 'inline';
+        modelInput.placeholder = 'e.g., gpt-4.1';
+        modelHelpText.textContent = t('modal.modelHelpOpenAI2');
     } else if (transformer === 'gemini') {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gemini-pro';
