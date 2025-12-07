@@ -114,9 +114,12 @@ function showUpdateNotification(info) {
         return;
     }
 
-    const title = 'ccNexus ' + t('update.newVersionAvailable');
-    const message = t('update.latestVersion') + ': ' + info.latestVersion;
-    SendUpdateNotification(title, message).catch(err => console.error('Failed to send notification:', err));
+    // 非Windows平台发送系统通知
+    if (navigator.platform.indexOf('Win') === -1) {
+        const title = 'ccNexus ' + t('update.newVersionAvailable');
+        const message = t('update.latestVersion') + ': ' + info.latestVersion;
+        SendUpdateNotification(title, message).catch(err => console.error('Failed to send notification:', err));
+    }
 
     const modal = document.createElement('div');
     modal.id = 'updateModal';
