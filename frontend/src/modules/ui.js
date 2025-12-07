@@ -303,7 +303,20 @@ export function initUI() {
                     </div>
                     <div class="form-group" id="modelFieldGroup" style="display: block;">
                         <label><span class="required" id="modelRequired" style="display: none; color: #ff4444;">* </span>${t('modal.model')}</label>
-                        <input type="text" id="endpointModel" placeholder="${t('modal.modelPlaceholder')}">
+                        <div class="model-input-wrapper">
+                            <div class="model-select-container">
+                                <input type="text" id="endpointModel" placeholder="${t('modal.modelPlaceholder')}" autocomplete="off">
+                                <button type="button" class="model-dropdown-toggle" onclick="window.toggleModelDropdown()">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                                        <path d="M2 4L6 8L10 4" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    </svg>
+                                </button>
+                                <div class="model-dropdown" id="modelDropdown"></div>
+                            </div>
+                            <button type="button" class="btn btn-secondary" id="fetchModelsBtn" onclick="window.fetchModels()" title="${t('modal.fetchModels')}">
+                                <span id="fetchModelsIcon">${t('modal.fetchModelsBtn')}</span>
+                            </button>
+                        </div>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
                             ${t('modal.modelHelp')}
                         </p>
@@ -519,8 +532,8 @@ export function initUI() {
                         <label>✨ ${t('settings.closeWindowBehavior')}</label>
                         <select id="settingsCloseWindowBehavior">
                             <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
-                            <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
                             <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
+                            <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
                         </select>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.closeWindowBehaviorHelp')}

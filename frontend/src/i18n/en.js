@@ -68,7 +68,14 @@ export default {
         modelRequired: 'Model field is required for {transformer} transformer',
         saveFailed: 'Failed to save: {error}',
         confirmDelete: 'Are you sure you want to delete endpoint "{name}"?',
-        deleteFailed: 'Failed to delete: {error}'
+        deleteFailed: 'Failed to delete: {error}',
+        fetchModels: 'Fetch Models',
+        fetchModelsBtn: 'Fetch',
+        fetchModelsNoUrl: 'Please enter API URL first',
+        fetchModelsNoKey: 'Please enter API Key first',
+        fetchModelsSuccess: 'Successfully fetched {count} models',
+        fetchModelsFailed: 'Failed to fetch models',
+        fetchModelsEmpty: 'No models found'
     },
     logs: {
         title: 'Logs',

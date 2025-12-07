@@ -68,7 +68,14 @@ export default {
         modelRequired: '使用 {transformer} 转换器时，模型字段为必填项',
         saveFailed: '保存失败：{error}',
         confirmDelete: '确认删除端点 "{name}" 吗？',
-        deleteFailed: '删除失败：{error}'
+        deleteFailed: '删除失败：{error}',
+        fetchModels: '获取模型列表',
+        fetchModelsBtn: '检测',
+        fetchModelsNoUrl: '请先填写 API 地址',
+        fetchModelsNoKey: '请先填写 API 密钥',
+        fetchModelsSuccess: '成功获取到 {count} 个模型',
+        fetchModelsFailed: '获取模型列表失败',
+        fetchModelsEmpty: '未获取到模型列表'
     },
     logs: {
         title: '日志',
@@ -282,7 +289,7 @@ export default {
         checkFailed: '检查更新失败',
         noAutoCheck: "不自动更新",
         noChangelog: '暂无更新说明',
-        everyHour: '每小时',
+        everyHour: '每时',
         everyDay: '每天',
         everyWeek: '每周',
         everyMonth: '每月',

@@ -17,6 +17,9 @@ import {
     deleteEndpoint,
     closeModal,
     handleTransformerChange,
+    fetchModels,
+    initModelInputEvents,
+    toggleModelDropdown,
     showEditPortModal,
     savePort,
     closePortModal,
@@ -54,6 +57,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize UI
     initUI();
+
+    // Initialize model input events
+    initModelInputEvents();
 
     // Load and display version
     try {
@@ -136,6 +142,8 @@ window.saveEndpoint = saveEndpoint;
 window.deleteEndpoint = deleteEndpoint;
 window.closeModal = closeModal;
 window.handleTransformerChange = handleTransformerChange;
+window.fetchModels = fetchModels;
+window.toggleModelDropdown = toggleModelDropdown;
 window.showEditPortModal = showEditPortModal;
 window.savePort = savePort;
 window.closePortModal = closePortModal;
