@@ -2450,6 +2450,13 @@ func (a *App) GetDownloadProgress() string {
 	return string(data)
 }
 
+// CancelDownload cancels the current download
+func (a *App) CancelDownload() {
+	if a.updater != nil {
+		a.updater.CancelDownload()
+	}
+}
+
 // InstallUpdate installs the downloaded update
 func (a *App) InstallUpdate(filePath string) string {
 	if a.updater == nil {
@@ -2466,6 +2473,15 @@ func (a *App) InstallUpdate(filePath string) string {
 	}
 	data, _ := json.Marshal(result)
 	return string(data)
+}
+
+// ApplyUpdate 应用更新并退出程序
+func (a *App) ApplyUpdate(newExePath string) string {
+	err := updater.ApplyUpdate(newExePath)
+	if err != nil {
+		return fmt.Sprintf(`{"success":false,"error":"%s"}`, err.Error())
+	}
+	return `{"success":true,"message":"update_applying"}`
 }
 
 // SendUpdateNotification sends a system notification for updates
