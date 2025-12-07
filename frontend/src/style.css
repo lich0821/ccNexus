@@ -714,6 +714,85 @@ body {
     color: #667eea;
 }
 
+/* Model Input Wrapper */
+.model-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.model-select-container {
+    flex: 1;
+    position: relative;
+}
+
+.model-select-container input {
+    width: 100%;
+    padding-right: 32px;
+}
+
+.model-dropdown-toggle {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.model-dropdown-toggle:hover {
+    color: #667eea;
+}
+
+.model-dropdown {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    background: var(--modal-bg, #fff);
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10;
+    margin-top: 1px;
+}
+
+.model-dropdown.show {
+    display: block;
+}
+
+.model-dropdown-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-primary, #333);
+    border-bottom: 1px solid var(--border-light, #eee);
+}
+
+.model-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.model-dropdown-item:hover {
+    background: var(--hover-bg, #f5f5f5);
+}
+
+#fetchModelsBtn {
+    min-width: 60px;
+    height: 38px;
+    padding: 8px 12px;
+}
+
 .password-toggle:focus {
     outline: none;
 }
@@ -1491,9 +1570,10 @@ body {
 .conflict-dialog-content {
     background: white;
     border-radius: 8px;
-    max-width: 500px;
+    max-width: 550px;
     width: 90%;
     min-height: 479px;
+    max-height: 120vh;
     padding: 20px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     animation: confirmSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2002,8 +2082,8 @@ body {
 
 /* Backup manager in sub-modal should be narrow and tall */
 #subModal:has(.backup-manager) .modal-content {
-    max-width: 520px !important;
-    width: 520px !important;
+    max-width: 535px !important;
+    width: 535px !important;
     max-height: 70vh;
 }
 
@@ -2091,7 +2171,7 @@ body {
 
 /* Enhanced Conflict Dialog Styles */
 .conflict-details-container {
-    max-height: 500px;
+    max-height: 50vh;
     overflow-y: auto;
     margin-bottom: 15px;
     padding: 10px;
@@ -2230,10 +2310,6 @@ body {
     color: #1e3a8a;
 }
 
-/* Update conflict dialog content max width */
-.conflict-dialog-content {
-    max-width: 520px;
-}
 
 /* Settings Modal Styles */
 #settingsModal {
@@ -2290,7 +2366,7 @@ body {
 }
 
 #settingsModal .modal-body {
-    padding: 25px 30px 30px 30px;
+    padding: 25px 30px 15px 30px;
 }
 
 /* Auto Theme Config Modal Styles */

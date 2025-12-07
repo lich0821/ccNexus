@@ -2,89 +2,93 @@
 
 <div align="center">
 
-**Smart API endpoint rotation proxy for Claude Code**
+**Claude Code 智能端点轮换代理**
 
-[![Build Status](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+[![构建状态](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
+[![许可证: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Go 版本](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![Wails](https://img.shields.io/badge/Wails-v2-blue)](https://wails.io/)
 
 [English](README.md) | [简体中文](README_CN.md)
 
 </div>
 
-## 📖 Introduction
+## 📖 项目简介
 
-ccNexus is a smart API endpoint rotation proxy designed for Claude Code. It helps you manage multiple API endpoints with automatic failover, load balancing, and supports converting Claude API requests to OpenAI or Gemini formats.
+ccNexus 是一个专为 Claude Code 设计的智能 API 端点轮换代理工具。它可以帮助你管理多个 API 端点，实现自动故障转移、负载均衡，并支持将 Claude API 请求转换为 OpenAI 或 Gemini 格式，让你能够使用各种兼容的 API 服务。
 
-### Why ccNexus?
+### 为什么需要 ccNexus？
 
-- **Multi-endpoint Management**: Configure multiple API endpoints, automatically switch when one fails
-- **API Format Conversion**: Support Claude, OpenAI, and Gemini API format conversion
-- **Usage Statistics**: Real-time monitoring of requests, errors, and token usage
-- **Data Security**: All data stored locally, safe and secure
+- **多端点管理**：同时配置多个 API 端点，一个失败自动切换到下一个
+- **API 格式转换**：支持 Claude、OpenAI、Gemini 三种 API 格式互转
+- **使用统计**：实时监控请求数、错误数、Token 用量
+- **数据安全**：所有数据本地存储，安全可靠
 
-## 📸 Application Interface
+## 📸 应用界面
 
-<p align="center">
-  <img src="docs/images/EN-Light.png" alt="Light Theme" width="45%">
-  <br/>Light Theme
-</p>
-<p align="center">
-  <img src="docs/images/EN-Dark.png" alt="Dark Theme" width="45%">
-  <br/>Dark Theme
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/CN-Light.png" alt="明亮主题" width="400"></td>
+    <td align="center"><img src="docs/images/CN-Dark.png" alt="暗黑主题" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center">明亮主题</td>
+    <td align="center">暗黑主题</td>
+  </tr>
+</table>
 
-## 📖 Help
+## 📖 获取帮助
 
-<p align="center">
-  <img src="frontend/public/chat.jpg" width="45%">
-  <br/>Please join the group for problem feedback
-</p>
-<p align="center">
-  <img src="docs/images/ME.png" width="45%">
-  <br/>If the group chat expires, please add as friend to join
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="frontend/public/chat.jpg" alt="微信群" width="300"></td>
+    <td align="center"><img src="docs/images/ME.png" alt="个人微信" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center">问题反馈请加群</td>
+    <td align="center">若群聊过期，请加好友拉入群</td>
+  </tr>
+</table>
 
-## ✨ Features
+## ✨ 功能特性
 
-### Core Features
+### 核心功能
 
-| Feature | Description |
-|---------|-------------|
-| 🔄 **Auto Endpoint Rotation** | Automatically switch to next available endpoint on failure |
-| 🔀 **Multi-Format Support** | Support Claude, OpenAI, and Gemini API format conversion |
-| 🔁 **Smart Retry** | Auto retry failed requests, up to `endpoints × 2` attempts |
-| 📊 **Real-time Stats** | Monitor requests, errors, and token usage |
-| 📈 **Historical Data** | SQLite-based statistics with monthly archives |
-| ☁️ **WebDAV Sync** | Sync configuration and stats across devices via WebDAV |
+| 功能 | 说明 |
+|------|------|
+| 🔄 **自动端点轮换** | 请求失败时自动切换到下一个可用端点，实现无缝故障转移 |
+| 🔀 **多格式支持** | 支持 Claude、OpenAI 和 Gemini API 格式转换 |
+| 🔁 **智能重试** | 自动重试失败请求，最多重试 `端点数 × 2` 次 |
+| 📊 **实时统计** | 监控请求数、错误数、Token 使用量 |
+| 📈 **历史数据** | 基于 SQLite 的统计数据存储，支持按月查看历史归档 |
+| ☁️ **WebDAV 同步** | 支持通过 WebDAV 在多设备间同步配置和统计数据 |
 
-### UI Features
+### 界面功能
 
-| Feature | Description |
-|---------|-------------|
-| 🖥️ **Cross-platform Desktop App** | Support Windows, macOS, Linux |
-| 🎨 **Multiple Themes** | 12 themes: Light, Dark, Green, Starry, Sakura, Sunset, Ocean, Mocha, Cyberpunk, Aurora, Holographic, Quantum |
-| 🌙 **Auto Theme Switch** | Automatically switch between light/dark themes by time (7:00-19:00 light) |
-| 🌐 **Bilingual Interface** | Support Chinese and English |
-| 📋 **System Tray** | Minimize to system tray |
-| 📝 **Real-time Logs** | View proxy logs with level filtering |
+| 功能 | 说明 |
+|------|------|
+| 🖥️ **跨平台桌面应用** | 支持 Windows、macOS、Linux |
+| 🎨 **多主题支持** | 12 种主题可选：默认、深色、护眼、星空、樱花粉、暖阳橙、海洋蓝、摩卡棕、赛博朋克、暗夜极光、全息蓝、量子紫 |
+| 🌙 **自动主题切换** | 根据时间自动在浅色和深色主题间切换（7:00-19:00 浅色） |
+| 🌐 **中英文界面** | 支持中文和英文界面切换 |
+| 📋 **系统托盘** | 支持最小化到系统托盘运行 |
+| 📝 **实时日志** | 查看代理运行日志，支持按级别过滤 |
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Download
+### 下载安装
 
-[📥 Download Latest Release](https://github.com/lich0821/ccNexus/releases/latest)
+[📥 下载最新版本](https://github.com/lich0821/ccNexus/releases/latest)
 
 #### Windows
-1. Download `ccNexus-windows-amd64.zip`
-2. Extract to any directory
-3. Run `ccNexus.exe`
+1. 下载 `ccNexus-windows-amd64.zip`
+2. 解压到任意目录
+3. 双击运行 `ccNexus.exe`
 
 #### macOS
-1. Download `ccNexus-darwin-amd64.zip` or `ccNexus-darwin-arm64.zip` (Apple Silicon)
-2. Extract and move `ccNexus.app` to Applications folder
-3. First run: Right-click → Open (bypass Gatekeeper)
+1. 下载 `ccNexus-darwin-amd64.zip` 或 `ccNexus-darwin-arm64.zip`（M 系列芯片）
+2. 解压后将 `ccNexus.app` 移动到「应用程序」文件夹
+3. 首次运行：右键点击 → 打开（绕过 Gatekeeper）
 
 #### Linux
 ```bash
@@ -92,90 +96,90 @@ tar -xzf ccNexus-linux-amd64.tar.gz
 ./ccNexus
 ```
 
-### Setup
+### 配置步骤
 
-#### 1. Add API Endpoint
+#### 1. 添加 API 端点
 
-Click "Add Endpoint" button and fill in:
+点击界面上的「添加端点」按钮，填写以下信息：
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| **Name** | Friendly name for the endpoint | `Claude Official` |
-| **API URL** | API server address | `https://api.anthropic.com` |
-| **API Key** | Your API key | `sk-ant-api03-...` |
-| **Transformer** | API format type | `claude` / `openai` / `gemini` |
-| **Model** | Target model (required for non-Claude) | `gpt-4-turbo` / `gemini-pro` |
-| **Remark** | Optional notes | `Primary endpoint` |
+| 字段 | 说明 | 示例 |
+|------|------|------|
+| **名称** | 端点的友好名称 | `Claude 官方` |
+| **API 地址** | API 服务器地址 | `https://api.anthropic.com` |
+| **API 密钥** | 你的 API 密钥 | `sk-ant-api03-...` |
+| **转换器** | API 格式类型 | `claude` / `openai` / `gemini` |
+| **模型** | 目标模型（非 Claude 必填） | `gpt-4-turbo` / `gemini-pro` |
+| **备注** | 可选的备注说明 | `主力端点` |
 
-#### 2. Configure Claude Code
+#### 2. 配置 Claude Code
 
-Set the following in Claude Code's settings.json file (default in user's home directory):
+在 Claude Code 的配置文件 settings.json 中设置以下参数（默认在系统的用户目录下）：
 
 ```
 API Base URL: http://localhost:3000
-API Key: Any value (proxy uses endpoint's configured key)
+API Key: 任意值（代理会使用端点配置的密钥）
 ```
 
-#### 3. Start Using
+#### 3. 开始使用
 
-After configuration, all Claude Code requests will be proxied through ccNexus to your configured endpoints.
+配置完成后，Claude Code 的所有请求都会通过 ccNexus 代理转发到你配置的端点。
 
-## 📖 How It Works
+## 📖 工作原理
 
 ```
 ┌─────────────┐     ┌─────────────────────────────────────────────────┐
-│ Claude Code │────▶│              ccNexus Proxy                       │
+│ Claude Code │────▶│              ccNexus 代理                        │
 └─────────────┘     │  localhost:3000                                  │
                     │                                                  │
-                    │  ┌─────────────┐   Fail     ┌─────────────┐     │
-                    │  │ Endpoint #1 │──────────▶│ Endpoint #2 │     │
-                    │  │  (Claude)   │           │  (OpenAI)   │     │
-                    │  └─────────────┘           └─────────────┘     │
-                    │         │                         │             │
-                    │         │ Success                 │ Success     │
-                    │         ▼                         ▼             │
-                    │  ┌─────────────────────────────────────┐        │
-                    │  │      Return response to Claude Code  │        │
-                    │  └─────────────────────────────────────┘        │
+                    │  ┌─────────────┐   失败    ┌─────────────┐      │
+                    │  │  端点 #1    │─────────▶│  端点 #2    │      │
+                    │  │  (Claude)   │          │  (OpenAI)   │      │
+                    │  └─────────────┘          └─────────────┘      │
+                    │         │                        │              │
+                    │         │ 成功                   │ 成功         │
+                    │         ▼                        ▼              │
+                    │  ┌─────────────────────────────────────┐       │
+                    │  │           返回响应给 Claude Code     │       │
+                    │  └─────────────────────────────────────┘       │
                     └─────────────────────────────────────────────────┘
 ```
 
-**Workflow:**
-1. Claude Code sends request to local proxy (default port 3000)
-2. Proxy tries enabled endpoints in order
-3. If current endpoint fails, automatically switch to next endpoint
-4. Auto-convert request/response format based on endpoint's transformer
-5. Return successful response to Claude Code
+**工作流程：**
+1. Claude Code 发送请求到本地代理（默认端口 3000）
+2. 代理按顺序尝试已启用的端点
+3. 如果当前端点失败，自动切换到下一个端点重试
+4. 根据端点配置的转换器，自动转换请求/响应格式
+5. 返回成功响应给 Claude Code
 
-## 🔧 Configuration
+## 🔧 详细配置
 
-### Application Settings
+### 应用设置
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Proxy Port** | Local proxy listening port | `3000` |
-| **Log Level** | 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR | `1` (INFO) |
-| **Language** | Chinese / English | `zh-CN` |
-| **Theme** | 12 themes available | `light` |
-| **Auto Theme** | Auto switch theme by time | Off |
-| **Close Behavior** | Quit / Minimize to tray / Ask | Ask |
+| 设置项 | 说明 | 默认值 |
+|--------|------|--------|
+| **代理端口** | 本地代理监听端口 | `3000` |
+| **日志级别** | 0=调试, 1=信息, 2=警告, 3=错误 | `1` (信息) |
+| **界面语言** | 中文 / English | `zh-CN` |
+| **主题** | 12 种主题可选 | `light` |
+| **自动主题** | 根据时间自动切换主题 | 关闭 |
+| **窗口关闭行为** | 直接关闭 / 最小化到托盘 / 每次询问 | 每次询问 |
 
-### Endpoint Configuration
+### 端点配置详解
 
-#### Transformer Types
+#### 转换器类型
 
-| Transformer | Description | Model Field |
-|-------------|-------------|-------------|
-| `claude` | Claude native API (passthrough) | Optional (override request model) |
-| `openai` | OpenAI compatible API | **Required** (e.g., `gpt-4-turbo`) |
-| `gemini` | Google Gemini API | **Required** (e.g., `gemini-pro`) |
+| 转换器 | 说明 | 模型字段 |
+|--------|------|----------|
+| `claude` | Claude 原生 API（直通） | 可选（覆盖请求中的模型） |
+| `openai` | OpenAI 兼容 API | **必填**（如 `gpt-4-turbo`） |
+| `gemini` | Google Gemini API | **必填**（如 `gemini-pro`） |
 
-#### Configuration Examples
+#### 配置示例
 
-**Claude Official Endpoint:**
+**Claude 官方端点：**
 ```json
 {
-  "name": "Claude Official",
+  "name": "Claude 官方",
   "apiUrl": "https://api.anthropic.com",
   "apiKey": "sk-ant-api03-xxx",
   "enabled": true,
@@ -183,10 +187,10 @@ After configuration, all Claude Code requests will be proxied through ccNexus to
 }
 ```
 
-**OpenAI Compatible Endpoint:**
+**OpenAI 兼容端点：**
 ```json
 {
-  "name": "OpenAI Proxy",
+  "name": "OpenAI 代理",
   "apiUrl": "https://api.openai.com",
   "apiKey": "sk-xxx",
   "enabled": true,
@@ -195,7 +199,7 @@ After configuration, all Claude Code requests will be proxied through ccNexus to
 }
 ```
 
-**Gemini Endpoint:**
+**Gemini 端点：**
 ```json
 {
   "name": "Gemini",
@@ -207,179 +211,228 @@ After configuration, all Claude Code requests will be proxied through ccNexus to
 }
 ```
 
-### WebDAV Cloud Sync
+### WebDAV 云同步
 
-ccNexus supports syncing configuration and statistics via WebDAV protocol, compatible with:
-- Nutstore (坚果云)
+ccNexus 支持通过 WebDAV 协议同步配置和统计数据，兼容以下服务：
+- 坚果云
 - NextCloud
 - ownCloud
-- Other standard WebDAV services
+- 其他标准 WebDAV 服务
 
-**Setup Steps:**
-1. Click "WebDAV Cloud Backup" in the interface
-2. Enter WebDAV server URL, username, and password
-3. Click "Test Connection" to verify
-4. Use "Backup" and "Restore" to manage data
+**配置步骤：**
+1. 点击界面上的「WebDAV 云备份」
+2. 填写 WebDAV 服务器地址、用户名、密码
+3. 点击「测试连接」确认配置正确
+4. 使用「备份」和「恢复」功能管理数据
 
-## 📊 Statistics
+## 📊 统计功能
 
-### Time Ranges
+### 统计维度
 
-| Range | Description |
-|-------|-------------|
-| **Today** | Current day statistics |
-| **Yesterday** | Previous day statistics |
-| **Weekly** | Current week cumulative |
-| **Monthly** | Current month cumulative |
-| **History** | View monthly archives |
+| 维度 | 说明 |
+|------|------|
+| **今日** | 当天的请求统计 |
+| **昨日** | 昨天的请求统计 |
+| **本周** | 本周的累计统计 |
+| **本月** | 本月的累计统计 |
+| **历史** | 按月查看历史归档数据 |
 
-### Metrics
+### 统计指标
 
-- **Requests**: Total successful and failed requests
-- **Errors**: Number of failed requests
-- **Tokens**: Input and output token usage (estimated)
-- **Success Rate**: Percentage of successful requests
+- **请求数**：成功和失败的请求总数
+- **错误数**：失败的请求数量
+- **Token 数**：输入和输出的 Token 用量（估算值）
+- **成功率**：请求成功的百分比
 
-## 🛠️ Development
+## 🛠️ 开发指南
 
-### Requirements
+### 1. 环境准备
 
-- Go 1.22+
-- Node.js 18+
-- Wails CLI v2
+#### 安装 Go
 
-### Development Mode
+1. 访问 [Go 官网](https://go.dev/dl/) 下载 Go 1.22+ 版本
+2. 安装完成后验证：
+```bash
+go version
+# 输出示例: go version go1.22.0 windows/amd64
+```
+
+#### 安装 Node.js
+
+1. 访问 [Node.js 官网](https://nodejs.org/) 下载 LTS 版本（18+）
+2. 安装完成后验证：
+```bash
+node -v
+# 输出示例: v18.19.0
+
+npm -v
+# 输出示例: 10.2.3
+```
+
+#### 安装 Wails CLI
 
 ```bash
-# Clone repository
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+验证安装：
+```bash
+wails version
+# 输出示例: v2.10.1
+```
+
+检查开发环境依赖：
+```bash
+wails doctor
+```
+> 根据 `wails doctor` 的提示安装缺失的依赖（如 Windows 需要 WebView2，Linux 需要 GTK3 等）
+
+### 2. 克隆项目
+
+```bash
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
+```
 
-# Run in dev mode (auto-installs dependencies)
+### 3. 开发模式运行
+
+```bash
+# 自动安装依赖并启动开发模式
 node run.mjs
 ```
 
-### Build
+或手动执行：
+```bash
+# 安装前端依赖
+cd frontend && npm install && cd ..
+
+# 启动开发模式（支持热重载）
+wails dev
+```
+
+### 4. 构建发布
 
 ```bash
-# Build for current platform
+# 当前平台构建
 npm run build
 
-# Optimized build (production)
+# 优化构建（生产环境）
 npm run build:prod
 
-# Platform-specific builds
+# 指定平台构建
 npm run build:windows    # Windows
 npm run build:macos      # macOS
 npm run build:linux      # Linux
 ```
 
-### Project Structure
+构建产物位于 `build/bin/` 目录下。
+
+### 项目结构
 
 ```
 ccNexus/
-├── main.go                    # Application entry
-├── app.go                     # Core application logic
-├── wails.json                 # Wails configuration
+├── main.go                    # 应用入口
+├── app.go                     # 核心应用逻辑
+├── wails.json                 # Wails 配置
 │
-├── internal/                  # Go backend modules
-│   ├── proxy/                 # HTTP proxy core
-│   │   ├── proxy.go          # Proxy server
-│   │   ├── handler.go        # Request handling
-│   │   ├── streaming.go      # SSE streaming
-│   │   └── stats.go          # Statistics recording
-│   ├── transformer/           # API format converters
+├── internal/                  # Go 后端模块
+│   ├── proxy/                 # HTTP 代理核心
+│   │   ├── proxy.go          # 代理服务器
+│   │   ├── handler.go        # 请求处理
+│   │   ├── streaming.go      # SSE 流式响应
+│   │   └── stats.go          # 统计记录
+│   ├── transformer/           # API 格式转换器
 │   │   ├── claude/           # Claude API
 │   │   ├── openai/           # OpenAI API
 │   │   └── gemini/           # Gemini API
-│   ├── storage/               # SQLite data storage
-│   ├── config/                # Configuration management
-│   ├── webdav/                # WebDAV sync
-│   ├── logger/                # Logging system
-│   └── tray/                  # System tray
+│   ├── storage/               # SQLite 数据存储
+│   ├── config/                # 配置管理
+│   ├── webdav/                # WebDAV 同步
+│   ├── logger/                # 日志系统
+│   └── tray/                  # 系统托盘
 │
-└── frontend/                  # Frontend code
+└── frontend/                  # 前端代码
     ├── src/
-    │   ├── modules/          # Feature modules
-    │   ├── i18n/             # Internationalization
-    │   └── themes/           # Theme styles
-    └── wailsjs/              # Wails bindings
+    │   ├── modules/          # 功能模块
+    │   ├── i18n/             # 国际化
+    │   └── themes/           # 主题样式
+    └── wailsjs/              # Wails 绑定
 ```
 
-## ❓ FAQ
+## ❓ 常见问题
 
-### Installation & Startup
+### 安装和启动
 
-**Q: Windows shows "Windows protected your PC" warning?**
+**Q: Windows 提示「Windows 已保护你的电脑」怎么办？**
 
-A: Click "More info" → "Run anyway". This is because the app is not digitally signed.
+A: 点击「更多信息」→「仍要运行」。这是因为应用没有数字签名，不影响使用。
 
-**Q: macOS shows "Cannot be opened because the developer cannot be verified"?**
+**Q: macOS 提示「无法打开，因为无法验证开发者」怎么办？**
 
-A: Right-click the app → Select "Open" → Click "Open" in the dialog. Or allow in "System Preferences" → "Security & Privacy".
+A: 右键点击应用 → 选择「打开」→ 在弹出的对话框中点击「打开」。或者在「系统偏好设置」→「安全性与隐私」中允许运行。
 
-**Q: Port is already in use?**
+**Q: 启动后端口被占用怎么办？**
 
-A: Click the port number at the top of the interface, change to another available port (e.g., 3001), then restart the app.
+A: 点击界面顶部的端口号，修改为其他未被占用的端口（如 3001），然后重启应用。
 
-### Endpoint Configuration
+### 端点配置
 
-**Q: How to choose the right transformer?**
+**Q: 如何判断应该使用哪种转换器？**
 
 A:
-- Using Claude official API or Claude-compatible services → Select `claude`
-- Using OpenAI API or OpenAI-compatible services → Select `openai`
-- Using Google Gemini API → Select `gemini`
+- 使用 Claude 官方 API 或兼容 Claude 格式的服务 → 选择 `claude`
+- 使用 OpenAI API 或兼容 OpenAI 格式的服务 → 选择 `openai`
+- 使用 Google Gemini API → 选择 `gemini`
 
-**Q: Why is the model field required for OpenAI/Gemini?**
+**Q: 为什么 OpenAI/Gemini 转换器必须填写模型？**
 
-A: Because Claude Code sends requests with Claude model names, the proxy needs to know which target API model to convert to.
+A: 因为 Claude Code 发送的请求中包含 Claude 模型名称，代理需要知道应该转换为目标 API 的哪个模型。
 
-**Q: Endpoint test succeeds but actual use fails?**
+**Q: 端点测试成功但实际使用失败？**
 
-A: The test only verifies connectivity. Actual use may fail due to:
-- Insufficient API key permissions
-- Incorrect model name
-- API quota exhausted
-- Check logs for detailed error information
+A: 测试只验证连接是否正常。实际使用时可能因为：
+- API 密钥权限不足
+- 模型名称错误
+- API 配额用尽
+- 请检查日志获取详细错误信息
 
-### Usage
+### 使用问题
 
-**Q: How to view request logs?**
+**Q: 如何查看请求日志？**
 
-A: Click the "Logs" area at the bottom of the interface to expand. Supports filtering by level (Debug/Info/Warn/Error).
+A: 点击界面底部的「日志」区域展开，可以查看实时日志。支持按级别（调试/信息/警告/错误）过滤。
 
-**Q: Are token statistics accurate?**
+**Q: Token 统计准确吗？**
 
-A: Token counts are estimates based on text length and may differ from actual billing. For reference only.
+A: Token 数量是估算值，基于文本长度计算，可能与实际计费有差异。仅供参考。
 
-**Q: How to backup configuration?**
+**Q: 如何备份配置？**
 
-A: Two methods:
-1. Use WebDAV cloud sync feature
-2. Manually copy `~/.ccNexus/ccnexus.db` file
+A: 两种方式：
+1. 使用 WebDAV 云同步功能
+2. 手动复制 `~/.ccNexus/ccnexus.db` 文件
 
-**Q: What's the rotation order for multiple endpoints?**
+**Q: 多个端点的轮换顺序是什么？**
 
-A: Endpoints rotate in list order. You can drag to reorder endpoints.
+A: 按照端点列表的顺序轮换。你可以通过拖拽调整端点顺序。
 
-### Other
+### 其他问题
 
-**Q: Where is data stored? Is it secure?**
+**Q: 数据存储在哪里？安全吗？**
 
-A: All data is stored locally in `~/.ccNexus/` directory. API keys are never sent to any third-party services.
+A: 所有数据存储在本地 `~/.ccNexus/` 目录下，API 密钥不会发送给任何第三方服务。
 
-**Q: Which operating systems are supported?**
+**Q: 支持哪些操作系统？**
 
-A: Windows 10+, macOS 10.15+, Linux (requires GTK3).
+A: 支持 Windows 10+、macOS 10.15+、Linux（需要 GTK3）。
 
-**Q: How to update to a new version?**
+**Q: 如何更新到新版本？**
 
-A: Download the new version and overwrite install. Configuration data is automatically preserved.
+A: 下载新版本覆盖安装即可，配置数据会自动保留。
 
-## 📄 License
+## 📄 许可证
 
-This project is open source under the [MIT License](LICENSE).
+本项目采用 [MIT 许可证](LICENSE) 开源。
 
 ---
 
