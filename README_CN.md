@@ -26,25 +26,29 @@ ccNexus 是一个专为 Claude Code 设计的智能 API 端点轮换代理工具
 
 ## 📸 应用界面
 
-<p align="center">
-  <img src="docs/images/CN-Light.png" alt="明亮主题" width="45%">
-  <br/>默认主题
-</p>
-<p align="center">
-  <img src="docs/images/CN-Dark.png" alt="暗黑主题" width="45%">
-  <br/>暗黑主题
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="docs/images/CN-Light.png" alt="明亮主题" width="400"></td>
+    <td align="center"><img src="docs/images/CN-Dark.png" alt="暗黑主题" width="400"></td>
+  </tr>
+  <tr>
+    <td align="center">明亮主题</td>
+    <td align="center">暗黑主题</td>
+  </tr>
+</table>
 
 ## 📖 获取帮助
 
-<p align="center">
-  <img src="frontend/public/chat.jpg" alt="微信群" width="45%">
-  <br/>问题反馈请加群
-</p>
-<p align="center">
-  <img src="docs/images/ME.png" alt="个人微信" width="45%">
-  <br/>若群聊过期，请加好友拉你入群
-</p>
+<table>
+  <tr>
+    <td align="center"><img src="frontend/public/chat.jpg" alt="微信群" width="300"></td>
+    <td align="center"><img src="docs/images/ME.png" alt="个人微信" width="300"></td>
+  </tr>
+  <tr>
+    <td align="center">问题反馈请加群</td>
+    <td align="center">若群聊过期，请加好友拉入群</td>
+  </tr>
+</table>
 
 ## ✨ 功能特性
 
@@ -242,24 +246,71 @@ ccNexus 支持通过 WebDAV 协议同步配置和统计数据，兼容以下服�
 
 ## 🛠️ 开发指南
 
-### 环境要求
+### 1. 环境准备
 
-- Go 1.22+
-- Node.js 18+
-- Wails CLI v2
+#### 安装 Go
 
-### 开发运行
+1. 访问 [Go 官网](https://go.dev/dl/) 下载 Go 1.22+ 版本
+2. 安装完成后验证：
+```bash
+go version
+# 输出示例: go version go1.22.0 windows/amd64
+```
+
+#### 安装 Node.js
+
+1. 访问 [Node.js 官网](https://nodejs.org/) 下载 LTS 版本（18+）
+2. 安装完成后验证：
+```bash
+node -v
+# 输出示例: v18.19.0
+
+npm -v
+# 输出示例: 10.2.3
+```
+
+#### 安装 Wails CLI
 
 ```bash
-# 克隆项目
+go install github.com/wailsapp/wails/v2/cmd/wails@latest
+```
+
+验证安装：
+```bash
+wails version
+# 输出示例: v2.10.1
+```
+
+检查开发环境依赖：
+```bash
+wails doctor
+```
+> 根据 `wails doctor` 的提示安装缺失的依赖（如 Windows 需要 WebView2，Linux 需要 GTK3 等）
+
+### 2. 克隆项目
+
+```bash
 git clone https://github.com/lich0821/ccNexus.git
 cd ccNexus
+```
 
-# 开发模式运行（自动安装依赖）
+### 3. 开发模式运行
+
+```bash
+# 自动安装依赖并启动开发模式
 node run.mjs
 ```
 
-### 构建发布
+或手动执行：
+```bash
+# 安装前端依赖
+cd frontend && npm install && cd ..
+
+# 启动开发模式（支持热重载）
+wails dev
+```
+
+### 4. 构建发布
 
 ```bash
 # 当前平台构建
@@ -273,6 +324,8 @@ npm run build:windows    # Windows
 npm run build:macos      # macOS
 npm run build:linux      # Linux
 ```
+
+构建产物位于 `build/bin/` 目录下。
 
 ### 项目结构
 

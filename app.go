@@ -1547,6 +1547,154 @@ func (a *App) TestEndpoint(index int) string {
 	return string(data)
 }
 
+// FetchModels fetches available models from the API provider
+func (a *App) FetchModels(apiUrl, apiKey, transformer string) string {
+	logger.Info("Fetching models for transformer: %s", transformer)
+
+	if transformer == "" {
+		transformer = "claude"
+	}
+
+	// Normalize API URL
+	normalizedAPIUrl := normalizeAPIUrl(apiUrl)
+	if !strings.HasPrefix(normalizedAPIUrl, "http://") && !strings.HasPrefix(normalizedAPIUrl, "https://") {
+		normalizedAPIUrl = "https://" + normalizedAPIUrl
+	}
+
+	var models []string
+	var err error
+
+	switch transformer {
+	case "claude":
+		// Use OpenAI-compatible /v1/models API (same as NewAPI approach)
+		models, err = a.fetchOpenAIModels(normalizedAPIUrl, apiKey)
+
+	case "openai":
+		models, err = a.fetchOpenAIModels(normalizedAPIUrl, apiKey)
+
+	case "gemini":
+		models, err = a.fetchGeminiModels(normalizedAPIUrl, apiKey)
+
+	default:
+		result := map[string]interface{}{
+			"success": false,
+			"message": fmt.Sprintf("Unsupported transformer: %s", transformer),
+			"models":  []string{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	if err != nil {
+		result := map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+			"models":  []string{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"message": fmt.Sprintf("Found %d models", len(models)),
+		"models":  models,
+	}
+	data, _ := json.Marshal(result)
+	logger.Info("Fetched %d models for %s", len(models), transformer)
+	return string(data)
+}
+
+// fetchOpenAIModels fetches models from OpenAI-compatible API
+func (a *App) fetchOpenAIModels(apiUrl, apiKey string) ([]string, error) {
+	url := fmt.Sprintf("%s/v1/models", apiUrl)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("no_models_found")
+	}
+
+	var result struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	// Use map to deduplicate models
+	seen := make(map[string]bool)
+	models := make([]string, 0, len(result.Data))
+	for _, m := range result.Data {
+		id := strings.TrimSpace(m.ID)
+		if id != "" && !seen[id] {
+			seen[id] = true
+			models = append(models, id)
+		}
+	}
+
+	return models, nil
+}
+
+// fetchGeminiModels fetches models from Gemini API
+func (a *App) fetchGeminiModels(apiUrl, apiKey string) ([]string, error) {
+	url := fmt.Sprintf("%s/v1beta/models?key=%s", apiUrl, apiKey)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %v", err)
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("HTTP %d: %s", resp.StatusCode, string(body))
+	}
+
+	var result struct {
+		Models []struct {
+			Name string `json:"name"`
+		} `json:"models"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %v", err)
+	}
+
+	models := make([]string, 0, len(result.Models))
+	for _, m := range result.Models {
+		// Gemini returns "models/gemini-pro", extract just the model name
+		name := m.Name
+		if strings.HasPrefix(name, "models/") {
+			name = strings.TrimPrefix(name, "models/")
+		}
+		models = append(models, name)
+	}
+
+	return models, nil
+}
+
 // GetCurrentEndpoint returns the current active endpoint name
 func (a *App) GetCurrentEndpoint() string {
 	if a.proxy == nil {

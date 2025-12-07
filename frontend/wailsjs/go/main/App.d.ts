@@ -15,6 +15,8 @@ export function DetectWebDAVConflict(arg1:string):Promise<string>;
 
 export function DownloadUpdate(arg1:string,arg2:string):Promise<void>;
 
+export function FetchModels(arg1:string,arg2:string,arg3:string):Promise<string>;
+
 export function GenerateMockArchives(arg1:number):Promise<string>;
 
 export function GetArchiveData(arg1:string):Promise<string>;

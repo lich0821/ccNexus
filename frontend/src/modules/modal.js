@@ -199,6 +199,9 @@ export function handleTransformerChange() {
     const modelInput = document.getElementById('endpointModel');
     const modelHelpText = document.getElementById('modelHelpText');
 
+    // Clear fetched models when transformer changes
+    clearFetchedModels();
+
     if (transformer === 'claude') {
         modelRequired.style.display = 'none';
         modelInput.placeholder = 'e.g., claude-3-5-sonnet-20241022';
@@ -211,6 +214,120 @@ export function handleTransformerChange() {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gemini-pro';
         modelHelpText.textContent = t('modal.modelHelpGemini');
+    }
+}
+
+// Store fetched models for filtering
+let fetchedModels = [];
+
+// Fetch models from API
+export async function fetchModels() {
+    const apiUrl = document.getElementById('endpointUrl').value.trim();
+    const apiKey = document.getElementById('endpointKey').value.trim();
+    const transformer = document.getElementById('endpointTransformer').value;
+    const fetchBtn = document.getElementById('fetchModelsBtn');
+    const fetchIcon = document.getElementById('fetchModelsIcon');
+    const modelInput = document.getElementById('endpointModel');
+    const dropdown = document.getElementById('modelDropdown');
+
+    // Validate inputs
+    if (!apiUrl) {
+        showNotification(t('modal.fetchModelsNoUrl'), 'error');
+        return;
+    }
+    if (!apiKey) {
+        showNotification(t('modal.fetchModelsNoKey'), 'error');
+        return;
+    }
+
+    // Show loading state
+    fetchBtn.disabled = true;
+    fetchIcon.textContent = '⏳';
+
+    try {
+        const resultStr = await window.go.main.App.FetchModels(apiUrl, apiKey, transformer);
+        const result = JSON.parse(resultStr);
+
+        if (result.success && result.models && result.models.length > 0) {
+            fetchedModels = result.models;
+            renderModelDropdown(fetchedModels, dropdown, modelInput);
+            dropdown.classList.add('show');
+
+            showNotification(t('modal.fetchModelsSuccess').replace('{count}', result.models.length), 'success');
+        } else {
+            const msg = result.message?.includes('no_models_found') ? t('modal.fetchModelsEmpty') : t('modal.fetchModelsFailed');
+            showNotification(msg, 'error');
+        }
+    } catch (error) {
+        console.error('Failed to fetch models:', error);
+        showNotification(t('modal.fetchModelsFailed') + ': ' + error, 'error');
+    } finally {
+        fetchBtn.disabled = false;
+        fetchIcon.textContent = t('modal.fetchModelsBtn');
+    }
+}
+
+// Render model dropdown
+function renderModelDropdown(models, dropdown, input) {
+    dropdown.innerHTML = '';
+    models.forEach(model => {
+        const item = document.createElement('div');
+        item.className = 'model-dropdown-item';
+        item.textContent = model;
+        item.onclick = () => {
+            input.value = model;
+            dropdown.classList.remove('show');
+        };
+        dropdown.appendChild(item);
+    });
+
+}
+
+
+// Initialize model input events
+export function initModelInputEvents() {
+    const modelInput = document.getElementById('endpointModel');
+    const dropdown = document.getElementById('modelDropdown');
+    if (!modelInput || !dropdown) return;
+
+    // Show dropdown on focus if has models
+    modelInput.addEventListener('focus', () => {
+        if (fetchedModels.length > 0) {
+            renderModelDropdown(fetchedModels, dropdown, modelInput);
+            dropdown.classList.add('show');
+        }
+    });
+
+    // Hide dropdown on click outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.model-select-container')) {
+            dropdown.classList.remove('show');
+        }
+    });
+
+}
+
+// Toggle model dropdown
+export function toggleModelDropdown() {
+    const dropdown = document.getElementById('modelDropdown');
+    const modelInput = document.getElementById('endpointModel');
+    if (!dropdown || fetchedModels.length === 0) return;
+
+    if (dropdown.classList.contains('show')) {
+        dropdown.classList.remove('show');
+    } else {
+        renderModelDropdown(fetchedModels, dropdown, modelInput);
+        dropdown.classList.add('show');
+    }
+}
+
+// Clear fetched models (call when transformer changes)
+export function clearFetchedModels() {
+    fetchedModels = [];
+    const dropdown = document.getElementById('modelDropdown');
+    if (dropdown) {
+        dropdown.innerHTML = '';
+        dropdown.classList.remove('show');
     }
 }
 
