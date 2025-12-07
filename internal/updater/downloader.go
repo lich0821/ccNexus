@@ -3,6 +3,7 @@ package updater
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -59,9 +60,27 @@ func (d *Downloader) Download(url, destPath string) error {
 	}
 	defer out.Close()
 
-	// Download file
-	client := &http.Client{Timeout: 10 * time.Minute}
-	resp, err := client.Get(url)
+	// Download file with proper timeouts
+	client := &http.Client{
+		Timeout: 10 * time.Minute,
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   15 * time.Second,
+			ResponseHeaderTimeout: 30 * time.Second,
+		},
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		d.setError(fmt.Sprintf("failed to create request: %v", err))
+		return err
+	}
+	req.Header.Set("User-Agent", "ccNexus-Updater")
+
+	resp, err := client.Do(req)
 	if err != nil {
 		d.setError(fmt.Sprintf("failed to download: %v", err))
 		return err

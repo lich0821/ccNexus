@@ -1,4 +1,4 @@
-import { CheckForUpdates, GetUpdateSettings, SetUpdateSettings, SkipVersion, DownloadUpdate, GetDownloadProgress, CancelDownload, InstallUpdate, SendUpdateNotification } from '../../wailsjs/go/main/App';
+import { CheckForUpdates, GetUpdateSettings, SetUpdateSettings, SkipVersion, DownloadUpdate, GetDownloadProgress, CancelDownload, InstallUpdate, ApplyUpdate, SendUpdateNotification } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
 
@@ -273,30 +273,54 @@ function showInstallButton(filePath) {
     const progressContainer = document.getElementById('download-progress-container');
     progressContainer.innerHTML = `<p class="success-message center">🎉 ${t('update.downloadComplete')}</p>`;
 
+    const isWindows = navigator.platform.indexOf('Win') > -1;
+    const btnText = isWindows ? t('update.applyUpdate') : t('update.installUpdate');
     const modalFooter = document.querySelector('#updateModal .modal-footer');
-    modalFooter.innerHTML = `<button id="btn-install-update" class="btn btn-primary">${t('update.installUpdate')}</button>`;
+    modalFooter.innerHTML = `<button id="btn-install-update" class="btn btn-primary">${btnText}</button>`;
 
     document.getElementById('btn-install-update').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-install-update');
+        btn.disabled = true;
+        btn.textContent = t('update.applying');
+
         try {
             const resultStr = await InstallUpdate(filePath);
             const result = JSON.parse(resultStr);
 
             if (result.success) {
-                showInstallInstructions(result);
+                if (result.exePath) {
+                    // Windows: 直接应用更新
+                    const applyResult = JSON.parse(await ApplyUpdate(result.exePath));
+                    if (applyResult.success) {
+                        const modal = document.getElementById('updateModal');
+                        if (modal) modal.remove();
+                    } else {
+                        showNotification(t('update.applyFailed') + ': ' + applyResult.error, 'error');
+                        btn.disabled = false;
+                        btn.textContent = btnText;
+                    }
+                } else {
+                    // 其他平台: 显示手动安装说明
+                    showInstallInstructions(result);
+                }
             } else {
                 showNotification(t('update.installFailed') + ': ' + result.error, 'error');
+                btn.disabled = false;
+                btn.textContent = btnText;
             }
         } catch (error) {
             showNotification(t('update.installFailed') + ': ' + error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = btnText;
         }
     });
 }
 
-// Show installation instructions
+// Show installation instructions (非Windows平台)
 function showInstallInstructions(result) {
     const progressContainer = document.getElementById('download-progress-container');
+    const modalFooter = document.querySelector('#updateModal .modal-footer');
     const instructions = t('update.' + result.message);
-
     progressContainer.innerHTML = `
         <div class="install-instructions">
             <p class="success-message">${t('update.extractComplete')}</p>
@@ -304,8 +328,6 @@ function showInstallInstructions(result) {
             <div class="instructions-text">${instructions}</div>
         </div>
     `;
-
-    const modalFooter = document.querySelector('#updateModal .modal-footer');
     modalFooter.innerHTML = '';
 }
 
@@ -313,9 +335,9 @@ function showInstallInstructions(result) {
 function showError(errorMsg, info) {
     const progressContainer = document.getElementById('download-progress-container');
     progressContainer.innerHTML = `
-        <div class="error-container">
-            <p class="error-message">${t('update.downloadFailed')}</p>
-            <p class="error-detail">${errorMsg}</p>
+        <div class="error-container" style="background: var(--bg-tertiary);">
+            <p class="error-message" style="color: #dc3545;">${t('update.downloadFailed')}</p>
+            <p class="error-detail" style="color: var(--text-secondary);">${errorMsg}</p>
         </div>
     `;
 

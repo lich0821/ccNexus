@@ -6,6 +6,10 @@ export function AddEndpoint(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['main']['App']['AddEndpoint'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function ApplyUpdate(arg1) {
+  return window['go']['main']['App']['ApplyUpdate'](arg1);
+}
+
 export function BackupToWebDAV(arg1) {
   return window['go']['main']['App']['BackupToWebDAV'](arg1);
 }

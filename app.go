@@ -2475,6 +2475,15 @@ func (a *App) InstallUpdate(filePath string) string {
 	return string(data)
 }
 
+// ApplyUpdate 应用更新并退出程序
+func (a *App) ApplyUpdate(newExePath string) string {
+	err := updater.ApplyUpdate(newExePath)
+	if err != nil {
+		return fmt.Sprintf(`{"success":false,"error":"%s"}`, err.Error())
+	}
+	return `{"success":true,"message":"update_applying"}`
+}
+
 // SendUpdateNotification sends a system notification for updates
 func (a *App) SendUpdateNotification(title, message string) error {
 	err := updater.SendNotification(title, message)

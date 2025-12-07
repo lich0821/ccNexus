@@ -298,7 +298,13 @@ export default {
         extractPath: '文件位置',
         install_instructions_windows: '1. 关闭当前 ccNexus 应用<br>2. 运行新版本的 ccNexus.exe',
         install_instructions_macos: '1. 关闭当前 ccNexus 应用<br>2. 将新版本的 ccNexus.app 拖到应用程序文件夹',
-        install_instructions_linux: '1. 关闭当前 ccNexus 应用<br>2. 运行新版本的 ccNexus 可执行文件'
+        install_instructions_linux: '1. 关闭当前 ccNexus 应用<br>2. 运行新版本的 ccNexus 可执行文件',
+        readyToUpdate: '新版本已准备就绪，点击下方按钮立即更新',
+        applyUpdate: '立即更新',
+        applying: '正在应用更新...',
+        restartingApp: '正在重启应用...',
+        applyFailed: '应用更新失败',
+        install_ready_windows: '点击立即更新按钮自动完成更新'
     },
     common: {
         ok: '确定',
