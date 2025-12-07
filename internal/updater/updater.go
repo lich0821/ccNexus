@@ -95,6 +95,11 @@ func (u *Updater) GetDownloadProgress() DownloadProgress {
 	return u.downloader.GetProgress()
 }
 
+// CancelDownload cancels the current download
+func (u *Updater) CancelDownload() {
+	u.downloader.Cancel()
+}
+
 // InstallUpdate installs the downloaded update
 func (u *Updater) InstallUpdate(filePath string) (*InstallResult, error) {
 	// Extract version from filename (e.g., ccNexus-v3.4.1-darwin-arm64.zip -> v3.4.1)

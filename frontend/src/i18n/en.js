@@ -308,7 +308,8 @@ export default {
         confirm: 'Confirm',
         delete: 'Delete',
         confirmDeleteTitle: 'Confirm Deletion',
-        close: 'Close'
+        close: 'Close',
+        retry: 'Retry'
     },
     tips: [
         'Tip: You can add multiple API endpoints for automatic failover',

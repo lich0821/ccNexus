@@ -2823,9 +2823,83 @@ body {
 }
 
 .update-progress-text {
-    text-align: center;
     font-size: 13px;
     color: var(--text-secondary, #666);
     margin: 0;
+}
+
+.update-progress-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-small {
+    padding: 4px 12px;
+    font-size: 12px;
+}
+
+.download-complete-container {
+    text-align: center;
+    padding: 15px 0;
+}
+
+.success-message {
+    color: #28a745;
+    font-size: 14px;
+    margin: 0;
+}
+
+.success-message.center {
+    text-align: center;
+    padding: 15px 0;
+    font-size: 20px;
+}
+
+.install-instructions {
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.install-instructions .success-message {
+    color: #28a745;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 10px 0;
+}
+
+.install-instructions .install-path {
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+    margin: 0 0 10px 0;
+    word-break: break-all;
+}
+
+.install-instructions .instructions-text {
+    font-size: 13px;
+    color: var(--text-primary, #333);
+    line-height: 1.6;
+}
+
+.error-container {
+    background: #fff5f5;
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.error-detail {
+    color: var(--text-secondary, #666);
+    font-size: 12px;
+    margin: 0;
+    word-break: break-all;
 }
 

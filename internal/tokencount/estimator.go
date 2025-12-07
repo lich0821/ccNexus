@@ -86,7 +86,7 @@ func estimateBlock(block any) int {
 			return estimateText(text)
 		}
 	case "image":
-		return 1500
+		return estimateImageBlock(m)
 	case "document":
 		return 500
 	case "tool_use":
@@ -96,9 +96,7 @@ func estimateBlock(block any) int {
 			}
 		}
 	case "tool_result":
-		if content, ok := m["content"].(string); ok {
-			return estimateText(content)
-		}
+		return estimateAny(m["content"])
 	}
 
 	if data, err := json.Marshal(block); err == nil {

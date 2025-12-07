@@ -23,8 +23,9 @@ type DownloadProgress struct {
 
 // Downloader handles file downloads
 type Downloader struct {
-	progress DownloadProgress
-	mu       sync.RWMutex
+	progress   DownloadProgress
+	mu         sync.RWMutex
+	cancelChan chan struct{}
 }
 
 // NewDownloader creates a new downloader
@@ -41,6 +42,7 @@ func (d *Downloader) Download(url, destPath string) error {
 		Status:   "downloading",
 		FilePath: destPath,
 	}
+	d.cancelChan = make(chan struct{})
 	d.mu.Unlock()
 
 	// Create destination directory
@@ -82,6 +84,18 @@ func (d *Downloader) Download(url, destPath string) error {
 	var downloaded int64
 
 	for {
+		// Check for cancellation
+		select {
+		case <-d.cancelChan:
+			out.Close()
+			os.Remove(destPath)
+			d.mu.Lock()
+			d.progress.Status = "cancelled"
+			d.mu.Unlock()
+			return fmt.Errorf("download cancelled")
+		default:
+		}
+
 		n, err := resp.Body.Read(buffer)
 		if n > 0 {
 			if _, writeErr := out.Write(buffer[:n]); writeErr != nil {
@@ -139,4 +153,13 @@ func (d *Downloader) setError(errMsg string) {
 	d.progress.Status = "failed"
 	d.progress.Error = errMsg
 	d.mu.Unlock()
+}
+
+// Cancel cancels the current download
+func (d *Downloader) Cancel() {
+	d.mu.RLock()
+	if d.cancelChan != nil && d.progress.Status == "downloading" {
+		close(d.cancelChan)
+	}
+	d.mu.RUnlock()
 }

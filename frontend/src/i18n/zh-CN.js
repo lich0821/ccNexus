@@ -308,7 +308,8 @@ export default {
         confirm: '确认',
         delete: '删除',
         confirmDeleteTitle: '确认删除',
-        close: '关闭'
+        close: '关闭',
+        retry: '重试'
     },
     tips: [
         '小贴士：您可以添加多个 API 端点实现自动故障转移',

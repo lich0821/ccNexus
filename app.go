@@ -2450,6 +2450,13 @@ func (a *App) GetDownloadProgress() string {
 	return string(data)
 }
 
+// CancelDownload cancels the current download
+func (a *App) CancelDownload() {
+	if a.updater != nil {
+		a.updater.CancelDownload()
+	}
+}
+
 // InstallUpdate installs the downloaded update
 func (a *App) InstallUpdate(filePath string) string {
 	if a.updater == nil {
