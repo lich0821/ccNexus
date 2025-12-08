@@ -92,9 +92,12 @@ export async function checkForUpdates(silent = false) {
                 return;
             }
 
-            // 显示红点提示
-            showUpdateBadge();
-            showUpdateNotification(info);
+            // 自动检查只显示红点，手动检查才弹窗
+            if (silent) {
+                showUpdateBadge();
+            } else {
+                showUpdateNotification(info);
+            }
         } else {
             if (!silent) {
                 showNotification(t('update.upToDate'), 'success');

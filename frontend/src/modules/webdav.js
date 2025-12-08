@@ -208,11 +208,6 @@ window.saveDataSyncConfig = async function() {
         showNotification(t('webdav.urlRequired'), 'error');
         return;
     }
-    // Only allow Nutstore WebDAV
-    if (!url.includes('dav.jianguoyun.com')) {
-        showNotification(t('webdav.onlyNutstore'), 'error');
-        return;
-    }
     if (!username) {
         showNotification(t('webdav.usernameRequired'), 'error');
         return;
@@ -249,11 +244,6 @@ window.testDataSyncConnection = async function() {
         showNotification(t('webdav.urlRequired'), 'error');
         return;
     }
-    // Only allow Nutstore WebDAV
-    if (!url.includes('dav.jianguoyun.com')) {
-        showNotification(t('webdav.onlyNutstore'), 'error');
-        return;
-    }
     if (!username) {
         showNotification(t('webdav.usernameRequired'), 'error');
         return;
@@ -272,11 +262,11 @@ window.testDataSyncConnection = async function() {
             showNotification(t('webdav.connectionSuccess'), 'success');
         } else {
             connectionTestPassed = false;
-            showNotification(t('webdav.connectionFailed'), 'error');
+            showNotification(t('webdav.connectionFailedWithRecommend'), 'error');
         }
     } catch (error) {
         connectionTestPassed = false;
-        showNotification(t('webdav.connectionFailed') + ': ' + error, 'error');
+        showNotification(t('webdav.connectionFailedWithRecommend'), 'error');
     }
 };
 

@@ -719,7 +719,6 @@ body {
     position: relative;
     display: flex;
     align-items: center;
-    gap: 8px;
 }
 
 .model-select-container {
@@ -730,6 +729,9 @@ body {
 .model-select-container input {
     width: 100%;
     padding-right: 32px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
 }
 
 .model-dropdown-toggle {
@@ -789,8 +791,25 @@ body {
 
 #fetchModelsBtn {
     min-width: 60px;
-    height: 38px;
-    padding: 8px 12px;
+    height: 37.3px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color, #ddd);
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    color: var(--text-secondary, #666);
+    transition: all 0.2s ease;
+}
+
+#fetchModelsBtn:hover {
+    background: var(--hover-bg, rgba(102, 126, 234, 0.1));
+    border-color: var(--primary-color, #667eea);
+    color: var(--primary-color, #667eea);
+}
+
+#fetchModelsBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .password-toggle:focus {
