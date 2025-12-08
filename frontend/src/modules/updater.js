@@ -1,9 +1,25 @@
-import { CheckForUpdates, GetUpdateSettings, SetUpdateSettings, SkipVersion, DownloadUpdate, GetDownloadProgress, InstallUpdate, SendUpdateNotification } from '../../wailsjs/go/main/App';
+import { CheckForUpdates, GetUpdateSettings, SetUpdateSettings, SkipVersion, DownloadUpdate, GetDownloadProgress, CancelDownload, InstallUpdate, ApplyUpdate, SendUpdateNotification } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
 
 let downloadInterval = null;
 let updateCheckInterval = null;
+
+// 显示更新红点
+function showUpdateBadge() {
+    document.getElementById('updateBadge')?.classList.add('show');
+    document.getElementById('checkUpdateBadge')?.classList.add('show');
+}
+
+// 隐藏关于按钮红点
+export function hideAboutBadge() {
+    document.getElementById('updateBadge')?.classList.remove('show');
+}
+
+// 隐藏检查更新按钮红点
+function hideCheckUpdateBadge() {
+    document.getElementById('checkUpdateBadge')?.classList.remove('show');
+}
 
 // Check for updates on startup
 export async function checkUpdatesOnStartup() {
@@ -54,13 +70,14 @@ function stopAutoCheck() {
 
 // Check for updates manually
 export async function checkForUpdates(silent = false) {
+    hideCheckUpdateBadge();
     try {
         const resultStr = await CheckForUpdates();
         const result = JSON.parse(resultStr);
 
         if (!result.success) {
             if (!silent) {
-                alert(t('update.checkFailed') + ': ' + result.error);
+                showNotification(t('update.checkFailed') + ': ' + result.error, 'error');
             }
             return;
         }
@@ -75,6 +92,8 @@ export async function checkForUpdates(silent = false) {
                 return;
             }
 
+            // 显示红点提示
+            showUpdateBadge();
             showUpdateNotification(info);
         } else {
             if (!silent) {
@@ -95,9 +114,12 @@ function showUpdateNotification(info) {
         return;
     }
 
-    const title = 'ccNexus ' + t('update.newVersionAvailable');
-    const message = t('update.latestVersion') + ': ' + info.latestVersion;
-    SendUpdateNotification(title, message).catch(err => console.error('Failed to send notification:', err));
+    // 非Windows平台发送系统通知
+    if (navigator.platform.indexOf('Win') === -1) {
+        const title = 'ccNexus ' + t('update.newVersionAvailable');
+        const message = t('update.latestVersion') + ': ' + info.latestVersion;
+        SendUpdateNotification(title, message).catch(err => console.error('Failed to send notification:', err));
+    }
 
     const modal = document.createElement('div');
     modal.id = 'updateModal';
@@ -131,7 +153,10 @@ function showUpdateNotification(info) {
                     <div class="update-progress-bar">
                         <div id="progress-fill" class="update-progress-fill"></div>
                     </div>
-                    <p id="progress-text" class="update-progress-text">0%</p>
+                    <div class="update-progress-row">
+                        <p id="progress-text" class="update-progress-text">${t('update.downloading')} 0%</p>
+                        <button id="btn-cancel-download" class="btn btn-secondary btn-small">${t('common.cancel')}</button>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -145,7 +170,12 @@ function showUpdateNotification(info) {
     document.body.appendChild(modal);
 
     // Attach event listeners
-    modal.querySelector('.modal-close').addEventListener('click', () => {
+    modal.querySelector('.modal-close').addEventListener('click', async () => {
+        if (downloadInterval) {
+            clearInterval(downloadInterval);
+            downloadInterval = null;
+        }
+        await CancelDownload();
         modal.remove();
     });
 
@@ -183,16 +213,35 @@ function formatChangelog(markdown) {
 
 // Start download
 async function startDownload(info) {
+    // Clear any existing interval
+    if (downloadInterval) {
+        clearInterval(downloadInterval);
+        downloadInterval = null;
+    }
+
     const downloadBtn = document.getElementById('btn-download-update');
     const skipBtn = document.getElementById('btn-skip-version');
     const remindBtn = document.getElementById('btn-remind-later');
     const progressContainer = document.getElementById('download-progress-container');
 
     // Hide buttons and show progress
-    downloadBtn.style.display = 'none';
-    skipBtn.style.display = 'none';
-    remindBtn.style.display = 'none';
+    if (downloadBtn) downloadBtn.style.display = 'none';
+    if (skipBtn) skipBtn.style.display = 'none';
+    if (remindBtn) remindBtn.style.display = 'none';
     progressContainer.style.display = 'block';
+
+    // Add cancel button listener
+    const cancelBtn = document.getElementById('btn-cancel-download');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', async () => {
+            await CancelDownload();
+            if (downloadInterval) {
+                clearInterval(downloadInterval);
+            }
+            const modal = document.getElementById('updateModal');
+            if (modal) modal.remove();
+        });
+    }
 
     try {
         // Extract filename from URL
@@ -206,23 +255,27 @@ async function startDownload(info) {
         await new Promise(resolve => setTimeout(resolve, 100));
 
         // Poll download progress
+        let downloadStarted = false;
         downloadInterval = setInterval(async () => {
             const progressStr = await GetDownloadProgress();
             const progress = JSON.parse(progressStr);
 
-            updateProgressBar(progress);
-
-            if (progress.status === 'completed') {
+            if (progress.status === 'downloading') {
+                downloadStarted = true;
+                updateProgressBar(progress);
+            } else if (progress.status === 'completed') {
                 clearInterval(downloadInterval);
                 showInstallButton(progress.filePath);
-            } else if (progress.status === 'failed') {
+            } else if (downloadStarted && (progress.status === 'failed' || progress.status === 'cancelled')) {
                 clearInterval(downloadInterval);
-                showError(progress.error);
+                if (progress.status === 'failed') {
+                    showError(progress.error, info);
+                }
             }
         }, 200);
     } catch (error) {
         console.error('Failed to start download:', error);
-        showError(error.message);
+        showError(error.message, info);
     }
 }
 
@@ -233,65 +286,100 @@ function updateProgressBar(progress) {
 
     if (progressFill && progressText) {
         progressFill.style.width = progress.progress + '%';
-        progressText.textContent = Math.round(progress.progress) + '%';
+        progressText.textContent = t('update.downloading') + ' ' + Math.round(progress.progress) + '%';
     }
 }
 
 // Show install button
 function showInstallButton(filePath) {
     const progressContainer = document.getElementById('download-progress-container');
-    progressContainer.innerHTML = `
-        <p class="success-message">${t('update.downloadComplete')}</p>
-        <button id="btn-install-update" class="btn-primary">${t('update.installUpdate')}</button>
-    `;
+    progressContainer.innerHTML = `<p class="success-message center">🎉 ${t('update.downloadComplete')}</p>`;
+
+    const isWindows = navigator.platform.indexOf('Win') > -1;
+    const btnText = isWindows ? t('update.applyUpdate') : t('update.installUpdate');
+    const modalFooter = document.querySelector('#updateModal .modal-footer');
+    modalFooter.innerHTML = `<button id="btn-install-update" class="btn btn-primary">${btnText}</button>`;
 
     document.getElementById('btn-install-update').addEventListener('click', async () => {
+        const btn = document.getElementById('btn-install-update');
+        btn.disabled = true;
+        btn.textContent = t('update.applying');
+
         try {
             const resultStr = await InstallUpdate(filePath);
             const result = JSON.parse(resultStr);
 
             if (result.success) {
-                showInstallInstructions(result);
+                if (result.exePath) {
+                    // Windows: 直接应用更新
+                    const applyResult = JSON.parse(await ApplyUpdate(result.exePath));
+                    if (applyResult.success) {
+                        const modal = document.getElementById('updateModal');
+                        if (modal) modal.remove();
+                    } else {
+                        showNotification(t('update.applyFailed') + ': ' + applyResult.error, 'error');
+                        btn.disabled = false;
+                        btn.textContent = btnText;
+                    }
+                } else {
+                    // 其他平台: 显示手动安装说明
+                    showInstallInstructions(result);
+                }
             } else {
-                alert(t('update.installFailed') + ': ' + result.error);
+                showNotification(t('update.installFailed') + ': ' + result.error, 'error');
+                btn.disabled = false;
+                btn.textContent = btnText;
             }
         } catch (error) {
-            alert(t('update.installFailed') + ': ' + error.message);
+            showNotification(t('update.installFailed') + ': ' + error.message, 'error');
+            btn.disabled = false;
+            btn.textContent = btnText;
         }
     });
 }
 
-// Show installation instructions
+// Show installation instructions (非Windows平台)
 function showInstallInstructions(result) {
     const progressContainer = document.getElementById('download-progress-container');
+    const modalFooter = document.querySelector('#updateModal .modal-footer');
     const instructions = t('update.' + result.message);
-
     progressContainer.innerHTML = `
         <div class="install-instructions">
             <p class="success-message">${t('update.extractComplete')}</p>
             <p class="install-path">${t('update.extractPath')}: ${result.path}</p>
             <div class="instructions-text">${instructions}</div>
-            <button id="btn-close-modal" class="btn btn-secondary">${t('common.close')}</button>
         </div>
     `;
-
-    document.getElementById('btn-close-modal').addEventListener('click', () => {
-        const modal = document.getElementById('updateModal');
-        if (modal) modal.remove();
-    });
+    modalFooter.innerHTML = '';
 }
 
 // Show error
-function showError(errorMsg) {
+function showError(errorMsg, info) {
     const progressContainer = document.getElementById('download-progress-container');
     progressContainer.innerHTML = `
-        <p class="error-message" style="color: red;">${t('update.downloadFailed')}: ${errorMsg}</p>
-        <button id="btn-close-error" class="btn btn-secondary">${t('common.close')}</button>
+        <div class="error-container" style="background: var(--bg-tertiary);">
+            <p class="error-message" style="color: #dc3545;">${t('update.downloadFailed')}</p>
+            <p class="error-detail" style="color: var(--text-secondary);">${errorMsg}</p>
+        </div>
     `;
 
-    document.getElementById('btn-close-error').addEventListener('click', () => {
-        const modal = document.getElementById('updateModal');
-        if (modal) modal.remove();
+    const modalFooter = document.querySelector('#updateModal .modal-footer');
+    modalFooter.innerHTML = `<button id="btn-retry-download" class="btn btn-primary">${t('common.retry')}</button>`;
+
+    document.getElementById('btn-retry-download').addEventListener('click', () => {
+        if (info) {
+            progressContainer.innerHTML = `
+                <div class="update-progress-bar">
+                    <div id="progress-fill" class="update-progress-fill"></div>
+                </div>
+                <div class="update-progress-row">
+                    <p id="progress-text" class="update-progress-text">${t('update.downloading')} 0%</p>
+                    <button id="btn-cancel-download" class="btn btn-secondary btn-small">${t('common.cancel')}</button>
+                </div>
+            `;
+            modalFooter.innerHTML = '';
+            startDownload(info);
+        }
     });
 }
 

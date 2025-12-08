@@ -52,6 +52,7 @@ export default {
         modelHelp: 'Optional: Override the model specified in requests',
         modelHelpClaude: 'Optional: Override the model specified in requests',
         modelHelpOpenAI: 'Required: Specify the OpenAI model to use',
+        modelHelpOpenAI2: 'Required: Specify the OpenAI model (Responses API)',
         modelHelpGemini: 'Required: Specify the Gemini model to use',
         remark: 'Remark',
         remarkHelp: 'Optional: Add a remark for this endpoint',
@@ -298,7 +299,13 @@ export default {
         extractPath: 'File Location',
         install_instructions_windows: '1. Close current ccNexus application<br>2. Run the new ccNexus.exe',
         install_instructions_macos: '1. Close current ccNexus application<br>2. Drag the new ccNexus.app to Applications folder',
-        install_instructions_linux: '1. Close current ccNexus application<br>2. Run the new ccNexus executable'
+        install_instructions_linux: '1. Close current ccNexus application<br>2. Run the new ccNexus executable',
+        readyToUpdate: 'New version is ready, click the button below to update now',
+        applyUpdate: 'Update Now',
+        applying: 'Applying update...',
+        restartingApp: 'Restarting application...',
+        applyFailed: 'Failed to apply update',
+        install_ready_windows: 'Click Update Now button to complete the update automatically'
     },
     common: {
         ok: 'OK',
@@ -308,7 +315,8 @@ export default {
         confirm: 'Confirm',
         delete: 'Delete',
         confirmDeleteTitle: 'Confirm Deletion',
-        close: 'Close'
+        close: 'Close',
+        retry: 'Retry'
     },
     tips: [
         'Tip: You can add multiple API endpoints for automatic failover',

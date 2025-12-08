@@ -2,6 +2,7 @@ import { t } from '../i18n/index.js';
 import { escapeHtml } from '../utils/format.js';
 import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, updatePort } from './config.js';
 import { setTestState, clearTestState } from './endpoints.js';
+import { hideAboutBadge } from './updater.js';
 
 let currentEditIndex = -1;
 
@@ -210,6 +211,10 @@ export function handleTransformerChange() {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gpt-4-turbo';
         modelHelpText.textContent = t('modal.modelHelpOpenAI');
+    } else if (transformer === 'openai2') {
+        modelRequired.style.display = 'inline';
+        modelInput.placeholder = 'e.g., gpt-4.1';
+        modelHelpText.textContent = t('modal.modelHelpOpenAI2');
     } else if (transformer === 'gemini') {
         modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gemini-pro';
@@ -365,6 +370,7 @@ export function closePortModal() {
 // Welcome Modal
 export async function showWelcomeModal() {
     document.getElementById('welcomeModal').classList.add('active');
+    hideAboutBadge();
 
     try {
         const version = await window.go.main.App.GetVersion();

@@ -32,6 +32,7 @@ type InstallResult struct {
 	Success bool   `json:"success"`
 	Path    string `json:"path"`
 	Message string `json:"message"`
+	ExePath string `json:"exePath,omitempty"`
 }
 
 // Updater manages application updates
@@ -95,6 +96,11 @@ func (u *Updater) GetDownloadProgress() DownloadProgress {
 	return u.downloader.GetProgress()
 }
 
+// CancelDownload cancels the current download
+func (u *Updater) CancelDownload() {
+	u.downloader.Cancel()
+}
+
 // InstallUpdate installs the downloaded update
 func (u *Updater) InstallUpdate(filePath string) (*InstallResult, error) {
 	// Extract version from filename (e.g., ccNexus-v3.4.1-darwin-arm64.zip -> v3.4.1)
@@ -152,12 +158,11 @@ func (u *Updater) installWindows(filePath, version string) (*InstallResult, erro
 		return nil, fmt.Errorf("executable not found in archive")
 	}
 
-	openFileManager(exePath)
-
 	return &InstallResult{
 		Success: true,
 		Path:    extractDir,
-		Message: "install_instructions_windows",
+		Message: "install_ready_windows",
+		ExePath: exePath,
 	}, nil
 }
 
@@ -344,3 +349,4 @@ func SendNotification(title, message string) error {
 	}
 	return beeep.Notify(title, message, "")
 }
+

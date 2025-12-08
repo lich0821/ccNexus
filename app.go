@@ -1372,6 +1372,26 @@ func (a *App) TestEndpoint(index int) string {
 			},
 		})
 
+	case "openai2":
+		// OpenAI Responses API format
+		apiPath = "/v1/responses"
+		model := endpoint.Model
+		if model == "" {
+			model = "gpt-5-codex"
+		}
+		requestBody, err = json.Marshal(map[string]interface{}{
+			"model": model,
+			"input": []map[string]interface{}{
+				{
+					"type": "message",
+					"role": "user",
+					"content": []map[string]interface{}{
+						{"type": "input_text", "text": testMessage},
+					},
+				},
+			},
+		})
+
 	case "gemini":
 		// Gemini API format
 		model := endpoint.Model
@@ -1435,7 +1455,7 @@ func (a *App) TestEndpoint(index int) string {
 	case "claude":
 		req.Header.Set("x-api-key", endpoint.APIKey)
 		req.Header.Set("anthropic-version", "2023-06-01")
-	case "openai":
+	case "openai", "openai2":
 		req.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
 	case "gemini":
 		// Gemini uses API key in query parameter
@@ -1569,7 +1589,7 @@ func (a *App) FetchModels(apiUrl, apiKey, transformer string) string {
 		// Use OpenAI-compatible /v1/models API (same as NewAPI approach)
 		models, err = a.fetchOpenAIModels(normalizedAPIUrl, apiKey)
 
-	case "openai":
+	case "openai", "openai2":
 		models, err = a.fetchOpenAIModels(normalizedAPIUrl, apiKey)
 
 	case "gemini":
@@ -2450,6 +2470,13 @@ func (a *App) GetDownloadProgress() string {
 	return string(data)
 }
 
+// CancelDownload cancels the current download
+func (a *App) CancelDownload() {
+	if a.updater != nil {
+		a.updater.CancelDownload()
+	}
+}
+
 // InstallUpdate installs the downloaded update
 func (a *App) InstallUpdate(filePath string) string {
 	if a.updater == nil {
@@ -2466,6 +2493,15 @@ func (a *App) InstallUpdate(filePath string) string {
 	}
 	data, _ := json.Marshal(result)
 	return string(data)
+}
+
+// ApplyUpdate 应用更新并退出程序
+func (a *App) ApplyUpdate(newExePath string) string {
+	err := updater.ApplyUpdate(newExePath)
+	if err != nil {
+		return fmt.Sprintf(`{"success":false,"error":"%s"}`, err.Error())
+	}
+	return `{"success":true,"message":"update_applying"}`
 }
 
 // SendUpdateNotification sends a system notification for updates

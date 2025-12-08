@@ -14,6 +14,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/transformer/claude"
 	"github.com/lich0821/ccNexus/internal/transformer/gemini"
 	"github.com/lich0821/ccNexus/internal/transformer/openai"
+	"github.com/lich0821/ccNexus/internal/transformer/openai2"
 )
 
 // prepareTransformer creates and returns the appropriate transformer for the endpoint
@@ -29,6 +30,11 @@ func prepareTransformer(endpoint config.Endpoint) (transformer.Transformer, erro
 			return nil, fmt.Errorf("OpenAI transformer requires model field")
 		}
 		return openai.NewOpenAITransformer(endpoint.Model), nil
+	case "openai2":
+		if endpoint.Model == "" {
+			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
+		}
+		return openai2.NewOpenAI2Transformer(endpoint.Model), nil
 	case "gemini":
 		if endpoint.Model == "" {
 			return nil, fmt.Errorf("Gemini transformer requires model field")
@@ -52,6 +58,8 @@ func buildProxyRequest(r *http.Request, endpoint config.Endpoint, transformedBod
 
 	if transformerName == "openai" && targetPath == "/v1/messages" {
 		targetPath = "/v1/chat/completions"
+	} else if transformerName == "openai2" && targetPath == "/v1/messages" {
+		targetPath = "/v1/responses"
 	} else if transformerName == "gemini" && targetPath == "/v1/messages" {
 		var geminiReq struct {
 			Stream bool `json:"stream"`
@@ -88,7 +96,7 @@ func buildProxyRequest(r *http.Request, endpoint config.Endpoint, transformedBod
 
 	// Set authentication based on transformer type
 	switch transformerName {
-	case "openai":
+	case "openai", "openai2":
 		proxyReq.Header.Set("Authorization", "Bearer "+endpoint.APIKey)
 	case "gemini":
 		q := proxyReq.URL.Query()
