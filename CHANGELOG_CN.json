@@ -1,5 +1,20 @@
 [
   {
+    "version": "v3.9.1",
+    "date": "2025-12-07",
+    "changes": ["已知bug修复"]
+  },
+  {
+    "version": "v3.9.0",
+    "date": "2025-12-07",
+    "changes": ["支持OpenAI response API"]
+  },
+  {
+    "version": "v3.8.0",
+    "date": "2025-12-07",
+    "changes": ["Win实现自动无感更新", "自动更新检测增加小红点提示", "已知bug修复"]
+  },
+  {
     "version": "v3.7.0",
     "date": "2025-12-07",
     "changes": ["新增获取模型列表功能"]
