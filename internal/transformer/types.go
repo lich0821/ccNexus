@@ -26,7 +26,7 @@ type OpenAITool struct {
 // OpenAIMessage represents a message in OpenAI format
 type OpenAIMessage struct {
 	Role       string           `json:"role"`
-	Content    string           `json:"content,omitempty"`
+	Content    interface{}      `json:"content,omitempty"` // Can be string or array of content parts
 	ToolCalls  []OpenAIToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string           `json:"tool_call_id,omitempty"`
 }
@@ -35,8 +35,9 @@ type OpenAIMessage struct {
 type OpenAIRequest struct {
 	Model               string          `json:"model"`
 	Messages            []OpenAIMessage `json:"messages"`
+	MaxTokens           int             `json:"max_tokens,omitempty"`           // Legacy field
 	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
-	Temperature         float64         `json:"temperature,omitempty"`
+	Temperature         *float64        `json:"temperature,omitempty"`
 	Stream              bool            `json:"stream,omitempty"`
 	StreamOptions       *StreamOptions  `json:"stream_options,omitempty"`
 	EnableThinking      bool            `json:"enable_thinking,omitempty"` // For models that support reasoning/thinking
@@ -125,16 +126,13 @@ type ClaudeTool struct {
 
 // ClaudeResponse represents a Claude API response
 type ClaudeResponse struct {
-	ID      string `json:"id"`
-	Type    string `json:"type"`
-	Role    string `json:"role"`
-	Content []struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	} `json:"content"`
-	Model        string `json:"model"`
-	StopReason   string `json:"stop_reason"`
-	StopSequence string `json:"stop_sequence,omitempty"`
+	ID           string        `json:"id"`
+	Type         string        `json:"type"`
+	Role         string        `json:"role"`
+	Content      []interface{} `json:"content"` // Array of content blocks (text, tool_use, etc.)
+	Model        string        `json:"model"`
+	StopReason   string        `json:"stop_reason"`
+	StopSequence string        `json:"stop_sequence,omitempty"`
 	Usage        struct {
 		InputTokens  int `json:"input_tokens"`
 		OutputTokens int `json:"output_tokens"`
@@ -196,6 +194,10 @@ type StreamContext struct {
 	State                interface{}       // V3 architecture state (openai.StreamState)
 	ToolCallIDMap        map[string]string // tool_use_id -> function_name mapping for Gemini
 	ToolCallCounter      int               // Counter for generating unique tool IDs
+	// Codex transformer fields
+	CurrentToolID   string // Current tool call ID being processed
+	CurrentToolName string // Current tool call name being processed
+	ToolArguments   string // Accumulated tool arguments
 }
 
 // NewStreamContext creates a new stream context with default values
@@ -289,11 +291,11 @@ type GeminiResponse struct {
 		FinishReason string `json:"finishReason"`
 		Index        int    `json:"index"`
 	} `json:"candidates"`
-	UsageMetadata struct {
+	UsageMetadata *struct {
 		PromptTokenCount     int `json:"promptTokenCount"`
 		CandidatesTokenCount int `json:"candidatesTokenCount"`
 		TotalTokenCount      int `json:"totalTokenCount"`
-	} `json:"usageMetadata"`
+	} `json:"usageMetadata,omitempty"`
 }
 
 // GeminiStreamChunk represents a streaming response chunk from Gemini
