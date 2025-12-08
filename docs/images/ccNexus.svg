@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="140" viewBox="0 0 1200 140">
+  <rect width="100%" height="100%" fill="transparent"/>
+  <style>
+    /* Use common system fonts for good cross-platform rendering */
+    .title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", "Helvetica", Arial, sans-serif; 
+             font-size: 56px; font-weight: 700; }
+  </style>
+
+  <text x="20" y="90" class="title">
+    <tspan fill="#e53935">C</tspan><tspan fill="#111">laude </tspan>
+    <tspan fill="#e53935">C</tspan><tspan fill="#111">ode &amp; </tspan>
+    <tspan fill="#1e88e5">C</tspan><tspan fill="#111">odex </tspan>
+    <tspan fill="#1e88e5">C</tspan><tspan fill="#111">LI 智能端点轮换代理</tspan>
+  </text>
+</svg>
