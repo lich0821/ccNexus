@@ -1,7 +1,12 @@
 <div align="center">
 
 <p align="center">
-  <img src="docs/images/ccNexus.svg" alt="Claude Code & Codex CLI Smart Endpoint Rotation Proxy" width="800" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" src set="docs/images/ccNexus-dark.svg">
+    <img src="docs/images/ccNexus-light.svg"
+         alt="Claude Code & Codex CLI 智能端点轮换代理"
+         width="720">
+  </picture>
 </p>
 
 [![Build Status](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
