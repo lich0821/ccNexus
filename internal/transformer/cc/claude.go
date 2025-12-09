@@ -1,6 +1,8 @@
 package cc
 
 import (
+	"encoding/json"
+
 	"github.com/lich0821/ccNexus/internal/transformer"
 )
 
@@ -24,7 +26,17 @@ func (t *ClaudeTransformer) Name() string {
 }
 
 func (t *ClaudeTransformer) TransformRequest(req []byte) ([]byte, error) {
-	return req, nil
+	if t.model == "" {
+		return req, nil
+	}
+
+	var data map[string]interface{}
+	if err := json.Unmarshal(req, &data); err != nil {
+		return req, nil
+	}
+
+	data["model"] = t.model
+	return json.Marshal(data)
 }
 
 func (t *ClaudeTransformer) TransformResponse(resp []byte, isStreaming bool) ([]byte, error) {
