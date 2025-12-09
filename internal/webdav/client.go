@@ -91,13 +91,13 @@ func (c *Client) TestConnection() *TestResult {
 	if err != nil {
 		return &TestResult{
 			Success: false,
-			Message: fmt.Sprintf("连接失败: %v", err),
+			Message: fmt.Sprintf("Connection failed: %v", err),
 		}
 	}
 
 	return &TestResult{
 		Success: true,
-		Message: "连接成功",
+		Message: "Connection successful",
 	}
 }
 
@@ -119,7 +119,7 @@ func (c *Client) ensureDirectory(dirPath string) error {
 		return nil
 	}
 
-	return fmt.Errorf("创建目录失败: %v", err)
+	return fmt.Errorf("Failed to create directory: %v", err)
 }
 
 // UploadBackup 上传备份文件
@@ -141,7 +141,7 @@ func (c *Client) UploadBackup(filename string, data []byte, isConfig bool) error
 	// 上传文件
 	err := c.client.Write(remotePath, data, 0644)
 	if err != nil {
-		return fmt.Errorf("上传文件失败: %v", err)
+		return fmt.Errorf("Failed to upload file: %v", err)
 	}
 
 	return nil
@@ -166,7 +166,7 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 	// 创建 PROPFIND 请求
 	req, err := http.NewRequest("PROPFIND", fullURL, nil)
 	if err != nil {
-		return nil, fmt.Errorf("创建请求失败: %v", err)
+		return nil, fmt.Errorf("Failed to create request: %v", err)
 	}
 
 	// 设置请求头
@@ -177,7 +177,7 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 	// 发送请求
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("请求失败: %v", err)
+		return nil, fmt.Errorf("Request failed: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -194,14 +194,14 @@ func (c *Client) ListBackups(isConfig bool) ([]BackupFile, error) {
 	// 读取响应体
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("读取响应失败: %v", err)
+		return nil, fmt.Errorf("Failed to read response: %v", err)
 	}
 
 
 	// 解析 XML
 	var propfind propfindResponse
 	if err := xml.Unmarshal(body, &propfind); err != nil {
-		return nil, fmt.Errorf("解析XML失败: %v", err)
+		return nil, fmt.Errorf("Failed to parse XML: %v", err)
 	}
 
 
@@ -272,7 +272,7 @@ func (c *Client) DownloadBackup(filename string, isConfig bool) ([]byte, error) 
 	// 下载文件
 	data, err := c.client.Read(remotePath)
 	if err != nil {
-		return nil, fmt.Errorf("下载文件失败: %v", err)
+		return nil, fmt.Errorf("Failed to download file: %v", err)
 	}
 
 	return data, nil
@@ -301,7 +301,7 @@ func (c *Client) DeleteBackups(filenames []string, isConfig bool) error {
 	}
 
 	if len(errors) > 0 {
-		return fmt.Errorf("删除失败: %s", strings.Join(errors, "; "))
+		return fmt.Errorf("Delete failed: %s", strings.Join(errors, "; "))
 	}
 
 	return nil

@@ -268,7 +268,22 @@ export default {
         endpointsHave: '个端点存在冲突配置',
         useRemoteDesc: '远程配置将覆盖本地冲突的端点配置',
         keepLocalDesc: '保留本地配置，仅从远程添加新端点',
-        inputFilename: '输入文件名'
+        inputFilename: '输入文件名',
+        // 错误消息
+        errors: {
+            webdav_not_configured: 'WebDAV 未配置',
+            storage_not_initialized: '存储未初始化',
+            webdav_client_failed: '创建 WebDAV 客户端失败',
+            get_home_dir_failed: '获取用户目录失败',
+            create_temp_dir_failed: '创建临时目录失败',
+            create_db_backup_failed: '创建数据库备份失败',
+            backup_upload_failed: '备份上传失败',
+            restore_download_failed: '恢复下载失败',
+            merge_data_failed: '合并数据失败',
+            load_config_failed: '加载配置失败',
+            update_proxy_config_failed: '更新代理配置失败',
+            delete_backup_failed: '删除备份失败'
+        }
     },
     update: {
         checkForUpdates: '检查更新',
@@ -307,6 +322,25 @@ export default {
         restartingApp: '正在重启应用...',
         applyFailed: '应用更新失败',
         install_ready_windows: '点击立即更新按钮自动完成更新'
+    },
+    terminal: {
+        title: '启动器',
+        selectTerminal: '选择终端',
+        selectTerminalHelp: '选择用于启动 Claude Code 的终端程序',
+        projectDirs: '项目目录',
+        projectDirsHelp: '添加常用的项目目录，点击启动直接打开终端',
+        addDir: '添加目录',
+        noDirs: '暂无项目目录，点击下方按钮添加',
+        launchFailed: '启动终端失败',
+        launch: '启动',
+        delete: '删除',
+        confirmDelete: '确定要删除此项目目录吗？',
+        addDirFailed: '添加目录失败',
+        dirExists: '目录已存在',
+        // 错误消息
+        errors: {
+            directory_already_exists: '目录已存在'
+        }
     },
     common: {
         ok: '确定',

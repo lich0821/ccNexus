@@ -33,7 +33,7 @@ func (m *Manager) BackupDatabase(dbPath string, version string, filename string)
 	fmt.Printf("[WebDAV] Reading database file: %s\n", dbPath)
 	dbData, err := os.ReadFile(dbPath)
 	if err != nil {
-		return fmt.Errorf("读取数据库文件失败: %v", err)
+		return fmt.Errorf("Failed to read database file: %v", err)
 	}
 	fmt.Printf("[WebDAV] Database file read successfully: %d bytes\n", len(dbData))
 
@@ -46,7 +46,7 @@ func (m *Manager) BackupDatabase(dbPath string, version string, filename string)
 	// Serialize metadata
 	metadataJSON, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
-		return fmt.Errorf("序列化元数据失败: %v", err)
+		return fmt.Errorf("Failed to serialize metadata: %v", err)
 	}
 
 	// Upload database file (use .db extension)
@@ -62,7 +62,7 @@ func (m *Manager) BackupDatabase(dbPath string, version string, filename string)
 
 	if err := m.client.UploadBackup(dbFilename, dbData, true); err != nil {
 		fmt.Printf("[WebDAV] Failed to upload database: %v\n", err)
-		return fmt.Errorf("上传数据库失败: %v", err)
+		return fmt.Errorf("Failed to upload database: %v", err)
 	}
 	fmt.Printf("[WebDAV] Database uploaded successfully\n")
 
@@ -96,12 +96,12 @@ func (m *Manager) RestoreDatabase(filename string, targetPath string) error {
 	// Download database file
 	dbData, err := m.client.DownloadBackup(dbFilename, true)
 	if err != nil {
-		return fmt.Errorf("下载数据库失败: %v", err)
+		return fmt.Errorf("Failed to download database: %v", err)
 	}
 
 	// Write to target path
 	if err := os.WriteFile(targetPath, dbData, 0644); err != nil {
-		return fmt.Errorf("写入数据库文件失败: %v", err)
+		return fmt.Errorf("Failed to write database file: %v", err)
 	}
 
 	return nil

@@ -268,7 +268,22 @@ export default {
         endpointHas: 'endpoint has conflicting configurations',
         endpointsHave: 'endpoints have conflicting configurations',
         useRemoteDesc: 'Remote configuration will overwrite local conflicting endpoints',
-        keepLocalDesc: 'Keep local configuration, only add new endpoints from remote'
+        keepLocalDesc: 'Keep local configuration, only add new endpoints from remote',
+        // Error messages
+        errors: {
+            webdav_not_configured: 'WebDAV not configured',
+            storage_not_initialized: 'Storage not initialized',
+            webdav_client_failed: 'Failed to create WebDAV client',
+            get_home_dir_failed: 'Failed to get home directory',
+            create_temp_dir_failed: 'Failed to create temp directory',
+            create_db_backup_failed: 'Failed to create database backup',
+            backup_upload_failed: 'Backup upload failed',
+            restore_download_failed: 'Restore download failed',
+            merge_data_failed: 'Failed to merge data',
+            load_config_failed: 'Failed to load config',
+            update_proxy_config_failed: 'Failed to update proxy config',
+            delete_backup_failed: 'Failed to delete backup'
+        }
     },
     update: {
         checkForUpdates: 'Check for Updates',
@@ -307,6 +322,25 @@ export default {
         restartingApp: 'Restarting application...',
         applyFailed: 'Failed to apply update',
         install_ready_windows: 'Click Update Now button to complete the update automatically'
+    },
+    terminal: {
+        title: 'Launcher',
+        selectTerminal: 'Select Terminal',
+        selectTerminalHelp: 'Choose the terminal to launch Claude Code',
+        projectDirs: 'Project Directories',
+        projectDirsHelp: 'Add frequently used project directories for quick terminal launch',
+        addDir: 'Add Directory',
+        noDirs: 'No project directories. Click button below to add.',
+        launchFailed: 'Failed to launch terminal',
+        launch: 'Launch',
+        delete: 'Delete',
+        confirmDelete: 'Are you sure you want to delete this project directory?',
+        addDirFailed: 'Failed to add directory',
+        dirExists: 'Directory already exists',
+        // Error messages
+        errors: {
+            directory_already_exists: 'Directory already exists'
+        }
     },
     common: {
         ok: 'OK',

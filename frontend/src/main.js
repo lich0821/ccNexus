@@ -8,6 +8,7 @@ import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
+import { initTerminal } from './modules/terminal.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import {
@@ -57,6 +58,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize UI
     initUI();
+
+    // Initialize terminal module
+    initTerminal();
 
     // Initialize model input events
     initModelInputEvents();

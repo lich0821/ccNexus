@@ -598,13 +598,12 @@ body {
 }
 
 .btn {
-    padding: 10px 24px;
+    padding: 8px 16px;
     border: none;
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s;
-    min-width: 80px;
 }
 
 .btn-primary {
@@ -1200,8 +1199,8 @@ body {
     border-radius: 6px;
     font-size: 14px;
     cursor: pointer;
-    background: white;
-    color: #333;
+    background: transparent;
+    color: var(--text-secondary, #666);
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
@@ -1209,8 +1208,8 @@ body {
 }
 
 .endpoint-toggle-btn:hover {
-    border-color: #667eea;
-    background: #f8f9fa;
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
+    color: var(--text-primary, #333);
 }
 
 .endpoint-toggle-btn:active {
@@ -1241,7 +1240,7 @@ body {
 /* Log Level Select Button Style (same as secondary button) */
 .log-level-select-btn {
     padding: 6px 12px;
-    border: none;
+    border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 13px;
     cursor: pointer;
@@ -2954,5 +2953,177 @@ body {
     font-size: 12px;
     margin: 0;
     word-break: break-all;
+}
+
+/* Terminal Modal Styles */
+#terminalModal {
+    backdrop-filter: blur(4px);
+}
+
+#terminalModal .modal-content {
+    max-width: min(500px, 90vw);
+    width: 500px;
+}
+
+#terminalModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#terminalModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: var(--border-color, #e9ecef);
+}
+
+#terminalModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary, #333);
+}
+
+#terminalModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg-secondary, #f0f0f0);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: var(--text-secondary, #666);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#terminalModal .modal-close:hover {
+    background: var(--bg-tertiary, #e0e0e0);
+    color: var(--text-primary, #333);
+    transform: rotate(90deg);
+}
+
+#terminalModal .modal-body {
+    padding: 25px 30px 20px 30px;
+}
+
+.project-dir-list {
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    background: var(--bg-secondary, #f8f9fa);
+    margin-top: 8px;
+}
+
+.project-dir-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    background: var(--bg-primary, #fff);
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    transition: background 0.15s;
+}
+
+.project-dir-item:first-child {
+    border-radius: 7px 7px 0 0;
+}
+
+.project-dir-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 7px 7px;
+}
+
+.project-dir-item:only-child {
+    border-radius: 7px;
+}
+
+.project-dir-item:hover {
+    background: var(--bg-secondary, #f8f9fa);
+}
+
+.project-dir-item .dir-path {
+    flex: 1;
+    font-size: 13px;
+    color: var(--text-primary, #333);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 12px;
+}
+
+.project-dir-item .dir-actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.project-dir-item .dir-actions .btn {
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.project-dir-list .empty-tip {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--text-secondary, #999);
+    font-size: 14px;
+}
+
+#terminalModal .modal-footer {
+    padding: 10px 30px 30px 30px;
+}
+
+.btn-add-dir {
+    width: 100%;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px dashed var(--border-color, #d0d0d0);
+    background: transparent;
+    color: var(--text-secondary, #666);
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.btn-add-dir:hover {
+    border-color: var(--primary-color, #667eea);
+    color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+#terminalModal .form-help {
+    display: block;
+    color: var(--text-secondary, #888);
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.btn-danger {
+    background: #ff6b6b;
+    color: white;
+    border: none;
+}
+
+.btn-danger:hover {
+    background: #ee5a5a;
 }
 
