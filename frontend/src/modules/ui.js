@@ -2,8 +2,7 @@ import { t } from '../i18n/index.js';
 
 export function initUI() {
     const platform = navigator.platform.toLowerCase();
-    //const isShowBtn = platform.includes('win') || platform.includes('mac');
-    const isShowBtn = platform.includes('win');
+    const isShowBtn = platform.includes('win') || platform.includes('mac');
 
     const app = document.getElementById('app');
     app.innerHTML = `
