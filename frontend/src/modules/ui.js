@@ -1,6 +1,10 @@
 import { t } from '../i18n/index.js';
 
 export function initUI() {
+    const platform = navigator.platform.toLowerCase();
+    //const isShowBtn = platform.includes('win') || platform.includes('mac');
+    const isShowBtn = platform.includes('win');
+
     const app = document.getElementById('app');
     app.innerHTML = `
         <div class="header">
@@ -200,6 +204,10 @@ export function initUI() {
                         </button>
                     </div>
                     <div style="display: flex; gap: 10px;">
+                        ${isShowBtn ? `
+                        <button class="btn btn-secondary" onclick="window.showTerminalModal()">
+                            🖥️ ${t('terminal.title')}
+                        </button>` : ''}
                         <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
                             🔄 ${t('webdav.dataSync')}
                         </button>
@@ -335,6 +343,37 @@ export function initUI() {
             </div>
         </div>
 
+        <!-- Terminal Modal -->
+        <div id="terminalModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2>🖥️ ${t('terminal.title')}</h2>
+                    <button class="modal-close" onclick="window.closeTerminalModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('terminal.selectTerminal')}</label>
+                        <select id="terminalSelect" onchange="window.onTerminalChange()">
+                            <option value="">Loading...</option>
+                        </select>
+                        <small class="form-help">${t('terminal.selectTerminalHelp')}</small>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="required" style="color: #ff4444;">* </span>${t('terminal.projectDirs')}</label>
+                        <small class="form-help">${t('terminal.projectDirsHelp')}</small>
+                        <div id="projectDirList" class="project-dir-list">
+                            <div class="empty-tip">${t('terminal.noDirs')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-add-dir" onclick="window.addProjectDir()">
+                        ➕ ${t('terminal.addDir')}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Edit Port Modal -->
         <div id="portModal" class="modal">
             <div class="modal-content">
@@ -381,7 +420,7 @@ export function initUI() {
                     </div>
 
                     <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-                        <button class="btn btn-primary" onclick="window.openArticle()">
+                        <button class="btn btn-secondary" onclick="window.openArticle()">
                             ${t('welcome.readArticle')}
                         </button>
                         <button class="btn btn-secondary" onclick="window.showChangelogModal()">

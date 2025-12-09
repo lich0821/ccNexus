@@ -18,6 +18,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/lich0821/ccNexus/internal/storage"
+	"github.com/lich0821/ccNexus/internal/terminal"
 	"github.com/lich0821/ccNexus/internal/tray"
 	"github.com/lich0821/ccNexus/internal/updater"
 	"github.com/lich0821/ccNexus/internal/webdav"
@@ -1839,13 +1840,13 @@ func (a *App) BackupToWebDAV(filename string) error {
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
 		logger.Error("WebDAV configuration is not set")
-		return fmt.Errorf("WebDAV未配置")
+		return fmt.Errorf("webdav_not_configured")
 	}
 	logger.Debug("WebDAV config loaded: URL=%s, Username=%s", webdavCfg.URL, webdavCfg.Username)
 
 	if a.storage == nil {
 		logger.Error("Storage is not initialized")
-		return fmt.Errorf("存储未初始化")
+		return fmt.Errorf("storage_not_initialized")
 	}
 
 	// Create WebDAV client
@@ -1853,7 +1854,7 @@ func (a *App) BackupToWebDAV(filename string) error {
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
 		logger.Error("Failed to create WebDAV client: %v", err)
-		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+		return fmt.Errorf("webdav_client_failed")
 	}
 	logger.Debug("WebDAV client created successfully")
 
@@ -1864,13 +1865,13 @@ func (a *App) BackupToWebDAV(filename string) error {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		logger.Error("Failed to get home directory: %v", err)
-		return fmt.Errorf("获取用户目录失败: %w", err)
+		return fmt.Errorf("get_home_dir_failed")
 	}
 	tempDir := filepath.Join(homeDir, ".ccNexus", "temp")
 	logger.Debug("Creating temp directory: %s", tempDir)
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
 		logger.Error("Failed to create temp directory: %v", err)
-		return fmt.Errorf("创建临时目录失败: %w", err)
+		return fmt.Errorf("create_temp_dir_failed")
 	}
 	tempBackupPath := filepath.Join(tempDir, "backup_temp.db")
 
@@ -1891,7 +1892,7 @@ func (a *App) BackupToWebDAV(filename string) error {
 	logger.Info("Creating database backup copy (excluding app_config)...")
 	if err := a.storage.CreateBackupCopy(tempBackupPath); err != nil {
 		logger.Error("Failed to create database backup: %v", err)
-		return fmt.Errorf("创建数据库备份失败: %w", err)
+		return fmt.Errorf("create_db_backup_failed")
 	}
 
 	// Check file size
@@ -1904,7 +1905,7 @@ func (a *App) BackupToWebDAV(filename string) error {
 	logger.Info("Uploading backup to WebDAV (version: %s)...", version)
 	if err := manager.BackupDatabase(tempBackupPath, version, filename); err != nil {
 		logger.Error("Failed to upload backup to WebDAV: %v", err)
-		return fmt.Errorf("备份失败: %w", err)
+		return fmt.Errorf("backup_upload_failed")
 	}
 
 	logger.Info("Backup created successfully: %s", filename)
@@ -1915,11 +1916,11 @@ func (a *App) BackupToWebDAV(filename string) error {
 func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
-		return fmt.Errorf("WebDAV未配置")
+		return fmt.Errorf("webdav_not_configured")
 	}
 
 	if a.storage == nil {
-		return fmt.Errorf("存储未初始化")
+		return fmt.Errorf("storage_not_initialized")
 	}
 
 	// If user chose to keep local config, do nothing
@@ -1931,7 +1932,7 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	// Create WebDAV client
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
-		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+		return fmt.Errorf("webdav_client_failed")
 	}
 
 	// Create sync manager
@@ -1940,11 +1941,11 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 	// Create temporary directory for downloaded backup
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return fmt.Errorf("获取用户目录失败: %w", err)
+		return fmt.Errorf("get_home_dir_failed")
 	}
 	tempDir := filepath.Join(homeDir, ".ccNexus", "temp")
 	if err := os.MkdirAll(tempDir, 0755); err != nil {
-		return fmt.Errorf("创建临时目录失败: %w", err)
+		return fmt.Errorf("create_temp_dir_failed")
 	}
 	tempRestorePath := filepath.Join(tempDir, "restore_temp.db")
 	defer os.Remove(tempRestorePath) // Clean up temp file
@@ -1952,7 +1953,7 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 
 	// Download and restore database from WebDAV
 	if err := manager.RestoreDatabase(filename, tempRestorePath); err != nil {
-		return fmt.Errorf("恢复失败: %w", err)
+		return fmt.Errorf("restore_download_failed")
 	}
 
 	// Determine merge strategy based on user choice
@@ -1965,14 +1966,14 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 
 	// Merge the restored database into current database
 	if err := a.storage.MergeFromBackup(tempRestorePath, strategy); err != nil {
-		return fmt.Errorf("合并数据失败: %w", err)
+		return fmt.Errorf("merge_data_failed")
 	}
 
 	// Reload configuration from storage
 	configAdapter := storage.NewConfigStorageAdapter(a.storage)
 	newConfig, err := config.LoadFromStorage(configAdapter)
 	if err != nil {
-		return fmt.Errorf("加载配置失败: %w", err)
+		return fmt.Errorf("load_config_failed")
 	}
 
 	// Update in-memory config
@@ -1980,7 +1981,7 @@ func (a *App) RestoreFromWebDAV(filename, choice string) error {
 
 	// Update proxy config
 	if err := a.proxy.UpdateConfig(newConfig); err != nil {
-		return fmt.Errorf("更新代理配置失败: %w", err)
+		return fmt.Errorf("update_proxy_config_failed")
 	}
 
 	logger.Info("Configuration and statistics restored from: %s", filename)
@@ -2054,13 +2055,13 @@ func (a *App) ListWebDAVBackups() string {
 func (a *App) DeleteWebDAVBackups(filenames []string) error {
 	webdavCfg := a.config.GetWebDAV()
 	if webdavCfg == nil {
-		return fmt.Errorf("WebDAV未配置")
+		return fmt.Errorf("webdav_not_configured")
 	}
 
 	// Create WebDAV client
 	client, err := webdav.NewClient(webdavCfg)
 	if err != nil {
-		return fmt.Errorf("创建WebDAV客户端失败: %w", err)
+		return fmt.Errorf("webdav_client_failed")
 	}
 
 	// Create sync manager
@@ -2068,7 +2069,7 @@ func (a *App) DeleteWebDAVBackups(filenames []string) error {
 
 	// Delete backups
 	if err := manager.DeleteConfigBackups(filenames); err != nil {
-		return fmt.Errorf("删除备份失败: %w", err)
+		return fmt.Errorf("delete_backup_failed")
 	}
 
 	logger.Info("Backups deleted: %v", filenames)
@@ -2506,4 +2507,107 @@ func (a *App) SendUpdateNotification(title, message string) error {
 		logger.Error("Failed to send notification: %v", err)
 	}
 	return err
+}
+
+// DetectTerminals detects available terminals on the system
+func (a *App) DetectTerminals() string {
+	terminals := terminal.DetectTerminals()
+	data, _ := json.Marshal(terminals)
+	return string(data)
+}
+
+// GetTerminalConfig returns the terminal configuration
+func (a *App) GetTerminalConfig() string {
+	terminalCfg := a.config.GetTerminal()
+	data, _ := json.Marshal(terminalCfg)
+	return string(data)
+}
+
+// SaveTerminalConfig saves the terminal configuration
+func (a *App) SaveTerminalConfig(selectedTerminal string, projectDirs []string) error {
+	terminalCfg := &config.TerminalConfig{
+		SelectedTerminal: selectedTerminal,
+		ProjectDirs:      projectDirs,
+	}
+	a.config.UpdateTerminal(terminalCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save terminal config: %w", err)
+		}
+	}
+
+	logger.Info("Terminal config saved: terminal=%s, dirs=%d", selectedTerminal, len(projectDirs))
+	return nil
+}
+
+// AddProjectDir adds a project directory
+func (a *App) AddProjectDir(dir string) error {
+	terminalCfg := a.config.GetTerminal()
+	// Check if already exists
+	for _, d := range terminalCfg.ProjectDirs {
+		if d == dir {
+			return fmt.Errorf("directory_already_exists")
+		}
+	}
+	terminalCfg.ProjectDirs = append(terminalCfg.ProjectDirs, dir)
+	a.config.UpdateTerminal(terminalCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save terminal config: %w", err)
+		}
+	}
+
+	logger.Info("Project directory added: %s", dir)
+	return nil
+}
+
+// RemoveProjectDir removes a project directory
+func (a *App) RemoveProjectDir(dir string) error {
+	terminalCfg := a.config.GetTerminal()
+	newDirs := make([]string, 0, len(terminalCfg.ProjectDirs))
+	for _, d := range terminalCfg.ProjectDirs {
+		if d != dir {
+			newDirs = append(newDirs, d)
+		}
+	}
+	terminalCfg.ProjectDirs = newDirs
+	a.config.UpdateTerminal(terminalCfg)
+
+	if a.storage != nil {
+		configAdapter := storage.NewConfigStorageAdapter(a.storage)
+		if err := a.config.SaveToStorage(configAdapter); err != nil {
+			return fmt.Errorf("failed to save terminal config: %w", err)
+		}
+	}
+
+	logger.Info("Project directory removed: %s", dir)
+	return nil
+}
+
+// LaunchTerminal launches a terminal in the specified directory
+func (a *App) LaunchTerminal(dir string) error {
+	terminalCfg := a.config.GetTerminal()
+	terminalID := terminalCfg.SelectedTerminal
+	if terminalID == "" {
+		terminalID = "cmd"
+	}
+
+	logger.Info("Launching terminal: %s in %s", terminalID, dir)
+	return terminal.LaunchTerminal(terminalID, dir)
+}
+
+// SelectDirectory opens a directory selection dialog
+func (a *App) SelectDirectory() string {
+	dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select Project Directory",
+	})
+	if err != nil {
+		logger.Error("Failed to open directory dialog: %v", err)
+		return ""
+	}
+	return dir
 }

@@ -209,7 +209,7 @@ export default {
         configSaved: 'Configuration saved',
         configSaveFailed: 'Failed to save configuration',
         serverUrl: 'WebDAV Server URL',
-        serverUrlHelp: 'Currently only supports Nutstore WebDAV service',
+        serverUrlHelp: 'Recommend using Nutstore WebDAV service',
         username: 'Username',
         password: 'Password',
         usernamePlaceholder: 'Enter WebDAV username',
@@ -220,6 +220,7 @@ export default {
         passwordRequired: 'Please enter password',
         connectionSuccess: 'Connection successful',
         connectionFailed: 'Connection failed',
+        connectionFailedWithRecommend: 'Connection failed, recommend using Nutstore WebDAV service',
         testRequired: 'Please test connection first',
         testConnection: 'Test Connection',
         backup: 'Backup',
@@ -267,7 +268,22 @@ export default {
         endpointHas: 'endpoint has conflicting configurations',
         endpointsHave: 'endpoints have conflicting configurations',
         useRemoteDesc: 'Remote configuration will overwrite local conflicting endpoints',
-        keepLocalDesc: 'Keep local configuration, only add new endpoints from remote'
+        keepLocalDesc: 'Keep local configuration, only add new endpoints from remote',
+        // Error messages
+        errors: {
+            webdav_not_configured: 'WebDAV not configured',
+            storage_not_initialized: 'Storage not initialized',
+            webdav_client_failed: 'Failed to create WebDAV client',
+            get_home_dir_failed: 'Failed to get home directory',
+            create_temp_dir_failed: 'Failed to create temp directory',
+            create_db_backup_failed: 'Failed to create database backup',
+            backup_upload_failed: 'Backup upload failed',
+            restore_download_failed: 'Restore download failed',
+            merge_data_failed: 'Failed to merge data',
+            load_config_failed: 'Failed to load config',
+            update_proxy_config_failed: 'Failed to update proxy config',
+            delete_backup_failed: 'Failed to delete backup'
+        }
     },
     update: {
         checkForUpdates: 'Check for Updates',
@@ -307,6 +323,25 @@ export default {
         applyFailed: 'Failed to apply update',
         install_ready_windows: 'Click Update Now button to complete the update automatically'
     },
+    terminal: {
+        title: 'Launcher',
+        selectTerminal: 'Select Terminal',
+        selectTerminalHelp: 'Choose the terminal to launch Claude Code',
+        projectDirs: 'Project Directories',
+        projectDirsHelp: 'Add frequently used project directories for quick terminal launch',
+        addDir: 'Add Directory',
+        noDirs: 'No project directories. Click button below to add.',
+        launchFailed: 'Failed to launch terminal',
+        launch: 'Launch',
+        delete: 'Delete',
+        confirmDelete: 'Are you sure you want to delete this project directory?',
+        addDirFailed: 'Failed to add directory',
+        dirExists: 'Directory already exists',
+        // Error messages
+        errors: {
+            directory_already_exists: 'Directory already exists'
+        }
+    },
     common: {
         ok: 'OK',
         cancel: 'Cancel',
@@ -319,19 +354,28 @@ export default {
         retry: 'Retry'
     },
     tips: [
-        'Tip: You can add multiple API endpoints for automatic failover',
-        'Tip: ccNexus automatically switches to the next endpoint when one fails',
-        'Tip: Check the Statistics tab to monitor your API usage',
+        'Tip: Enable multiple API endpoints for automatic failover',
+        'Tip: When an endpoint fails after 2 retries, it automatically switches to the next available one',
+        'Tip: Currently supports Claude, OpenAI and Gemini API formats',
         'Tip: Use different transformers (Claude/OpenAI/Gemini) for different endpoints',
+        'Tip: Click the "Switch" button on an endpoint to manually select it as current',
         'Tip: Enable multiple endpoints to improve response speed and reliability',
-        'Tip: Click the port number in the header to change the proxy port',
-        'Tip: View historical statistics by clicking the "History" tab',
-        'Tip: Use WebDAV to sync your configuration across devices',
-        'Tip: Test your endpoints before saving to ensure they work correctly',
-        'Tip: Your API keys are stored locally and never sent to third parties',
-        'Tip: Add remarks to your endpoints to help identify them easily',
-        'Tip: Switch between English and Chinese in the language selector',
+        'Tip: Disable unused endpoints to exclude them from rotation',
+        'Tip: Add remarks to endpoints to help identify them easily',
+        'Tip: Drag endpoint cards to adjust proxy priority order',
+        'Tip: Click "Fetch" button to auto-detect available models',
+        'Tip: Check the Statistics tab to monitor your API usage',
         'Tip: Statistics are updated every 3 seconds automatically',
-        'Tip: ccNexus supports Claude, OpenAI, and Gemini API formats'
+        'Tip: Statistics show trend comparison with the previous period',
+        'Tip: Click "History" tab to view historical statistics with monthly archived details',
+        'Tip: Choose from 12 theme skins in Settings',
+        'Tip: Enable "Auto Mode" to switch themes based on time of day',
+        'Tip: Switch between English and Chinese in Settings',
+        'Tip: Auto-update checks can be configured with custom intervals',
+        'Tip: Window size is remembered and restored on next launch',
+        'Tip: Click the port number in header to change the proxy listening port',
+        'Tip: Use WebDAV to sync your data and config across devices',
+        'Tip: Test endpoints before saving to ensure they work correctly',
+        'Tip: Your API keys and data are stored locally, safe and secure'
     ]
 };

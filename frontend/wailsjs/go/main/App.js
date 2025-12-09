@@ -6,6 +6,10 @@ export function AddEndpoint(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['main']['App']['AddEndpoint'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function AddProjectDir(arg1) {
+  return window['go']['main']['App']['AddProjectDir'](arg1);
+}
+
 export function ApplyUpdate(arg1) {
   return window['go']['main']['App']['ApplyUpdate'](arg1);
 }
@@ -28,6 +32,10 @@ export function ClearLogs() {
 
 export function DeleteWebDAVBackups(arg1) {
   return window['go']['main']['App']['DeleteWebDAVBackups'](arg1);
+}
+
+export function DetectTerminals() {
+  return window['go']['main']['App']['DetectTerminals']();
 }
 
 export function DetectWebDAVConflict(arg1) {
@@ -126,6 +134,10 @@ export function GetSystemLanguage() {
   return window['go']['main']['App']['GetSystemLanguage']();
 }
 
+export function GetTerminalConfig() {
+  return window['go']['main']['App']['GetTerminalConfig']();
+}
+
 export function GetTheme() {
   return window['go']['main']['App']['GetTheme']();
 }
@@ -150,6 +162,10 @@ export function InstallUpdate(arg1) {
   return window['go']['main']['App']['InstallUpdate'](arg1);
 }
 
+export function LaunchTerminal(arg1) {
+  return window['go']['main']['App']['LaunchTerminal'](arg1);
+}
+
 export function ListArchives() {
   return window['go']['main']['App']['ListArchives']();
 }
@@ -170,12 +186,24 @@ export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }
 
+export function RemoveProjectDir(arg1) {
+  return window['go']['main']['App']['RemoveProjectDir'](arg1);
+}
+
 export function ReorderEndpoints(arg1) {
   return window['go']['main']['App']['ReorderEndpoints'](arg1);
 }
 
 export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
+}
+
+export function SaveTerminalConfig(arg1, arg2) {
+  return window['go']['main']['App']['SaveTerminalConfig'](arg1, arg2);
+}
+
+export function SelectDirectory() {
+  return window['go']['main']['App']['SelectDirectory']();
 }
 
 export function SendUpdateNotification(arg1, arg2) {
