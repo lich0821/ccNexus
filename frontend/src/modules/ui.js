@@ -1,6 +1,9 @@
 import { t } from '../i18n/index.js';
 
 export function initUI() {
+    const platform = navigator.platform.toLowerCase();
+    const isShowBtn = platform.includes('win') || platform.includes('mac');
+
     const app = document.getElementById('app');
     app.innerHTML = `
         <div class="header">
@@ -200,9 +203,10 @@ export function initUI() {
                         </button>
                     </div>
                     <div style="display: flex; gap: 10px;">
+                        ${isShowBtn ? `
                         <button class="btn btn-secondary" onclick="window.showTerminalModal()">
                             🖥️ ${t('terminal.title')}
-                        </button>
+                        </button>` : ''}
                         <button class="btn btn-secondary" onclick="window.showDataSyncDialog()">
                             🔄 ${t('webdav.dataSync')}
                         </button>

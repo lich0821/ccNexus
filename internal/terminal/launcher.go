@@ -16,19 +16,16 @@ func LaunchTerminal(terminalID, dir string) error {
 
 func buildLaunchCommand(terminalID, dir string) *exec.Cmd {
 	switch terminalID {
+	// Windows terminals
 	case "cmd":
-		// CMD: 使用 PowerShell 的 Start-Process 启动 CMD 窗口
 		psCmd := fmt.Sprintf(`Start-Process cmd.exe -ArgumentList '/k','cd /d "%s" && claude'`, dir)
 		return exec.Command("powershell.exe", "-Command", psCmd)
 	case "powershell":
-		// PowerShell: 使用 Start-Process 在新窗口中启动
 		psCmd := fmt.Sprintf(`Start-Process powershell -ArgumentList '-NoExit','-Command','cd \"%s\"; claude'`, dir)
 		return exec.Command("powershell", "-Command", psCmd)
 	case "wt":
-		// Windows Terminal: 使用 new-tab 子命令避免路径解析问题
 		return exec.Command("wt.exe", "new-tab", "--startingDirectory", dir, "cmd", "/k", "claude")
 	case "gitbash":
-		// Find Git Bash path
 		terminals := detectWindowsTerminals()
 		var gitBashPath string
 		for _, t := range terminals {
@@ -40,8 +37,23 @@ func buildLaunchCommand(terminalID, dir string) *exec.Cmd {
 		if gitBashPath == "" {
 			return nil
 		}
-		// Git Bash: git-bash.exe 使用 --cd 参数设置目录，-c 执行命令
 		return exec.Command(gitBashPath, "--cd="+dir, "-i", "-c", "claude; exec bash")
+	// Mac terminals
+	case "terminal":
+		script1 := `tell application "Terminal" to activate`
+		script2 := fmt.Sprintf(`tell application "Terminal" to do script "cd '%s' && claude"`, dir)
+		return exec.Command("osascript", "-e", script1, "-e", script2)
+	case "iterm2":
+		script := fmt.Sprintf(`tell application "iTerm" to create window with default profile command "cd '%s' && claude"`, dir)
+		return exec.Command("osascript", "-e", script)
+	case "ghostty":
+		return exec.Command("ghostty", "-e", "bash", "-c", fmt.Sprintf("cd '%s' && claude; exec $SHELL", dir))
+	case "alacritty":
+		return exec.Command("alacritty", "--working-directory", dir, "-e", "bash", "-c", "claude; exec bash")
+	case "kitty":
+		return exec.Command("kitty", "--directory", dir, "bash", "-c", "claude; exec bash")
+	case "wezterm":
+		return exec.Command("wezterm", "start", "--cwd", dir, "--", "bash", "-c", "claude; exec bash")
 	default:
 		return nil
 	}
