@@ -162,15 +162,18 @@ func buildProxyRequest(r *http.Request, endpoint config.Endpoint, transformedBod
 		return nil, err
 	}
 
-	// Copy headers (except Host)
+	// Copy headers (except Host and Accept-Encoding)
 	for key, values := range r.Header {
-		if key == "Host" {
+		if key == "Host" || key == "Accept-Encoding" {
 			continue
 		}
 		for _, value := range values {
 			proxyReq.Header.Add(key, value)
 		}
 	}
+
+	// Force gzip or no compression to avoid unsupported encodings (e.g., brotli)
+	proxyReq.Header.Set("Accept-Encoding", "gzip, identity")
 
 	// Set authentication based on transformer type
 	switch transformerName {
