@@ -102,11 +102,6 @@ func (a *App) startup(ctx context.Context) {
 		logger.Error("Failed to create config directory: %v", err)
 	}
 
-	// Initialize unified log file
-	if err := logger.InitLogFile(configDir); err != nil {
-		logger.Warn("Failed to initialize log file: %v", err)
-	}
-
 	// Setup paths
 	configPath := filepath.Join(configDir, "config.json")
 	statsPath := filepath.Join(configDir, "stats.json")

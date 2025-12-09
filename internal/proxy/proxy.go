@@ -212,6 +212,27 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	return fmt.Errorf("endpoint '%s' not found or not enabled", targetName)
 }
 
+// ClientFormat represents the API format used by the client
+type ClientFormat string
+
+const (
+	ClientFormatClaude          ClientFormat = "claude"           // Claude Code: /v1/messages
+	ClientFormatOpenAIChat      ClientFormat = "openai_chat"      // Codex (chat): /v1/chat/completions
+	ClientFormatOpenAIResponses ClientFormat = "openai_responses" // Codex (responses): /v1/responses
+)
+
+// detectClientFormat identifies the client format based on request path
+func detectClientFormat(path string) ClientFormat {
+	switch {
+	case strings.HasPrefix(path, "/v1/chat/completions") || strings.HasPrefix(path, "/chat/completions"):
+		return ClientFormatOpenAIChat
+	case strings.HasPrefix(path, "/v1/responses") || strings.HasPrefix(path, "/responses"):
+		return ClientFormatOpenAIResponses
+	default:
+		return ClientFormatClaude
+	}
+}
+
 // handleProxy handles the main proxy logic
 func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := io.ReadAll(r.Body)
@@ -222,15 +243,19 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	// Detect client format
+	clientFormat := detectClientFormat(r.URL.Path)
+
 	logger.DebugLog("=== Proxy Request ===")
-	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
+	logger.DebugLog("Method: %s, Path: %s, ClientFormat: %s", r.Method, r.URL.Path, clientFormat)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
-	var claudeReq struct {
+	var streamReq struct {
+		Model    string      `json:"model"`
 		Thinking interface{} `json:"thinking"`
 		Stream   bool        `json:"stream"`
 	}
-	json.Unmarshal(bodyBytes, &claudeReq)
+	json.Unmarshal(bodyBytes, &streamReq)
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
@@ -253,7 +278,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		p.markRequestActive(endpoint.Name)
 		p.stats.RecordRequest(endpoint.Name)
 
-		trans, err := prepareTransformer(endpoint)
+		trans, err := prepareTransformerForClient(clientFormat, endpoint)
 		if err != nil {
 			logger.Error("[%s] %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
@@ -265,10 +290,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		transformerName := endpoint.Transformer
-		if transformerName == "" {
-			transformerName = "claude"
-		}
+		transformerName := trans.Name()
 
 		transformedBody, err := trans.TransformRequest(bodyBytes)
 		if err != nil {
@@ -293,7 +315,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		transformedBody = cleanedBody
 
 		var thinkingEnabled bool
-		if transformerName == "openai" {
+		if strings.Contains(transformerName, "openai") {
 			var openaiReq map[string]interface{}
 			if err := json.Unmarshal(transformedBody, &openaiReq); err == nil {
 				if enable, ok := openaiReq["enable_thinking"].(bool); ok {
@@ -327,10 +349,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentType := resp.Header.Get("Content-Type")
-		isStreaming := contentType == "text/event-stream" || (claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
+		isStreaming := contentType == "text/event-stream" || (streamReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
@@ -366,6 +388,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				errMsg = errMsg[:200] + "..."
 			}
 			logger.Warn("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
+			logger.DebugLog("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -375,20 +398,34 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		bodyBytes, _ := io.ReadAll(resp.Body)
+		var respBody []byte
+		if resp.Header.Get("Content-Encoding") == "gzip" {
+			respBody, _ = decompressGzip(resp.Body)
+		} else {
+			respBody, _ = io.ReadAll(resp.Body)
+		}
 		resp.Body.Close()
 		p.markRequestInactive(endpoint.Name)
 		// Log non-200 responses for debugging
 		if resp.StatusCode != http.StatusOK {
-			errMsg := string(bodyBytes)
+			errMsg := string(respBody)
 			if len(errMsg) > 500 {
 				errMsg = errMsg[:500] + "..."
 			}
 			logger.Warn("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 		}
+		// Remove Content-Encoding header since we've decompressed
+		for key, values := range resp.Header {
+			if key == "Content-Encoding" || key == "Content-Length" {
+				continue
+			}
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
 		w.WriteHeader(resp.StatusCode)
-		w.Write(bodyBytes)
+		w.Write(respBody)
 		return
 	}
 
