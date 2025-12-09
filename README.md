@@ -32,8 +32,8 @@ ccNexus 是一个专为 Claude Code 设计的智能 API 端点轮换代理工具
     <td align="center"><img src="docs/images/CN-Dark.png" alt="暗黑主题" width="400"></td>
   </tr>
   <tr>
-    <td align="center">明亮主题</td>
-    <td align="center">暗黑主题</td>
+    <td align="center">浅色主题</td>
+    <td align="center">深色主题</td>
   </tr>
 </table>
 
