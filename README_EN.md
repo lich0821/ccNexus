@@ -1,12 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" src set="docs/images/ccNexus-dark.svg">
-    <img src="docs/images/ccNexus-light.svg"
-         alt="Claude Code & Codex CLI 智能端点轮换代理"
-         width="720">
-  </picture>
+  <img src="docs/images/ccNexus.svg" alt="Claude Code & Codex CLI 智能端点轮换代理" width="720" />
 </p>
 
 [![Build Status](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)

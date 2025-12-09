@@ -1,14 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="140" viewBox="0 0 1200 140">
   <rect width="100%" height="100%" fill="transparent"/>
+
   <style>
-    .title {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", "Helvetica", Arial, sans-serif;
-      font-size: 56px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
+    .title{
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans","Helvetica",Arial,sans-serif;
+      font-size:56px;
+      font-weight:700;
     }
-    .base { fill: #0b0f19; }
+    /* 单方案兼容深浅背景 */
+    .base{
+      fill:#0b0f19;
+      stroke:#ffffff;
+      stroke-width:2.2;
+      stroke-opacity:0.9;
+      paint-order:stroke fill;
+      stroke-linejoin:round;
+    }
   </style>
 
   <text x="20" y="90" class="title">
