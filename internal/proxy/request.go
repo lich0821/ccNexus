@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -198,7 +199,8 @@ func buildProxyRequest(r *http.Request, endpoint config.Endpoint, transformedBod
 }
 
 // sendRequest sends the HTTP request and returns the response
-func sendRequest(proxyReq *http.Request) (*http.Response, error) {
+func sendRequest(ctx context.Context, proxyReq *http.Request) (*http.Response, error) {
+	proxyReq = proxyReq.WithContext(ctx)
 	client := &http.Client{
 		Timeout: 300 * time.Second,
 	}

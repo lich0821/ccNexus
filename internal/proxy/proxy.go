@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,8 +38,11 @@ type Proxy struct {
 	currentIndex     int
 	mu               sync.RWMutex
 	server           *http.Server
-	activeRequests   map[string]bool // tracks active requests by endpoint name
-	activeRequestsMu sync.RWMutex    // protects activeRequests map
+	activeRequests   map[string]bool              // tracks active requests by endpoint name
+	activeRequestsMu sync.RWMutex                 // protects activeRequests map
+	endpointCtx      map[string]context.Context   // context per endpoint for cancellation
+	endpointCancel   map[string]context.CancelFunc // cancel functions per endpoint
+	ctxMu            sync.RWMutex                 // protects context maps
 }
 
 // New creates a new Proxy instance
@@ -50,6 +54,8 @@ func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy 
 		stats:          stats,
 		currentIndex:   0,
 		activeRequests: make(map[string]bool),
+		endpointCtx:    make(map[string]context.Context),
+		endpointCancel: make(map[string]context.CancelFunc),
 	}
 }
 
@@ -136,6 +142,33 @@ func (p *Proxy) isCurrentEndpoint(endpointName string) bool {
 	return current.Name == endpointName
 }
 
+// getEndpointContext returns a context for the given endpoint, creating one if needed
+func (p *Proxy) getEndpointContext(endpointName string) context.Context {
+	p.ctxMu.Lock()
+	defer p.ctxMu.Unlock()
+
+	if ctx, ok := p.endpointCtx[endpointName]; ok {
+		return ctx
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	p.endpointCtx[endpointName] = ctx
+	p.endpointCancel[endpointName] = cancel
+	return ctx
+}
+
+// cancelEndpointRequests cancels all requests for the given endpoint
+func (p *Proxy) cancelEndpointRequests(endpointName string) {
+	p.ctxMu.Lock()
+	defer p.ctxMu.Unlock()
+
+	if cancel, ok := p.endpointCancel[endpointName]; ok {
+		cancel()
+		delete(p.endpointCtx, endpointName)
+		delete(p.endpointCancel, endpointName)
+	}
+}
+
 // rotateEndpoint switches to the next endpoint (thread-safe)
 // waitForActive: if true, waits briefly for active requests to complete before switching
 func (p *Proxy) rotateEndpoint() config.Endpoint {
@@ -189,7 +222,7 @@ func (p *Proxy) GetCurrentEndpointName() string {
 
 // SetCurrentEndpoint manually switches to a specific endpoint by name
 // Returns error if endpoint not found or not enabled
-// Thread-safe and won't affect ongoing requests
+// Thread-safe and cancels ongoing requests on the old endpoint
 func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -203,6 +236,10 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	for i, ep := range endpoints {
 		if ep.Name == targetName {
 			oldEndpoint := endpoints[p.currentIndex%len(endpoints)]
+			if oldEndpoint.Name != targetName {
+				// Cancel all requests on the old endpoint
+				p.cancelEndpointRequests(oldEndpoint.Name)
+			}
 			p.currentIndex = i
 			logger.Info("[MANUAL SWITCH] %s → %s", oldEndpoint.Name, ep.Name)
 			return nil
@@ -266,6 +303,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 	maxRetries := len(endpoints) * 2
 	endpointAttempts := 0
+	lastEndpointName := ""
 
 	for retry := 0; retry < maxRetries; retry++ {
 		endpoint := p.getCurrentEndpoint()
@@ -273,6 +311,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
 			return
 		}
+
+		// Reset attempts counter if endpoint changed (e.g., manual switch)
+		if lastEndpointName != "" && lastEndpointName != endpoint.Name {
+			endpointAttempts = 0
+		}
+		lastEndpointName = endpoint.Name
 
 		endpointAttempts++
 		p.markRequestActive(endpoint.Name)
@@ -336,7 +380,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		resp, err := sendRequest(proxyReq)
+		ctx := p.getEndpointContext(endpoint.Name)
+		resp, err := sendRequest(ctx, proxyReq)
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
