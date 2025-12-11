@@ -9,6 +9,7 @@ import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from '.
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
 import { initTerminal } from './modules/terminal.js'
+import { initSession } from './modules/session.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import {
@@ -61,6 +62,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize terminal module
     initTerminal();
+
+    // Initialize session module
+    initSession();
 
     // Initialize model input events
     initModelInputEvents();

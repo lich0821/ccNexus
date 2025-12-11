@@ -30,6 +30,10 @@ export function ClearLogs() {
   return window['go']['main']['App']['ClearLogs']();
 }
 
+export function DeleteSession(arg1, arg2) {
+  return window['go']['main']['App']['DeleteSession'](arg1, arg2);
+}
+
 export function DeleteWebDAVBackups(arg1) {
   return window['go']['main']['App']['DeleteWebDAVBackups'](arg1);
 }
@@ -102,6 +106,14 @@ export function GetLogsByLevel(arg1) {
   return window['go']['main']['App']['GetLogsByLevel'](arg1);
 }
 
+export function GetSessionData(arg1, arg2) {
+  return window['go']['main']['App']['GetSessionData'](arg1, arg2);
+}
+
+export function GetSessions(arg1) {
+  return window['go']['main']['App']['GetSessions'](arg1);
+}
+
 export function GetStats() {
   return window['go']['main']['App']['GetStats']();
 }
@@ -162,6 +174,10 @@ export function InstallUpdate(arg1) {
   return window['go']['main']['App']['InstallUpdate'](arg1);
 }
 
+export function LaunchSessionTerminal(arg1, arg2) {
+  return window['go']['main']['App']['LaunchSessionTerminal'](arg1, arg2);
+}
+
 export function LaunchTerminal(arg1) {
   return window['go']['main']['App']['LaunchTerminal'](arg1);
 }
@@ -188,6 +204,10 @@ export function RemoveEndpoint(arg1) {
 
 export function RemoveProjectDir(arg1) {
   return window['go']['main']['App']['RemoveProjectDir'](arg1);
+}
+
+export function RenameSession(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RenameSession'](arg1, arg2, arg3);
 }
 
 export function ReorderEndpoints(arg1) {

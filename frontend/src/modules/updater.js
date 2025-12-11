@@ -6,14 +6,18 @@ let downloadInterval = null;
 let updateCheckInterval = null;
 
 // 显示更新红点
-function showUpdateBadge() {
+function showUpdateBadge(version) {
     document.getElementById('updateBadge')?.classList.add('show');
     document.getElementById('checkUpdateBadge')?.classList.add('show');
+    if (version) {
+        localStorage.setItem('unviewedUpdateVersion', version);
+    }
 }
 
 // 隐藏关于按钮红点
 export function hideAboutBadge() {
     document.getElementById('updateBadge')?.classList.remove('show');
+    localStorage.removeItem('unviewedUpdateVersion');
 }
 
 // 隐藏检查更新按钮红点
@@ -24,6 +28,11 @@ function hideCheckUpdateBadge() {
 // Check for updates on startup
 export async function checkUpdatesOnStartup() {
     try {
+        const unviewedVersion = localStorage.getItem('unviewedUpdateVersion');
+        if (unviewedVersion) {
+            showUpdateBadge();
+        }
+
         const settingsStr = await GetUpdateSettings();
         const settings = JSON.parse(settingsStr);
 
@@ -94,7 +103,7 @@ export async function checkForUpdates(silent = false) {
 
             // 自动检查只显示红点，手动检查才弹窗
             if (silent) {
-                showUpdateBadge();
+                showUpdateBadge(info.latestVersion);
             } else {
                 showUpdateNotification(info);
             }
@@ -116,6 +125,9 @@ function showUpdateNotification(info) {
     if (document.getElementById('updateModal')) {
         return;
     }
+
+    localStorage.removeItem('unviewedUpdateVersion');
+    hideAboutBadge();
 
     // 非Windows平台发送系统通知
     if (navigator.platform.indexOf('Win') === -1) {
@@ -296,12 +308,19 @@ function updateProgressBar(progress) {
 // Show install button
 function showInstallButton(filePath) {
     const progressContainer = document.getElementById('download-progress-container');
-    progressContainer.innerHTML = `<p class="success-message center">🎉 ${t('update.downloadComplete')}</p>`;
-
     const isWindows = navigator.platform.indexOf('Win') > -1;
     const btnText = isWindows ? t('update.applyUpdate') : t('update.installUpdate');
+
+    progressContainer.innerHTML = `
+        <div class="download-complete-row">
+            <p class="success-message">🎉 ${t('update.downloadComplete')}</p>
+            <button id="btn-install-update" class="btn btn-primary">${btnText}</button>
+        </div>
+    `;
+
     const modalFooter = document.querySelector('#updateModal .modal-footer');
-    modalFooter.innerHTML = `<button id="btn-install-update" class="btn btn-primary">${btnText}</button>`;
+    modalFooter.innerHTML = '';
+    modalFooter.style.display = 'none';
 
     document.getElementById('btn-install-update').addEventListener('click', async () => {
         const btn = document.getElementById('btn-install-update');

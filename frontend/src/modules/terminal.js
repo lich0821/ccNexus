@@ -1,6 +1,7 @@
-import { DetectTerminals, GetTerminalConfig, SaveTerminalConfig, AddProjectDir, RemoveProjectDir, LaunchTerminal, SelectDirectory } from '../../wailsjs/go/main/App';
+import { DetectTerminals, GetTerminalConfig, SaveTerminalConfig, AddProjectDir, RemoveProjectDir, LaunchTerminal, LaunchSessionTerminal, SelectDirectory } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
+import { getSelectedSession, clearSelectedSession } from './session.js';
 
 // 翻译后端错误消息
 function translateError(error) {
@@ -20,6 +21,11 @@ export function initTerminal() {
     window.addProjectDir = addProjectDir;
     window.removeProjectDir = removeProjectDir;
     window.launchTerminal = launchTerminal;
+
+    // 监听会话选择事件，更新界面
+    window.addEventListener('sessionSelected', () => {
+        renderProjectDirs();
+    });
 }
 
 async function showTerminalModal() {
@@ -88,15 +94,55 @@ function renderProjectDirs() {
         return;
     }
 
-    container.innerHTML = terminalConfig.projectDirs.map(dir => `
-        <div class="project-dir-item">
-            <span class="dir-path" title="${dir}">${dir}</span>
+    container.innerHTML = terminalConfig.projectDirs.map((dir, index) => {
+        const selectedSession = getSelectedSession(dir);
+        const hasSession = selectedSession !== null;
+        const sessionName = hasSession ? (selectedSession.info?.alias || selectedSession.info?.summary || selectedSession.sessionId.substring(0, 8)) : '';
+        const sessionTooltip = hasSession
+            ? `已选择会话 ${selectedSession.info?.serialNumber || '-'}：${sessionName}`
+            : '点击查看历史会话信息';
+
+        return `
+        <div class="project-dir-item" data-dir-index="${index}">
+            <div class="dir-info">
+                <span class="dir-path" title="${dir}">${dir}</span>
+            </div>
             <div class="dir-actions">
-                <button class="btn btn-sm btn-primary" onclick="window.launchTerminal('${dir.replace(/\\/g, '\\\\')}')">▶ ${t('terminal.launch')}</button>
-                <button class="btn btn-sm btn-danger" onclick="window.removeProjectDir('${dir.replace(/\\/g, '\\\\')}')">🗑️ ${t('terminal.delete')}</button>
+                <button class="btn btn-sm btn-primary" data-action="launch">▶ ${t('terminal.launch')}</button>
+                <button class="btn btn-sm btn-danger" data-action="remove">🗑️ ${t('terminal.delete')}</button>
+                <button class="btn btn-sm btn-session" data-action="session" title="${sessionTooltip}">
+                    ${hasSession ? '✅' : '📋'} ${t('session.sessions')}
+                    ${hasSession ? '<span class="session-clear-btn">×</span>' : ''}
+                </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
+
+    // 添加事件监听
+    container.querySelectorAll('.project-dir-item').forEach(item => {
+        const dirIndex = parseInt(item.dataset.dirIndex);
+        const dir = terminalConfig.projectDirs[dirIndex];
+        const selectedSession = getSelectedSession(dir);
+        const hasSession = selectedSession !== null;
+
+        item.querySelector('[data-action="launch"]').onclick = () => window.launchTerminal(dir);
+        item.querySelector('[data-action="remove"]').onclick = () => window.removeProjectDir(dir);
+        item.querySelector('[data-action="session"]').onclick = () => {
+            window.showSessionModal(dir);
+        };
+
+        // 添加清除会话按钮的事件
+        if (hasSession) {
+            const clearBtn = item.querySelector('.session-clear-btn');
+            if (clearBtn) {
+                clearBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    clearSelectedSession(dir);
+                    renderProjectDirs();
+                };
+            }
+        }
+    });
 }
 
 async function addProjectDir() {
@@ -173,7 +219,19 @@ function showConfirmDialog(message) {
 
 async function launchTerminal(dir) {
     try {
-        await LaunchTerminal(dir);
+        // 检查是否有选中的会话
+        const selectedSession = getSelectedSession(dir);
+
+        if (selectedSession) {
+            // 恢复会话
+            await LaunchSessionTerminal(dir, selectedSession.sessionId);
+        } else {
+            // 启动新会话
+            await LaunchTerminal(dir);
+        }
+
+        // 延时后自动关闭模态框
+        setTimeout(() => closeTerminalModal(), 600);
     } catch (err) {
         console.error('Failed to launch terminal:', err);
         showNotification(t('terminal.launchFailed') + ': ' + translateError(err), 'error');

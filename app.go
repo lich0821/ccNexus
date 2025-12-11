@@ -17,6 +17,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/proxy"
+	"github.com/lich0821/ccNexus/internal/session"
 	"github.com/lich0821/ccNexus/internal/storage"
 	"github.com/lich0821/ccNexus/internal/terminal"
 	"github.com/lich0821/ccNexus/internal/tray"
@@ -2610,4 +2611,84 @@ func (a *App) SelectDirectory() string {
 		return ""
 	}
 	return dir
+}
+
+// GetSessions returns all sessions for a project directory
+func (a *App) GetSessions(projectDir string) string {
+	sessions, err := session.GetSessionsForProject(projectDir)
+	if err != nil {
+		logger.Error("Failed to get sessions for %s: %v", projectDir, err)
+		result := map[string]interface{}{
+			"success":  false,
+			"message":  err.Error(),
+			"sessions": []interface{}{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success":  true,
+		"sessions": sessions,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// DeleteSession deletes a session
+func (a *App) DeleteSession(projectDir, sessionID string) error {
+	if err := session.DeleteSession(projectDir, sessionID); err != nil {
+		logger.Error("Failed to delete session %s: %v", sessionID, err)
+		return err
+	}
+	logger.Info("Session deleted: %s", sessionID)
+	return nil
+}
+
+// RenameSession sets an alias for a session
+func (a *App) RenameSession(projectDir, sessionID, alias string) error {
+	if err := session.RenameSession(projectDir, sessionID, alias); err != nil {
+		logger.Error("Failed to rename session %s: %v", sessionID, err)
+		return err
+	}
+	logger.Info("Session renamed: %s -> %s", sessionID, alias)
+	return nil
+}
+
+// GetSessionData returns all messages for a specific session
+func (a *App) GetSessionData(projectDir, sessionID string) string {
+	messages, err := session.GetSessionData(projectDir, sessionID)
+	if err != nil {
+		logger.Error("Failed to get session data for %s: %v", sessionID, err)
+		result := map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+			"data":    []interface{}{},
+		}
+		data, _ := json.Marshal(result)
+		return string(data)
+	}
+
+	result := map[string]interface{}{
+		"success": true,
+		"data":    messages,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// LaunchSessionTerminal launches a terminal with optional session resume
+func (a *App) LaunchSessionTerminal(dir, sessionID string) error {
+	terminalCfg := a.config.GetTerminal()
+	terminalID := terminalCfg.SelectedTerminal
+	if terminalID == "" {
+		terminalID = "cmd"
+	}
+
+	if sessionID != "" {
+		logger.Info("Launching terminal with session: %s in %s", sessionID, dir)
+	} else {
+		logger.Info("Launching new terminal in %s", dir)
+	}
+	return terminal.LaunchTerminalWithSession(terminalID, dir, sessionID)
 }
