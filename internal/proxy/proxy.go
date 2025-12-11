@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,8 +38,11 @@ type Proxy struct {
 	currentIndex     int
 	mu               sync.RWMutex
 	server           *http.Server
-	activeRequests   map[string]bool // tracks active requests by endpoint name
-	activeRequestsMu sync.RWMutex    // protects activeRequests map
+	activeRequests   map[string]bool              // tracks active requests by endpoint name
+	activeRequestsMu sync.RWMutex                 // protects activeRequests map
+	endpointCtx      map[string]context.Context   // context per endpoint for cancellation
+	endpointCancel   map[string]context.CancelFunc // cancel functions per endpoint
+	ctxMu            sync.RWMutex                 // protects context maps
 }
 
 // New creates a new Proxy instance
@@ -50,6 +54,8 @@ func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy 
 		stats:          stats,
 		currentIndex:   0,
 		activeRequests: make(map[string]bool),
+		endpointCtx:    make(map[string]context.Context),
+		endpointCancel: make(map[string]context.CancelFunc),
 	}
 }
 
@@ -136,6 +142,33 @@ func (p *Proxy) isCurrentEndpoint(endpointName string) bool {
 	return current.Name == endpointName
 }
 
+// getEndpointContext returns a context for the given endpoint, creating one if needed
+func (p *Proxy) getEndpointContext(endpointName string) context.Context {
+	p.ctxMu.Lock()
+	defer p.ctxMu.Unlock()
+
+	if ctx, ok := p.endpointCtx[endpointName]; ok {
+		return ctx
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	p.endpointCtx[endpointName] = ctx
+	p.endpointCancel[endpointName] = cancel
+	return ctx
+}
+
+// cancelEndpointRequests cancels all requests for the given endpoint
+func (p *Proxy) cancelEndpointRequests(endpointName string) {
+	p.ctxMu.Lock()
+	defer p.ctxMu.Unlock()
+
+	if cancel, ok := p.endpointCancel[endpointName]; ok {
+		cancel()
+		delete(p.endpointCtx, endpointName)
+		delete(p.endpointCancel, endpointName)
+	}
+}
+
 // rotateEndpoint switches to the next endpoint (thread-safe)
 // waitForActive: if true, waits briefly for active requests to complete before switching
 func (p *Proxy) rotateEndpoint() config.Endpoint {
@@ -189,7 +222,7 @@ func (p *Proxy) GetCurrentEndpointName() string {
 
 // SetCurrentEndpoint manually switches to a specific endpoint by name
 // Returns error if endpoint not found or not enabled
-// Thread-safe and won't affect ongoing requests
+// Thread-safe and cancels ongoing requests on the old endpoint
 func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -203,6 +236,10 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	for i, ep := range endpoints {
 		if ep.Name == targetName {
 			oldEndpoint := endpoints[p.currentIndex%len(endpoints)]
+			if oldEndpoint.Name != targetName {
+				// Cancel all requests on the old endpoint
+				p.cancelEndpointRequests(oldEndpoint.Name)
+			}
 			p.currentIndex = i
 			logger.Info("[MANUAL SWITCH] %s → %s", oldEndpoint.Name, ep.Name)
 			return nil
@@ -210,6 +247,27 @@ func (p *Proxy) SetCurrentEndpoint(targetName string) error {
 	}
 
 	return fmt.Errorf("endpoint '%s' not found or not enabled", targetName)
+}
+
+// ClientFormat represents the API format used by the client
+type ClientFormat string
+
+const (
+	ClientFormatClaude          ClientFormat = "claude"           // Claude Code: /v1/messages
+	ClientFormatOpenAIChat      ClientFormat = "openai_chat"      // Codex (chat): /v1/chat/completions
+	ClientFormatOpenAIResponses ClientFormat = "openai_responses" // Codex (responses): /v1/responses
+)
+
+// detectClientFormat identifies the client format based on request path
+func detectClientFormat(path string) ClientFormat {
+	switch {
+	case strings.HasPrefix(path, "/v1/chat/completions") || strings.HasPrefix(path, "/chat/completions"):
+		return ClientFormatOpenAIChat
+	case strings.HasPrefix(path, "/v1/responses") || strings.HasPrefix(path, "/responses"):
+		return ClientFormatOpenAIResponses
+	default:
+		return ClientFormatClaude
+	}
 }
 
 // handleProxy handles the main proxy logic
@@ -222,15 +280,19 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	// Detect client format
+	clientFormat := detectClientFormat(r.URL.Path)
+
 	logger.DebugLog("=== Proxy Request ===")
-	logger.DebugLog("Method: %s, Path: %s", r.Method, r.URL.Path)
+	logger.DebugLog("Method: %s, Path: %s, ClientFormat: %s", r.Method, r.URL.Path, clientFormat)
 	logger.DebugLog("Request Body: %s", string(bodyBytes))
 
-	var claudeReq struct {
+	var streamReq struct {
+		Model    string      `json:"model"`
 		Thinking interface{} `json:"thinking"`
 		Stream   bool        `json:"stream"`
 	}
-	json.Unmarshal(bodyBytes, &claudeReq)
+	json.Unmarshal(bodyBytes, &streamReq)
 
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
@@ -241,6 +303,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 	maxRetries := len(endpoints) * 2
 	endpointAttempts := 0
+	lastEndpointName := ""
 
 	for retry := 0; retry < maxRetries; retry++ {
 		endpoint := p.getCurrentEndpoint()
@@ -249,11 +312,17 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		// Reset attempts counter if endpoint changed (e.g., manual switch)
+		if lastEndpointName != "" && lastEndpointName != endpoint.Name {
+			endpointAttempts = 0
+		}
+		lastEndpointName = endpoint.Name
+
 		endpointAttempts++
 		p.markRequestActive(endpoint.Name)
 		p.stats.RecordRequest(endpoint.Name)
 
-		trans, err := prepareTransformer(endpoint)
+		trans, err := prepareTransformerForClient(clientFormat, endpoint)
 		if err != nil {
 			logger.Error("[%s] %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
@@ -265,10 +334,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		transformerName := endpoint.Transformer
-		if transformerName == "" {
-			transformerName = "claude"
-		}
+		transformerName := trans.Name()
 
 		transformedBody, err := trans.TransformRequest(bodyBytes)
 		if err != nil {
@@ -293,7 +359,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		transformedBody = cleanedBody
 
 		var thinkingEnabled bool
-		if transformerName == "openai" {
+		if strings.Contains(transformerName, "openai") {
 			var openaiReq map[string]interface{}
 			if err := json.Unmarshal(transformedBody, &openaiReq); err == nil {
 				if enable, ok := openaiReq["enable_thinking"].(bool); ok {
@@ -314,7 +380,8 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		resp, err := sendRequest(proxyReq)
+		ctx := p.getEndpointContext(endpoint.Name)
+		resp, err := sendRequest(ctx, proxyReq)
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
@@ -327,10 +394,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentType := resp.Header.Get("Content-Type")
-		isStreaming := contentType == "text/event-stream" || (claudeReq.Stream && strings.Contains(contentType, "text/event-stream"))
+		isStreaming := contentType == "text/event-stream" || (streamReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
@@ -366,6 +433,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				errMsg = errMsg[:200] + "..."
 			}
 			logger.Warn("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
+			logger.DebugLog("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -375,20 +443,34 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		bodyBytes, _ := io.ReadAll(resp.Body)
+		var respBody []byte
+		if resp.Header.Get("Content-Encoding") == "gzip" {
+			respBody, _ = decompressGzip(resp.Body)
+		} else {
+			respBody, _ = io.ReadAll(resp.Body)
+		}
 		resp.Body.Close()
 		p.markRequestInactive(endpoint.Name)
 		// Log non-200 responses for debugging
 		if resp.StatusCode != http.StatusOK {
-			errMsg := string(bodyBytes)
+			errMsg := string(respBody)
 			if len(errMsg) > 500 {
 				errMsg = errMsg[:500] + "..."
 			}
 			logger.Warn("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 		}
+		// Remove Content-Encoding header since we've decompressed
+		for key, values := range resp.Header {
+			if key == "Content-Encoding" || key == "Content-Length" {
+				continue
+			}
+			for _, value := range values {
+				w.Header().Add(key, value)
+			}
+		}
 		w.WriteHeader(resp.StatusCode)
-		w.Write(bodyBytes)
+		w.Write(respBody)
 		return
 	}
 

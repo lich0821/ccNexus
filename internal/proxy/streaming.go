@@ -12,16 +12,16 @@ import (
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/transformer"
-	"github.com/lich0821/ccNexus/internal/transformer/gemini"
-	"github.com/lich0821/ccNexus/internal/transformer/openai"
-	"github.com/lich0821/ccNexus/internal/transformer/openai2"
+	"github.com/lich0821/ccNexus/internal/transformer/cc"
+	"github.com/lich0821/ccNexus/internal/transformer/cx/chat"
+	"github.com/lich0821/ccNexus/internal/transformer/cx/responses"
 )
 
 // handleStreamingResponse processes streaming SSE responses
-func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool) (int, int, string) {
-	// Copy response headers except Content-Length (streaming response length is unknown)
+func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool, modelName string) (int, int, string) {
+	// Copy response headers except Content-Length and Content-Encoding
 	for key, values := range resp.Header {
-		if key == "Content-Length" {
+		if key == "Content-Length" || key == "Content-Encoding" {
 			continue
 		}
 		for _, value := range values {
@@ -37,15 +37,30 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 		return 0, 0, ""
 	}
 
-	var streamCtx *transformer.StreamContext
-	if transformerName == "openai" || transformerName == "openai2" || transformerName == "gemini" {
-		streamCtx = transformer.NewStreamContext()
-		if transformerName == "openai" {
-			streamCtx.EnableThinking = thinkingEnabled
+	// Handle gzip-encoded response body
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzipReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			logger.Error("[%s] Failed to create gzip reader: %v", endpoint.Name, err)
+			resp.Body.Close()
+			return 0, 0, ""
 		}
+		defer gzipReader.Close()
+		reader = gzipReader
 	}
 
-	scanner := bufio.NewScanner(resp.Body)
+	// Create stream context for all transformers except passthrough
+	var streamCtx *transformer.StreamContext
+	switch transformerName {
+	case "cc_claude", "cx_chat_openai", "cx_resp_openai2":
+		// Passthrough - no context needed
+	default:
+		streamCtx = transformer.NewStreamContext()
+		streamCtx.ModelName = modelName
+	}
+
+	scanner := bufio.NewScanner(reader)
 	buf := make([]byte, 0, 64*1024)
 	scanner.Buffer(buf, 1024*1024)
 
@@ -71,7 +86,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 			logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount+1, string(eventData))
 
 			transformedEvent, err := p.transformStreamEvent(eventData, trans, transformerName, streamCtx)
-			if err == nil {
+			if err == nil && len(transformedEvent) > 0 {
 				logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount+1, string(transformedEvent))
 				w.Write(transformedEvent)
 				flusher.Flush()
@@ -89,14 +104,19 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 			transformedEvent, err := p.transformStreamEvent(eventData, trans, transformerName, streamCtx)
 			if err != nil {
 				logger.Error("[%s] Failed to transform SSE event: %v", endpoint.Name, err)
-			} else {
+			} else if len(transformedEvent) > 0 {
 				logger.DebugLog("[%s] SSE Event #%d (Transformed): %s", endpoint.Name, eventCount, string(transformedEvent))
 
 				p.extractTokensFromEvent(transformedEvent, &inputTokens, &outputTokens)
 				p.extractTextFromEvent(transformedEvent, &outputText)
 
 				if _, writeErr := w.Write(transformedEvent); writeErr != nil {
-					logger.Error("[%s] Failed to write transformed event: %v", endpoint.Name, writeErr)
+					// Client disconnected (broken pipe) is normal for cancelled requests
+					if strings.Contains(writeErr.Error(), "broken pipe") || strings.Contains(writeErr.Error(), "connection reset") {
+						logger.Debug("[%s] Client disconnected: %v", endpoint.Name, writeErr)
+					} else {
+						logger.Error("[%s] Failed to write transformed event: %v", endpoint.Name, writeErr)
+					}
 					streamDone = true
 					break
 				}
@@ -117,12 +137,33 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 // transformStreamEvent transforms a single SSE event
 func (p *Proxy) transformStreamEvent(eventData []byte, trans transformer.Transformer, transformerName string, streamCtx *transformer.StreamContext) ([]byte, error) {
 	switch transformerName {
-	case "openai":
-		return trans.(*openai.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
-	case "openai2":
-		return trans.(*openai2.OpenAI2Transformer).TransformResponseWithContext(eventData, true, streamCtx)
-	case "gemini":
-		return trans.(*gemini.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	// Claude Code transformers
+	case "cc_claude":
+		return eventData, nil // passthrough
+	case "cc_openai":
+		return trans.(*cc.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cc_openai2":
+		return trans.(*cc.OpenAI2Transformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cc_gemini":
+		return trans.(*cc.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	// Codex Chat transformers
+	case "cx_chat_claude":
+		return trans.(*chat.ClaudeTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cx_chat_openai":
+		return eventData, nil // passthrough
+	case "cx_chat_openai2":
+		return trans.(*chat.OpenAI2Transformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cx_chat_gemini":
+		return trans.(*chat.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	// Codex Responses transformers
+	case "cx_resp_claude":
+		return trans.(*responses.ClaudeTransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cx_resp_openai":
+		return trans.(*responses.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
+	case "cx_resp_openai2":
+		return eventData, nil // passthrough
+	case "cx_resp_gemini":
+		return trans.(*responses.GeminiTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 	default:
 		return trans.TransformResponse(eventData, true)
 	}

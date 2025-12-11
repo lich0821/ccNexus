@@ -3,6 +3,8 @@
 
 export function AddEndpoint(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string):Promise<void>;
 
+export function AddProjectDir(arg1:string):Promise<void>;
+
 export function ApplyUpdate(arg1:string):Promise<string>;
 
 export function BackupToWebDAV(arg1:string):Promise<void>;
@@ -14,6 +16,8 @@ export function CheckForUpdates():Promise<string>;
 export function ClearLogs():Promise<void>;
 
 export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
+
+export function DetectTerminals():Promise<string>;
 
 export function DetectWebDAVConflict(arg1:string):Promise<string>;
 
@@ -63,6 +67,8 @@ export function GetStatsYesterday():Promise<string>;
 
 export function GetSystemLanguage():Promise<string>;
 
+export function GetTerminalConfig():Promise<string>;
+
 export function GetTheme():Promise<string>;
 
 export function GetThemeAuto():Promise<boolean>;
@@ -75,6 +81,8 @@ export function HideWindow():Promise<void>;
 
 export function InstallUpdate(arg1:string):Promise<string>;
 
+export function LaunchTerminal(arg1:string):Promise<void>;
+
 export function ListArchives():Promise<string>;
 
 export function ListWebDAVBackups():Promise<string>;
@@ -85,9 +93,15 @@ export function Quit():Promise<void>;
 
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
+export function RemoveProjectDir(arg1:string):Promise<void>;
+
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
+
+export function SaveTerminalConfig(arg1:string,arg2:Array<string>):Promise<void>;
+
+export function SelectDirectory():Promise<string>;
 
 export function SendUpdateNotification(arg1:string,arg2:string):Promise<void>;
 

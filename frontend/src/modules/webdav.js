@@ -1,6 +1,15 @@
 // WebDAV management
 import { t } from '../i18n/index.js';
 
+// 翻译后端错误消息
+function translateError(error) {
+    const errorStr = error.toString();
+    const errorKey = `webdav.errors.${errorStr}`;
+    const translated = t(errorKey);
+    // 如果翻译存在且不等于 key 本身，返回翻译；否则返回原始错误
+    return translated !== errorKey ? translated : errorStr;
+}
+
 // Global variables to store WebDAV config
 let currentWebDAVConfig = {
     url: '',
@@ -208,11 +217,6 @@ window.saveDataSyncConfig = async function() {
         showNotification(t('webdav.urlRequired'), 'error');
         return;
     }
-    // Only allow Nutstore WebDAV
-    if (!url.includes('dav.jianguoyun.com')) {
-        showNotification(t('webdav.onlyNutstore'), 'error');
-        return;
-    }
     if (!username) {
         showNotification(t('webdav.usernameRequired'), 'error');
         return;
@@ -249,11 +253,6 @@ window.testDataSyncConnection = async function() {
         showNotification(t('webdav.urlRequired'), 'error');
         return;
     }
-    // Only allow Nutstore WebDAV
-    if (!url.includes('dav.jianguoyun.com')) {
-        showNotification(t('webdav.onlyNutstore'), 'error');
-        return;
-    }
     if (!username) {
         showNotification(t('webdav.usernameRequired'), 'error');
         return;
@@ -272,11 +271,11 @@ window.testDataSyncConnection = async function() {
             showNotification(t('webdav.connectionSuccess'), 'success');
         } else {
             connectionTestPassed = false;
-            showNotification(t('webdav.connectionFailed'), 'error');
+            showNotification(t('webdav.connectionFailedWithRecommend'), 'error');
         }
     } catch (error) {
         connectionTestPassed = false;
-        showNotification(t('webdav.connectionFailed') + ': ' + error, 'error');
+        showNotification(t('webdav.connectionFailedWithRecommend'), 'error');
     }
 };
 
@@ -331,7 +330,7 @@ export async function backupToWebDAV() {
         await window.go.main.App.BackupToWebDAV(filename);
         showNotification(t('webdav.backupSuccess'), 'success');
     } catch (error) {
-        showNotification(t('webdav.backupFailed') + ': ' + error, 'error');
+        showNotification(translateError(error), 'error');
     }
 }
 
@@ -363,7 +362,7 @@ export async function restoreFromWebDAV(filename) {
                 window.location.reload();
             }
         } catch (error) {
-            showNotification(t('webdav.restoreFailed') + ': ' + error, 'error');
+            showNotification(translateError(error), 'error');
         }
     } else {
         // No conflict, restore directly
@@ -373,7 +372,7 @@ export async function restoreFromWebDAV(filename) {
             // Reload config
             window.location.reload();
         } catch (error) {
-            showNotification(t('webdav.restoreFailed') + ': ' + error, 'error');
+            showNotification(translateError(error), 'error');
         }
     }
 }
@@ -390,7 +389,7 @@ export async function deleteWebDAVBackups(filenames) {
         await window.go.main.App.DeleteWebDAVBackups(filenames);
         showNotification(t('webdav.deleteSuccess'), 'success');
     } catch (error) {
-        showNotification(t('webdav.deleteFailed') + ': ' + error, 'error');
+        showNotification(translateError(error), 'error');
     }
 }
 

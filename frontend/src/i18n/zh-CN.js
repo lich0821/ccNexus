@@ -209,7 +209,7 @@ export default {
         configSaved: '配置已保存',
         configSaveFailed: '配置保存失败',
         serverUrl: 'WebDAV 服务器地址',
-        serverUrlHelp: '当前只支持坚果云 WebDAV 服务',
+        serverUrlHelp: '推荐使用坚果云 WebDAV 服务',
         username: '用户名',
         password: '密码',
         usernamePlaceholder: '输入 WebDAV 用户名',
@@ -220,6 +220,7 @@ export default {
         passwordRequired: '请输入密码',
         connectionSuccess: '连接成功',
         connectionFailed: '连接失败',
+        connectionFailedWithRecommend: '连接失败，推荐使用坚果云 WebDAV 服务',
         testRequired: '请先测试连接',
         testConnection: '测试连接',
         backup: '备份',
@@ -267,7 +268,22 @@ export default {
         endpointsHave: '个端点存在冲突配置',
         useRemoteDesc: '远程配置将覆盖本地冲突的端点配置',
         keepLocalDesc: '保留本地配置，仅从远程添加新端点',
-        inputFilename: '输入文件名'
+        inputFilename: '输入文件名',
+        // 错误消息
+        errors: {
+            webdav_not_configured: 'WebDAV 未配置',
+            storage_not_initialized: '存储未初始化',
+            webdav_client_failed: '创建 WebDAV 客户端失败',
+            get_home_dir_failed: '获取用户目录失败',
+            create_temp_dir_failed: '创建临时目录失败',
+            create_db_backup_failed: '创建数据库备份失败',
+            backup_upload_failed: '备份上传失败',
+            restore_download_failed: '恢复下载失败',
+            merge_data_failed: '合并数据失败',
+            load_config_failed: '加载配置失败',
+            update_proxy_config_failed: '更新代理配置失败',
+            delete_backup_failed: '删除备份失败'
+        }
     },
     update: {
         checkForUpdates: '检查更新',
@@ -307,6 +323,25 @@ export default {
         applyFailed: '应用更新失败',
         install_ready_windows: '点击立即更新按钮自动完成更新'
     },
+    terminal: {
+        title: '启动器',
+        selectTerminal: '选择终端',
+        selectTerminalHelp: '选择用于启动 Claude Code 的终端程序',
+        projectDirs: '项目目录',
+        projectDirsHelp: '添加常用的项目目录，点击启动直接打开终端',
+        addDir: '添加目录',
+        noDirs: '暂无项目目录，点击下方按钮添加',
+        launchFailed: '启动终端失败',
+        launch: '启动',
+        delete: '删除',
+        confirmDelete: '确定要删除此项目目录吗？',
+        addDirFailed: '添加目录失败',
+        dirExists: '目录已存在',
+        // 错误消息
+        errors: {
+            directory_already_exists: '目录已存在'
+        }
+    },
     common: {
         ok: '确定',
         cancel: '取消',
@@ -319,19 +354,28 @@ export default {
         retry: '重试'
     },
     tips: [
-        '小贴士：您可以添加多个 API 端点实现自动故障转移',
-        '小贴士：当某个端点失败时，ccNexus 会自动切换到下一个端点',
-        '小贴士：查看统计信息标签页可以监控您的 API 使用情况',
-        '小贴士：为不同端点使用不同的转换器（Claude/OpenAI/Gemini）',
+        '小贴士：您可以同时启用多个 API 端点，实现自动故障转移',
+        '小贴士：当某个端点重试2次仍失败时，会自动切换到下一个可用端点',
+        '小贴士：当前支持 Claude、OpenAI 和 Gemini API 格式',
+        '小贴士：可以为不同端点使用不同的转换器（Claude/OpenAI/Gemini）',
+        '小贴士：点击端点的"切换"按钮可以手动指定当前使用的端点',
         '小贴士：启用多个端点可以提高响应速度和可靠性',
-        '小贴士：点击顶部的端口号可以修改代理端口',
-        '小贴士：点击"历史"标签页可以查看历史统计数据',
-        '小贴士：使用 WebDAV 功能可以跨设备同步您的配置',
-        '小贴士：保存前测试端点可以确保它们正常工作',
-        '小贴士：您的 API 密钥存储在本地，不会发送给第三方',
+        '小贴士：禁用暂时不用的端点，避免轮询时被选中',
         '小贴士：为端点添加备注可以帮助您更容易识别它们',
-        '小贴士：在语言选择器中可以切换中英文界面',
+        '小贴士：拖拽端点卡片排序可以调整代理的优先级',
+        '小贴士：点击"检测"按钮可以自动获取到可用的模型列表',
+        '小贴士：查看统计信息标签页可以监控您的 API 使用情况',
         '小贴士：统计数据每 3 秒自动更新一次',
-        '小贴士：ccNexus 支持 Claude、OpenAI 和 Gemini API 格式'
+        '小贴士：统计数据会显示与上一周期的趋势对比',
+        '小贴士：点击"历史"标签页可以查看历史统计数据，包含按月归档的详细统计数据',
+        '小贴士：提供 12 种主题皮肤，在设置中可以自由选择',
+        '小贴士：开启"自动模式"可根据时间自动切换昼夜主题',
+        '小贴士：支持中英文双语界面，在设置中切换',
+        '小贴士：支持自动检查更新，可设置检查频率',
+        '小贴士：窗口大小会自动记忆，下次启动保持不变',
+        '小贴士：点击顶部端口号可修改代理监听端口',
+        '小贴士：使用 WebDAV 功能可以跨设备同步您的数据和配置',
+        '小贴士：保存端点前先点击"测试"可以确保它们能正常工作',
+        '小贴士：您的 API 密钥和数据都存储在本地，安全可靠',
     ]
 };

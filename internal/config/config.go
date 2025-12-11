@@ -36,6 +36,12 @@ type UpdateConfig struct {
 	SkippedVersion string `json:"skippedVersion"` // Skipped version
 }
 
+// TerminalConfig represents terminal launcher configuration
+type TerminalConfig struct {
+	SelectedTerminal string   `json:"selectedTerminal"` // Selected terminal ID
+	ProjectDirs      []string `json:"projectDirs"`      // Project directories
+}
+
 // Config represents the application configuration
 type Config struct {
 	Port                int           `json:"port"`
@@ -49,8 +55,9 @@ type Config struct {
 	WindowWidth         int           `json:"windowWidth"`                   // Window width in pixels
 	WindowHeight        int           `json:"windowHeight"`                  // Window height in pixels
 	CloseWindowBehavior string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
-	WebDAV              *WebDAVConfig `json:"webdav,omitempty"`              // WebDAV synchronization config
-	Update              *UpdateConfig `json:"update,omitempty"`              // Update configuration
+	WebDAV              *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
+	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
+	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
 	mu                  sync.RWMutex
 }
 
@@ -334,6 +341,26 @@ func (c *Config) UpdateUpdate(update *UpdateConfig) {
 	c.Update = update
 }
 
+// GetTerminal returns the Terminal configuration (thread-safe)
+func (c *Config) GetTerminal() *TerminalConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if c.Terminal == nil {
+		return &TerminalConfig{
+			SelectedTerminal: "cmd",
+			ProjectDirs:      []string{},
+		}
+	}
+	return c.Terminal
+}
+
+// UpdateTerminal updates the Terminal configuration (thread-safe)
+func (c *Config) UpdateTerminal(terminal *TerminalConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Terminal = terminal
+}
+
 // StorageAdapter defines the interface needed for loading/saving config
 type StorageAdapter interface {
 	GetEndpoints() ([]StorageEndpoint, error)
@@ -499,6 +526,21 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.Update.SkippedVersion = skipped
 	}
 
+	// Load Terminal config
+	config.Terminal = &TerminalConfig{
+		SelectedTerminal: "cmd",
+		ProjectDirs:      []string{},
+	}
+	if selectedTerminal, err := storage.GetConfig("terminal_selected"); err == nil && selectedTerminal != "" {
+		config.Terminal.SelectedTerminal = selectedTerminal
+	}
+	if projectDirsStr, err := storage.GetConfig("terminal_projectDirs"); err == nil && projectDirsStr != "" {
+		var dirs []string
+		if err := json.Unmarshal([]byte(projectDirsStr), &dirs); err == nil {
+			config.Terminal.ProjectDirs = dirs
+		}
+	}
+
 	return config, nil
 }
 
@@ -577,6 +619,14 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		storage.SetConfig("update_checkInterval", strconv.Itoa(c.Update.CheckInterval))
 		storage.SetConfig("update_lastCheckTime", c.Update.LastCheckTime)
 		storage.SetConfig("update_skippedVersion", c.Update.SkippedVersion)
+	}
+
+	// Save Terminal config
+	if c.Terminal != nil {
+		storage.SetConfig("terminal_selected", c.Terminal.SelectedTerminal)
+		if dirsJSON, err := json.Marshal(c.Terminal.ProjectDirs); err == nil {
+			storage.SetConfig("terminal_projectDirs", string(dirsJSON))
+		}
 	}
 
 	return nil
