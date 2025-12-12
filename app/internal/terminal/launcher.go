@@ -39,7 +39,11 @@ func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
 		psCmd := fmt.Sprintf(`Start-Process powershell -ArgumentList '-NoExit','-Command','cd \"%s\"; %s'`, dir, claudeCmd)
 		return exec.Command("powershell", "-Command", psCmd)
 	case "wt":
-		return exec.Command("wt.exe", "new-tab", "--startingDirectory", dir, "cmd", "/k", claudeCmd)
+		shell := "powershell.exe"
+		if _, err := exec.LookPath("pwsh.exe"); err == nil {
+			shell = "pwsh.exe"
+		}
+		return exec.Command("wt.exe", "-d", dir, shell, "-NoExit", "-Command", claudeCmd)
 	case "gitbash":
 		terminals := detectWindowsTerminals()
 		var gitBashPath string
