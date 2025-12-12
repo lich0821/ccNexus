@@ -6,6 +6,13 @@
 build/*
 !build/appicon.png
 !build/appicon.svg
+!build/darwin/
+build/darwin/*
+!build/darwin/Info.plist
+!build/windows/
+build/windows/*
+!build/windows/icon.ico
+!build/windows/wails.exe.manifest
 
 dist/
 *.exe
