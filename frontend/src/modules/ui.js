@@ -373,6 +373,27 @@ export function initUI() {
             </div>
         </div>
 
+        <!-- Session Modal -->
+        <div id="sessionModal" class="modal">
+            <div class="modal-content session-modal-content">
+                <div class="modal-header">
+                    <h2>📋 ${t('session.title')}</h2>
+                    <button class="modal-close" onclick="window.closeSessionModal()">&times;</button>
+                </div>
+                <div class="modal-body session-modal-body">
+                    <div class="session-hint">${t('session.selectHint')}</div>
+                    <div id="sessionList" class="session-list">
+                        <div class="session-loading">${t('session.loading')}</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary btn-add-dir" onclick="window.confirmSessionSelection()">
+                        ✅ ${t('session.confirmAndReturn')}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Edit Port Modal -->
         <div id="portModal" class="modal">
             <div class="modal-content">

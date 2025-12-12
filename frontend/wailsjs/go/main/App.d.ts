@@ -15,6 +15,8 @@ export function CheckForUpdates():Promise<string>;
 
 export function ClearLogs():Promise<void>;
 
+export function DeleteSession(arg1:string,arg2:string):Promise<void>;
+
 export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
 
 export function DetectTerminals():Promise<string>;
@@ -51,6 +53,10 @@ export function GetLogs():Promise<string>;
 
 export function GetLogsByLevel(arg1:number):Promise<string>;
 
+export function GetSessionData(arg1:string,arg2:string):Promise<string>;
+
+export function GetSessions(arg1:string):Promise<string>;
+
 export function GetStats():Promise<string>;
 
 export function GetStatsDaily():Promise<string>;
@@ -81,6 +87,8 @@ export function HideWindow():Promise<void>;
 
 export function InstallUpdate(arg1:string):Promise<string>;
 
+export function LaunchSessionTerminal(arg1:string,arg2:string):Promise<void>;
+
 export function LaunchTerminal(arg1:string):Promise<void>;
 
 export function ListArchives():Promise<string>;
@@ -94,6 +102,8 @@ export function Quit():Promise<void>;
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function RemoveProjectDir(arg1:string):Promise<void>;
+
+export function RenameSession(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 
