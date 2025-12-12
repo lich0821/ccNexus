@@ -52,7 +52,7 @@ jobs:
 
       - name: Install npm dependencies
         run: |
-          cd frontend
+          cd app/frontend
           npm install
         shell: bash
 
@@ -121,6 +121,7 @@ jobs:
           CGO_ENABLED: 1
         run: |
           export PATH=$PATH:$(go env GOPATH)/bin
+          cd app
           if [ "${{ matrix.platform }}" == "linux" ]; then
             # Verify webkit2gtk-4.0 is available before building
             echo "Checking WebKit2GTK availability..."
@@ -140,32 +141,33 @@ jobs:
         if: matrix.platform == 'windows'
         run: |
           $env:PATH += ";$(go env GOPATH)\bin"
+          cd app
           wails build -platform ${{ matrix.platform }}/${{ matrix.arch }}
         shell: pwsh
 
       - name: Package application (Linux)
         if: matrix.platform == 'linux'
         run: |
-          cd build/bin
+          cd app/build/bin
           tar -czf ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
-          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ../../
+          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ../../../
 
       - name: Package application (macOS)
         if: matrix.platform == 'darwin'
         run: |
-          cd build/bin
+          cd app/build/bin
           if [ -d "ccNexus.app" ]; then
             zip -r ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.zip "ccNexus.app"
           else
             tar -czf ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz ccNexus
           fi
-          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.* ../../
+          mv ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.* ../../../
 
       - name: Package application (Windows)
         if: matrix.platform == 'windows'
         run: |
-          cd build/bin
-          Compress-Archive -Path ccNexus.exe -DestinationPath ../../ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.zip
+          cd app/build/bin
+          Compress-Archive -Path ccNexus.exe -DestinationPath ../../../ccNexus-${{ steps.get_version.outputs.version }}-${{ matrix.platform }}-${{ matrix.arch }}.zip
         shell: pwsh
 
       - name: Upload artifacts

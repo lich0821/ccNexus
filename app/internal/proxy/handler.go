@@ -109,8 +109,36 @@ func (p *Proxy) UpdateConfig(cfg *config.Config) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
+	// Save current endpoint name
+	var currentEndpointName string
+	if p.config != nil {
+		endpoints := p.getEnabledEndpoints()
+		if len(endpoints) > 0 && p.currentIndex < len(endpoints) {
+			currentEndpointName = endpoints[p.currentIndex].Name
+		}
+	}
+
 	p.config = cfg
-	p.currentIndex = 0
+
+	// Try to find the previous current endpoint in new config
+	newEndpoints := p.getEnabledEndpoints()
+	if currentEndpointName != "" && len(newEndpoints) > 0 {
+		found := false
+		for i, ep := range newEndpoints {
+			if ep.Name == currentEndpointName {
+				p.currentIndex = i
+				found = true
+				logger.Debug("[CONFIG UPDATE] Preserved current endpoint: %s at index %d", currentEndpointName, i)
+				break
+			}
+		}
+		if !found {
+			p.currentIndex = 0
+			logger.Debug("[CONFIG UPDATE] Current endpoint '%s' not found, reset to index 0", currentEndpointName)
+		}
+	} else {
+		p.currentIndex = 0
+	}
 
 	logger.Info("Configuration updated: %d endpoints configured", len(cfg.GetEndpoints()))
 	return nil
