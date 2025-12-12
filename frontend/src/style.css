@@ -2745,8 +2745,8 @@ body {
     bottom: 0;
     left: 30px;
     right: 30px;
-    height: 1px;
-    background: #e9ecef;
+    height: 0.06px;
+    background: var(--border-color, #e9ecef);
 }
 
 #updateModal .modal-header h2 {
