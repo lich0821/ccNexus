@@ -79,9 +79,9 @@ wire_api = "responses"  # or "chat"
 
 <table>
   <tr>
-    <td align="center"><img src="frontend/public/chat.jpg" alt="WeChat Group" width="200"></td>
-    <td align="center"><img src="docs/images/MP.jpg" alt="WeChat Official Account" width="200"></td>
-    <td align="center"><img src="docs/images/ME.png" alt="Personal WeChat" width="200"></td>
+    <td align="center"><img src="app/frontend/public/chat.jpg" alt="WeChat Group" width="200"></td>
+    <td align="center"><img src="app/frontend/public/WeChat.jpg" alt="WeChat Official Account" width="200"></td>
+    <td align="center"><img src="app/frontend/public//ME.png" alt="Personal WeChat" width="200"></td>
   </tr>
   <tr>
     <td align="center">Join group for feedback</td>
