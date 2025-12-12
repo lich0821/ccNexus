@@ -366,7 +366,7 @@ export function initUI() {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-add-dir" onclick="window.addProjectDir()">
+                    <button class="btn btn-primary btn-add-dir" onclick="window.addProjectDir()">
                         ➕ ${t('terminal.addDir')}
                     </button>
                 </div>
@@ -387,7 +387,7 @@ export function initUI() {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary btn-add-dir" onclick="window.confirmSessionSelection()">
+                    <button class="btn btn-primary btn-add-dir" onclick="window.confirmSessionSelection()">
                         ✅ ${t('session.confirmAndReturn')}
                     </button>
                 </div>
