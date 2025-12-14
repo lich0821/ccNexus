@@ -397,7 +397,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		isStreaming := contentType == "text/event-stream" || (streamReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
