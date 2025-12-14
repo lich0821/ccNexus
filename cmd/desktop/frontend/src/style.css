@@ -10,6 +10,7 @@
 @import './themes/aurora.css';
 @import './themes/holographic.css';
 @import './themes/quantum.css';
+@import './simple-view.css';
 
 * {
     margin: 0;
@@ -1417,7 +1418,7 @@ body {
 
 /* Current badge */
 .current-badge {
-    background: #4CAF50;
+    background: var(--primary-color, #667eea);
     color: white;
     padding: 3px 7px;
     border-radius: 4px;
@@ -1432,7 +1433,7 @@ body {
 
 /* Switch button */
 .btn-switch {
-    background: #667eea;
+    background: var(--primary-color, #667eea);
     color: white;
     padding: 3px 7px;
     border-radius: 4px;
@@ -1450,7 +1451,7 @@ body {
 }
 
 .btn-switch:hover {
-    background: #5568d3;
+    background: var(--primary-hover, #5568d3);
     transform: translateY(-1px);
 }
 

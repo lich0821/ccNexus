@@ -201,6 +201,23 @@ export function initUI() {
                         <button class="endpoint-toggle-btn" onclick="window.toggleEndpointPanel()">
                             <span id="endpointToggleIcon">🔼</span> <span id="endpointToggleText">${t('endpoints.collapse')}</span>
                         </button>
+                        <div class="view-mode-tabs">
+                            <button class="view-mode-btn active" data-view="detail" onclick="window.switchEndpointViewMode('detail')" title="${t('endpoints.viewDetail')}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="3" y="3" width="8" height="8" rx="1"/>
+                                    <rect x="13" y="3" width="8" height="8" rx="1"/>
+                                    <rect x="3" y="13" width="8" height="8" rx="1"/>
+                                    <rect x="13" y="13" width="8" height="8" rx="1"/>
+                                </svg>
+                            </button>
+                            <button class="view-mode-btn" data-view="compact" onclick="window.switchEndpointViewMode('compact')" title="${t('endpoints.viewCompact')}">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <rect x="3" y="4" width="18" height="3" rx="1"/>
+                                    <rect x="3" y="10.5" width="18" height="3" rx="1"/>
+                                    <rect x="3" y="17" width="18" height="3" rx="1"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         ${isShowBtn ? `
