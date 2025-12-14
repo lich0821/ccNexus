@@ -18,7 +18,7 @@ import (
 )
 
 // handleStreamingResponse processes streaming SSE responses
-func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool, modelName string) (int, int, string) {
+func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool, modelName string, bodyBytes []byte) (int, int, string) {
 	// Copy response headers except Content-Length and Content-Encoding
 	for key, values := range resp.Header {
 		if key == "Content-Length" || key == "Content-Encoding" {
@@ -50,14 +50,19 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 		reader = gzipReader
 	}
 
-	// Create stream context for all transformers except passthrough
+	// Create stream context for all transformers except pure passthrough
 	var streamCtx *transformer.StreamContext
 	switch transformerName {
-	case "cc_claude", "cx_chat_openai", "cx_resp_openai2":
-		// Passthrough - no context needed
+	case "cx_chat_openai", "cx_resp_openai2":
+		// Pure passthrough - no context needed
 	default:
+		// cc_claude needs context for input_tokens fallback
 		streamCtx = transformer.NewStreamContext()
 		streamCtx.ModelName = modelName
+		// Pre-estimate input tokens for fallback
+		if bodyBytes != nil {
+			streamCtx.InputTokens = p.estimateInputTokens(bodyBytes)
+		}
 	}
 
 	scanner := bufio.NewScanner(reader)
@@ -139,7 +144,7 @@ func (p *Proxy) transformStreamEvent(eventData []byte, trans transformer.Transfo
 	switch transformerName {
 	// Claude Code transformers
 	case "cc_claude":
-		return eventData, nil // passthrough
+		return trans.(*cc.ClaudeTransformer).TransformResponseWithContext(eventData, true, streamCtx)
 	case "cc_openai":
 		return trans.(*cc.OpenAITransformer).TransformResponseWithContext(eventData, true, streamCtx)
 	case "cc_openai2":

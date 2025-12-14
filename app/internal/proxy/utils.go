@@ -90,6 +90,15 @@ func cleanIncompleteToolCalls(bodyBytes []byte) ([]byte, error) {
 	return json.Marshal(req)
 }
 
+// estimateInputTokens estimates input tokens from request body
+func (p *Proxy) estimateInputTokens(bodyBytes []byte) int {
+	var req tokencount.CountTokensRequest
+	if json.Unmarshal(bodyBytes, &req) == nil {
+		return tokencount.EstimateInputTokens(&req)
+	}
+	return 0
+}
+
 // estimateTokens estimates tokens when API doesn't provide usage
 func (p *Proxy) estimateTokens(bodyBytes []byte, outputText string, inputTokens, outputTokens int, endpointName string) (int, int) {
 	if inputTokens == 0 {
