@@ -3,6 +3,48 @@ import { formatTokens, maskApiKey } from '../utils/format.js';
 import { getEndpointStats } from './stats.js';
 import { toggleEndpoint } from './config.js';
 
+const ENDPOINT_TEST_STATUS_KEY = 'ccNexus_endpointTestStatus';
+const CURRENT_ENDPOINT_KEY = 'ccNexus_currentEndpoint';
+
+// 获取端点测试状态
+export function getEndpointTestStatus(endpointName) {
+    try {
+        const statusMap = JSON.parse(localStorage.getItem(ENDPOINT_TEST_STATUS_KEY) || '{}');
+        return statusMap[endpointName]; // true=成功, false=失败, undefined=未测试
+    } catch {
+        return undefined;
+    }
+}
+
+// 保存端点测试状态
+export function saveEndpointTestStatus(endpointName, success) {
+    try {
+        const statusMap = JSON.parse(localStorage.getItem(ENDPOINT_TEST_STATUS_KEY) || '{}');
+        statusMap[endpointName] = success;
+        localStorage.setItem(ENDPOINT_TEST_STATUS_KEY, JSON.stringify(statusMap));
+    } catch (error) {
+        console.error('Failed to save endpoint test status:', error);
+    }
+}
+
+// 获取保存的当前端点名称
+export function getSavedCurrentEndpoint() {
+    try {
+        return localStorage.getItem(CURRENT_ENDPOINT_KEY) || '';
+    } catch {
+        return '';
+    }
+}
+
+// 保存当前端点名称
+export function saveCurrentEndpoint(endpointName) {
+    try {
+        localStorage.setItem(CURRENT_ENDPOINT_KEY, endpointName);
+    } catch (error) {
+        console.error('Failed to save current endpoint:', error);
+    }
+}
+
 let currentTestButton = null;
 let currentTestButtonOriginalText = '';
 let currentTestIndex = -1;
@@ -39,12 +81,39 @@ export function setTestState(button, index) {
 export async function renderEndpoints(endpoints) {
     const container = document.getElementById('endpointList');
 
-    // Get current endpoint
+    // Get current endpoint from backend
     let currentEndpointName = '';
     try {
         currentEndpointName = await window.go.main.App.GetCurrentEndpoint();
     } catch (error) {
         console.error('Failed to get current endpoint:', error);
+    }
+
+    // 检查 localStorage 中保存的当前端点，如果与后端不一致则同步
+    const savedEndpoint = getSavedCurrentEndpoint();
+    if (savedEndpoint && savedEndpoint !== currentEndpointName) {
+        // 检查保存的端点是否存在且启用
+        const savedExists = endpoints.some(ep => ep.name === savedEndpoint && (ep.enabled !== false));
+        if (savedExists) {
+            try {
+                await window.go.main.App.SwitchToEndpoint(savedEndpoint);
+                currentEndpointName = savedEndpoint;
+            } catch (error) {
+                console.error('Failed to restore saved endpoint:', error);
+                // 如果恢复失败，更新 localStorage 为后端的当前端点
+                if (currentEndpointName) {
+                    saveCurrentEndpoint(currentEndpointName);
+                }
+            }
+        } else {
+            // 保存的端点不存在或未启用，更新 localStorage
+            if (currentEndpointName) {
+                saveCurrentEndpoint(currentEndpointName);
+            }
+        }
+    } else if (!savedEndpoint && currentEndpointName) {
+        // localStorage 没有保存，初始化保存当前端点
+        saveCurrentEndpoint(currentEndpointName);
     }
 
     if (endpoints.length === 0) {
@@ -78,11 +147,21 @@ export async function renderEndpoints(endpoints) {
         item.draggable = true;
         item.dataset.name = ep.name;
         item.dataset.index = index;
+        // 获取测试状态：true=成功显示✅，false=失败显示❌，undefined/unknown=未测试/未知显示⚠️
+        const testStatus = getEndpointTestStatus(ep.name);
+        let testStatusIcon = '⚠️'; // 默认未测试
+        if (testStatus === true) {
+            testStatusIcon = '✅';
+        } else if (testStatus === false) {
+            testStatusIcon = '❌';
+        }
+        // 'unknown' 或 undefined 都显示 ⚠️
+
         item.innerHTML = `
             <div class="endpoint-info">
                 <h3>
                     ${ep.name}
-                    ${enabled ? '✅' : '❌'}
+                    ${testStatusIcon}
                     ${isCurrentEndpoint ? '<span class="current-badge">' + t('endpoints.current') + '</span>' : ''}
                     ${enabled && !isCurrentEndpoint ? '<button class="btn btn-switch" data-action="switch" data-name="' + ep.name + '">' + t('endpoints.switchTo') + '</button>' : ''}
                 </h3>
@@ -155,6 +234,8 @@ export async function renderEndpoints(endpoints) {
                     switchBtn.disabled = true;
                     switchBtn.innerHTML = '⏳';
                     await window.go.main.App.SwitchToEndpoint(name);
+                    // 保存当前端点到 localStorage
+                    saveCurrentEndpoint(name);
                     window.loadConfig(); // Refresh display
                 } catch (error) {
                     console.error('Failed to switch endpoint:', error);

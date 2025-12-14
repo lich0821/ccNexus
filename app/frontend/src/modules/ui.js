@@ -279,15 +279,15 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.name')}</label>
+                        <label><span class="required">*</span>${t('modal.name')}</label>
                         <input type="text" id="endpointName" placeholder="${t('modal.namePlaceholder')}">
                     </div>
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.apiUrl')}</label>
+                        <label><span class="required">*</span>${t('modal.apiUrl')}</label>
                         <input type="text" id="endpointUrl" placeholder="${t('modal.apiUrlPlaceholder')}">
                     </div>
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.apiKey')}</label>
+                        <label><span class="required">*</span>${t('modal.apiKey')}</label>
                         <div class="password-input-wrapper">
                             <input type="password" id="endpointKey" placeholder="${t('modal.apiKeyPlaceholder')}">
                             <button type="button" class="password-toggle" onclick="window.togglePasswordVisibility()" title="${t('modal.togglePassword')}">
@@ -299,7 +299,7 @@ export function initUI() {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('modal.transformer')}</label>
+                        <label><span class="required">*</span>${t('modal.transformer')}</label>
                         <select id="endpointTransformer" onchange="window.handleTransformerChange()">
                             <option value="claude">Claude (Default)</option>
                             <option value="openai">OpenAI</option>
@@ -311,7 +311,7 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group" id="modelFieldGroup" style="display: block;">
-                        <label><span class="required" id="modelRequired" style="display: none; color: #ff4444;">* </span>${t('modal.model')}</label>
+                        <label><span class="required" id="modelRequired" style="display: none;">*</span>${t('modal.model')}</label>
                         <div class="model-input-wrapper">
                             <div class="model-select-container">
                                 <input type="text" id="endpointModel" placeholder="${t('modal.modelPlaceholder')}" autocomplete="off">
@@ -351,14 +351,14 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('terminal.selectTerminal')}</label>
+                        <label><span class="required">*</span>${t('terminal.selectTerminal')}</label>
                         <select id="terminalSelect" onchange="window.onTerminalChange()">
                             <option value="">Loading...</option>
                         </select>
                         <small class="form-help">${t('terminal.selectTerminalHelp')}</small>
                     </div>
                     <div class="form-group">
-                        <label><span class="required" style="color: #ff4444;">* </span>${t('terminal.projectDirs')}</label>
+                        <label><span class="required">*</span>${t('terminal.projectDirs')}</label>
                         <small class="form-help">${t('terminal.projectDirsHelp')}</small>
                         <div id="projectDirList" class="project-dir-list">
                             <div class="empty-tip">${t('terminal.noDirs')}</div>
@@ -403,7 +403,7 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>${t('modal.port')} (1-65535)</label>
+                        <label><span class="required">*</span>${t('modal.portLabel')}</label>
                         <input type="number" id="portInput" min="1" max="65535" placeholder="3000">
                     </div>
                     <p style="color: #666; font-size: 14px; margin-top: 10px;">
@@ -552,7 +552,7 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label>🌍 ${t('settings.language')}</label>
+                        <label><span class="required">*</span>${t('settings.language')}</label>
                         <select id="settingsLanguage">
                             <option value="zh-CN">${t('settings.languages.zh-CN')}</option>
                             <option value="en">${t('settings.languages.en')}</option>
@@ -562,7 +562,7 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
-                        <label>🌓 ${t('settings.theme')}</label>
+                        <label><span class="required">*</span>${t('settings.theme')}</label>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="settingsTheme" style="flex: 1;">
                                 <option value="light">${t('settings.themes.light')}</option>
@@ -591,7 +591,7 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
-                        <label>✨ ${t('settings.closeWindowBehavior')}</label>
+                        <label><span class="required">*</span>${t('settings.closeWindowBehavior')}</label>
                         <select id="settingsCloseWindowBehavior">
                             <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
                             <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
@@ -602,7 +602,7 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
-                        <label>🔄 ${t('update.autoCheck')}</label>
+                        <label><span class="required">*</span>${t('update.autoCheck')}</label>
                         <select id="check-interval">
                             <option value="1">${t('update.everyHour')}</option>
                             <option value="24">${t('update.everyDay')}</option>
@@ -634,7 +634,7 @@ export function initUI() {
                         ${t('settings.autoThemeConfigDesc')}
                     </p>
                     <div class="form-group">
-                        <label>☀️ ${t('settings.lightThemeLabel')}</label>
+                        <label><span class="required">*</span>${t('settings.lightThemeLabel')}</label>
                         <select id="autoLightTheme">
                             <option value="light">${t('settings.themes.light')}</option>
                             <option value="green">${t('settings.themes.green')}</option>
@@ -648,7 +648,7 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
-                        <label>🌙 ${t('settings.darkThemeLabel')}</label>
+                        <label><span class="required">*</span>${t('settings.darkThemeLabel')}</label>
                         <select id="autoDarkTheme">
                             <option value="dark">${t('settings.themes.dark')}</option>
                             <option value="starry">${t('settings.themes.starry')}</option>
