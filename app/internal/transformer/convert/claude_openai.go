@@ -48,6 +48,10 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 					if text, ok := m["text"].(string); ok {
 						textParts = append(textParts, text)
 					}
+				case "thinking":
+					// Skip thinking blocks - they are Claude's internal reasoning
+					// and should not be forwarded to other APIs
+					continue
 				case "tool_use":
 					args, _ := json.Marshal(m["input"])
 					toolCalls = append(toolCalls, transformer.OpenAIToolCall{
@@ -259,6 +263,9 @@ func ClaudeRespToOpenAI(claudeResp []byte, model string) ([]byte, error) {
 		switch blockMap["type"] {
 		case "text":
 			textContent += blockMap["text"].(string)
+		case "thinking":
+			// Skip thinking blocks in response
+			continue
 		case "tool_use":
 			args, _ := json.Marshal(blockMap["input"])
 			toolCalls = append(toolCalls, map[string]interface{}{
@@ -550,6 +557,9 @@ func convertClaudeContentToOpenAI(content []interface{}) (interface{}, []transfo
 		switch m["type"] {
 		case "text":
 			textParts = append(textParts, m["text"].(string))
+		case "thinking":
+			// Skip thinking blocks
+			continue
 		case "tool_use":
 			args, _ := json.Marshal(m["input"])
 			toolCalls = append(toolCalls, transformer.OpenAIToolCall{

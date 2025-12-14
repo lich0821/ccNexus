@@ -67,6 +67,12 @@ func OpenAI2ReqToGemini(openai2Req []byte, model string) ([]byte, error) {
 		}
 		if len(funcDecls) > 0 {
 			geminiReq["tools"] = []map[string]interface{}{{"functionDeclarations": funcDecls}}
+			// Add toolConfig to enable function calling
+			geminiReq["toolConfig"] = map[string]interface{}{
+				"functionCallingConfig": map[string]interface{}{
+					"mode": "AUTO",
+				},
+			}
 		}
 	}
 
@@ -278,6 +284,38 @@ func OpenAI2StreamToGemini(event []byte, ctx *transformer.StreamContext) ([]byte
 		}
 		d, _ := json.Marshal(chunk)
 		return []byte(fmt.Sprintf("data: %s\n\n", d)), nil
+
+	case "response.output_item.added":
+		if evt.Item != nil && evt.Item.Type == "function_call" {
+			ctx.ToolBlockStarted = true
+			ctx.CurrentToolID = evt.Item.CallID
+			ctx.CurrentToolName = evt.Item.Name
+			ctx.ToolArguments = ""
+		}
+		return nil, nil
+
+	case "response.function_call_arguments.delta":
+		if ctx.ToolBlockStarted {
+			ctx.ToolArguments += evt.Delta
+		}
+		return nil, nil
+
+	case "response.output_item.done":
+		if evt.Item != nil && evt.Item.Type == "function_call" && ctx.ToolBlockStarted {
+			ctx.ToolBlockStarted = false
+			var args map[string]interface{}
+			json.Unmarshal([]byte(ctx.ToolArguments), &args)
+			chunk := map[string]interface{}{
+				"candidates": []map[string]interface{}{
+					{"content": map[string]interface{}{"role": "model", "parts": []map[string]interface{}{
+						{"functionCall": map[string]interface{}{"name": ctx.CurrentToolName, "args": args}},
+					}}},
+				},
+			}
+			d, _ := json.Marshal(chunk)
+			return []byte(fmt.Sprintf("data: %s\n\n", d)), nil
+		}
+		return nil, nil
 	}
 
 	return nil, nil
