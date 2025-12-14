@@ -3032,7 +3032,7 @@ body {
 }
 
 .project-dir-list {
-    max-height: 280px;
+    max-height: min(342px, calc(70vh - 150px));
     overflow-y: auto;
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
@@ -3105,27 +3105,13 @@ body {
 }
 
 #sessionModal .modal-footer {
-    padding: 10px 30px 30px 30px;
-    margin-top: -50px;
+    padding: 10px 30px 20px 30px;
 }
 
 .btn-add-dir {
     width: 100%;
-    padding: 10px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    border: 1px dashed var(--border-color, #d0d0d0);
-    background: transparent;
-    color: var(--text-secondary, #666);
-    transition: all 0.2s;
-    cursor: pointer;
 }
 
-.btn-add-dir:hover {
-    border-color: var(--primary-color, #667eea);
-    color: var(--primary-color, #667eea);
-    background: rgba(102, 126, 234, 0.05);
-}
 
 #terminalModal .form-help {
     display: block;
@@ -3155,10 +3141,11 @@ body {
     backdrop-filter: blur(4px);
 }
 
-.session-modal-content {
+#sessionModal .session-modal-content {
     max-width: min(600px, 90vw);
-    width: 600px;
-    max-height: 90vh;
+    width: 90vw;
+    min-height: min(650px, 85vh) !important;
+    max-height: 85vh !important;
     display: flex;
     flex-direction: column;
 }
@@ -3212,15 +3199,17 @@ body {
     transform: rotate(90deg);
 }
 
-.session-modal-body {
-    padding: 10px 30px 30px 30px !important;
+#sessionModal .session-modal-body {
+    padding: 10px 30px 15px 30px !important;
     flex: 1;
     overflow-y: auto;
-    min-height: 450px;
+    display: flex;
+    flex-direction: column;
 }
 
 .session-list {
-    height: 342px;
+    flex: 1;
+    min-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--border-color, #e0e0e0);
     border-radius: 8px;
