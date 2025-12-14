@@ -63,6 +63,12 @@ async function loadSessions() {
     }
 }
 
+// HTML 转义函数
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function renderSessionList() {
     const listContainer = document.getElementById('sessionList');
 
@@ -78,11 +84,11 @@ function renderSessionList() {
         const time = formatTime(s.modTime);
         const fullTime = formatFullTime(s.modTime);
         const size = formatSize(s.size);
-        const summary = s.summary || t('session.noSummary');
-        const displaySummary = s.alias || summary;
-        const tooltipTitle = s.alias
-            ? `${s.alias}\n${t('session.modTime')}: ${fullTime}\n${t('session.size')}: ${size}\n${t('session.summary')}: ${summary}`
-            : `${t('session.session')} ${serialNumber}\n${t('session.modTime')}: ${fullTime}\n${t('session.size')}: ${size}\n${t('session.summary')}: ${summary}`;
+        const summary = escapeHtml(s.summary) || t('session.noSummary');
+        const displaySummary = escapeHtml(s.alias) || summary;
+        const tooltipTitle = escapeHtml(s.alias
+            ? `${s.alias}\n${t('session.modTime')}: ${fullTime}\n${t('session.size')}: ${size}\n${t('session.summary')}: ${s.summary || ''}`
+            : `${t('session.session')} ${serialNumber}\n${t('session.modTime')}: ${fullTime}\n${t('session.size')}: ${size}\n${t('session.summary')}: ${s.summary || ''}`);
 
         return `
         <div class="session-item ${currentSelected && currentSelected.sessionId === s.sessionId ? 'selected' : ''}"

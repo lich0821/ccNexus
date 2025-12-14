@@ -176,7 +176,8 @@ func parseSessionSummary(filePath string) (string, bool) {
 		if msgType == "user" {
 			hasValidMessage = true
 			if message, ok := data["message"].(map[string]interface{}); ok {
-				if content, ok := message["content"].(string); ok {
+				content := extractContent(message["content"])
+				if content != "" {
 					runes := []rune(content)
 					if len(runes) > 100 {
 						return string(runes[:100]) + "...", true

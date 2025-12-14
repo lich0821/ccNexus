@@ -3,6 +3,7 @@ package terminal
 import (
 	"fmt"
 	"os/exec"
+	"runtime"
 )
 
 // LaunchTerminal launches a terminal in the specified directory
@@ -20,11 +21,16 @@ func LaunchTerminalWithSession(terminalID, dir, sessionID string) error {
 }
 
 // getClaudeCommand returns the claude command with optional session resume
+// On macOS, prepends npm initialization to handle lazy-loaded Node environments (nvm, fnm, etc.)
 func getClaudeCommand(sessionID string) string {
-	if sessionID == "" {
-		return "claude"
+	cmd := "claude"
+	if sessionID != "" {
+		cmd = fmt.Sprintf("claude -r %s", sessionID)
 	}
-	return fmt.Sprintf("claude -r %s", sessionID)
+	if runtime.GOOS == "darwin" {
+		return "npm --version >/dev/null 2>&1; " + cmd
+	}
+	return cmd
 }
 
 func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
