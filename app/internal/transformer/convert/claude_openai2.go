@@ -48,9 +48,8 @@ func ClaudeReqToOpenAI2(claudeReq []byte, model string) ([]byte, error) {
 	}
 	openai2Req["input"] = input
 
-	if req.MaxTokens > 0 {
-		openai2Req["max_output_tokens"] = req.MaxTokens
-	}
+	// TODO: max_output_tokens is standard OpenAI Responses API param but some
+	// third-party endpoints (e.g. SiliconFlow) don't support it. Skipping for compatibility.
 
 	// Convert tools
 	if len(req.Tools) > 0 {
@@ -150,6 +149,9 @@ func ClaudeRespToOpenAI2(claudeResp []byte) ([]byte, error) {
 				"type": "output_text",
 				"text": blockMap["text"],
 			})
+		case "thinking":
+			// Skip thinking blocks in response
+			continue
 		case "tool_use":
 			args, _ := json.Marshal(blockMap["input"])
 			functionCalls = append(functionCalls, map[string]interface{}{
@@ -448,12 +450,51 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 			"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": evt.Delta},
 		})...)
 
+	case "response.output_item.added":
+		if evt.Item != nil && evt.Item.Type == "function_call" {
+			// Close text block if open
+			if ctx.ContentBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
+				ctx.ContentBlockStarted = false
+				ctx.ContentIndex++
+			}
+			ctx.ToolBlockStarted = true
+			ctx.ToolIndex = ctx.ContentIndex
+			ctx.CurrentToolID = evt.Item.CallID
+			ctx.CurrentToolName = evt.Item.Name
+			ctx.ToolArguments = ""
+			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
+				"index": ctx.ToolIndex, "content_block": map[string]interface{}{
+					"type": "tool_use", "id": ctx.CurrentToolID, "name": ctx.CurrentToolName, "input": map[string]interface{}{},
+				},
+			})...)
+		}
+
+	case "response.function_call_arguments.delta":
+		if ctx.ToolBlockStarted {
+			ctx.ToolArguments += evt.Delta
+			result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+				"index": ctx.ToolIndex, "delta": map[string]interface{}{"type": "input_json_delta", "partial_json": evt.Delta},
+			})...)
+		}
+
+	case "response.output_item.done":
+		if evt.Item != nil && evt.Item.Type == "function_call" && ctx.ToolBlockStarted {
+			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ToolIndex})...)
+			ctx.ToolBlockStarted = false
+			ctx.ContentIndex++
+		}
+
 	case "response.completed":
 		if ctx.ContentBlockStarted {
 			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
 		}
+		stopReason := "end_turn"
+		if ctx.ToolIndex > 0 || ctx.CurrentToolID != "" {
+			stopReason = "tool_use"
+		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
-			"delta": map[string]interface{}{"stop_reason": "end_turn", "stop_sequence": nil},
+			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
 			"usage": map[string]interface{}{"output_tokens": 0},
 		})...)
 	}
@@ -478,6 +519,9 @@ func convertClaudeContentToOpenAI2(content []interface{}, role string) []map[str
 		switch m["type"] {
 		case "text":
 			parts = append(parts, map[string]interface{}{"type": contentType, "text": m["text"]})
+		case "thinking":
+			// Skip thinking blocks - they are Claude's internal reasoning
+			continue
 		case "tool_use":
 			args, _ := json.Marshal(m["input"])
 			parts = append(parts, map[string]interface{}{

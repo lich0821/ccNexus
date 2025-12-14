@@ -108,6 +108,12 @@ func OpenAIReqToGemini(openaiReq []byte, model string) ([]byte, error) {
 		}
 		if len(funcDecls) > 0 {
 			geminiReq["tools"] = []map[string]interface{}{{"functionDeclarations": funcDecls}}
+			// Add toolConfig to enable function calling
+			geminiReq["toolConfig"] = map[string]interface{}{
+				"functionCallingConfig": map[string]interface{}{
+					"mode": "AUTO",
+				},
+			}
 		}
 	}
 
@@ -194,6 +200,7 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 
 	var result strings.Builder
 	candidate := resp.Candidates[0]
+	hasToolCall := false
 
 	for _, part := range candidate.Content.Parts {
 		if part.Text != "" {
@@ -201,6 +208,7 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 			result.Write(chunk)
 		}
 		if part.FunctionCall != nil {
+			hasToolCall = true
 			args, _ := json.Marshal(part.FunctionCall.Args)
 			toolCall := []map[string]interface{}{
 				{
@@ -222,7 +230,7 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 	// Check for finish
 	if candidate.FinishReason != "" {
 		finishReason := "stop"
-		if candidate.FinishReason == "TOOL_CODE" {
+		if hasToolCall || candidate.FinishReason == "TOOL_CODE" {
 			finishReason = "tool_calls"
 		}
 		chunk, _ := buildOpenAIChunk("gemini-chunk", model, "", nil, finishReason)
