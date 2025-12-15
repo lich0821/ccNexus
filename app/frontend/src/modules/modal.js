@@ -1,6 +1,6 @@
 import { t } from '../i18n/index.js';
 import { escapeHtml } from '../utils/format.js';
-import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, updatePort } from './config.js';
+import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, testEndpointLight, updatePort } from './config.js';
 import { setTestState, clearTestState, saveEndpointTestStatus } from './endpoints.js';
 
 let currentEditIndex = -1;
@@ -477,7 +477,8 @@ export async function testEndpointHandler(index, buttonElement) {
         buttonElement.disabled = true;
         buttonElement.innerHTML = '⏳';
 
-        const result = await testEndpoint(index);
+        // 使用轻量级测试（优先零消耗方法）
+        const result = await testEndpointLight(index);
 
         const resultContent = document.getElementById('testResultContent');
         const resultTitle = document.getElementById('testResultTitle');
@@ -488,14 +489,14 @@ export async function testEndpointHandler(index, buttonElement) {
                 <div style="padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 5px; margin-bottom: 15px;">
                     <strong style="color: #155724;">${t('test.connectionSuccess')}</strong>
                 </div>
-                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)}</div>
+                <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)} (${result.method})</div>
             `;
             // 保存测试成功状态
             if (endpointName) {
                 saveEndpointTestStatus(endpointName, true);
             }
-        } else if (isTestNotSupported(result.statusCode, result.message)) {
-            // 可能不支持测试的情况，使用 toast 提示
+        } else if (result.status === 'unknown') {
+            // 无法确定状态（如三方站限制测试）
             showNotification(t('test.notSupportedMessage'), 'warning');
             // 保存为未知状态
             if (endpointName) {

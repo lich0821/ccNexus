@@ -71,6 +71,12 @@ func ClaudeReqToGemini(claudeReq []byte, model string) ([]byte, error) {
 			})
 		}
 		geminiReq["tools"] = []map[string]interface{}{{"functionDeclarations": funcDecls}}
+		// Add toolConfig to enable function calling
+		geminiReq["toolConfig"] = map[string]interface{}{
+			"functionCallingConfig": map[string]interface{}{
+				"mode": "AUTO",
+			},
+		}
 	}
 
 	return json.Marshal(geminiReq)
@@ -111,7 +117,17 @@ func GeminiReqToClaude(geminiReq []byte, model string) ([]byte, error) {
 
 		var contentBlocks []map[string]interface{}
 		for _, part := range content.Parts {
-			if part.Text != "" {
+			if part.Thought && part.Text != "" {
+				// Convert Gemini thought to Claude thinking format
+				thinkingBlock := map[string]interface{}{
+					"type":     "thinking",
+					"thinking": part.Text,
+				}
+				if part.ThoughtSignature != "" {
+					thinkingBlock["signature"] = part.ThoughtSignature
+				}
+				contentBlocks = append(contentBlocks, thinkingBlock)
+			} else if part.Text != "" {
 				contentBlocks = append(contentBlocks, map[string]interface{}{"type": "text", "text": part.Text})
 			}
 			if part.FunctionCall != nil {
@@ -185,6 +201,16 @@ func ClaudeRespToGemini(claudeResp []byte) ([]byte, error) {
 		switch blockMap["type"] {
 		case "text":
 			parts = append(parts, map[string]interface{}{"text": blockMap["text"]})
+		case "thinking":
+			// Convert Claude thinking to Gemini thought format
+			part := map[string]interface{}{
+				"text":    blockMap["thinking"],
+				"thought": true,
+			}
+			if sig, ok := blockMap["signature"].(string); ok && sig != "" {
+				part["thoughtSignature"] = sig
+			}
+			parts = append(parts, part)
 		case "tool_use":
 			parts = append(parts, map[string]interface{}{
 				"functionCall": map[string]interface{}{
@@ -230,7 +256,17 @@ func GeminiRespToClaude(geminiResp []byte) ([]byte, error) {
 	if len(resp.Candidates) > 0 {
 		candidate := resp.Candidates[0]
 		for _, part := range candidate.Content.Parts {
-			if part.Text != "" {
+			if part.Thought && part.Text != "" {
+				// Convert Gemini thought to Claude thinking format
+				thinkingBlock := map[string]interface{}{
+					"type":     "thinking",
+					"thinking": part.Text,
+				}
+				if part.ThoughtSignature != "" {
+					thinkingBlock["signature"] = part.ThoughtSignature
+				}
+				content = append(content, thinkingBlock)
+			} else if part.Text != "" {
 				content = append(content, map[string]interface{}{"type": "text", "text": part.Text})
 			}
 			if part.FunctionCall != nil {
@@ -349,6 +385,7 @@ func GeminiStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 	}
 
 	candidate := resp.Candidates[0]
+	hasFunctionCall := false
 	for _, part := range candidate.Content.Parts {
 		if part.Text != "" {
 			if !ctx.ContentBlockStarted {
@@ -362,6 +399,7 @@ func GeminiStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			})...)
 		}
 		if part.FunctionCall != nil {
+			hasFunctionCall = true
 			// Close text block first if open
 			if ctx.ContentBlockStarted {
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
@@ -391,7 +429,7 @@ func GeminiStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			ctx.ContentBlockStarted = false
 		}
 		stopReason := "end_turn"
-		if candidate.FinishReason == "TOOL_CODE" {
+		if hasFunctionCall || candidate.FinishReason == "TOOL_CODE" {
 			stopReason = "tool_use"
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
@@ -416,6 +454,16 @@ func convertClaudeContentToGeminiParts(content []interface{}, toolUseIDToName ma
 		switch m["type"] {
 		case "text":
 			parts = append(parts, map[string]interface{}{"text": m["text"]})
+		case "thinking":
+			// Convert Claude thinking to Gemini thought format
+			part := map[string]interface{}{
+				"text":    m["thinking"],
+				"thought": true,
+			}
+			if sig, ok := m["signature"].(string); ok && sig != "" {
+				part["thoughtSignature"] = sig
+			}
+			parts = append(parts, part)
 		case "tool_use":
 			id, _ := m["id"].(string)
 			name, _ := m["name"].(string)

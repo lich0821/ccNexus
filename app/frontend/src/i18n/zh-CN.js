@@ -242,6 +242,8 @@ export default {
         restoreFailed: '恢复失败',
         deleteSuccess: '删除成功',
         deleteFailed: '删除失败',
+        refreshSuccess: '刷新成功',
+        refreshFailed: '刷新失败',
         selectBackupsToDelete: '请选择要删除的备份',
         confirmDelete: '确认删除 {count} 个备份吗？',
         confirmRestore: '确认从备份 "{filename}" 恢复配置吗？\n这将覆盖当前配置。',

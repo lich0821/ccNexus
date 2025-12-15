@@ -425,7 +425,17 @@ export async function openBackupManager() {
 
     // Set up global functions for backup manager
     window.refreshBackupList = async () => {
-        openBackupManager();
+        try {
+            const result = await listWebDAVBackups();
+            if (result.success) {
+                showNotification(t('webdav.refreshSuccess'), 'success');
+                openBackupManager();
+            } else {
+                showNotification(result.message || t('webdav.refreshFailed'), 'error');
+            }
+        } catch (error) {
+            showNotification(translateError(error), 'error');
+        }
     };
 
     window.deleteSelectedBackups = async () => {

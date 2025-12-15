@@ -45,9 +45,8 @@ func OpenAIReqToOpenAI2(openaiReq []byte, model string) ([]byte, error) {
 	}
 	openai2Req["input"] = input
 
-	if req.MaxCompletionTokens > 0 {
-		openai2Req["max_output_tokens"] = req.MaxCompletionTokens
-	}
+	// TODO: max_output_tokens is standard OpenAI Responses API param but some
+	// third-party endpoints (e.g. SiliconFlow) don't support it. Skipping for compatibility.
 
 	if len(req.Tools) > 0 {
 		var tools []map[string]interface{}
@@ -446,8 +445,37 @@ func OpenAI2StreamToOpenAI(event []byte, ctx *transformer.StreamContext, model s
 	case "response.output_text.delta":
 		return buildOpenAIChunk(ctx.MessageID, model, evt.Delta, nil, "")
 
+	case "response.output_item.added":
+		if evt.Item != nil && evt.Item.Type == "function_call" {
+			ctx.ToolBlockStarted = true
+			ctx.CurrentToolID = evt.Item.CallID
+			ctx.CurrentToolName = evt.Item.Name
+			ctx.ToolArguments = ""
+		}
+		return nil, nil
+
+	case "response.function_call_arguments.delta":
+		if ctx.ToolBlockStarted {
+			ctx.ToolArguments += evt.Delta
+		}
+		return nil, nil
+
+	case "response.output_item.done":
+		if evt.Item != nil && evt.Item.Type == "function_call" && ctx.ToolBlockStarted {
+			ctx.ToolBlockStarted = false
+			return buildOpenAIChunk(ctx.MessageID, model, "", []map[string]interface{}{
+				{"index": ctx.ToolIndex, "id": ctx.CurrentToolID, "type": "function",
+					"function": map[string]interface{}{"name": ctx.CurrentToolName, "arguments": ctx.ToolArguments}},
+			}, "")
+		}
+		return nil, nil
+
 	case "response.completed":
-		return buildOpenAIChunk(ctx.MessageID, model, "", nil, "stop")
+		finishReason := "stop"
+		if ctx.CurrentToolID != "" {
+			finishReason = "tool_calls"
+		}
+		return buildOpenAIChunk(ctx.MessageID, model, "", nil, finishReason)
 	}
 
 	return nil, nil

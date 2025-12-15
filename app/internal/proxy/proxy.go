@@ -43,6 +43,7 @@ type Proxy struct {
 	endpointCtx      map[string]context.Context   // context per endpoint for cancellation
 	endpointCancel   map[string]context.CancelFunc // cancel functions per endpoint
 	ctxMu            sync.RWMutex                 // protects context maps
+	onEndpointSuccess func(endpointName string)   // callback when endpoint request succeeds
 }
 
 // New creates a new Proxy instance
@@ -57,6 +58,11 @@ func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy 
 		endpointCtx:    make(map[string]context.Context),
 		endpointCancel: make(map[string]context.CancelFunc),
 	}
+}
+
+// SetOnEndpointSuccess sets the callback for successful endpoint requests
+func (p *Proxy) SetOnEndpointSuccess(callback func(endpointName string)) {
+	p.onEndpointSuccess = callback
 }
 
 // Start starts the proxy server
@@ -397,7 +403,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		isStreaming := contentType == "text/event-stream" || (streamReq.Stream && strings.Contains(contentType, "text/event-stream"))
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
@@ -406,6 +412,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 			p.markRequestInactive(endpoint.Name)
+			if p.onEndpointSuccess != nil {
+				p.onEndpointSuccess(endpoint.Name)
+			}
 			logger.Debug("[%s] Request completed successfully (streaming)", endpoint.Name)
 			return
 		}
@@ -415,6 +424,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
 				p.markRequestInactive(endpoint.Name)
+				if p.onEndpointSuccess != nil {
+					p.onEndpointSuccess(endpoint.Name)
+				}
 				logger.Debug("[%s] Request completed successfully", endpoint.Name)
 				return
 			}
