@@ -717,16 +717,17 @@ body {
 .model-input-wrapper {
     position: relative;
     display: flex;
-    align-items: center;
+    align-items: stretch;
 }
 
 .model-select-container {
     flex: 1;
     position: relative;
+    display: flex;
 }
 
 .model-select-container input {
-    width: 100%;
+    flex: 1;
     padding-right: 32px;
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
@@ -790,8 +791,7 @@ body {
 
 #fetchModelsBtn {
     min-width: 60px;
-    height: 37.3px;
-    padding: 6px 12px;
+    padding: 7px 12px;
     background: transparent;
     border: 1px solid var(--border-color, #ddd);
     border-top-left-radius: 0;
@@ -3265,7 +3265,7 @@ body {
 
 .session-item.selected .session-serial {
     background: var(--primary-color, #667eea);
-    color: #fff;
+    color: var(--bg-primary, #fff);
 }
 
 /* Session Info - 横向布局 */
@@ -3285,7 +3285,7 @@ body {
     min-width: 24px;
     text-align: center;
     padding: 2px 3px;
-    background: rgba(102, 126, 234, 0.1);
+    background: var(--bg-tertiary, #f3f4f6);
     border-radius: 8px;
 }
 

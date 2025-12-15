@@ -242,6 +242,8 @@ export default {
         restoreFailed: 'Restore failed',
         deleteSuccess: 'Delete successful',
         deleteFailed: 'Delete failed',
+        refreshSuccess: 'Refresh successful',
+        refreshFailed: 'Refresh failed',
         selectBackupsToDelete: 'Please select backups to delete',
         confirmDelete: 'Are you sure you want to delete {count} backup(s)?',
         confirmRestore: 'Are you sure you want to restore from backup "{filename}"?\nThis will overwrite current configuration.',
