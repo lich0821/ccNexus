@@ -1723,7 +1723,35 @@ func (a *App) testModelsAPI(apiUrl, apiKey, transformer string) (int, error) {
 	if resp.StatusCode != http.StatusOK {
 		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
-	return resp.StatusCode, nil
+
+	// Check if models list is not empty
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
+	// OpenAI/Claude format: {"data": [...]}
+	if data, ok := result["data"].([]interface{}); ok {
+		if len(data) == 0 {
+			return resp.StatusCode, fmt.Errorf("no models found")
+		}
+		return resp.StatusCode, nil
+	}
+
+	// Gemini format: {"models": [...]}
+	if models, ok := result["models"].([]interface{}); ok {
+		if len(models) == 0 {
+			return resp.StatusCode, fmt.Errorf("no models found")
+		}
+		return resp.StatusCode, nil
+	}
+
+	return resp.StatusCode, fmt.Errorf("unexpected response format")
 }
 
 func (a *App) testTokenCountAPI(apiUrl, apiKey string) (int, error) {
@@ -1756,6 +1784,22 @@ func (a *App) testTokenCountAPI(apiUrl, apiKey string) (int, error) {
 	if resp.StatusCode != http.StatusOK {
 		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
+
+	// Verify response contains input_tokens
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
+	if _, ok := result["input_tokens"]; !ok {
+		return resp.StatusCode, fmt.Errorf("invalid response: no input_tokens")
+	}
+
 	return resp.StatusCode, nil
 }
 
@@ -1779,6 +1823,18 @@ func (a *App) testBillingAPI(apiUrl, apiKey string) (int, error) {
 	if resp.StatusCode != http.StatusOK {
 		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
+
+	// Verify response is valid JSON (billing API returns grant info)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
 	return resp.StatusCode, nil
 }
 

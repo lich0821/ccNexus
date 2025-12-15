@@ -27,13 +27,8 @@ export function saveEndpointTestStatus(endpointName, success) {
     }
 }
 
-// 获取端点显示状态（结合请求统计和测试状态）
-export function getEndpointDisplayStatus(endpointName, stats) {
-    // 1. 有成功请求记录 → true
-    if (stats && stats.requests > 0 && stats.requests > stats.errors) {
-        return true;
-    }
-    // 2. localStorage 测试状态
+// 获取端点显示状态（只看测试状态，不看历史请求统计）
+export function getEndpointDisplayStatus(endpointName) {
     return getEndpointTestStatus(endpointName);
 }
 
@@ -157,8 +152,8 @@ export async function renderEndpoints(endpoints) {
         item.draggable = true;
         item.dataset.name = ep.name;
         item.dataset.index = index;
-        // 获取显示状态：结合请求统计和测试状态
-        const displayStatus = getEndpointDisplayStatus(ep.name, stats);
+        // 获取显示状态（只看测试状态）
+        const displayStatus = getEndpointDisplayStatus(ep.name);
         let testStatusIcon = '⚠️'; // 默认未测试
         if (displayStatus === true) {
             testStatusIcon = '✅';
@@ -423,9 +418,21 @@ export function initEndpointSuccessListener() {
     }
 }
 
+// 清除所有端点测试状态
+export function clearAllEndpointTestStatus() {
+    try {
+        localStorage.removeItem(ENDPOINT_TEST_STATUS_KEY);
+    } catch (error) {
+        console.error('Failed to clear endpoint test status:', error);
+    }
+}
+
 // 启动时零消耗检测所有端点
 export async function checkAllEndpointsOnStartup() {
     try {
+        // 先清除所有状态
+        clearAllEndpointTestStatus();
+
         const results = await testAllEndpointsZeroCost();
         for (const [name, status] of Object.entries(results)) {
             if (status === 'ok') {
@@ -433,7 +440,7 @@ export async function checkAllEndpointsOnStartup() {
             } else if (status === 'invalid_key') {
                 saveEndpointTestStatus(name, false);
             }
-            // 'unknown' 不更新，保持 ⚠️
+            // 'unknown' 保持未设置状态，显示 ⚠️
         }
         // 刷新端点列表显示
         if (window.loadConfig) {
