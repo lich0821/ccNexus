@@ -42,8 +42,12 @@ func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
 		psCmd := fmt.Sprintf(`Start-Process cmd.exe -ArgumentList '/k','cd /d "%s" && %s'`, dir, claudeCmd)
 		return exec.Command("powershell.exe", "-Command", psCmd)
 	case "powershell":
-		psCmd := fmt.Sprintf(`Start-Process powershell -ArgumentList '-NoExit','-Command','cd \"%s\"; %s'`, dir, claudeCmd)
-		return exec.Command("powershell", "-Command", psCmd)
+		shell := "powershell"
+		if _, err := exec.LookPath("pwsh.exe"); err == nil {
+			shell = "pwsh"
+		}
+		psCmd := fmt.Sprintf(`Start-Process %s -ArgumentList '-NoExit','-Command','cd \"%s\"; %s'`, shell, dir, claudeCmd)
+		return exec.Command(shell+".exe", "-Command", psCmd)
 	case "wt":
 		shell := "powershell.exe"
 		if _, err := exec.LookPath("pwsh.exe"); err == nil {
