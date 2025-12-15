@@ -4,7 +4,7 @@ import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
 import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
-import { renderEndpoints, toggleEndpointPanel } from './modules/endpoints.js'
+import { renderEndpoints, toggleEndpointPanel, initEndpointSuccessListener, checkAllEndpointsOnStartup } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
@@ -93,6 +93,12 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize tips
     initTips();
+
+    // Initialize endpoint success listener
+    initEndpointSuccessListener();
+
+    // Check all endpoints on startup (zero-cost methods only)
+    checkAllEndpointsOnStartup();
 
     // Refresh stats every 3 seconds
     setInterval(async () => {

@@ -137,7 +137,11 @@ export function SkipVersion(arg1:string):Promise<void>;
 
 export function SwitchToEndpoint(arg1:string):Promise<void>;
 
+export function TestAllEndpointsZeroCost():Promise<string>;
+
 export function TestEndpoint(arg1:number):Promise<string>;
+
+export function TestEndpointLight(arg1:number):Promise<string>;
 
 export function TestWebDAVConnection(arg1:string,arg2:string,arg3:string):Promise<string>;
 

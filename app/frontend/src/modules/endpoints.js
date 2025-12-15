@@ -1,7 +1,7 @@
 import { t } from '../i18n/index.js';
 import { formatTokens, maskApiKey } from '../utils/format.js';
 import { getEndpointStats } from './stats.js';
-import { toggleEndpoint } from './config.js';
+import { toggleEndpoint, testAllEndpointsZeroCost } from './config.js';
 
 const ENDPOINT_TEST_STATUS_KEY = 'ccNexus_endpointTestStatus';
 const CURRENT_ENDPOINT_KEY = 'ccNexus_currentEndpoint';
@@ -25,6 +25,16 @@ export function saveEndpointTestStatus(endpointName, success) {
     } catch (error) {
         console.error('Failed to save endpoint test status:', error);
     }
+}
+
+// 获取端点显示状态（结合请求统计和测试状态）
+export function getEndpointDisplayStatus(endpointName, stats) {
+    // 1. 有成功请求记录 → true
+    if (stats && stats.requests > 0 && stats.requests > stats.errors) {
+        return true;
+    }
+    // 2. localStorage 测试状态
+    return getEndpointTestStatus(endpointName);
 }
 
 // 获取保存的当前端点名称
@@ -147,12 +157,12 @@ export async function renderEndpoints(endpoints) {
         item.draggable = true;
         item.dataset.name = ep.name;
         item.dataset.index = index;
-        // 获取测试状态：true=成功显示✅，false=失败显示❌，undefined/unknown=未测试/未知显示⚠️
-        const testStatus = getEndpointTestStatus(ep.name);
+        // 获取显示状态：结合请求统计和测试状态
+        const displayStatus = getEndpointDisplayStatus(ep.name, stats);
         let testStatusIcon = '⚠️'; // 默认未测试
-        if (testStatus === true) {
+        if (displayStatus === true) {
             testStatusIcon = '✅';
-        } else if (testStatus === false) {
+        } else if (displayStatus === false) {
             testStatusIcon = '❌';
         }
         // 'unknown' 或 undefined 都显示 ⚠️
@@ -397,4 +407,39 @@ function setupDragAndDrop(item, container) {
 
         item.classList.remove('drag-over');
     });
+}
+
+// 初始化端点成功事件监听
+export function initEndpointSuccessListener() {
+    if (window.runtime && window.runtime.EventsOn) {
+        window.runtime.EventsOn('endpoint:success', (endpointName) => {
+            // 更新测试状态为成功
+            saveEndpointTestStatus(endpointName, true);
+            // 刷新端点列表显示
+            if (window.loadConfig) {
+                window.loadConfig();
+            }
+        });
+    }
+}
+
+// 启动时零消耗检测所有端点
+export async function checkAllEndpointsOnStartup() {
+    try {
+        const results = await testAllEndpointsZeroCost();
+        for (const [name, status] of Object.entries(results)) {
+            if (status === 'ok') {
+                saveEndpointTestStatus(name, true);
+            } else if (status === 'invalid_key') {
+                saveEndpointTestStatus(name, false);
+            }
+            // 'unknown' 不更新，保持 ⚠️
+        }
+        // 刷新端点列表显示
+        if (window.loadConfig) {
+            window.loadConfig();
+        }
+    } catch (error) {
+        console.error('Failed to check endpoints on startup:', error);
+    }
 }
