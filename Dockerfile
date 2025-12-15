@@ -18,7 +18,7 @@ COPY app/ ./
 # Ensure module graph is complete (generates go.sum)
 RUN go mod tidy
 
-# Build the headless API server
+# Build the headless API server (webui is embedded via go:embed)
 RUN CGO_ENABLED=1 GOOS=linux go build -ldflags="-s -w" -o ccnexus-server ./cmd/server
 
 # Runtime stage
