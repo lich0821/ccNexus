@@ -274,8 +274,16 @@ export function SwitchToEndpoint(arg1) {
   return window['go']['main']['App']['SwitchToEndpoint'](arg1);
 }
 
+export function TestAllEndpointsZeroCost() {
+  return window['go']['main']['App']['TestAllEndpointsZeroCost']();
+}
+
 export function TestEndpoint(arg1) {
   return window['go']['main']['App']['TestEndpoint'](arg1);
+}
+
+export function TestEndpointLight(arg1) {
+  return window['go']['main']['App']['TestEndpointLight'](arg1);
 }
 
 export function TestWebDAVConnection(arg1, arg2, arg3) {

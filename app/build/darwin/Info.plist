@@ -10,11 +10,11 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.ccnexus.app</string>
 	<key>CFBundleVersion</key>
-	<string>4.4.0</string>
+	<string>4.4.2</string>
 	<key>CFBundleGetInfoString</key>
 	<string>ccNexus</string>
 	<key>CFBundleShortVersionString</key>
-	<string>4.4.0</string>
+	<string>4.4.2</string>
 	<key>CFBundleIconFile</key>
 	<string>iconfile</string>
 	<key>LSUIElement</key>

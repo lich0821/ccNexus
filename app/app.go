@@ -166,6 +166,11 @@ func (a *App) startup(ctx context.Context) {
 	statsAdapter := storage.NewStatsStorageAdapter(sqliteStorage)
 	a.proxy = proxy.New(cfg, statsAdapter, deviceID)
 
+	// Set callback for endpoint success events
+	a.proxy.SetOnEndpointSuccess(func(endpointName string) {
+		runtime.EventsEmit(ctx, "endpoint:success", endpointName)
+	})
+
 	// Initialize system tray first
 	a.initTray()
 
@@ -1563,6 +1568,349 @@ func (a *App) TestEndpoint(index int) string {
 	data, _ := json.Marshal(result)
 	logger.Info("Test successful for %s", endpoint.Name)
 	return string(data)
+}
+
+// TestEndpointLight tests endpoint availability with minimal token consumption
+// Priority: 1. Models API, 2. Token count/billing API, 3. Minimal request
+func (a *App) TestEndpointLight(index int) string {
+	endpoints := a.config.GetEndpoints()
+
+	if index < 0 || index >= len(endpoints) {
+		return a.testResult(false, "invalid_index", "models", fmt.Sprintf("Invalid endpoint index: %d", index))
+	}
+
+	endpoint := endpoints[index]
+	logger.Info("Testing endpoint (light): %s (%s)", endpoint.Name, endpoint.APIUrl)
+
+	transformer := endpoint.Transformer
+	if transformer == "" {
+		transformer = "claude"
+	}
+
+	normalizedURL := normalizeAPIUrl(endpoint.APIUrl)
+	if !strings.HasPrefix(normalizedURL, "http://") && !strings.HasPrefix(normalizedURL, "https://") {
+		normalizedURL = "https://" + normalizedURL
+	}
+
+	// Step 1: Try models API
+	statusCode, err := a.testModelsAPI(normalizedURL, endpoint.APIKey, transformer)
+	if err == nil {
+		return a.testResult(true, "ok", "models", "Models API accessible")
+	}
+	if statusCode == 401 || statusCode == 403 {
+		return a.testResult(false, "invalid_key", "models", fmt.Sprintf("Authentication failed: HTTP %d", statusCode))
+	}
+
+	// Step 2: Try token count (Claude) or billing API (OpenAI)
+	if transformer == "claude" {
+		statusCode, err = a.testTokenCountAPI(normalizedURL, endpoint.APIKey)
+		if err == nil {
+			return a.testResult(true, "ok", "token_count", "Token count API accessible")
+		}
+		if statusCode == 401 || statusCode == 403 {
+			return a.testResult(false, "invalid_key", "token_count", fmt.Sprintf("Authentication failed: HTTP %d", statusCode))
+		}
+	} else if transformer == "openai" || transformer == "openai2" {
+		statusCode, err = a.testBillingAPI(normalizedURL, endpoint.APIKey)
+		if err == nil {
+			return a.testResult(true, "ok", "billing", "Billing API accessible")
+		}
+		if statusCode == 401 || statusCode == 403 {
+			return a.testResult(false, "invalid_key", "billing", fmt.Sprintf("Authentication failed: HTTP %d", statusCode))
+		}
+	}
+
+	// Step 3: Minimal request (fallback)
+	statusCode, err = a.testMinimalRequest(normalizedURL, endpoint.APIKey, transformer, endpoint.Model)
+	if err == nil {
+		return a.testResult(true, "ok", "minimal", "Minimal request successful")
+	}
+	if statusCode == 401 || statusCode == 403 {
+		return a.testResult(false, "invalid_key", "minimal", fmt.Sprintf("Authentication failed: HTTP %d", statusCode))
+	}
+	if statusCode == 405 {
+		return a.testResult(false, "unknown", "minimal", "Method not allowed (may work in real client)")
+	}
+
+	return a.testResult(false, "error", "minimal", fmt.Sprintf("Test failed: %v", err))
+}
+
+func (a *App) testResult(success bool, status, method, message string) string {
+	result := map[string]interface{}{
+		"success": success,
+		"status":  status,
+		"method":  method,
+		"message": message,
+	}
+	data, _ := json.Marshal(result)
+	return string(data)
+}
+
+// TestAllEndpointsZeroCost tests all endpoints using zero-cost methods only
+func (a *App) TestAllEndpointsZeroCost() string {
+	endpoints := a.config.GetEndpoints()
+	results := make(map[string]string)
+
+	for _, endpoint := range endpoints {
+		transformer := endpoint.Transformer
+		if transformer == "" {
+			transformer = "claude"
+		}
+
+		normalizedURL := normalizeAPIUrl(endpoint.APIUrl)
+		if !strings.HasPrefix(normalizedURL, "http://") && !strings.HasPrefix(normalizedURL, "https://") {
+			normalizedURL = "https://" + normalizedURL
+		}
+
+		status := "unknown"
+
+		// Try models API
+		statusCode, err := a.testModelsAPI(normalizedURL, endpoint.APIKey, transformer)
+		if err == nil {
+			status = "ok"
+		} else if statusCode == 401 || statusCode == 403 {
+			status = "invalid_key"
+		} else {
+			// Try token count (Claude) or billing API (OpenAI)
+			if transformer == "claude" {
+				statusCode, err = a.testTokenCountAPI(normalizedURL, endpoint.APIKey)
+				if err == nil {
+					status = "ok"
+				} else if statusCode == 401 || statusCode == 403 {
+					status = "invalid_key"
+				}
+			} else if transformer == "openai" || transformer == "openai2" {
+				statusCode, err = a.testBillingAPI(normalizedURL, endpoint.APIKey)
+				if err == nil {
+					status = "ok"
+				} else if statusCode == 401 || statusCode == 403 {
+					status = "invalid_key"
+				}
+			}
+		}
+
+		results[endpoint.Name] = status
+	}
+
+	data, _ := json.Marshal(results)
+	return string(data)
+}
+
+func (a *App) testModelsAPI(apiUrl, apiKey, transformer string) (int, error) {
+	var url string
+	if transformer == "gemini" {
+		url = fmt.Sprintf("%s/v1beta/models?key=%s", apiUrl, apiKey)
+	} else {
+		url = fmt.Sprintf("%s/v1/models", apiUrl)
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	if transformer != "gemini" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	// Check if models list is not empty
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
+	// OpenAI/Claude format: {"data": [...]}
+	if data, ok := result["data"].([]interface{}); ok {
+		if len(data) == 0 {
+			return resp.StatusCode, fmt.Errorf("no models found")
+		}
+		return resp.StatusCode, nil
+	}
+
+	// Gemini format: {"models": [...]}
+	if models, ok := result["models"].([]interface{}); ok {
+		if len(models) == 0 {
+			return resp.StatusCode, fmt.Errorf("no models found")
+		}
+		return resp.StatusCode, nil
+	}
+
+	return resp.StatusCode, fmt.Errorf("unexpected response format")
+}
+
+func (a *App) testTokenCountAPI(apiUrl, apiKey string) (int, error) {
+	url := fmt.Sprintf("%s/v1/messages/count_tokens", apiUrl)
+
+	body, _ := json.Marshal(map[string]interface{}{
+		"model": "claude-sonnet-4-5-20250929",
+		"messages": []map[string]string{
+			{"role": "user", "content": "Hi"},
+		},
+	})
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+	req.Header.Set("anthropic-beta", "token-counting-2024-11-01")
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	// Verify response contains input_tokens
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
+	if _, ok := result["input_tokens"]; !ok {
+		return resp.StatusCode, fmt.Errorf("invalid response: no input_tokens")
+	}
+
+	return resp.StatusCode, nil
+}
+
+func (a *App) testBillingAPI(apiUrl, apiKey string) (int, error) {
+	url := fmt.Sprintf("%s/v1/dashboard/billing/credit_grants", apiUrl)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	client := &http.Client{Timeout: 15 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+
+	// Verify response is valid JSON (billing API returns grant info)
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to read response")
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return resp.StatusCode, fmt.Errorf("failed to parse response")
+	}
+
+	return resp.StatusCode, nil
+}
+
+func (a *App) testMinimalRequest(apiUrl, apiKey, transformer, model string) (int, error) {
+	var url string
+	var body []byte
+
+	switch transformer {
+	case "claude":
+		url = fmt.Sprintf("%s/v1/messages", apiUrl)
+		if model == "" {
+			model = "claude-sonnet-4-5-20250929"
+		}
+		body, _ = json.Marshal(map[string]interface{}{
+			"model":      model,
+			"max_tokens": 1,
+			"messages":   []map[string]string{{"role": "user", "content": "Hi"}},
+		})
+	case "openai":
+		url = fmt.Sprintf("%s/v1/chat/completions", apiUrl)
+		if model == "" {
+			model = "gpt-4-turbo"
+		}
+		body, _ = json.Marshal(map[string]interface{}{
+			"model":      model,
+			"max_tokens": 1,
+			"messages":   []map[string]interface{}{{"role": "user", "content": "Hi"}},
+		})
+	case "openai2":
+		url = fmt.Sprintf("%s/v1/responses", apiUrl)
+		if model == "" {
+			model = "gpt-4-turbo"
+		}
+		body, _ = json.Marshal(map[string]interface{}{
+			"model": model,
+			"input": []map[string]interface{}{
+				{"type": "message", "role": "user", "content": []map[string]interface{}{{"type": "input_text", "text": "Hi"}}},
+			},
+		})
+	case "gemini":
+		if model == "" {
+			model = "gemini-2.0-flash"
+		}
+		url = fmt.Sprintf("%s/v1beta/models/%s:generateContent?key=%s", apiUrl, model, apiKey)
+		body, _ = json.Marshal(map[string]interface{}{
+			"contents":         []map[string]interface{}{{"parts": []map[string]string{{"text": "Hi"}}}},
+			"generationConfig": map[string]int{"maxOutputTokens": 1},
+		})
+	default:
+		return 0, fmt.Errorf("unsupported transformer: %s", transformer)
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
+	if err != nil {
+		return 0, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	if transformer == "claude" {
+		req.Header.Set("x-api-key", apiKey)
+		req.Header.Set("anthropic-version", "2023-06-01")
+	} else if transformer != "gemini" {
+		req.Header.Set("Authorization", "Bearer "+apiKey)
+	}
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return resp.StatusCode, fmt.Errorf("HTTP %d", resp.StatusCode)
+	}
+	return resp.StatusCode, nil
 }
 
 // FetchModels fetches available models from the API provider
