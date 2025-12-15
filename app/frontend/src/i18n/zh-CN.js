@@ -33,7 +33,10 @@ export default {
         switchFailed: '切换失败',
         reorderFailed: '排序失败',
         collapse: '收起',
-        expand: '展开'
+        expand: '展开',
+        testTipSuccess: '已测试连接成功',
+        testTipFailed: '测试连接失败或当前端点不支持接口测试',
+        testTipUnknown: '未测试或测试结果未知'
     },
     modal: {
         addEndpoint: '添加端点',
