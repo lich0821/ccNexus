@@ -79,7 +79,11 @@ function stopAutoCheck() {
 
 // Check for updates manually
 export async function checkForUpdates(silent = false) {
-    hideCheckUpdateBadge();
+    // 只有手动点击检查更新时才隐藏红点
+    if (!silent) {
+        hideCheckUpdateBadge();
+        hideAboutBadge();
+    }
     try {
         const resultStr = await CheckForUpdates();
         const result = JSON.parse(resultStr);
@@ -127,7 +131,6 @@ function showUpdateNotification(info) {
     }
 
     localStorage.removeItem('unviewedUpdateVersion');
-    hideAboutBadge();
 
     // 非Windows平台发送系统通知
     if (navigator.platform.indexOf('Win') === -1) {

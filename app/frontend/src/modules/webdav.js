@@ -637,6 +637,7 @@ async function promptFilename(message, defaultValue) {
     return new Promise((resolve) => {
         const content = `
             <div class="prompt-dialog">
+                <p><span class="required">*</span>${message}</p>
                 <div class="prompt-body">
                     <input type="text" id="promptInput" class="form-input" value="${defaultValue || ''}" />
                 </div>
@@ -661,10 +662,15 @@ async function promptFilename(message, defaultValue) {
         window.submitPrompt = () => {
             const input = document.getElementById('promptInput');
             const value = input?.value.trim();
+            if (!value) {
+                showNotification(t('webdav.filenameRequired'), 'warning');
+                input?.focus();
+                return;
+            }
             hideSubModal();
             delete window.submitPrompt;
             delete window.cancelPrompt;
-            resolve(value || null);
+            resolve(value);
         };
 
         window.cancelPrompt = () => {

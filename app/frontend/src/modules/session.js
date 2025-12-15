@@ -1,6 +1,7 @@
 import { GetSessions, DeleteSession, RenameSession, GetSessionData } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
+import { parseMarkdown } from '../utils/markdown.js';
 
 let currentProjectDir = '';
 let sessions = [];
@@ -285,7 +286,7 @@ function showPromptDialog(message, defaultValue = '') {
                 </div>
                 <div class="modal-body">
                     <div class="prompt-dialog">
-                        <p>${message}</p>
+                        <p><span class="required">*</span>${message}</p>
                         <div class="prompt-body">
                             <input type="text" id="promptInput" class="form-input" value="${defaultValue}" />
                         </div>
@@ -310,11 +311,18 @@ function showPromptDialog(message, defaultValue = '') {
             setTimeout(() => modal.remove(), 300);
         };
 
-        modal.querySelector('#promptOk').onclick = () => {
+        const handleSubmit = () => {
             const value = input.value.trim();
+            if (!value) {
+                showNotification(t('session.aliasRequired'), 'warning');
+                input.focus();
+                return;
+            }
             closeModal();
-            resolve(value || null);
+            resolve(value);
         };
+
+        modal.querySelector('#promptOk').onclick = handleSubmit;
         modal.querySelector('#promptCancel').onclick = () => {
             closeModal();
             resolve(null);
@@ -325,9 +333,7 @@ function showPromptDialog(message, defaultValue = '') {
         };
         input.onkeydown = (e) => {
             if (e.key === 'Enter') {
-                const value = input.value.trim();
-                closeModal();
-                resolve(value || null);
+                handleSubmit();
             }
         };
     });
@@ -391,12 +397,15 @@ function renderMessages(messages) {
     container.innerHTML = messages.map(msg => {
         const isUser = msg.type === 'user';
         const label = isUser ? t('session.user') : t('session.assistant');
-        const content = msg.content.trim().replace(/\n/g, '<br>');
+        // 使用 markdown 解析器处理内容
+        const content = parseMarkdown(msg.content.trim());
 
         return `
-            <div class="message-card ${isUser ? 'message-user' : 'message-assistant'}">
+            <div class="message-row ${isUser ? 'message-row-user' : 'message-row-assistant'}">
                 <div class="message-label">${label}</div>
-                <div class="message-content">${content}</div>
+                <div class="message-bubble ${isUser ? 'bubble-user' : 'bubble-assistant'}">
+                    <div class="message-content markdown-body">${content}</div>
+                </div>
             </div>
         `;
     }).join('');

@@ -1492,8 +1492,9 @@ func (a *App) TestEndpoint(index int) string {
 	// Check status code
 	if resp.StatusCode != http.StatusOK {
 		result := map[string]interface{}{
-			"success": false,
-			"message": fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(respBody)),
+			"success":    false,
+			"statusCode": resp.StatusCode,
+			"message":    fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(respBody)),
 		}
 		data, _ := json.Marshal(result)
 		logger.Error("Test failed for %s: HTTP %d", endpoint.Name, resp.StatusCode)

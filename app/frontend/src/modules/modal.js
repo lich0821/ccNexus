@@ -1,8 +1,7 @@
 import { t } from '../i18n/index.js';
 import { escapeHtml } from '../utils/format.js';
 import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, updatePort } from './config.js';
-import { setTestState, clearTestState } from './endpoints.js';
-import { hideAboutBadge } from './updater.js';
+import { setTestState, clearTestState, saveEndpointTestStatus } from './endpoints.js';
 
 let currentEditIndex = -1;
 
@@ -370,7 +369,6 @@ export function closePortModal() {
 // Welcome Modal
 export async function showWelcomeModal() {
     document.getElementById('welcomeModal').classList.add('active');
-    hideAboutBadge();
 
     try {
         const version = await window.go.main.App.GetVersion();
@@ -451,9 +449,29 @@ export function showWelcomeModalIfFirstTime() {
     }
 }
 
+// 判断是否为"不支持测试"的情况
+function isTestNotSupported(statusCode, message) {
+    // 可能不支持测试的 HTTP 状态码
+    const notSupportedCodes = [404, 405, 501];
+    // 认证错误关键词（如果包含这些，说明是真正的错误，不是不支持测试）
+    const authErrorKeywords = ['unauthorized', 'invalid key', 'invalid_api_key', 'authentication', 'api key', 'api_key', 'forbidden', 'permission', 'access denied'];
+
+    if (notSupportedCodes.includes(statusCode)) {
+        const lowerMsg = (message || '').toLowerCase();
+        // 排除明显的认证错误
+        const isAuthError = authErrorKeywords.some(kw => lowerMsg.includes(kw));
+        return !isAuthError;
+    }
+    return false;
+}
+
 // Test Result Modal
 export async function testEndpointHandler(index, buttonElement) {
     setTestState(buttonElement, index);
+
+    // 获取端点名称用于保存测试状态
+    const endpointItem = buttonElement.closest('.endpoint-item');
+    const endpointName = endpointItem ? endpointItem.dataset.name : null;
 
     try {
         buttonElement.disabled = true;
@@ -472,6 +490,24 @@ export async function testEndpointHandler(index, buttonElement) {
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;">${escapeHtml(result.message)}</div>
             `;
+            // 保存测试成功状态
+            if (endpointName) {
+                saveEndpointTestStatus(endpointName, true);
+            }
+        } else if (isTestNotSupported(result.statusCode, result.message)) {
+            // 可能不支持测试的情况，使用 toast 提示
+            showNotification(t('test.notSupportedMessage'), 'warning');
+            // 保存为未知状态
+            if (endpointName) {
+                saveEndpointTestStatus(endpointName, 'unknown');
+            }
+            // 清除测试状态，恢复按钮
+            clearTestState();
+            // 刷新端点列表以更新图标
+            if (window.loadConfig) {
+                window.loadConfig();
+            }
+            return; // 不显示测试结果弹窗
         } else {
             resultTitle.innerHTML = t('test.failedTitle');
             resultContent.innerHTML = `
@@ -480,9 +516,17 @@ export async function testEndpointHandler(index, buttonElement) {
                 </div>
                 <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line; word-break: break-all;"><strong>Error:</strong><br>${escapeHtml(result.message)}</div>
             `;
+            // 保存测试失败状态
+            if (endpointName) {
+                saveEndpointTestStatus(endpointName, false);
+            }
         }
 
         document.getElementById('testResultModal').classList.add('active');
+        // 刷新端点列表以更新图标
+        if (window.loadConfig) {
+            window.loadConfig();
+        }
 
     } catch (error) {
         console.error('Test failed:', error);
@@ -498,7 +542,16 @@ export async function testEndpointHandler(index, buttonElement) {
             <div style="padding: 15px; background: #f8f9fa; border-radius: 5px; font-family: monospace; white-space: pre-line;">${escapeHtml(error.toString())}</div>
         `;
 
+        // 保存测试失败状态（异常情况）
+        if (endpointName) {
+            saveEndpointTestStatus(endpointName, false);
+        }
+
         document.getElementById('testResultModal').classList.add('active');
+        // 刷新端点列表以更新图标
+        if (window.loadConfig) {
+            window.loadConfig();
+        }
     }
 }
 
