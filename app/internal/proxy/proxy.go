@@ -67,9 +67,21 @@ func (p *Proxy) SetOnEndpointSuccess(callback func(endpointName string)) {
 
 // Start starts the proxy server
 func (p *Proxy) Start() error {
+	return p.StartWithMux(nil)
+}
+
+// StartWithMux starts the proxy server with an optional custom mux
+func (p *Proxy) StartWithMux(customMux *http.ServeMux) error {
 	port := p.config.GetPort()
 
-	mux := http.NewServeMux()
+	var mux *http.ServeMux
+	if customMux != nil {
+		mux = customMux
+	} else {
+		mux = http.NewServeMux()
+	}
+
+	// Register proxy routes
 	mux.HandleFunc("/", p.handleProxy)
 	mux.HandleFunc("/v1/messages/count_tokens", p.handleCountTokens)
 	mux.HandleFunc("/health", p.handleHealth)
