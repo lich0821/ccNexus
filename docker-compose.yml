@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  ccnexus:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ccnexus
+    restart: unless-stopped
+    ports:
+      - "3021:3000"
+    volumes:
+      # Persistent data storage
+      - /data/ccnexus/:/data
+    environment:
+      - CCNEXUS_PORT=3000
+      - CCNEXUS_DATA_DIR=/data
+      - CCNEXUS_DB_PATH=/data/ccnexus.db
+      - TZ=Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    # Optional: resource limits
+    # deploy:
+    #   resources:
+    #     limits:
+    #       cpus: '1'
+    #       memory: 512M
+    #     reservations:
+    #       cpus: '0.25'
+    #       memory: 128M
+
+volumes:
+  ccnexus-data:
+    driver: local
