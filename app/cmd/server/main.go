@@ -64,9 +64,20 @@ func main() {
     statsAdapter := storage.NewStatsStorageAdapter(sqliteStorage)
     p := proxy.New(cfg, statsAdapter, deviceID)
 
+    // Create HTTP mux
+    mux := http.NewServeMux()
+
+    // Initialize and register Web UI (optional plugin)
+    // If webui package is not available, this will be skipped at compile time
+    if err := registerWebUI(mux, cfg, p, sqliteStorage); err != nil {
+        logger.Warn("Web UI not available: %v", err)
+    } else {
+        logger.Info("Web UI available at /ui/")
+    }
+
     errCh := make(chan error, 1)
     go func() {
-        errCh <- p.Start()
+        errCh <- p.StartWithMux(mux)
     }()
 
     logger.Info("ccNexus headless API listening on :%d (data dir: %s, db: %s)", cfg.GetPort(), dataDir, dbPath)

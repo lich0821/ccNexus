@@ -10,7 +10,6 @@ services:
     ports:
       - "3021:3000"
     volumes:
-      # Persistent data storage
       - /data/ccnexus/:/data
     environment:
       - CCNEXUS_PORT=3000
@@ -23,16 +22,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-    # Optional: resource limits
-    # deploy:
-    #   resources:
-    #     limits:
-    #       cpus: '1'
-    #       memory: 512M
-    #     reservations:
-    #       cpus: '0.25'
-    #       memory: 128M
-
-volumes:
-  ccnexus-data:
-    driver: local
