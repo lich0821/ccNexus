@@ -8,7 +8,7 @@ import (
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/proxy"
 	"github.com/lich0821/ccNexus/internal/storage"
-	"github.com/lich0821/ccNexus/cmd/webui/api"
+	"github.com/lich0821/ccNexus/cmd/server/webui/api"
 )
 
 //go:embed ui
