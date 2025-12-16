@@ -13,7 +13,20 @@ func LaunchTerminal(terminalID, dir string) error {
 
 // LaunchTerminalWithSession launches a terminal with optional session resume
 func LaunchTerminalWithSession(terminalID, dir, sessionID string) error {
-	cmd := buildLaunchCommand(terminalID, dir, sessionID)
+	// Find the terminal info to get the detected path
+	terminals := DetectTerminals()
+	var termInfo *TerminalInfo
+	for i := range terminals {
+		if terminals[i].ID == terminalID {
+			termInfo = &terminals[i]
+			break
+		}
+	}
+	if termInfo == nil {
+		return fmt.Errorf("terminal not found: %s", terminalID)
+	}
+
+	cmd := buildLaunchCommand(*termInfo, dir, sessionID)
 	if cmd == nil {
 		return fmt.Errorf("unsupported terminal: %s", terminalID)
 	}
@@ -33,10 +46,32 @@ func getClaudeCommand(sessionID string) string {
 	return cmd
 }
 
-func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
+// getExecutablePath returns the executable path for a terminal
+// For macOS .app bundles, extracts the executable from Contents/MacOS/
+func getExecutablePath(termInfo TerminalInfo) string {
+	path := termInfo.Path
+	// Check if it's a macOS .app bundle
+	if len(path) > 4 && path[len(path)-4:] == ".app" {
+		// Extract app name from path (e.g., "/Applications/Ghostty.app" -> "ghostty")
+		appName := termInfo.ID
+		// Map terminal IDs to their actual executable names
+		execNames := map[string]string{
+			"ghostty":   "ghostty",
+			"alacritty": "alacritty",
+			"kitty":     "kitty",
+			"wezterm":   "wezterm-gui",
+		}
+		if execName, ok := execNames[appName]; ok {
+			return path + "/Contents/MacOS/" + execName
+		}
+	}
+	return path
+}
+
+func buildLaunchCommand(termInfo TerminalInfo, dir, sessionID string) *exec.Cmd {
 	claudeCmd := getClaudeCommand(sessionID)
 
-	switch terminalID {
+	switch termInfo.ID {
 	// Windows terminals
 	case "cmd":
 		psCmd := fmt.Sprintf(`Start-Process cmd.exe -ArgumentList '/k','cd /d "%s" && %s'`, dir, claudeCmd)
@@ -55,18 +90,10 @@ func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
 		}
 		return exec.Command("wt.exe", "-d", dir, shell, "-NoExit", "-Command", claudeCmd)
 	case "gitbash":
-		terminals := detectWindowsTerminals()
-		var gitBashPath string
-		for _, t := range terminals {
-			if t.ID == "gitbash" {
-				gitBashPath = t.Path
-				break
-			}
-		}
-		if gitBashPath == "" {
+		if termInfo.Path == "" {
 			return nil
 		}
-		return exec.Command(gitBashPath, "--cd="+dir, "-i", "-c", claudeCmd+"; exec bash")
+		return exec.Command(termInfo.Path, "--cd="+dir, "-i", "-c", claudeCmd+"; exec bash")
 	// Mac terminals
 	case "terminal":
 		script1 := `tell application "Terminal" to activate`
@@ -76,13 +103,17 @@ func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
 		script := fmt.Sprintf(`tell application "iTerm" to create window with default profile command "cd '%s' && %s"`, dir, claudeCmd)
 		return exec.Command("osascript", "-e", script)
 	case "ghostty":
-		return exec.Command("ghostty", "-e", "bash", "-c", fmt.Sprintf("cd '%s' && %s; exec $SHELL", dir, claudeCmd))
+		execPath := getExecutablePath(termInfo)
+		return exec.Command(execPath, "-e", "bash", "-c", fmt.Sprintf("cd '%s' && %s; exec $SHELL", dir, claudeCmd))
 	case "alacritty":
-		return exec.Command("alacritty", "--working-directory", dir, "-e", "bash", "-c", claudeCmd+"; exec bash")
+		execPath := getExecutablePath(termInfo)
+		return exec.Command(execPath, "--working-directory", dir, "-e", "bash", "-c", claudeCmd+"; exec bash")
 	case "kitty":
-		return exec.Command("kitty", "--directory", dir, "bash", "-c", claudeCmd+"; exec bash")
+		execPath := getExecutablePath(termInfo)
+		return exec.Command(execPath, "--directory", dir, "bash", "-c", claudeCmd+"; exec bash")
 	case "wezterm":
-		return exec.Command("wezterm", "start", "--cwd", dir, "--", "bash", "-c", claudeCmd+"; exec bash")
+		execPath := getExecutablePath(termInfo)
+		return exec.Command(execPath, "start", "--cwd", dir, "--", "bash", "-c", claudeCmd+"; exec bash")
 	default:
 		return nil
 	}
