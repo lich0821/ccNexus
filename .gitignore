@@ -3,16 +3,16 @@
 !.github/
 
 # Build artifacts
-app/build/*
-!app/build/appicon.png
-!app/build/appicon.svg
-!app/build/darwin/
-app/build/darwin/*
-!app/build/darwin/Info.plist
-!app/build/windows/
-app/build/windows/*
-!app/build/windows/icon.ico
-!app/build/windows/wails.exe.manifest
+cmd/desktop/build/*
+!cmd/desktop/build/appicon.png
+!cmd/desktop/build/appicon.svg
+!cmd/desktop/build/darwin/
+cmd/desktop/build/darwin/*
+!cmd/desktop/build/darwin/Info.plist
+!cmd/desktop/build/windows/
+cmd/desktop/build/windows/*
+!cmd/desktop/build/windows/icon.ico
+!cmd/desktop/build/windows/wails.exe.manifest
 
 dist/
 *.exe

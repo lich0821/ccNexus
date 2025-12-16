@@ -14,7 +14,7 @@ import (
     "github.com/lich0821/ccNexus/internal/proxy"
     "github.com/lich0821/ccNexus/internal/storage"
     "github.com/lich0821/ccNexus/internal/tray"
-    "github.com/lich0821/ccNexus/service"
+    "github.com/lich0821/ccNexus/internal/service"
     "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
