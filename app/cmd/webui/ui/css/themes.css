@@ -1,0 +1,43 @@
+/* Dark theme */
+body.dark-theme {
+    --primary-color: #60a5fa;
+    --primary-hover: #3b82f6;
+    --success-color: #34d399;
+    --danger-color: #f87171;
+    --warning-color: #fbbf24;
+    --bg-primary: #1f2937;
+    --bg-secondary: #111827;
+    --bg-tertiary: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --border-color: #374151;
+    --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark theme badge adjustments */
+body.dark-theme .badge-success {
+    background-color: #064e3b;
+    color: #6ee7b7;
+}
+
+body.dark-theme .badge-danger {
+    background-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+body.dark-theme .badge-warning {
+    background-color: #78350f;
+    color: #fcd34d;
+}
+
+body.dark-theme .badge-info {
+    background-color: #1e3a8a;
+    color: #93c5fd;
+}
+
+/* Dark theme code block */
+body.dark-theme .code-block {
+    background-color: #0f172a;
+    color: #cbd5e1;
+}
