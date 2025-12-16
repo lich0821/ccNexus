@@ -9,7 +9,7 @@
 [![Go 版本](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![Wails](https://img.shields.io/badge/Wails-v2-blue)](https://wails.io/)
 
-[English](README_EN.md) | [简体中文](README.md)
+[English](docs/README_EN.md) | [简体中文](README.md)
 
 </div>
 
@@ -20,6 +20,7 @@
 - **实时统计**：请求数、错误数、Token 用量监控
 - **WebDAV 同步**：多设备间同步配置和数据
 - **跨平台**：Windows、macOS、Linux
+- **[Docker](docs/README_DOCKER.md)**：纯后端 HTTP 服务，并提供容器化运行
 
 <table>
   <tr>

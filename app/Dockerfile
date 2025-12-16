@@ -7,13 +7,13 @@ RUN apk add --no-cache gcc musl-dev sqlite-dev
 WORKDIR /app
 
 # Copy module definition first for caching
-COPY app/go.mod ./
+COPY go.mod ./
 
 # Download dependencies (go.sum will be generated after tidy)
 RUN go mod download
 
 # Copy source code
-COPY app/ ./
+COPY . ./
 
 # Ensure module graph is complete (generates go.sum)
 RUN go mod tidy

@@ -1,7 +1,7 @@
 <div align="center">
 
 <p align="center">
-  <img src="docs/images/ccNexus.svg" alt="Claude Code & Codex CLI 智能端点轮换代理" width="720" />
+  <img src="images/ccNexus.svg" alt="Claude Code & Codex CLI 智能端点轮换代理" width="720" />
 </p>
 
 [![Build Status](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
@@ -9,7 +9,7 @@
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
 [![Wails](https://img.shields.io/badge/Wails-v2-blue)](https://wails.io/)
 
-[English](README_EN.md) | [简体中文](README.md)
+[English](README_EN.md) | [简体中文](../README.md)
 
 </div>
 
@@ -23,8 +23,8 @@
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/EN-Light.png" alt="Light Theme" width="400"></td>
-    <td align="center"><img src="docs/images/EN-Dark.png" alt="Dark Theme" width="400"></td>
+    <td align="center"><img src="images/EN-Light.png" alt="Light Theme" width="400"></td>
+    <td align="center"><img src="images/EN-Dark.png" alt="Dark Theme" width="400"></td>
   </tr>
 </table>
 
@@ -79,9 +79,9 @@ wire_api = "responses"  # or "chat"
 
 <table>
   <tr>
-    <td align="center"><img src="app/frontend/public/chat.jpg" alt="WeChat Group" width="200"></td>
-    <td align="center"><img src="app/frontend/public/WeChat.jpg" alt="WeChat Official Account" width="200"></td>
-    <td align="center"><img src="app/frontend/public//ME.png" alt="Personal WeChat" width="200"></td>
+    <td align="center"><img src="../app/frontend/public/chat.jpg" alt="WeChat Group" width="200"></td>
+    <td align="center"><img src="../app/frontend/public/WeChat.jpg" alt="WeChat Official Account" width="200"></td>
+    <td align="center"><img src="../app/frontend/public//ME.png" alt="Personal WeChat" width="200"></td>
   </tr>
   <tr>
     <td align="center">Join group for feedback</td>
@@ -92,9 +92,9 @@ wire_api = "responses"  # or "chat"
 
 ## Documentation
 
-- [Configuration Guide](docs/configuration_en.md)
-- [Development Guide](docs/development_en.md)
-- [FAQ](docs/FAQ_en.md)
+- [Configuration Guide](configuration_en.md)
+- [Development Guide](development_en.md)
+- [FAQ](FAQ_en.md)
 
 ## License
 

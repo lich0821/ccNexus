@@ -7,11 +7,11 @@
 	- 若存储中无任何 endpoint，会自动写入默认示例 endpoint，避免 “no endpoints configured” 直接退出。请尽快替换为真实 API 配置。
 
 2. 镜像与构建
-	- [Dockerfile](Dockerfile) 仅构建后端二进制 `ccnexus-server`，移除前端构建。暴露端口仅 `3000`（HTTP API）。
+	- [Dockerfile](../app/Dockerfile) 仅构建后端二进制 `ccnexus-server`，移除前端构建。暴露端口仅 `3000`（HTTP API）。
 	- 构建阶段执行 `go mod tidy` 以生成 `go.sum`，并启用 CGO 支持 SQLite。
 
 3. 运行与编排
-	- [docker-compose.yml](docker-compose.yml) 仅映射 API 端口（示例 `3021:3000`），挂载数据卷 `/data`，健康检查指向 `/health`。
+	- [docker-compose.yml](../app/docker-compose.yml) 仅映射 API 端口（示例 `3021:3000`），挂载数据卷 `/data`，健康检查指向 `/health`。
 	- 默认环境：`CCNEXUS_DATA_DIR=/data`，`CCNEXUS_DB_PATH=/data/ccnexus.db`，`CCNEXUS_PORT=3000`。
 
 4. 使用快速指引
