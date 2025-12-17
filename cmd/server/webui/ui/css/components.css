@@ -116,6 +116,11 @@
     color: #1e40af;
 }
 
+.badge-primary {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
 /* Status indicators */
 .status-indicator {
     display: inline-block;
@@ -394,4 +399,29 @@
 
 .toggle-switch input:checked + .toggle-slider:before {
     transform: translateX(20px);
+}
+
+/* Copy button */
+.btn-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    transition: color 0.2s;
+    margin-left: 0.5rem;
+}
+
+.btn-icon:hover {
+    color: var(--primary-color);
+}
+
+/* Drag and drop styles */
+.table tbody tr[draggable="true"] {
+    transition: opacity 0.2s, border-top 0.2s;
+}
+
+.table tbody tr[draggable="true"]:active {
+    cursor: grabbing;
 }
