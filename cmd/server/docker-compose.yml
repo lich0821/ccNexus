@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   ccnexus:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: cmd/server/Dockerfile
     container_name: ccnexus
     restart: unless-stopped
     ports:

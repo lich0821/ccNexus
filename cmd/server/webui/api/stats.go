@@ -14,8 +14,26 @@ func (h *Handler) handleStatsSummary(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stats := h.proxy.GetStats()
-	WriteSuccess(w, stats)
+	totalRequests, endpointStats := h.proxy.GetStats().GetStats()
+
+	// Calculate totals
+	totalErrors := 0
+	var totalInputTokens int64 = 0
+	var totalOutputTokens int64 = 0
+
+	for _, stats := range endpointStats {
+		totalErrors += stats.Errors
+		totalInputTokens += int64(stats.InputTokens)
+		totalOutputTokens += int64(stats.OutputTokens)
+	}
+
+	WriteSuccess(w, map[string]interface{}{
+		"TotalRequests":     totalRequests,
+		"TotalErrors":       totalErrors,
+		"TotalInputTokens":  totalInputTokens,
+		"TotalOutputTokens": totalOutputTokens,
+		"Endpoints":         endpointStats,
+	})
 }
 
 // handleStatsDaily returns today's statistics
