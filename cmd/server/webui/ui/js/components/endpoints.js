@@ -7,6 +7,8 @@ class Endpoints {
     constructor() {
         this.container = document.getElementById('view-container');
         this.endpoints = [];
+        this.currentEndpoint = null;
+        this.draggedIndex = null;
     }
 
     async render() {
@@ -36,6 +38,16 @@ class Endpoints {
         try {
             const data = await api.getEndpoints();
             this.endpoints = data.endpoints || [];
+
+            // Get current endpoint
+            try {
+                const currentData = await api.getCurrentEndpoint();
+                this.currentEndpoint = currentData.name || null;
+            } catch (error) {
+                console.error('Failed to get current endpoint:', error);
+                this.currentEndpoint = null;
+            }
+
             this.renderTable();
         } catch (error) {
             notifications.error('Failed to load endpoints: ' + error.message);
@@ -61,6 +73,7 @@ class Endpoints {
                 <table class="table">
                     <thead>
                         <tr>
+                            <th style="width: 30px;"></th>
                             <th>Name</th>
                             <th>API URL</th>
                             <th>Transformer</th>
@@ -69,8 +82,8 @@ class Endpoints {
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${this.endpoints.map(ep => this.renderEndpointRow(ep)).join('')}
+                    <tbody id="endpoints-tbody">
+                        ${this.endpoints.map((ep, index) => this.renderEndpointRow(ep, index)).join('')}
                     </tbody>
                 </table>
             </div>
@@ -78,18 +91,47 @@ class Endpoints {
 
         // Attach event listeners
         this.attachEventListeners();
+        this.attachDragListeners();
     }
 
-    renderEndpointRow(ep) {
+    renderEndpointRow(ep, index) {
+        const isCurrentEndpoint = ep.name === this.currentEndpoint;
+        const testStatus = this.getTestStatus(ep.name);
+        let testStatusIcon = '⚠️';
+        let testStatusTitle = 'Not tested';
+
+        if (testStatus === true) {
+            testStatusIcon = '✅';
+            testStatusTitle = 'Test passed';
+        } else if (testStatus === false) {
+            testStatusIcon = '❌';
+            testStatusTitle = 'Test failed';
+        }
+
         return `
-            <tr data-endpoint="${this.escapeHtml(ep.name)}">
-                <td><strong>${this.escapeHtml(ep.name)}</strong></td>
-                <td><code>${this.escapeHtml(ep.apiUrl)}</code></td>
+            <tr data-endpoint="${this.escapeHtml(ep.name)}" data-index="${index}" draggable="true" style="cursor: move;">
+                <td style="cursor: grab; text-align: center;">⋮⋮</td>
+                <td>
+                    <strong>${this.escapeHtml(ep.name)}</strong>
+                    <span title="${testStatusTitle}" style="margin-left: 5px;">${testStatusIcon}</span>
+                    ${isCurrentEndpoint ? '<span class="badge badge-primary" style="margin-left: 5px;">Current</span>' : ''}
+                </td>
+                <td>
+                    <code style="font-size: 12px;">${this.escapeHtml(ep.apiUrl)}</code>
+                    <button class="btn-icon copy-btn" data-copy="${this.escapeHtml(ep.apiUrl)}" title="Copy URL">
+                        📋
+                    </button>
+                </td>
                 <td>${getTransformerLabel(ep.transformer)}</td>
                 <td>${this.escapeHtml(ep.model || '-')}</td>
                 <td>${getStatusBadge(ep.enabled)}</td>
                 <td>
                     <div class="flex gap-2">
+                        ${ep.enabled && !isCurrentEndpoint ? `
+                            <button class="btn btn-sm btn-secondary switch-btn" data-name="${this.escapeHtml(ep.name)}" title="Switch to this endpoint">
+                                Switch
+                            </button>
+                        ` : ''}
                         <button class="btn btn-sm btn-secondary test-btn" data-name="${this.escapeHtml(ep.name)}">
                             Test
                         </button>
@@ -129,6 +171,110 @@ class Endpoints {
         document.querySelectorAll('.delete-btn').forEach(btn => {
             btn.addEventListener('click', () => this.deleteEndpoint(btn.dataset.name));
         });
+
+        // Switch buttons
+        document.querySelectorAll('.switch-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.switchEndpoint(btn.dataset.name));
+        });
+
+        // Copy buttons
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.copyToClipboard(btn.dataset.copy, btn));
+        });
+    }
+
+    attachDragListeners() {
+        const rows = document.querySelectorAll('#endpoints-tbody tr[draggable="true"]');
+
+        rows.forEach(row => {
+            row.addEventListener('dragstart', (e) => {
+                this.draggedIndex = parseInt(row.dataset.index);
+                row.style.opacity = '0.5';
+            });
+
+            row.addEventListener('dragend', (e) => {
+                row.style.opacity = '1';
+            });
+
+            row.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                row.style.borderTop = '2px solid #3b82f6';
+            });
+
+            row.addEventListener('dragleave', (e) => {
+                row.style.borderTop = '';
+            });
+
+            row.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                row.style.borderTop = '';
+
+                const dropIndex = parseInt(row.dataset.index);
+                if (this.draggedIndex !== null && this.draggedIndex !== dropIndex) {
+                    await this.reorderEndpoints(this.draggedIndex, dropIndex);
+                }
+                this.draggedIndex = null;
+            });
+        });
+    }
+
+    async reorderEndpoints(fromIndex, toIndex) {
+        try {
+            // Reorder the array
+            const [movedItem] = this.endpoints.splice(fromIndex, 1);
+            this.endpoints.splice(toIndex, 0, movedItem);
+
+            // Send new order to backend
+            const names = this.endpoints.map(ep => ep.name);
+            await api.reorderEndpoints(names);
+
+            notifications.success('Endpoints reordered successfully');
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to reorder endpoints: ' + error.message);
+            await this.loadEndpoints(); // Reload to reset order
+        }
+    }
+
+    async switchEndpoint(name) {
+        try {
+            await api.switchEndpoint(name);
+            notifications.success(`Switched to endpoint: ${name}`);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to switch endpoint: ' + error.message);
+        }
+    }
+
+    copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.textContent;
+            button.textContent = '✓';
+            setTimeout(() => {
+                button.textContent = originalText;
+            }, 1000);
+        }).catch(err => {
+            notifications.error('Failed to copy to clipboard');
+        });
+    }
+
+    getTestStatus(endpointName) {
+        try {
+            const statusMap = JSON.parse(localStorage.getItem('ccNexus_endpointTestStatus') || '{}');
+            return statusMap[endpointName];
+        } catch {
+            return undefined;
+        }
+    }
+
+    saveTestStatus(endpointName, success) {
+        try {
+            const statusMap = JSON.parse(localStorage.getItem('ccNexus_endpointTestStatus') || '{}');
+            statusMap[endpointName] = success;
+            localStorage.setItem('ccNexus_endpointTestStatus', JSON.stringify(statusMap));
+        } catch (error) {
+            console.error('Failed to save test status:', error);
+        }
     }
 
     showAddModal() {
@@ -180,7 +326,13 @@ class Endpoints {
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Model</label>
-                                <input type="text" class="form-input" name="model" value="${endpoint ? this.escapeHtml(endpoint.model || '') : ''}" placeholder="gpt-4, gemini-pro, etc.">
+                                <div style="display: flex; gap: 8px;">
+                                    <input type="text" class="form-input" name="model" id="model-input" value="${endpoint ? this.escapeHtml(endpoint.model || '') : ''}" placeholder="gpt-4, gemini-pro, etc." style="flex: 1;">
+                                    <button type="button" class="btn btn-secondary" id="fetch-models-btn" style="white-space: nowrap;">
+                                        Fetch Models
+                                    </button>
+                                </div>
+                                <small class="text-muted">Click "Fetch Models" to load available models from the API</small>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Remark</label>
@@ -205,6 +357,101 @@ class Endpoints {
         document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
         document.getElementById('cancel-btn').addEventListener('click', () => this.closeModal());
         document.getElementById('save-btn').addEventListener('click', () => this.saveEndpoint(isEdit, endpoint?.name));
+        document.getElementById('fetch-models-btn').addEventListener('click', () => this.fetchModels());
+    }
+
+    async fetchModels() {
+        const apiUrlInput = document.querySelector('input[name="apiUrl"]');
+        const apiKeyInput = document.querySelector('input[name="apiKey"]');
+        const transformerSelect = document.querySelector('select[name="transformer"]');
+        const modelInput = document.getElementById('model-input');
+        const fetchBtn = document.getElementById('fetch-models-btn');
+
+        const apiUrl = apiUrlInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+        const transformer = transformerSelect.value;
+
+        if (!apiUrl || !apiKey || apiKey === '****') {
+            notifications.error('Please enter API URL and API Key first');
+            return;
+        }
+
+        try {
+            fetchBtn.disabled = true;
+            fetchBtn.textContent = 'Fetching...';
+
+            const result = await api.fetchModels(apiUrl, apiKey, transformer);
+
+            if (result.models && result.models.length > 0) {
+                // Show model selection modal
+                this.showModelSelectionModal(result.models, modelInput);
+            } else {
+                notifications.info('No models found');
+            }
+        } catch (error) {
+            notifications.error('Failed to fetch models: ' + error.message);
+        } finally {
+            fetchBtn.disabled = false;
+            fetchBtn.textContent = 'Fetch Models';
+        }
+    }
+
+    showModelSelectionModal(models, modelInput) {
+        const modalContainer = document.getElementById('modal-container');
+        const currentModal = modalContainer.querySelector('.modal');
+
+        // Create a second modal overlay
+        const modelModal = document.createElement('div');
+        modelModal.className = 'modal-overlay';
+        modelModal.style.zIndex = '1001';
+        modelModal.innerHTML = `
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h3 class="modal-title">Select Model</h3>
+                    <button class="modal-close" id="close-model-modal">×</button>
+                </div>
+                <div class="modal-body">
+                    <div style="max-height: 400px; overflow-y: auto;">
+                        ${models.map(model => `
+                            <div class="model-item" style="padding: 10px; border-bottom: 1px solid #e5e7eb; cursor: pointer;" data-model="${this.escapeHtml(model)}">
+                                <strong>${this.escapeHtml(model)}</strong>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="cancel-model-btn">Cancel</button>
+                </div>
+            </div>
+        `;
+
+        modalContainer.appendChild(modelModal);
+
+        // Attach event listeners
+        document.getElementById('close-model-modal').addEventListener('click', () => {
+            modelModal.remove();
+        });
+
+        document.getElementById('cancel-model-btn').addEventListener('click', () => {
+            modelModal.remove();
+        });
+
+        document.querySelectorAll('.model-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const selectedModel = item.dataset.model;
+                modelInput.value = selectedModel;
+                notifications.success(`Model selected: ${selectedModel}`);
+                modelModal.remove();
+            });
+
+            item.addEventListener('mouseenter', () => {
+                item.style.backgroundColor = '#f3f4f6';
+            });
+
+            item.addEventListener('mouseleave', () => {
+                item.style.backgroundColor = '';
+            });
+        });
     }
 
     async saveEndpoint(isEdit, originalName) {
@@ -259,13 +506,19 @@ class Endpoints {
             const result = await api.testEndpoint(name);
 
             if (result.success) {
+                this.saveTestStatus(name, true);
                 notifications.success(`Test successful! Latency: ${result.latency}ms`);
                 this.showTestResultModal(name, result);
+                await this.loadEndpoints(); // Refresh to show test status
             } else {
+                this.saveTestStatus(name, false);
                 notifications.error(`Test failed: ${result.error}`);
+                await this.loadEndpoints(); // Refresh to show test status
             }
         } catch (error) {
+            this.saveTestStatus(name, false);
             notifications.error('Test failed: ' + error.message);
+            await this.loadEndpoints(); // Refresh to show test status
         }
     }
 

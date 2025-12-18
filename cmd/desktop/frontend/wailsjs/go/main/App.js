@@ -106,6 +106,10 @@ export function GetLogsByLevel(arg1) {
   return window['go']['main']['App']['GetLogsByLevel'](arg1);
 }
 
+export function GetProxyURL() {
+  return window['go']['main']['App']['GetProxyURL']();
+}
+
 export function GetSessionData(arg1, arg2) {
   return window['go']['main']['App']['GetSessionData'](arg1, arg2);
 }
@@ -248,6 +252,10 @@ export function SetLanguage(arg1) {
 
 export function SetLogLevel(arg1) {
   return window['go']['main']['App']['SetLogLevel'](arg1);
+}
+
+export function SetProxyURL(arg1) {
+  return window['go']['main']['App']['SetProxyURL'](arg1);
 }
 
 export function SetTheme(arg1) {

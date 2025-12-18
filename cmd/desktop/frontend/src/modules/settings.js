@@ -190,6 +190,13 @@ async function loadCurrentSettings() {
                 }
             };
         }
+
+        // Load proxy URL
+        const proxyUrl = await window.go.main.App.GetProxyURL();
+        const proxyInput = document.getElementById('settingsProxyUrl');
+        if (proxyInput) {
+            proxyInput.value = proxyUrl || '';
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -275,9 +282,13 @@ export async function saveSettings() {
         const language = document.getElementById('settingsLanguage').value;
         const theme = document.getElementById('settingsTheme').value;
         const themeAuto = document.getElementById('settingsThemeAuto').checked;
+        const proxyUrl = document.getElementById('settingsProxyUrl').value.trim();
 
         // Save close window behavior
         await window.go.main.App.SetCloseWindowBehavior(closeWindowBehavior);
+
+        // Save proxy URL
+        await window.go.main.App.SetProxyURL(proxyUrl);
 
         // Get current config
         const configStr = await window.go.main.App.GetConfig();

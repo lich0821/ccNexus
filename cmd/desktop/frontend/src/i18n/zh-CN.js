@@ -168,6 +168,10 @@ export default {
             minimize: '最小化到托盘',
             ask: '每次询问'
         },
+        proxy: '代理设置',
+        proxyUrl: '代理地址',
+        proxyUrlPlaceholder: '例如：http://127.0.0.1:7890 或 socks5://127.0.0.1:1080',
+        proxyHelp: '配置 HTTP/SOCKS5 代理，留空则直连',
         languageHelp: '选择界面显示语言',
         save: '保存',
         cancel: '取消',

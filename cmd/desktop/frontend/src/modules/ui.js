@@ -614,6 +614,13 @@ export function initUI() {
                             ${t('update.autoCheckHelp')}
                         </p>
                     </div>
+                    <div class="form-group">
+                        <label>${t('settings.proxy')}</label>
+                        <input type="text" id="settingsProxyUrl" placeholder="${t('settings.proxyUrlPlaceholder')}">
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.proxyHelp')}
+                        </p>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeSettingsModal()">${t('settings.cancel')}</button>
