@@ -42,6 +42,11 @@ type TerminalConfig struct {
 	ProjectDirs      []string `json:"projectDirs"`      // Project directories
 }
 
+// ProxyConfig represents HTTP proxy configuration
+type ProxyConfig struct {
+	URL string `json:"url"` // Proxy URL, e.g., http://127.0.0.1:7890 or socks5://127.0.0.1:1080
+}
+
 // Config represents the application configuration
 type Config struct {
 	Port                int           `json:"port"`
@@ -58,6 +63,7 @@ type Config struct {
 	WebDAV              *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
 	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
 	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
+	Proxy               *ProxyConfig    `json:"proxy,omitempty"`               // HTTP proxy config
 	mu                  sync.RWMutex
 }
 
@@ -361,6 +367,20 @@ func (c *Config) UpdateTerminal(terminal *TerminalConfig) {
 	c.Terminal = terminal
 }
 
+// GetProxy returns the Proxy configuration (thread-safe)
+func (c *Config) GetProxy() *ProxyConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.Proxy
+}
+
+// UpdateProxy updates the Proxy configuration (thread-safe)
+func (c *Config) UpdateProxy(proxy *ProxyConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Proxy = proxy
+}
+
 // StorageAdapter defines the interface needed for loading/saving config
 type StorageAdapter interface {
 	GetEndpoints() ([]StorageEndpoint, error)
@@ -541,6 +561,11 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		}
 	}
 
+	// Load Proxy config
+	if proxyURL, err := storage.GetConfig("proxy_url"); err == nil && proxyURL != "" {
+		config.Proxy = &ProxyConfig{URL: proxyURL}
+	}
+
 	return config, nil
 }
 
@@ -627,6 +652,13 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		if dirsJSON, err := json.Marshal(c.Terminal.ProjectDirs); err == nil {
 			storage.SetConfig("terminal_projectDirs", string(dirsJSON))
 		}
+	}
+
+	// Save Proxy config
+	if c.Proxy != nil {
+		storage.SetConfig("proxy_url", c.Proxy.URL)
+	} else {
+		storage.SetConfig("proxy_url", "")
 	}
 
 	return nil

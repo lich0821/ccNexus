@@ -15,6 +15,17 @@ import (
     "github.com/lich0821/ccNexus/internal/storage"
 )
 
+// createHTTPClient creates an HTTP client with optional proxy support
+func (e *EndpointService) createHTTPClient(timeout time.Duration) *http.Client {
+    client := &http.Client{Timeout: timeout}
+    if proxyCfg := e.config.GetProxy(); proxyCfg != nil && proxyCfg.URL != "" {
+        if transport, err := proxy.CreateProxyTransport(proxyCfg.URL); err == nil {
+            client.Transport = transport
+        }
+    }
+    return client
+}
+
 // Test endpoint constants
 const (
     testMessage   = "你是什么模型?"
@@ -428,7 +439,7 @@ func (e *EndpointService) TestEndpoint(index int) string {
         req.URL.RawQuery = q.Encode()
     }
 
-    client := &http.Client{Timeout: 30 * time.Second}
+    client := e.createHTTPClient(30 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         result := map[string]interface{}{
@@ -665,7 +676,7 @@ func (e *EndpointService) testModelsAPI(apiUrl, apiKey, transformer string) (int
         req.Header.Set("Authorization", "Bearer "+apiKey)
     }
 
-    client := &http.Client{Timeout: 15 * time.Second}
+    client := e.createHTTPClient(15 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return 0, err
@@ -723,7 +734,7 @@ func (e *EndpointService) testTokenCountAPI(apiUrl, apiKey string) (int, error) 
     req.Header.Set("anthropic-version", "2023-06-01")
     req.Header.Set("anthropic-beta", "token-counting-2024-11-01")
 
-    client := &http.Client{Timeout: 15 * time.Second}
+    client := e.createHTTPClient(15 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return 0, err
@@ -761,7 +772,7 @@ func (e *EndpointService) testBillingAPI(apiUrl, apiKey string) (int, error) {
 
     req.Header.Set("Authorization", "Bearer "+apiKey)
 
-    client := &http.Client{Timeout: 15 * time.Second}
+    client := e.createHTTPClient(15 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return 0, err
@@ -847,7 +858,7 @@ func (e *EndpointService) testMinimalRequest(apiUrl, apiKey, transformer, model 
         req.Header.Set("Authorization", "Bearer "+apiKey)
     }
 
-    client := &http.Client{Timeout: 30 * time.Second}
+    client := e.createHTTPClient(30 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return 0, err
@@ -923,7 +934,7 @@ func (e *EndpointService) fetchOpenAIModels(apiUrl, apiKey string) ([]string, er
 
     req.Header.Set("Authorization", "Bearer "+apiKey)
 
-    client := &http.Client{Timeout: 30 * time.Second}
+    client := e.createHTTPClient(30 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return nil, fmt.Errorf("request failed: %v", err)
@@ -965,7 +976,7 @@ func (e *EndpointService) fetchGeminiModels(apiUrl, apiKey string) ([]string, er
         return nil, fmt.Errorf("failed to create request: %v", err)
     }
 
-    client := &http.Client{Timeout: 30 * time.Second}
+    client := e.createHTTPClient(30 * time.Second)
     resp, err := client.Do(req)
     if err != nil {
         return nil, fmt.Errorf("request failed: %v", err)

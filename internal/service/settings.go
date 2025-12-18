@@ -282,3 +282,30 @@ func (s *SettingsService) SaveWindowSize(width, height int) {
         }
     }
 }
+
+// GetProxyURL returns the current proxy URL
+func (s *SettingsService) GetProxyURL() string {
+    if proxy := s.config.GetProxy(); proxy != nil {
+        return proxy.URL
+    }
+    return ""
+}
+
+// SetProxyURL sets the proxy URL
+func (s *SettingsService) SetProxyURL(proxyURL string) error {
+    var proxyCfg *config.ProxyConfig
+    if proxyURL != "" {
+        proxyCfg = &config.ProxyConfig{URL: proxyURL}
+    }
+    s.config.UpdateProxy(proxyCfg)
+
+    if s.storage != nil {
+        configAdapter := storage.NewConfigStorageAdapter(s.storage)
+        if err := s.config.SaveToStorage(configAdapter); err != nil {
+            return fmt.Errorf("failed to save proxy config: %w", err)
+        }
+    }
+
+    logger.Info("Proxy URL changed to: %s", proxyURL)
+    return nil
+}

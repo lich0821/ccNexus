@@ -53,6 +53,8 @@ export function GetLogs():Promise<string>;
 
 export function GetLogsByLevel(arg1:number):Promise<string>;
 
+export function GetProxyURL():Promise<string>;
+
 export function GetSessionData(arg1:string,arg2:string):Promise<string>;
 
 export function GetSessions(arg1:string):Promise<string>;
@@ -124,6 +126,8 @@ export function SetCloseWindowBehavior(arg1:string):Promise<void>;
 export function SetLanguage(arg1:string):Promise<void>;
 
 export function SetLogLevel(arg1:number):Promise<void>;
+
+export function SetProxyURL(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
 

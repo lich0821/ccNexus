@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
+
+	"golang.org/x/net/proxy"
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
@@ -199,10 +202,54 @@ func buildProxyRequest(r *http.Request, endpoint config.Endpoint, transformedBod
 }
 
 // sendRequest sends the HTTP request and returns the response
-func sendRequest(ctx context.Context, proxyReq *http.Request) (*http.Response, error) {
+func sendRequest(ctx context.Context, proxyReq *http.Request, cfg *config.Config) (*http.Response, error) {
 	proxyReq = proxyReq.WithContext(ctx)
 	client := &http.Client{
 		Timeout: 300 * time.Second,
 	}
+
+	// Apply proxy if configured
+	if proxyCfg := cfg.GetProxy(); proxyCfg != nil && proxyCfg.URL != "" {
+		transport, err := CreateProxyTransport(proxyCfg.URL)
+		if err != nil {
+			logger.Warn("Failed to create proxy transport: %v, using direct connection", err)
+		} else {
+			client.Transport = transport
+			logger.Debug("Using proxy: %s", proxyCfg.URL)
+		}
+	}
+
 	return client.Do(proxyReq)
+}
+
+// CreateProxyTransport creates an http.Transport with proxy support
+func CreateProxyTransport(proxyURL string) (*http.Transport, error) {
+	parsed, err := url.Parse(proxyURL)
+	if err != nil {
+		return nil, fmt.Errorf("invalid proxy URL: %w", err)
+	}
+
+	transport := &http.Transport{}
+
+	switch parsed.Scheme {
+	case "socks5", "socks5h":
+		auth := &proxy.Auth{}
+		if parsed.User != nil {
+			auth.User = parsed.User.Username()
+			auth.Password, _ = parsed.User.Password()
+		} else {
+			auth = nil
+		}
+		dialer, err := proxy.SOCKS5("tcp", parsed.Host, auth, proxy.Direct)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create SOCKS5 dialer: %w", err)
+		}
+		transport.Dial = dialer.Dial
+	case "http", "https":
+		transport.Proxy = http.ProxyURL(parsed)
+	default:
+		return nil, fmt.Errorf("unsupported proxy scheme: %s", parsed.Scheme)
+	}
+
+	return transport, nil
 }

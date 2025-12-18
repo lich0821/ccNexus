@@ -338,6 +338,8 @@ func (a *App) ClearLogs()                                      { a.settings.Clea
 func (a *App) SetLogLevel(level int)                           { a.settings.SetLogLevel(level) }
 func (a *App) GetLogLevel() int                                { return a.settings.GetLogLevel() }
 func (a *App) SetCloseWindowBehavior(behavior string) error    { return a.settings.SetCloseWindowBehavior(behavior) }
+func (a *App) GetProxyURL() string                             { return a.settings.GetProxyURL() }
+func (a *App) SetProxyURL(proxyURL string) error               { return a.settings.SetProxyURL(proxyURL) }
 
 // ========== WebDAV Bindings ==========
 
