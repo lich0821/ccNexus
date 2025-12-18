@@ -36,7 +36,13 @@ export default {
         expand: 'Expand',
         testTipSuccess: 'Connection test passed',
         testTipFailed: 'Connection test failed or endpoint does not support API testing',
-        testTipUnknown: 'Not tested or test result unknown'
+        testTipUnknown: 'Not tested or test result unknown',
+        expand: 'Expand',
+        viewDetail: 'Default Mode',
+        viewCompact: 'List Mode',
+        dragToReorder: 'Drag to Reorder',
+        moreActions: 'More Actions',
+        disabled: 'Off'
     },
     modal: {
         addEndpoint: 'Add Endpoint',
@@ -343,6 +349,7 @@ export default {
         projectDirsHelp: 'Add frequently used project directories for quick terminal launch',
         addDir: 'Add Directory',
         noDirs: 'No project directories. Click button below to add.',
+        project: 'Project',
         launchFailed: 'Failed to launch terminal',
         launch: 'Launch',
         launchWithSession: 'Resume Session',

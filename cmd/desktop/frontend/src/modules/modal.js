@@ -469,9 +469,16 @@ function isTestNotSupported(statusCode, message) {
 export async function testEndpointHandler(index, buttonElement) {
     setTestState(buttonElement, index);
 
-    // 获取端点名称用于保存测试状态
-    const endpointItem = buttonElement.closest('.endpoint-item');
+    // 获取端点名称用于保存测试状态（兼容详情视图和简洁视图）
+    const endpointItem = buttonElement.closest('.endpoint-item') || buttonElement.closest('.endpoint-item-compact');
     const endpointName = endpointItem ? endpointItem.dataset.name : null;
+
+    // 简洁视图：同时更新 moreBtn
+    const moreBtn = endpointItem ? endpointItem.querySelector('[data-action="more"]') : null;
+    if (moreBtn) {
+        moreBtn.disabled = true;
+        moreBtn.innerHTML = '⏳';
+    }
 
     try {
         buttonElement.disabled = true;

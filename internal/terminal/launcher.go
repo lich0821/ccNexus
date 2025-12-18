@@ -53,7 +53,7 @@ func buildLaunchCommand(terminalID, dir, sessionID string) *exec.Cmd {
 		if _, err := exec.LookPath("pwsh.exe"); err == nil {
 			shell = "pwsh.exe"
 		}
-		return exec.Command("wt.exe", "-d", dir, shell, "-NoExit", "-Command", claudeCmd)
+		return exec.Command("wt.exe", "-d", dir, "--", shell, "-NoExit", "-Command", claudeCmd)
 	case "gitbash":
 		terminals := detectWindowsTerminals()
 		var gitBashPath string

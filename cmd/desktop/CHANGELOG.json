@@ -1,5 +1,75 @@
 [
   {
+    "version": "v4.6.0",
+    "date": "2025-12-18",
+    "changes": ["Add proxy configuration", "Optimize directory structure", "Fix known issues"]
+  },
+  {
+    "version": "v4.5.0",
+    "date": "2025-12-16",
+    "changes": ["Add Web UI for Docker service", "Fix known issues"]
+  },
+  {
+    "version": "v4.4.2",
+    "date": "2025-12-15",
+    "changes": ["Optimize status detection logic"]
+  },
+  {
+    "version": "v4.4.0",
+    "date": "2025-12-15",
+    "changes": ["Add Docker container deployment", "Adapt to new CC version", "Fix known issues"]
+  },
+  {
+    "version": "v4.3.0",
+    "date": "2025-12-14",
+    "changes": ["Add Markdown parsing for session history details"]
+  },
+  {
+    "version": "v4.2.3",
+    "date": "2025-12-14",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v4.2.2",
+    "date": "2025-12-12",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v4.2.1",
+    "date": "2025-12-12",
+    "changes": ["Optimize directory structure"]
+  },
+  {
+    "version": "v4.2.0",
+    "date": "2025-12-12",
+    "changes": ["Add session history management feature"]
+  },
+  {
+    "version": "v4.1.3",
+    "date": "2025-12-10",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v4.1.2",
+    "date": "2025-12-10",
+    "changes": ["Code optimization"]
+  },
+  {
+    "version": "v4.1.1",
+    "date": "2025-12-09",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v4.1.0",
+    "date": "2025-12-09",
+    "changes": ["Add launcher feature for one-click CC startup"]
+  },
+  {
+    "version": "v4.0.0",
+    "date": "2025-12-09",
+    "changes": ["Add CodeX CLI support"]
+  },
+  {
     "version": "v3.9.1",
     "date": "2025-12-07",
     "changes": ["Fix known bugs"]
