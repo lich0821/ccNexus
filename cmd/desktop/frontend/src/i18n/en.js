@@ -349,6 +349,7 @@ export default {
         projectDirsHelp: 'Add frequently used project directories for quick terminal launch',
         addDir: 'Add Directory',
         noDirs: 'No project directories. Click button below to add.',
+        project: 'Project',
         launchFailed: 'Failed to launch terminal',
         launch: 'Launch',
         launchWithSession: 'Resume Session',

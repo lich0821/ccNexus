@@ -349,6 +349,7 @@ export default {
         projectDirsHelp: '添加常用的项目目录，点击启动自动打开终端（可先选择会话）',
         addDir: '添加目录',
         noDirs: '暂无项目目录，点击下方按钮添加',
+        project: '项目',
         launchFailed: '启动终端失败',
         launch: '启动',
         launchWithSession: '恢复会话',

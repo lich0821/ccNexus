@@ -102,10 +102,14 @@ function renderProjectDirs() {
             ? `已选择会话 ${selectedSession.info?.serialNumber || '-'}：${sessionName}`
             : '点击查看历史会话信息';
 
+        // 从路径中提取项目名
+        const projectName = dir.split(/[/\\]/).filter(Boolean).pop() || dir;
+
         return `
         <div class="project-dir-item" data-dir-index="${index}">
             <div class="dir-info">
-                <span class="dir-path" title="${dir}">${dir}</span>
+                <span class="dir-index">${t('terminal.project')} ${index + 1}:</span>
+                <span class="dir-name" title="${dir}">${projectName}</span>
             </div>
             <div class="dir-actions">
                 <button class="btn btn-sm btn-primary" data-action="launch">▶ ${t('terminal.launch')}</button>

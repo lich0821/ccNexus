@@ -1431,6 +1431,21 @@ body {
     top: -1px;
 }
 
+/* Disabled badge */
+.disabled-badge {
+    background: #999;
+    color: white;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 8px;
+    vertical-align: middle;
+    display: inline-block;
+    position: relative;
+    top: -1px;
+}
+
 /* Switch button */
 .btn-switch {
     background: var(--primary-color, #667eea);
@@ -3074,13 +3089,26 @@ body {
     min-width: 0;
 }
 
-.project-dir-item .dir-path {
-    display: block;
+.project-dir-item .dir-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.project-dir-item .dir-index {
     font-size: 13px;
+    color: var(--text-secondary, #666);
+    white-space: nowrap;
+}
+
+.project-dir-item .dir-name {
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-primary, #333);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: default;
 }
 
 .project-dir-item .dir-actions {

@@ -336,31 +336,3 @@ span.compact-badge-btn:hover {
     background: rgba(220, 53, 69, 0.1);
 }
 
-/* Responsive for Compact View */
-@media (max-width: 900px) {
-    .compact-url {
-        display: none;
-    }
-
-    .compact-name {
-        width: 100px;
-    }
-}
-
-@media (max-width: 600px) {
-    .compact-transformer {
-        display: none;
-    }
-
-    .compact-stats {
-        display: none;
-    }
-
-    .compact-name {
-        width: 80px;
-    }
-
-    .compact-badge-btn {
-        width: 60px !important;
-    }
-}

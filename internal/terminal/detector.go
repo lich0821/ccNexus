@@ -85,72 +85,82 @@ func detectMacTerminals() []TerminalInfo {
 	})
 
 	// iTerm2
-	if _, err := os.Stat("/Applications/iTerm.app"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "iterm2",
-			Name: "iTerm2",
-			Path: "/Applications/iTerm.app",
-		})
+	homeDir, _ := os.UserHomeDir()
+	iterm2Paths := []string{
+		"/Applications/iTerm.app",
+		filepath.Join(homeDir, "Applications", "iTerm.app"),
+	}
+	for _, path := range iterm2Paths {
+		if _, err := os.Stat(path); err == nil {
+			terminals = append(terminals, TerminalInfo{
+				ID:   "iterm2",
+				Name: "iTerm2",
+				Path: path,
+			})
+			break
+		}
 	}
 
 	// Ghostty
-	if _, err := os.Stat("/Applications/Ghostty.app"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "ghostty",
-			Name: "Ghostty",
-			Path: "/Applications/Ghostty.app",
-		})
-	} else if _, err := exec.LookPath("ghostty"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "ghostty",
-			Name: "Ghostty",
-			Path: "ghostty",
-		})
+	ghosttyPaths := []string{"/Applications/Ghostty.app", filepath.Join(homeDir, "Applications", "Ghostty.app")}
+	for _, path := range ghosttyPaths {
+		if _, err := os.Stat(path); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "ghostty", Name: "Ghostty", Path: path})
+			break
+		}
+	}
+	if len(terminals) == 2 { // 没找到 .app，尝试命令行
+		if _, err := exec.LookPath("ghostty"); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "ghostty", Name: "Ghostty", Path: "ghostty"})
+		}
 	}
 
 	// Alacritty
-	if _, err := os.Stat("/Applications/Alacritty.app"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "alacritty",
-			Name: "Alacritty",
-			Path: "/Applications/Alacritty.app",
-		})
-	} else if path, err := exec.LookPath("alacritty"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "alacritty",
-			Name: "Alacritty",
-			Path: path,
-		})
+	alacrittyPaths := []string{"/Applications/Alacritty.app", filepath.Join(homeDir, "Applications", "Alacritty.app")}
+	found := false
+	for _, path := range alacrittyPaths {
+		if _, err := os.Stat(path); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "alacritty", Name: "Alacritty", Path: path})
+			found = true
+			break
+		}
+	}
+	if !found {
+		if path, err := exec.LookPath("alacritty"); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "alacritty", Name: "Alacritty", Path: path})
+		}
 	}
 
 	// Kitty
-	if _, err := os.Stat("/Applications/kitty.app"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "kitty",
-			Name: "Kitty",
-			Path: "/Applications/kitty.app",
-		})
-	} else if path, err := exec.LookPath("kitty"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "kitty",
-			Name: "Kitty",
-			Path: path,
-		})
+	kittyPaths := []string{"/Applications/kitty.app", filepath.Join(homeDir, "Applications", "kitty.app")}
+	found = false
+	for _, path := range kittyPaths {
+		if _, err := os.Stat(path); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "kitty", Name: "Kitty", Path: path})
+			found = true
+			break
+		}
+	}
+	if !found {
+		if path, err := exec.LookPath("kitty"); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "kitty", Name: "Kitty", Path: path})
+		}
 	}
 
 	// WezTerm
-	if _, err := os.Stat("/Applications/WezTerm.app"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "wezterm",
-			Name: "WezTerm",
-			Path: "/Applications/WezTerm.app",
-		})
-	} else if path, err := exec.LookPath("wezterm"); err == nil {
-		terminals = append(terminals, TerminalInfo{
-			ID:   "wezterm",
-			Name: "WezTerm",
-			Path: path,
-		})
+	weztermPaths := []string{"/Applications/WezTerm.app", filepath.Join(homeDir, "Applications", "WezTerm.app")}
+	found = false
+	for _, path := range weztermPaths {
+		if _, err := os.Stat(path); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "wezterm", Name: "WezTerm", Path: path})
+			found = true
+			break
+		}
+	}
+	if !found {
+		if path, err := exec.LookPath("wezterm"); err == nil {
+			terminals = append(terminals, TerminalInfo{ID: "wezterm", Name: "WezTerm", Path: path})
+		}
 	}
 
 	return terminals

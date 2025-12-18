@@ -187,8 +187,9 @@ export async function renderEndpoints(endpoints) {
         item.innerHTML = `
             <div class="endpoint-info">
                 <h3>
-                    ${ep.name}
                     <span title="${testStatusTip}" style="cursor: help">${testStatusIcon}</span>
+                    ${ep.name}
+                    ${!enabled ? '<span class="disabled-badge">' + t('endpoints.disabled') + '</span>' : ''}
                     ${isCurrentEndpoint ? '<span class="current-badge">' + t('endpoints.current') + '</span>' : ''}
                     ${enabled && !isCurrentEndpoint ? '<button class="btn btn-switch" data-action="switch" data-name="' + ep.name + '">' + t('endpoints.switchTo') + '</button>' : ''}
                 </h3>
@@ -696,6 +697,47 @@ function updateItemPositions(container, draggedElement, placeholder) {
     });
 }
 
+// 根据鼠标位置移动占位符
+function movePlaceholderByMousePosition(e, container, draggedElement, dragPlaceholder) {
+    if (!draggedElement || !dragPlaceholder) return;
+
+    const allItems = Array.from(container.querySelectorAll('.endpoint-item-compact'));
+    const mouseY = e.clientY;
+
+    // 找到最接近鼠标位置的元素
+    let closestItem = null;
+    let closestDistance = Infinity;
+    let insertBefore = true;
+
+    allItems.forEach(item => {
+        if (item === draggedElement) return;
+
+        const rect = item.getBoundingClientRect();
+        const itemMiddle = rect.top + rect.height / 2;
+        const distance = Math.abs(mouseY - itemMiddle);
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestItem = item;
+            insertBefore = mouseY < itemMiddle;
+        }
+    });
+
+    // 移动占位符
+    if (closestItem) {
+        const targetPosition = insertBefore ? closestItem : closestItem.nextSibling;
+        if (targetPosition !== dragPlaceholder && targetPosition !== dragPlaceholder.nextSibling) {
+            container.insertBefore(dragPlaceholder, targetPosition);
+            updateItemPositions(container, draggedElement, dragPlaceholder);
+        }
+    } else if (allItems.length === 1) {
+        // 只有一个元素（被拖拽的元素）
+        if (dragPlaceholder.parentNode !== container) {
+            container.appendChild(dragPlaceholder);
+        }
+    }
+}
+
 // 简洁视图的拖拽设置
 function setupCompactDragAndDrop(item, container) {
     item.addEventListener('dragstart', (e) => {
@@ -710,6 +752,10 @@ function setupCompactDragAndDrop(item, container) {
         dragPlaceholder = createPlaceholder();
         item.parentNode.insertBefore(dragPlaceholder, item.nextSibling);
 
+        // 在容器上添加事件监听
+        container.addEventListener('dragover', handleContainerDragOver);
+        container.addEventListener('drop', handleContainerDrop);
+
         autoScrollInterval = setInterval(() => {
             if (window.lastDragEvent) {
                 autoScroll(window.lastDragEvent);
@@ -722,8 +768,12 @@ function setupCompactDragAndDrop(item, container) {
         const allItems = container.querySelectorAll('.endpoint-item-compact');
         allItems.forEach(i => {
             i.classList.remove('drag-over');
-            i.style.transform = ''; // 清除所有 transform
+            i.style.transform = '';
         });
+
+        // 移除容器的事件监听
+        container.removeEventListener('dragover', handleContainerDragOver);
+        container.removeEventListener('drop', handleContainerDrop);
 
         // 移除占位符
         if (dragPlaceholder && dragPlaceholder.parentNode) {
@@ -743,94 +793,70 @@ function setupCompactDragAndDrop(item, container) {
         window.lastDragEvent = null;
     });
 
+    // 在端点元素上禁止 drop
     item.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        window.lastDragEvent = e;
-
-        if (draggedElement && draggedElement !== item && dragPlaceholder) {
-            // 判断鼠标在元素的上半部分还是下半部分
-            const rect = item.getBoundingClientRect();
-            const midpoint = rect.top + rect.height / 2;
-            const isAfter = e.clientY > midpoint;
-
-            // 移动占位符到合适位置
-            let newPosition;
-            if (isAfter) {
-                // 插入到目标元素后面
-                newPosition = item.nextSibling;
-                if (newPosition !== dragPlaceholder) {
-                    item.parentNode.insertBefore(dragPlaceholder, newPosition);
-                }
-            } else {
-                // 插入到目标元素前面
-                if (item.previousSibling !== dragPlaceholder) {
-                    item.parentNode.insertBefore(dragPlaceholder, item);
-                }
-            }
-
-            // 更新其他元素位置
-            updateItemPositions(container, draggedElement, dragPlaceholder);
-        }
-    });
-
-    item.addEventListener('dragleave', (e) => {
-        if (!item.contains(e.relatedTarget)) {
-            item.classList.remove('drag-over');
-            if (draggedOverElement === item) {
-                draggedOverElement = null;
-            }
-        }
-    });
-
-    item.addEventListener('drop', async (e) => {
-        e.preventDefault();
         e.stopPropagation();
+        e.dataTransfer.dropEffect = 'none';
+    });
+}
 
-        if (draggedElement && dragPlaceholder) {
-            const draggedName = draggedElement.dataset.name;
+// 容器的 dragover 处理函数
+function handleContainerDragOver(e) {
+    // 在端点元素上不允许 drop
+    if (e.target.closest('.endpoint-item-compact')) {
+        return;
+    }
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    window.lastDragEvent = e;
 
-            // 获取所有端点元素（不包括占位符）
-            const allItems = Array.from(container.querySelectorAll('.endpoint-item-compact'));
-            const currentOrder = allItems.map(el => el.dataset.name);
+    const container = e.currentTarget;
+    movePlaceholderByMousePosition(e, container, draggedElement, dragPlaceholder);
+}
 
-            // 计算占位符的位置（在所有子元素中的索引）
-            const allChildren = Array.from(container.children);
-            const placeholderIndex = allChildren.indexOf(dragPlaceholder);
+// 容器的 drop 处理函数
+async function handleContainerDrop(e) {
+    if (e.target.closest('.endpoint-item-compact')) {
+        return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
 
-            // 计算占位符前面有多少个端点元素
-            let targetIndex = 0;
-            for (let i = 0; i < placeholderIndex; i++) {
-                if (allChildren[i].classList.contains('endpoint-item-compact')) {
-                    targetIndex++;
-                }
-            }
+    const container = e.currentTarget;
+    if (draggedElement && dragPlaceholder) {
+        const draggedName = draggedElement.dataset.name;
+        const allItems = Array.from(container.querySelectorAll('.endpoint-item-compact'));
+        const currentOrder = allItems.map(el => el.dataset.name);
+        const allChildren = Array.from(container.children);
+        const placeholderIndex = allChildren.indexOf(dragPlaceholder);
 
-            // 如果拖拽元素在占位符前面，目标索引需要减1
-            const draggedIndex = currentOrder.indexOf(draggedName);
-            if (draggedIndex < targetIndex) {
-                targetIndex--;
-            }
-
-            // 构建新顺序
-            const newOrder = [...currentOrder];
-            newOrder.splice(draggedIndex, 1);
-            newOrder.splice(targetIndex, 0, draggedName);
-
-            const orderChanged = !currentOrder.every((name, idx) => name === newOrder[idx]);
-
-            if (!orderChanged) {
-                return;
-            }
-
-            try {
-                await window.go.main.App.ReorderEndpoints(newOrder);
-                window.loadConfig();
-            } catch (error) {
-                console.error('Failed to reorder endpoints:', error);
-                alert(t('endpoints.reorderFailed') + ': ' + error);
-                window.loadConfig();
+        let targetIndex = 0;
+        for (let i = 0; i < placeholderIndex; i++) {
+            if (allChildren[i].classList.contains('endpoint-item-compact')) {
+                targetIndex++;
             }
         }
-    });
+
+        const draggedIndex = currentOrder.indexOf(draggedName);
+        if (draggedIndex < targetIndex) {
+            targetIndex--;
+        }
+
+        const newOrder = [...currentOrder];
+        newOrder.splice(draggedIndex, 1);
+        newOrder.splice(targetIndex, 0, draggedName);
+
+        const orderChanged = !currentOrder.every((name, idx) => name === newOrder[idx]);
+        if (!orderChanged) return;
+
+        try {
+            await window.go.main.App.ReorderEndpoints(newOrder);
+            window.loadConfig();
+        } catch (error) {
+            console.error('Failed to reorder endpoints:', error);
+            alert(t('endpoints.reorderFailed') + ': ' + error);
+            window.loadConfig();
+        }
+    }
 }
