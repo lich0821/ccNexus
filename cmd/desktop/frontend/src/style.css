@@ -10,6 +10,7 @@
 @import './themes/aurora.css';
 @import './themes/holographic.css';
 @import './themes/quantum.css';
+@import './simple-view.css';
 
 * {
     margin: 0;
@@ -1417,7 +1418,22 @@ body {
 
 /* Current badge */
 .current-badge {
-    background: #4CAF50;
+    background: var(--primary-color, #667eea);
+    color: white;
+    padding: 3px 7px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: normal;
+    margin-left: 8px;
+    vertical-align: middle;
+    display: inline-block;
+    position: relative;
+    top: -1px;
+}
+
+/* Disabled badge */
+.disabled-badge {
+    background: #999;
     color: white;
     padding: 3px 7px;
     border-radius: 4px;
@@ -1432,7 +1448,7 @@ body {
 
 /* Switch button */
 .btn-switch {
-    background: #667eea;
+    background: var(--primary-color, #667eea);
     color: white;
     padding: 3px 7px;
     border-radius: 4px;
@@ -1450,7 +1466,7 @@ body {
 }
 
 .btn-switch:hover {
-    background: #5568d3;
+    background: var(--primary-hover, #5568d3);
     transform: translateY(-1px);
 }
 
@@ -3073,13 +3089,26 @@ body {
     min-width: 0;
 }
 
-.project-dir-item .dir-path {
-    display: block;
+.project-dir-item .dir-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.project-dir-item .dir-index {
     font-size: 13px;
+    color: var(--text-secondary, #666);
+    white-space: nowrap;
+}
+
+.project-dir-item .dir-name {
+    font-size: 13px;
+    font-weight: 500;
     color: var(--text-primary, #333);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: default;
 }
 
 .project-dir-item .dir-actions {

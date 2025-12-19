@@ -4,7 +4,7 @@ import { setLanguage } from './i18n/index.js'
 import { initUI, changeLanguage } from './modules/ui.js'
 import { loadConfig } from './modules/config.js'
 import { loadStats, switchStatsPeriod, loadStatsByPeriod, getCurrentPeriod } from './modules/stats.js'
-import { renderEndpoints, toggleEndpointPanel, initEndpointSuccessListener, checkAllEndpointsOnStartup } from './modules/endpoints.js'
+import { renderEndpoints, toggleEndpointPanel, initEndpointSuccessListener, checkAllEndpointsOnStartup, switchEndpointViewMode, initEndpointViewMode, isDropdownOpen } from './modules/endpoints.js'
 import { loadLogs, toggleLogPanel, changeLogLevel, copyLogs, clearLogs } from './modules/logs.js'
 import { showDataSyncDialog } from './modules/webdav.js'
 import { initTips } from './modules/tips.js'
@@ -60,6 +60,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Initialize UI
     initUI();
 
+    // Initialize endpoint view mode
+    initEndpointViewMode();
+
     // Initialize terminal module
     initTerminal();
 
@@ -105,6 +108,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         await loadStats(); // Refresh cumulative stats for endpoint cards
         const currentPeriod = getCurrentPeriod(); // Get current selected period
         await loadStatsByPeriod(currentPeriod); // Refresh period stats (daily/weekly/monthly)
+        // 如果下拉菜单打开，跳过渲染避免菜单消失
+        if (isDropdownOpen()) {
+            return;
+        }
         const config = await window.go.main.App.GetConfig();
         if (config) {
             renderEndpoints(JSON.parse(config).endpoints);
@@ -184,6 +191,7 @@ window.minimizeToTray = minimizeToTray;
 window.showDataSyncDialog = showDataSyncDialog;
 window.switchStatsPeriod = switchStatsPeriod;
 window.toggleEndpointPanel = toggleEndpointPanel;
+window.switchEndpointViewMode = switchEndpointViewMode;
 window.showSettingsModal = showSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.saveSettings = saveSettings;
