@@ -3097,7 +3097,7 @@ body {
 
 .project-dir-item .dir-index {
     font-size: 13px;
-    color: var(--text-secondary, #666);
+    color: var(--text-primary, #333);
     white-space: nowrap;
 }
 

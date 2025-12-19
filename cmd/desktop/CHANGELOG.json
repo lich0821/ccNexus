@@ -1,5 +1,10 @@
 [
   {
+    "version": "v4.7.0",
+    "date": "2025-12-18",
+    "changes": ["Add list view mode", "Fix known issues"]
+  },
+  {
     "version": "v4.6.0",
     "date": "2025-12-18",
     "changes": ["Add proxy configuration", "Optimize directory structure", "Fix known issues"]
