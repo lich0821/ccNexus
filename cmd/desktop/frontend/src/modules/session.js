@@ -5,7 +5,8 @@ import { parseMarkdown } from '../utils/markdown.js';
 
 let currentProjectDir = '';
 let sessions = [];
-let selectedSessions = {}; // 按目录存储选中的会话
+let selectedSessions = {}; // 按目录存储已确认选中的会话
+let tempSelectedSession = null; // 临时选中的会话（未确认）
 
 export function initSession() {
     window.showSessionModal = showSessionModal;
@@ -34,6 +35,8 @@ export function clearSelectedSession(dir) {
 
 export async function showSessionModal(projectDir) {
     currentProjectDir = projectDir;
+    // 初始化临时选择为当前已确认的选择
+    tempSelectedSession = selectedSessions[projectDir] ? { ...selectedSessions[projectDir] } : null;
     const modal = document.getElementById('sessionModal');
     modal.style.display = 'flex';
     await loadSessions();
@@ -41,7 +44,8 @@ export async function showSessionModal(projectDir) {
 
 export function closeSessionModal() {
     document.getElementById('sessionModal').style.display = 'none';
-    // 不清空 currentProjectDir，保留选中状态
+    // 关闭时清空临时选择（不保存）
+    tempSelectedSession = null;
     sessions = [];
 }
 
@@ -78,7 +82,8 @@ function renderSessionList() {
         return;
     }
 
-    const currentSelected = selectedSessions[currentProjectDir];
+    // 使用临时选择状态来显示高亮
+    const currentSelected = tempSelectedSession;
 
     listContainer.innerHTML = sessions.map((s, index) => {
         const serialNumber = index + 1; // 序号从1开始
@@ -177,7 +182,7 @@ function formatSize(bytes) {
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-// 选择会话
+// 选择会话（临时选中，未确认）
 function selectSession(sessionId) {
     const session = sessions.find(s => s.sessionId === sessionId);
     if (!session) return;
@@ -185,8 +190,8 @@ function selectSession(sessionId) {
     const sessionIndex = sessions.findIndex(s => s.sessionId === sessionId);
     const serialNumber = sessionIndex + 1;
 
-    // 按目录存储选中的会话
-    selectedSessions[currentProjectDir] = {
+    // 临时存储选中的会话（点击确认后才真正保存）
+    tempSelectedSession = {
         sessionId: sessionId,
         info: {
             alias: session.alias,
@@ -201,8 +206,19 @@ function selectSession(sessionId) {
 
 // 确认选择会话
 function confirmSessionSelection() {
-    // 关闭会话模态框，返回启动器
-    closeSessionModal();
+    // 将临时选择保存为正式选择
+    if (tempSelectedSession) {
+        selectedSessions[currentProjectDir] = { ...tempSelectedSession };
+    } else {
+        // 如果没有临时选择，清除该目录的选择
+        delete selectedSessions[currentProjectDir];
+    }
+
+    // 关闭会话模态框
+    document.getElementById('sessionModal').style.display = 'none';
+    tempSelectedSession = null;
+    sessions = [];
+
     // 触发启动器界面更新（通过自定义事件）
     window.dispatchEvent(new CustomEvent('sessionSelected'));
 }
@@ -211,10 +227,16 @@ async function deleteSession(sessionId) {
     const confirmed = await showConfirmDialog(t('session.confirmDelete'));
     if (!confirmed) return;
 
+    // 保存滚动位置
+    const listContainer = document.getElementById('sessionList');
+    const scrollTop = listContainer.scrollTop;
+
     try {
         await DeleteSession(currentProjectDir, sessionId);
         showNotification(t('session.deleted'), 'success');
         await loadSessions();
+        // 恢复滚动位置
+        listContainer.scrollTop = scrollTop;
     } catch (err) {
         console.error('Failed to delete session:', err);
         showNotification(t('session.deleteFailed'), 'error');
@@ -228,10 +250,16 @@ async function renameSession(sessionId) {
     const newName = await showPromptDialog(t('session.renamePrompt'), currentName);
     if (newName === null) return;
 
+    // 保存滚动位置
+    const listContainer = document.getElementById('sessionList');
+    const scrollTop = listContainer.scrollTop;
+
     try {
         await RenameSession(currentProjectDir, sessionId, newName);
         showNotification(t('session.renamed'), 'success');
         await loadSessions();
+        // 恢复滚动位置
+        listContainer.scrollTop = scrollTop;
     } catch (err) {
         console.error('Failed to rename session:', err);
         showNotification(t('session.renameFailed'), 'error');
