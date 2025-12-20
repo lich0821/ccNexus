@@ -462,7 +462,14 @@ body.aurora-theme #autoThemeConfigModal .modal-header::after,
 body.aurora-theme #endpointModal .modal-header::after,
 body.aurora-theme #portModal .modal-header::after,
 body.aurora-theme #historyModal .modal-header::after,
-body.aurora-theme #testResultModal .modal-header::after {
+body.aurora-theme #testResultModal .modal-header::after,
+body.aurora-theme #welcomeModal .modal-header::after,
+body.aurora-theme #changelogModal .modal-header::after,
+body.aurora-theme #updateModal .modal-header::after,
+body.aurora-theme #terminalModal .modal-header::after,
+body.aurora-theme #sessionModal .modal-header::after,
+body.aurora-theme #sessionDetailModal .modal-header::after,
+body.aurora-theme #sessionPromptModal .modal-header::after {
     background: var(--aurora-cyan);
 }
 

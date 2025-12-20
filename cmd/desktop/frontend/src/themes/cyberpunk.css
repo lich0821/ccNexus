@@ -494,7 +494,14 @@ body.cyberpunk-theme #autoThemeConfigModal .modal-header::after,
 body.cyberpunk-theme #endpointModal .modal-header::after,
 body.cyberpunk-theme #portModal .modal-header::after,
 body.cyberpunk-theme #historyModal .modal-header::after,
-body.cyberpunk-theme #testResultModal .modal-header::after {
+body.cyberpunk-theme #testResultModal .modal-header::after,
+body.cyberpunk-theme #welcomeModal .modal-header::after,
+body.cyberpunk-theme #changelogModal .modal-header::after,
+body.cyberpunk-theme #updateModal .modal-header::after,
+body.cyberpunk-theme #terminalModal .modal-header::after,
+body.cyberpunk-theme #sessionModal .modal-header::after,
+body.cyberpunk-theme #sessionDetailModal .modal-header::after,
+body.cyberpunk-theme #sessionPromptModal .modal-header::after {
     background: var(--border-color);
     box-shadow: 0 0 5px var(--border-color);
 }

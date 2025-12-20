@@ -421,7 +421,14 @@ body.sunset-theme #autoThemeConfigModal .modal-header::after,
 body.sunset-theme #endpointModal .modal-header::after,
 body.sunset-theme #portModal .modal-header::after,
 body.sunset-theme #historyModal .modal-header::after,
-body.sunset-theme #testResultModal .modal-header::after {
+body.sunset-theme #testResultModal .modal-header::after,
+body.sunset-theme #welcomeModal .modal-header::after,
+body.sunset-theme #changelogModal .modal-header::after,
+body.sunset-theme #updateModal .modal-header::after,
+body.sunset-theme #terminalModal .modal-header::after,
+body.sunset-theme #sessionModal .modal-header::after,
+body.sunset-theme #sessionDetailModal .modal-header::after,
+body.sunset-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 

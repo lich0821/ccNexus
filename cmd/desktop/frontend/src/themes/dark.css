@@ -420,7 +420,14 @@ body.dark-theme #autoThemeConfigModal .modal-header::after,
 body.dark-theme #endpointModal .modal-header::after,
 body.dark-theme #portModal .modal-header::after,
 body.dark-theme #historyModal .modal-header::after,
-body.dark-theme #testResultModal .modal-header::after {
+body.dark-theme #testResultModal .modal-header::after,
+body.dark-theme #welcomeModal .modal-header::after,
+body.dark-theme #changelogModal .modal-header::after,
+body.dark-theme #updateModal .modal-header::after,
+body.dark-theme #terminalModal .modal-header::after,
+body.dark-theme #sessionModal .modal-header::after,
+body.dark-theme #sessionDetailModal .modal-header::after,
+body.dark-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 

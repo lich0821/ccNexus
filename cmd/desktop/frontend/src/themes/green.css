@@ -421,7 +421,14 @@ body.green-theme #autoThemeConfigModal .modal-header::after,
 body.green-theme #endpointModal .modal-header::after,
 body.green-theme #portModal .modal-header::after,
 body.green-theme #historyModal .modal-header::after,
-body.green-theme #testResultModal .modal-header::after {
+body.green-theme #testResultModal .modal-header::after,
+body.green-theme #welcomeModal .modal-header::after,
+body.green-theme #changelogModal .modal-header::after,
+body.green-theme #updateModal .modal-header::after,
+body.green-theme #terminalModal .modal-header::after,
+body.green-theme #sessionModal .modal-header::after,
+body.green-theme #sessionDetailModal .modal-header::after,
+body.green-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 

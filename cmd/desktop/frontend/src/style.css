@@ -893,7 +893,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #endpointModal .modal-header h2 {
@@ -929,6 +930,70 @@ body {
     padding: 25px 30px 30px 30px;
 }
 
+#welcomeModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#welcomeModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
+}
+
+#welcomeModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+#welcomeModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#welcomeModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#welcomeModal .modal-content {
+    min-height: 550px;
+}
+
+#welcomeModal .modal-body {
+    padding-top: 30px;
+    padding-bottom: 10px;
+}
+
+#welcomeModal .modal-footer {
+    padding-top: 15px;
+    padding-bottom: 25px;
+}
+
 #portModal {
     backdrop-filter: blur(4px);
 }
@@ -950,7 +1015,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #portModal .modal-header h2 {
@@ -2020,7 +2086,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #genericModal .modal-header h2 {
@@ -2084,7 +2151,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #subModal .modal-header h2 {
@@ -2229,7 +2297,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #historyModal .modal-body {
@@ -2402,7 +2471,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #settingsModal .modal-header h2 {
@@ -2465,7 +2535,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #autoThemeConfigModal .modal-header h2 {
@@ -2523,7 +2594,8 @@ body {
     left: 30px;
     right: 30px;
     height: 1px;
-    background: #e9ecef;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #testResultModal .modal-header h2 {
@@ -2582,6 +2654,7 @@ body {
     right: 30px;
     height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #changelogModal .modal-header h2 {
@@ -2762,8 +2835,9 @@ body {
     bottom: 0;
     left: 30px;
     right: 30px;
-    height: 0.06px;
+    height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #updateModal .modal-header h2 {
@@ -2776,12 +2850,12 @@ body {
     width: 32px;
     height: 32px;
     border: none;
-    background: #f0f0f0;
+    background: var(--bg-secondary, #f0f0f0);
     border-radius: 50%;
     cursor: pointer;
     font-size: 24px;
     line-height: 1;
-    color: #666;
+    color: var(--text-secondary, #666);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2790,8 +2864,8 @@ body {
 }
 
 #updateModal .modal-close:hover {
-    background: #e0e0e0;
-    color: #333;
+    background: var(--bg-tertiary, #e0e0e0);
+    color: var(--text-primary, #333);
     transform: rotate(90deg);
 }
 
@@ -3013,6 +3087,7 @@ body {
     right: 30px;
     height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #terminalModal .modal-header h2 {
@@ -3198,6 +3273,7 @@ body {
     right: 30px;
     height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #sessionModal .modal-header h2 {
@@ -3413,6 +3489,7 @@ body {
     right: 30px;
     height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #sessionDetailModal .modal-header h2 {
@@ -3791,6 +3868,7 @@ body {
     right: 30px;
     height: 1px;
     background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
 }
 
 #sessionPromptModal .modal-header h2 {

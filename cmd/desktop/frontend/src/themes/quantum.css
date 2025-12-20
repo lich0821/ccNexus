@@ -497,7 +497,14 @@ body.quantum-theme #autoThemeConfigModal .modal-header::after,
 body.quantum-theme #endpointModal .modal-header::after,
 body.quantum-theme #portModal .modal-header::after,
 body.quantum-theme #historyModal .modal-header::after,
-body.quantum-theme #testResultModal .modal-header::after {
+body.quantum-theme #testResultModal .modal-header::after,
+body.quantum-theme #welcomeModal .modal-header::after,
+body.quantum-theme #changelogModal .modal-header::after,
+body.quantum-theme #updateModal .modal-header::after,
+body.quantum-theme #terminalModal .modal-header::after,
+body.quantum-theme #sessionModal .modal-header::after,
+body.quantum-theme #sessionDetailModal .modal-header::after,
+body.quantum-theme #sessionPromptModal .modal-header::after {
     background: linear-gradient(90deg, transparent 0%, var(--quantum-purple) 50%, transparent 100%);
 }
 

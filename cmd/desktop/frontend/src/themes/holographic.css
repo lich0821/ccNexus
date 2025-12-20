@@ -496,7 +496,14 @@ body.holographic-theme #autoThemeConfigModal .modal-header::after,
 body.holographic-theme #endpointModal .modal-header::after,
 body.holographic-theme #portModal .modal-header::after,
 body.holographic-theme #historyModal .modal-header::after,
-body.holographic-theme #testResultModal .modal-header::after {
+body.holographic-theme #testResultModal .modal-header::after,
+body.holographic-theme #welcomeModal .modal-header::after,
+body.holographic-theme #changelogModal .modal-header::after,
+body.holographic-theme #updateModal .modal-header::after,
+body.holographic-theme #terminalModal .modal-header::after,
+body.holographic-theme #sessionModal .modal-header::after,
+body.holographic-theme #sessionDetailModal .modal-header::after,
+body.holographic-theme #sessionPromptModal .modal-header::after {
     background: linear-gradient(90deg, transparent 0%, var(--holo-blue) 50%, transparent 100%);
 }
 

@@ -421,7 +421,14 @@ body.starry-theme #autoThemeConfigModal .modal-header::after,
 body.starry-theme #endpointModal .modal-header::after,
 body.starry-theme #portModal .modal-header::after,
 body.starry-theme #historyModal .modal-header::after,
-body.starry-theme #testResultModal .modal-header::after {
+body.starry-theme #testResultModal .modal-header::after,
+body.starry-theme #welcomeModal .modal-header::after,
+body.starry-theme #changelogModal .modal-header::after,
+body.starry-theme #updateModal .modal-header::after,
+body.starry-theme #terminalModal .modal-header::after,
+body.starry-theme #sessionModal .modal-header::after,
+body.starry-theme #sessionDetailModal .modal-header::after,
+body.starry-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 

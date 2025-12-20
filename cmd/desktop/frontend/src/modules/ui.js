@@ -439,6 +439,7 @@ export function initUI() {
             <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2>👋 ${t('welcome.title')}</h2>
+                    <button class="modal-close" onclick="window.closeWelcomeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
@@ -698,15 +699,8 @@ export function initUI() {
 }
 
 function setupModalEventListeners() {
-    // Close modals on background click (endpointModal and portModal do NOT close on background click)
-
-    document.getElementById('welcomeModal').addEventListener('click', (e) => {
-        if (e.target.id === 'welcomeModal') {
-            window.closeWelcomeModal();
-        }
-    });
-
-    document.getElementById('testResultModal').addEventListener('click', (e) => {
+    // Close modals on background click (endpointModal, portModal, welcomeModal do NOT close on background click)
+     document.getElementById('testResultModal').addEventListener('click', (e) => {
         if (e.target.id === 'testResultModal') {
             window.closeTestResultModal();
         }
