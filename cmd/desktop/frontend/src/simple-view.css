@@ -98,13 +98,13 @@
 
 /* 拖拽插入指示线 */
 .drag-placeholder {
-    height: 3px;
-    margin: 2.5px 0;
+    height: 4px;
+    margin: 4px 0;
     pointer-events: none;
     background: linear-gradient(90deg, transparent, var(--primary-color, #667eea), transparent);
-    box-shadow: 0 0 8px var(--primary-color, #667eea);
+    box-shadow: 0 0 12px var(--primary-color, #667eea), 0 0 4px rgba(102, 126, 234, 0.5);
     border-radius: 2px;
-    animation: insertLineAppear 0.2s ease;
+    animation: insertLineAppear 0.2s ease, placeholderPulse 1.5s ease-in-out infinite;
 }
 
 @keyframes insertLineAppear {
@@ -115,6 +115,18 @@
     to {
         opacity: 1;
         transform: scaleX(1);
+    }
+}
+
+/* 占位符脉冲动画，提示可释放位置 */
+@keyframes placeholderPulse {
+    0%, 100% {
+        opacity: 0.8;
+        box-shadow: 0 0 12px var(--primary-color, #667eea), 0 0 4px rgba(102, 126, 234, 0.5);
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 16px var(--primary-color, #667eea), 0 0 8px rgba(102, 126, 234, 0.8);
     }
 }
 

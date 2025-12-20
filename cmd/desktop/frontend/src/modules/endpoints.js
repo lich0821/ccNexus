@@ -771,6 +771,9 @@ function setupCompactDragAndDrop(item, container) {
             i.style.transform = '';
         });
 
+        // 清理容器的 cursor 样式
+        container.style.cursor = '';
+
         // 移除容器的事件监听
         container.removeEventListener('dragover', handleContainerDragOver);
         container.removeEventListener('drop', handleContainerDrop);
@@ -793,25 +796,35 @@ function setupCompactDragAndDrop(item, container) {
         window.lastDragEvent = null;
     });
 
-    // 在端点元素上禁止 drop
+    // 在端点元素上禁止 drop（但允许事件冒泡到容器，让占位符能正常移动）
     item.addEventListener('dragover', (e) => {
         e.preventDefault();
-        e.stopPropagation();
+        // 移除 stopPropagation()，让事件冒泡到容器
         e.dataTransfer.dropEffect = 'none';
     });
 }
 
 // 容器的 dragover 处理函数
 function handleContainerDragOver(e) {
-    // 在端点元素上不允许 drop
-    if (e.target.closest('.endpoint-item-compact')) {
-        return;
-    }
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
     window.lastDragEvent = e;
 
     const container = e.currentTarget;
+
+    // 检查鼠标是否在端点元素上
+    const isOverEndpointItem = e.target.closest('.endpoint-item-compact');
+
+    if (isOverEndpointItem) {
+        // 在端点元素上：显示禁止图标，但仍然移动占位符
+        e.dataTransfer.dropEffect = 'none';
+        container.style.cursor = 'no-drop';
+    } else {
+        // 在空白区域或占位符上：显示允许图标
+        e.dataTransfer.dropEffect = 'move';
+        container.style.cursor = 'grabbing';
+    }
+
+    // 始终更新占位符位置，让其他元素自动移开
     movePlaceholderByMousePosition(e, container, draggedElement, dragPlaceholder);
 }
 
