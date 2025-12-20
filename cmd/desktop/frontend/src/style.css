@@ -1261,10 +1261,12 @@ body {
 
 /* Endpoint Toggle Button */
 .endpoint-toggle-btn {
-    padding: 5px 10px;
+    padding: 0 10px;
+    height: 30px;
     border: 1px solid #ddd;
     border-radius: 6px;
     font-size: 14px;
+    line-height: 1;
     cursor: pointer;
     background: transparent;
     color: var(--text-secondary, #666);

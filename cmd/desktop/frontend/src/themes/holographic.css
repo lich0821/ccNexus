@@ -612,7 +612,7 @@ body.holographic-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.holographic-theme .endpoint-toggle-btn {
-    background: rgba(39, 54, 73, 0.8);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }

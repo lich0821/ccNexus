@@ -613,7 +613,7 @@ body.quantum-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.quantum-theme .endpoint-toggle-btn {
-    background: rgba(42, 30, 71, 0.8);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }

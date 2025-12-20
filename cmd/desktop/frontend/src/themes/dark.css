@@ -528,7 +528,7 @@ body.dark-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.dark-theme .endpoint-toggle-btn {
-    background: var(--bg-tertiary);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }
