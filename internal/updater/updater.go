@@ -40,6 +40,7 @@ type Updater struct {
 	currentVersion string
 	downloader     *Downloader
 	downloadPath   string
+	proxyURL       string
 }
 
 // New creates a new updater
@@ -51,9 +52,15 @@ func New(currentVersion string) *Updater {
 	}
 }
 
+// SetProxyURL sets the proxy URL for HTTP requests
+func (u *Updater) SetProxyURL(proxyURL string) {
+	u.proxyURL = proxyURL
+	u.downloader.SetProxyURL(proxyURL)
+}
+
 // CheckForUpdates checks if a new version is available
 func (u *Updater) CheckForUpdates() (*UpdateInfo, error) {
-	release, err := GetLatestRelease()
+	release, err := GetLatestRelease(u.proxyURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check updates: %w", err)
 	}

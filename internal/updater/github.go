@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/net/proxy"
 )
 
 const (
@@ -32,8 +35,14 @@ type Asset struct {
 }
 
 // GetLatestRelease fetches the latest release from GitHub
-func GetLatestRelease() (*ReleaseInfo, error) {
+func GetLatestRelease(proxyURL string) (*ReleaseInfo, error) {
 	client := &http.Client{Timeout: httpTimeout}
+
+	if proxyURL != "" {
+		if transport, err := createProxyTransport(proxyURL); err == nil {
+			client.Transport = transport
+		}
+	}
 
 	req, err := http.NewRequest("GET", githubAPIURL, nil)
 	if err != nil {
@@ -101,4 +110,36 @@ func getPlatformPattern() string {
 	default:
 		return fmt.Sprintf("%s-%s", goos, goarch)
 	}
+}
+
+// createProxyTransport creates an http.Transport with proxy support
+func createProxyTransport(proxyURL string) (*http.Transport, error) {
+	parsed, err := url.Parse(proxyURL)
+	if err != nil {
+		return nil, err
+	}
+
+	transport := &http.Transport{}
+
+	switch parsed.Scheme {
+	case "socks5", "socks5h":
+		auth := &proxy.Auth{}
+		if parsed.User != nil {
+			auth.User = parsed.User.Username()
+			auth.Password, _ = parsed.User.Password()
+		} else {
+			auth = nil
+		}
+		dialer, err := proxy.SOCKS5("tcp", parsed.Host, auth, proxy.Direct)
+		if err != nil {
+			return nil, err
+		}
+		transport.Dial = dialer.Dial
+	case "http", "https":
+		transport.Proxy = http.ProxyURL(parsed)
+	default:
+		return nil, fmt.Errorf("unsupported proxy scheme: %s", parsed.Scheme)
+	}
+
+	return transport, nil
 }

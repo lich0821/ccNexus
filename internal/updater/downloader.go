@@ -27,6 +27,7 @@ type Downloader struct {
 	progress   DownloadProgress
 	mu         sync.RWMutex
 	cancelChan chan struct{}
+	proxyURL   string
 }
 
 // NewDownloader creates a new downloader
@@ -34,6 +35,13 @@ func NewDownloader() *Downloader {
 	return &Downloader{
 		progress: DownloadProgress{Status: "idle"},
 	}
+}
+
+// SetProxyURL sets the proxy URL for downloads
+func (d *Downloader) SetProxyURL(proxyURL string) {
+	d.mu.Lock()
+	d.proxyURL = proxyURL
+	d.mu.Unlock()
 }
 
 // Download downloads a file from URL to destination
@@ -44,6 +52,7 @@ func (d *Downloader) Download(url, destPath string) error {
 		FilePath: destPath,
 	}
 	d.cancelChan = make(chan struct{})
+	proxyURL := d.proxyURL
 	d.mu.Unlock()
 
 	// Create destination directory
@@ -71,6 +80,13 @@ func (d *Downloader) Download(url, destPath string) error {
 			TLSHandshakeTimeout:   15 * time.Second,
 			ResponseHeaderTimeout: 30 * time.Second,
 		},
+	}
+
+	// Apply proxy if configured
+	if proxyURL != "" {
+		if transport, err := createProxyTransport(proxyURL); err == nil {
+			client.Transport = transport
+		}
 	}
 
 	req, err := http.NewRequest("GET", url, nil)

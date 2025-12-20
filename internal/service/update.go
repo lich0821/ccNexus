@@ -29,10 +29,20 @@ func NewUpdateService(cfg *config.Config, s *storage.SQLiteStorage, version stri
     }
 }
 
+// syncProxyConfig syncs proxy configuration to updater
+func (u *UpdateService) syncProxyConfig() {
+    if proxyCfg := u.config.GetProxy(); proxyCfg != nil {
+        u.updater.SetProxyURL(proxyCfg.URL)
+    } else {
+        u.updater.SetProxyURL("")
+    }
+}
+
 // CheckForUpdates checks if a new version is available
 func (u *UpdateService) CheckForUpdates() string {
     logger.Info("CheckForUpdates called, current version: %s", u.version)
 
+    u.syncProxyConfig()
     info, err := u.updater.CheckForUpdates()
     if err != nil {
         logger.Error("CheckForUpdates failed: %v", err)
@@ -109,6 +119,7 @@ func (u *UpdateService) SkipVersion(version string) error {
 
 // DownloadUpdate downloads the update file
 func (u *UpdateService) DownloadUpdate(url, filename string) error {
+    u.syncProxyConfig()
     return u.updater.DownloadUpdate(url, filename)
 }
 
