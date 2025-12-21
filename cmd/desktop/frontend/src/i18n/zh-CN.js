@@ -127,6 +127,7 @@ export default {
         dontShow: '不再显示',
         qrCodeTip: '扫码关注公众号，了解更多',
         chatGroupTip: '问题反馈请加群，学习与交流',
+        chatGroupFallbackTip: '问题反馈可扫码，请备注加群',
         readArticle: '📖 阅读介绍',
         githubRepo: '🔗 GitHub 仓库',
         changelog: '📋 更新日志'

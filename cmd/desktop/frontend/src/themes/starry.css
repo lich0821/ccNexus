@@ -421,7 +421,14 @@ body.starry-theme #autoThemeConfigModal .modal-header::after,
 body.starry-theme #endpointModal .modal-header::after,
 body.starry-theme #portModal .modal-header::after,
 body.starry-theme #historyModal .modal-header::after,
-body.starry-theme #testResultModal .modal-header::after {
+body.starry-theme #testResultModal .modal-header::after,
+body.starry-theme #welcomeModal .modal-header::after,
+body.starry-theme #changelogModal .modal-header::after,
+body.starry-theme #updateModal .modal-header::after,
+body.starry-theme #terminalModal .modal-header::after,
+body.starry-theme #sessionModal .modal-header::after,
+body.starry-theme #sessionDetailModal .modal-header::after,
+body.starry-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 
@@ -522,7 +529,7 @@ body.starry-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.starry-theme .endpoint-toggle-btn {
-    background: var(--bg-tertiary);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }

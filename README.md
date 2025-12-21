@@ -80,7 +80,7 @@ wire_api = "responses"  # 或 "chat"
 
 <table>
   <tr>
-    <td align="center"><img src="cmd/desktop/frontend/public/chat.jpg" alt="微信群" width="200"></td>
+    <td align="center"><img src="https://gitee.com/hea7en/images/raw/master/group/chat.png" alt="微信群" width="200"></td>
     <td align="center"><img src="cmd/desktop/frontend/public/WeChat.jpg" alt="公众号" width="200"></td>
     <td align="center"><img src="cmd/desktop/frontend/public/ME.png" alt="个人微信" width="200"></td>
   </tr>

@@ -9,11 +9,12 @@
 .view-mode-tabs {
     display: flex;
     gap: 2px;
-    background: var(--bg-secondary, #f8f9fa);
+    background: transparent;
     padding: 2px;
     border-radius: 6px;
     border: 1px solid var(--border-color, #ddd);
-    margin-top: 1px;
+    height: 26px;
+    box-sizing: content-box;
 }
 
 .view-mode-btn {
@@ -28,6 +29,7 @@
     color: var(--text-secondary, #666);
     cursor: pointer;
     transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .view-mode-btn:hover {

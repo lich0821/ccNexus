@@ -421,7 +421,14 @@ body.sakura-theme #autoThemeConfigModal .modal-header::after,
 body.sakura-theme #endpointModal .modal-header::after,
 body.sakura-theme #portModal .modal-header::after,
 body.sakura-theme #historyModal .modal-header::after,
-body.sakura-theme #testResultModal .modal-header::after {
+body.sakura-theme #testResultModal .modal-header::after,
+body.sakura-theme #welcomeModal .modal-header::after,
+body.sakura-theme #changelogModal .modal-header::after,
+body.sakura-theme #updateModal .modal-header::after,
+body.sakura-theme #terminalModal .modal-header::after,
+body.sakura-theme #sessionModal .modal-header::after,
+body.sakura-theme #sessionDetailModal .modal-header::after,
+body.sakura-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 
@@ -522,7 +529,7 @@ body.sakura-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.sakura-theme .endpoint-toggle-btn {
-    background: var(--bg-tertiary);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }
