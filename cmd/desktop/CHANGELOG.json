@@ -1,5 +1,15 @@
 [
   {
+    "version": "v4.8.0",
+    "date": "2025-12-20",
+    "changes": ["Fix known issues"]
+  },
+  {
+    "version": "v4.7.1",
+    "date": "2025-12-19",
+    "changes": ["Fix known issues"]
+  },
+  {
     "version": "v4.7.0",
     "date": "2025-12-18",
     "changes": ["Add list view mode", "Fix known issues"]

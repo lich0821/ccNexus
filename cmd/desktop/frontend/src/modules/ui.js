@@ -452,8 +452,13 @@ export function initUI() {
                             <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
                         </div>
                         <div style="text-align: center;">
-                            <img src="/chat.jpg" alt="Chat Group QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupTip')}</p>
+                            <img
+                                id="chatQRCodeImg"
+                                src="/ME.png"
+                                alt="Chat Group QR Code"
+                                style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                            >
+                            <p id="chatQRCodeTip" style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupFallbackTip')}</p>
                         </div>
                     </div>
 

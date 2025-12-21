@@ -3,7 +3,10 @@ package main
 import (
     "context"
     _ "embed"
+    "encoding/base64"
     "encoding/json"
+    "io"
+    "net/http"
     "os"
     "path/filepath"
     "sync"
@@ -270,6 +273,50 @@ func (a *App) GetChangelog(lang string) string {
 // OpenURL opens a URL in the default browser
 func (a *App) OpenURL(url string) {
     runtime.BrowserOpenURL(a.ctx, url)
+}
+
+// FetchImageAsBase64 fetches an image from URL and returns it as base64 data URL
+// This is used to bypass CORS restrictions for external images
+func (a *App) FetchImageAsBase64(imageUrl string) string {
+    client := &http.Client{Timeout: 10 * time.Second}
+
+    req, err := http.NewRequest("GET", imageUrl, nil)
+    if err != nil {
+        logger.Error("Failed to create request: %v", err)
+        return ""
+    }
+
+    // Set browser-like headers
+    req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    req.Header.Set("Accept", "image/*")
+
+    resp, err := client.Do(req)
+    if err != nil {
+        logger.Error("Failed to fetch image: %v", err)
+        return ""
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        logger.Error("Image fetch failed with status: %d", resp.StatusCode)
+        return ""
+    }
+
+    data, err := io.ReadAll(resp.Body)
+    if err != nil {
+        logger.Error("Failed to read image data: %v", err)
+        return ""
+    }
+
+    // Detect content type
+    contentType := resp.Header.Get("Content-Type")
+    if contentType == "" {
+        contentType = http.DetectContentType(data)
+    }
+
+    // Return as data URL
+    base64Data := base64.StdEncoding.EncodeToString(data)
+    return "data:" + contentType + ";base64," + base64Data
 }
 
 // SelectDirectory opens a directory selection dialog

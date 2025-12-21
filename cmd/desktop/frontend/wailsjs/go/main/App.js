@@ -50,6 +50,10 @@ export function DownloadUpdate(arg1, arg2) {
   return window['go']['main']['App']['DownloadUpdate'](arg1, arg2);
 }
 
+export function FetchImageAsBase64(arg1) {
+  return window['go']['main']['App']['FetchImageAsBase64'](arg1);
+}
+
 export function FetchModels(arg1, arg2, arg3) {
   return window['go']['main']['App']['FetchModels'](arg1, arg2, arg3);
 }
