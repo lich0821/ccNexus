@@ -2047,6 +2047,95 @@ body {
     color: white;
 }
 
+/* Broadcast Banner - inline with title */
+.broadcast-banner {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 20px;
+    font-size: 13px;
+    font-weight: normal;
+    vertical-align: middle;
+    background: none;
+    border: none;
+    padding: 0;
+    max-width: calc(100vw - 500px);
+}
+
+.broadcast-banner.hidden {
+    display: none;
+}
+
+.broadcast-banner-icon {
+    flex-shrink: 0;
+    margin-right: 6px;
+    margin-bottom: 3px;
+    font-size: 17px;
+    animation: broadcast-breathe 2s ease-in-out infinite;
+}
+
+.broadcast-banner-text-wrapper {
+    overflow: hidden;
+    flex: 1;
+}
+
+.broadcast-banner-text {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.broadcast-banner-text.scroll {
+    animation: broadcast-scroll var(--scroll-duration, 15s) linear infinite;
+}
+
+.broadcast-banner-text.scroll:hover {
+    animation-play-state: paused;
+}
+
+.broadcast-banner-text[style*="cursor:pointer"]:hover {
+    text-decoration: underline;
+}
+
+.broadcast-banner-close {
+    flex-shrink: 0;
+    cursor: pointer;
+    margin-left: 8px;
+    opacity: 0.5;
+    font-size: 12px;
+    transition: opacity 0.2s;
+}
+
+.broadcast-banner-close:hover {
+    opacity: 1;
+}
+
+/* Broadcast type colors */
+.broadcast-banner.info {
+    color: #667eea;
+}
+
+.broadcast-banner.warning {
+    color: #f59e0b;
+}
+
+.broadcast-banner.error {
+    color: #ef4444;
+}
+
+.broadcast-banner.success {
+    color: #10b981;
+}
+
+/* Broadcast animations */
+@keyframes broadcast-breathe {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.9); }
+}
+
+@keyframes broadcast-scroll {
+    0%, 25% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
 /* Empty State */
 .empty-state {
     padding: 40px;

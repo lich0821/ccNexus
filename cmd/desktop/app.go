@@ -319,6 +319,37 @@ func (a *App) FetchImageAsBase64(imageUrl string) string {
     return "data:" + contentType + ";base64," + base64Data
 }
 
+// FetchBroadcast fetches broadcast JSON from URL
+func (a *App) FetchBroadcast(url string) string {
+    client := &http.Client{Timeout: 10 * time.Second}
+
+    req, err := http.NewRequest("GET", url, nil)
+    if err != nil {
+        return ""
+    }
+
+    req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+    req.Header.Set("Accept", "application/json")
+    req.Header.Set("Cache-Control", "no-cache")
+
+    resp, err := client.Do(req)
+    if err != nil {
+        return ""
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        return ""
+    }
+
+    data, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return ""
+    }
+
+    return string(data)
+}
+
 // SelectDirectory opens a directory selection dialog
 func (a *App) SelectDirectory() string {
     dir, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{

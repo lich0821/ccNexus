@@ -9,7 +9,7 @@ export function initUI() {
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
-                    <h1>🚀 ${t('app.title')}</h1>
+                    <h1>🚀 ${t('app.title')}<span id="broadcast-banner" class="broadcast-banner hidden"></span></h1>
                     <p>${t('header.title')}</p>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
