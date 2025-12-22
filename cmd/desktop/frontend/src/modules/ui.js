@@ -9,7 +9,7 @@ export function initUI() {
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
-                    <h1>🚀 ${t('app.title')}</h1>
+                    <h1>🚀 ${t('app.title')}<span id="broadcast-banner" class="broadcast-banner hidden"></span></h1>
                     <p>${t('header.title')}</p>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -439,6 +439,7 @@ export function initUI() {
             <div class="modal-content" style="max-width: min(600px, 90vw);">
                 <div class="modal-header">
                     <h2>👋 ${t('welcome.title')}</h2>
+                    <button class="modal-close" onclick="window.closeWelcomeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p style="font-size: 16px; line-height: 1.6; margin-bottom: 20px;">
@@ -451,8 +452,13 @@ export function initUI() {
                             <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.qrCodeTip')}</p>
                         </div>
                         <div style="text-align: center;">
-                            <img src="/chat.jpg" alt="Chat Group QR Code" style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                            <p style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupTip')}</p>
+                            <img
+                                id="chatQRCodeImg"
+                                src="/ME.png"
+                                alt="Chat Group QR Code"
+                                style="width: 200px; height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                            >
+                            <p id="chatQRCodeTip" style="margin-top: 10px; color: #666; font-size: 14px;">${t('welcome.chatGroupFallbackTip')}</p>
                         </div>
                     </div>
 
@@ -698,15 +704,8 @@ export function initUI() {
 }
 
 function setupModalEventListeners() {
-    // Close modals on background click (endpointModal and portModal do NOT close on background click)
-
-    document.getElementById('welcomeModal').addEventListener('click', (e) => {
-        if (e.target.id === 'welcomeModal') {
-            window.closeWelcomeModal();
-        }
-    });
-
-    document.getElementById('testResultModal').addEventListener('click', (e) => {
+    // Close modals on background click (endpointModal, portModal, welcomeModal do NOT close on background click)
+     document.getElementById('testResultModal').addEventListener('click', (e) => {
         if (e.target.id === 'testResultModal') {
             window.closeTestResultModal();
         }

@@ -12,6 +12,7 @@ import { initTerminal } from './modules/terminal.js'
 import { initSession } from './modules/session.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
+import { initBroadcast } from './modules/broadcast.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -127,6 +128,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Check for updates on startup
     checkUpdatesOnStartup();
+
+    // Initialize broadcast banner
+    initBroadcast();
 
     // Initialize update settings
     initUpdateSettings();

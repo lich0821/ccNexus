@@ -427,7 +427,14 @@ body.mocha-theme #autoThemeConfigModal .modal-header::after,
 body.mocha-theme #endpointModal .modal-header::after,
 body.mocha-theme #portModal .modal-header::after,
 body.mocha-theme #historyModal .modal-header::after,
-body.mocha-theme #testResultModal .modal-header::after {
+body.mocha-theme #testResultModal .modal-header::after,
+body.mocha-theme #welcomeModal .modal-header::after,
+body.mocha-theme #changelogModal .modal-header::after,
+body.mocha-theme #updateModal .modal-header::after,
+body.mocha-theme #terminalModal .modal-header::after,
+body.mocha-theme #sessionModal .modal-header::after,
+body.mocha-theme #sessionDetailModal .modal-header::after,
+body.mocha-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 
@@ -528,7 +535,7 @@ body.mocha-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.mocha-theme .endpoint-toggle-btn {
-    background: var(--card-bg);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }

@@ -127,6 +127,7 @@ export default {
         dontShow: "Don't show this again",
         qrCodeTip: 'Scan to follow the official account for more',
         chatGroupTip: 'Join the group for feedback, learning and discussion',
+        chatGroupFallbackTip: 'Scan to contact, please note "join group"',
         readArticle: '📖 Read Introduction',
         githubRepo: '🔗 GitHub Repository',
         changelog: '📋 Changelog'

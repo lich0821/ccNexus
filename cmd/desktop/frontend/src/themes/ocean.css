@@ -427,7 +427,14 @@ body.ocean-theme #autoThemeConfigModal .modal-header::after,
 body.ocean-theme #endpointModal .modal-header::after,
 body.ocean-theme #portModal .modal-header::after,
 body.ocean-theme #historyModal .modal-header::after,
-body.ocean-theme #testResultModal .modal-header::after {
+body.ocean-theme #testResultModal .modal-header::after,
+body.ocean-theme #welcomeModal .modal-header::after,
+body.ocean-theme #changelogModal .modal-header::after,
+body.ocean-theme #updateModal .modal-header::after,
+body.ocean-theme #terminalModal .modal-header::after,
+body.ocean-theme #sessionModal .modal-header::after,
+body.ocean-theme #sessionDetailModal .modal-header::after,
+body.ocean-theme #sessionPromptModal .modal-header::after {
     background: var(--border-light);
 }
 
@@ -528,7 +535,7 @@ body.ocean-theme .btn-sm.btn-secondary:hover {
 
 /* Endpoint toggle button - 端点折叠按钮 */
 body.ocean-theme .endpoint-toggle-btn {
-    background: var(--card-bg);
+    background: transparent;
     border-color: var(--border-color);
     color: var(--text-primary);
 }
