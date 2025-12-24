@@ -348,6 +348,20 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
+                        <label>${t('modal.modelRedirects')}</label>
+                        <div class="model-redirects-editor">
+                            <div class="kv-header">
+                                <span>${t('modal.modelRedirectsHelp')}</span>
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="window.addModelRedirectRow()">
+                                    ➕ ${t('modal.addRedirectRow')}
+                                </button>
+                            </div>
+                            <div id="modelRedirectsList" class="kv-list">
+                                <!-- KV rows will be added here dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label>${t('modal.remark')}</label>
                         <input type="text" id="endpointRemark" placeholder="${t('modal.remarkHelp')}">
                     </div>

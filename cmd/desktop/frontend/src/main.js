@@ -41,7 +41,9 @@ import {
     cancelConfirm,
     showCloseActionDialog,
     quitApplication,
-    minimizeToTray
+    minimizeToTray,
+    addModelRedirectRow,
+    removeModelRedirectRow
 } from './modules/modal.js'
 
 // Load data on startup
@@ -202,6 +204,8 @@ window.saveSettings = saveSettings;
 window.showAutoThemeConfigModal = showAutoThemeConfigModal;
 window.closeAutoThemeConfigModal = closeAutoThemeConfigModal;
 window.saveAutoThemeConfig = saveAutoThemeConfig;
+window.addModelRedirectRow = addModelRedirectRow;
+window.removeModelRedirectRow = removeModelRedirectRow;
 
 // History modal functions
 window.closeHistoryModal = async () => {

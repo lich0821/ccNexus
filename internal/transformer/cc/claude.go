@@ -12,7 +12,8 @@ import (
 // ClaudeTransformer is a passthrough transformer for Claude Code → Claude endpoint
 // with input_tokens fallback for message_delta events
 type ClaudeTransformer struct {
-	model string
+	model          string
+	modelRedirects map[string]string
 }
 
 // NewClaudeTransformer creates a new passthrough transformer
@@ -25,22 +26,41 @@ func NewClaudeTransformerWithModel(model string) *ClaudeTransformer {
 	return &ClaudeTransformer{model: model}
 }
 
+// NewClaudeTransformerWithRedirects creates a transformer with model and model redirects
+func NewClaudeTransformerWithRedirects(model string, redirects map[string]string) *ClaudeTransformer {
+	return &ClaudeTransformer{
+		model:          model,
+		modelRedirects: redirects,
+	}
+}
+
 func (t *ClaudeTransformer) Name() string {
 	return "cc_claude"
 }
 
 func (t *ClaudeTransformer) TransformRequest(req []byte) ([]byte, error) {
-	if t.model == "" {
-		return req, nil
-	}
-
+	// Parse request to get model
 	var data map[string]interface{}
 	if err := json.Unmarshal(req, &data); err != nil {
 		return req, nil
 	}
 
-	data["model"] = t.model
-	return json.Marshal(data)
+	// Step 1: Check ModelRedirects first (highest priority)
+	if reqModel, ok := data["model"].(string); ok && reqModel != "" {
+		if redirect, found := t.modelRedirects[reqModel]; found {
+			data["model"] = redirect
+			return json.Marshal(data)
+		}
+	}
+
+	// Step 2: Apply global model override if set
+	if t.model != "" {
+		data["model"] = t.model
+		return json.Marshal(data)
+	}
+
+	// Step 3: No changes needed
+	return req, nil
 }
 
 func (t *ClaudeTransformer) TransformResponse(resp []byte, isStreaming bool) ([]byte, error) {

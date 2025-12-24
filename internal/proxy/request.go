@@ -43,24 +43,37 @@ func prepareTransformerForClient(clientFormat ClientFormat, endpoint config.Endp
 func prepareCCTransformer(endpoint config.Endpoint, endpointTransformer string) (transformer.Transformer, error) {
 	switch endpointTransformer {
 	case "claude":
+		if len(endpoint.ModelRedirects) > 0 {
+			logger.Debug("[%s] Using cc_claude with model redirects", endpoint.Name)
+			return cc.NewClaudeTransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
+		}
 		if endpoint.Model != "" {
 			logger.Debug("[%s] Using cc_claude with model override: %s", endpoint.Name, endpoint.Model)
 			return cc.NewClaudeTransformerWithModel(endpoint.Model), nil
 		}
 		return cc.NewClaudeTransformer(), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return cc.NewOpenAITransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return cc.NewOpenAITransformer(endpoint.Model), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI2 transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return cc.NewOpenAI2TransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return cc.NewOpenAI2Transformer(endpoint.Model), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("Gemini transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return cc.NewGeminiTransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return cc.NewGeminiTransformer(endpoint.Model), nil
 	default:
@@ -76,20 +89,32 @@ func prepareCxChatTransformer(endpoint config.Endpoint, endpointTransformer stri
 		if model == "" {
 			model = "claude-sonnet-4-20250514"
 		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return chat.NewClaudeTransformerWithRedirects(model, endpoint.ModelRedirects), nil
+		}
 		return chat.NewClaudeTransformer(model), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return chat.NewOpenAITransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return chat.NewOpenAITransformer(endpoint.Model), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI2 transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return chat.NewOpenAI2TransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return chat.NewOpenAI2Transformer(endpoint.Model), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("Gemini transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return chat.NewGeminiTransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return chat.NewGeminiTransformer(endpoint.Model), nil
 	default:
@@ -105,20 +130,32 @@ func prepareCxRespTransformer(endpoint config.Endpoint, endpointTransformer stri
 		if model == "" {
 			model = "claude-sonnet-4-20250514"
 		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return responses.NewClaudeTransformerWithRedirects(model, endpoint.ModelRedirects), nil
+		}
 		return responses.NewClaudeTransformer(model), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return responses.NewOpenAITransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return responses.NewOpenAITransformer(endpoint.Model), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("OpenAI2 transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return responses.NewOpenAI2TransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return responses.NewOpenAI2Transformer(endpoint.Model), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
+		if endpoint.Model == "" && len(endpoint.ModelRedirects) == 0 {
+			return nil, fmt.Errorf("Gemini transformer requires model field or model redirects")
+		}
+		if len(endpoint.ModelRedirects) > 0 {
+			return responses.NewGeminiTransformerWithRedirects(endpoint.Model, endpoint.ModelRedirects), nil
 		}
 		return responses.NewGeminiTransformer(endpoint.Model), nil
 	default:

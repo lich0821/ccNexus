@@ -104,6 +104,7 @@ export function showAddEndpointModal() {
     document.getElementById('endpointTransformer').value = 'claude';
     document.getElementById('endpointModel').value = '';
     document.getElementById('endpointRemark').value = '';
+    initModelRedirectsEditor({});
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
 }
@@ -122,6 +123,9 @@ export async function editEndpoint(index) {
     document.getElementById('endpointModel').value = ep.model || '';
     document.getElementById('endpointRemark').value = ep.remark || '';
 
+    // Load model redirects
+    initModelRedirectsEditor(ep.modelRedirects || {});
+
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
 }
@@ -133,6 +137,10 @@ export async function saveEndpoint() {
     const transformer = document.getElementById('endpointTransformer').value;
     const model = document.getElementById('endpointModel').value.trim();
     const remark = document.getElementById('endpointRemark').value.trim();
+
+    // Get model redirects
+    const modelRedirects = getModelRedirects();
+    const modelRedirectsJSON = Object.keys(modelRedirects).length > 0 ? JSON.stringify(modelRedirects) : '';
 
     if (!name || !url || !key) {
         showError(t('modal.requiredFields'));
@@ -158,9 +166,9 @@ export async function saveEndpoint() {
 
     try {
         if (currentEditIndex === -1) {
-            await addEndpoint(name, url, key, transformer, model, remark);
+            await addEndpoint(name, url, key, transformer, model, remark, modelRedirectsJSON);
         } else {
-            await updateEndpoint(currentEditIndex, name, url, key, transformer, model, remark);
+            await updateEndpoint(currentEditIndex, name, url, key, transformer, model, remark, modelRedirectsJSON);
         }
 
         closeModal();
@@ -610,3 +618,57 @@ export function openArticle() {
         window.go.main.App.OpenURL('https://mp.weixin.qq.com/s/ohtkyIMd5YC7So1q-gE0og');
     }
 }
+
+// ========== Model Redirects KV Editor ==========
+
+// Add a new model redirect row
+export function addModelRedirectRow(key = '', value = '') {
+    const container = document.getElementById('modelRedirectsList');
+    const row = document.createElement('div');
+    row.className = 'kv-row';
+    row.innerHTML = `
+        <input type="text" class="kv-input kv-key" placeholder="${t('modal.modelRedirectKeyPlaceholder') || 'Original model'}" value="${key}">
+        <span class="kv-arrow">→</span>
+        <input type="text" class="kv-input kv-value" placeholder="${t('modal.modelRedirectValuePlaceholder') || 'Target model'}" value="${value}">
+        <button type="button" class="kv-remove-btn" onclick="window.removeModelRedirectRow(this)">✕</button>
+    `;
+    container.appendChild(row);
+}
+
+// Remove a model redirect row
+export function removeModelRedirectRow(button) {
+    button.parentElement.remove();
+}
+
+// Get model redirects as an object
+function getModelRedirects() {
+    const container = document.getElementById('modelRedirectsList');
+    const rows = container.querySelectorAll('.kv-row');
+    const redirects = {};
+
+    rows.forEach(row => {
+        const key = row.querySelector('.kv-key').value.trim();
+        const value = row.querySelector('.kv-value').value.trim();
+        if (key && value) {
+            redirects[key] = value;
+        }
+    });
+
+    return redirects;
+}
+
+// Initialize model redirects editor with data
+function initModelRedirectsEditor(modelRedirects) {
+    const container = document.getElementById('modelRedirectsList');
+    container.innerHTML = '';
+
+    if (modelRedirects && Object.keys(modelRedirects).length > 0) {
+        Object.entries(modelRedirects).forEach(([key, value]) => {
+            addModelRedirectRow(key, value);
+        });
+    } else {
+        // Add one empty row for new endpoints
+        addModelRedirectRow();
+    }
+}
+

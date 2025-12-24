@@ -10,13 +10,14 @@ import (
 
 // Endpoint represents a single API endpoint configuration
 type Endpoint struct {
-	Name        string `json:"name"`
-	APIUrl      string `json:"apiUrl"`
-	APIKey      string `json:"apiKey"`
-	Enabled     bool   `json:"enabled"`
-	Transformer string `json:"transformer,omitempty"` // Transformer type: claude, openai, gemini, deepseek
-	Model       string `json:"model,omitempty"`       // Target model name for non-Claude APIs
-	Remark      string `json:"remark,omitempty"`      // Optional remark for the endpoint
+	Name           string            `json:"name"`
+	APIUrl         string            `json:"apiUrl"`
+	APIKey         string            `json:"apiKey"`
+	Enabled        bool              `json:"enabled"`
+	Transformer    string            `json:"transformer,omitempty"`    // Transformer type: claude, openai, gemini, deepseek
+	Model          string            `json:"model,omitempty"`          // Target model name for non-Claude APIs
+	ModelRedirects map[string]string `json:"modelRedirects,omitempty"` // Model redirects: request model -> target model
+	Remark         string            `json:"remark,omitempty"`         // Optional remark for the endpoint
 }
 
 // WebDAVConfig represents WebDAV synchronization configuration
@@ -49,17 +50,17 @@ type ProxyConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port                int           `json:"port"`
-	Endpoints           []Endpoint    `json:"endpoints"`
-	LogLevel            int           `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language            string        `json:"language"`                      // UI language: en, zh-CN
-	Theme               string        `json:"theme"`                         // UI theme: light, dark
-	ThemeAuto           bool          `json:"themeAuto"`                     // Auto switch theme based on time
-	AutoLightTheme      string        `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
-	AutoDarkTheme       string        `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
-	WindowWidth         int           `json:"windowWidth"`                   // Window width in pixels
-	WindowHeight        int           `json:"windowHeight"`                  // Window height in pixels
-	CloseWindowBehavior string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
+	Port                int             `json:"port"`
+	Endpoints           []Endpoint      `json:"endpoints"`
+	LogLevel            int             `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language            string          `json:"language"`                      // UI language: en, zh-CN
+	Theme               string          `json:"theme"`                         // UI theme: light, dark
+	ThemeAuto           bool            `json:"themeAuto"`                     // Auto switch theme based on time
+	AutoLightTheme      string          `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
+	AutoDarkTheme       string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
+	WindowWidth         int             `json:"windowWidth"`                   // Window width in pixels
+	WindowHeight        int             `json:"windowHeight"`                  // Window height in pixels
+	CloseWindowBehavior string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	WebDAV              *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
 	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
 	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
@@ -393,14 +394,15 @@ type StorageAdapter interface {
 
 // StorageEndpoint represents an endpoint in storage
 type StorageEndpoint struct {
-	Name        string
-	APIUrl      string
-	APIKey      string
-	Enabled     bool
-	Transformer string
-	Model       string
-	Remark      string
-	SortOrder   int
+	Name           string
+	APIUrl         string
+	APIKey         string
+	Enabled        bool
+	Transformer    string
+	Model          string
+	ModelRedirects string // JSON string for model redirects map
+	Remark         string
+	SortOrder      int
 }
 
 // LoadFromStorage loads configuration from SQLite storage
@@ -427,6 +429,13 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		}
 		if endpoint.Transformer == "" {
 			endpoint.Transformer = "claude"
+		}
+		// Deserialize ModelRedirects from JSON string
+		if ep.ModelRedirects != "" {
+			var redirects map[string]string
+			if err := json.Unmarshal([]byte(ep.ModelRedirects), &redirects); err == nil {
+				endpoint.ModelRedirects = redirects
+			}
 		}
 		config.Endpoints = append(config.Endpoints, endpoint)
 	}
@@ -587,15 +596,24 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 
 	// Save/update endpoints
 	for i, ep := range c.Endpoints {
+		// Serialize ModelRedirects to JSON string
+		var redirectsJSON string
+		if len(ep.ModelRedirects) > 0 {
+			if data, err := json.Marshal(ep.ModelRedirects); err == nil {
+				redirectsJSON = string(data)
+			}
+		}
+
 		endpoint := &StorageEndpoint{
-			Name:        ep.Name,
-			APIUrl:      ep.APIUrl,
-			APIKey:      ep.APIKey,
-			Enabled:     ep.Enabled,
-			Transformer: ep.Transformer,
-			Model:       ep.Model,
-			Remark:      ep.Remark,
-			SortOrder:   i, // Use array index as sort order
+			Name:           ep.Name,
+			APIUrl:         ep.APIUrl,
+			APIKey:         ep.APIKey,
+			Enabled:        ep.Enabled,
+			Transformer:    ep.Transformer,
+			Model:          ep.Model,
+			ModelRedirects: redirectsJSON,
+			Remark:         ep.Remark,
+			SortOrder:      i, // Use array index as sort order
 		}
 
 		if existingNames[ep.Name] {

@@ -101,13 +101,14 @@ func (h *Handler) getEndpoint(w http.ResponseWriter, r *http.Request, name strin
 // createEndpoint creates a new endpoint
 func (h *Handler) createEndpoint(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Name        string `json:"name"`
-		APIUrl      string `json:"apiUrl"`
-		APIKey      string `json:"apiKey"`
-		Enabled     bool   `json:"enabled"`
-		Transformer string `json:"transformer"`
-		Model       string `json:"model"`
-		Remark      string `json:"remark"`
+		Name           string            `json:"name"`
+		APIUrl         string            `json:"apiUrl"`
+		APIKey         string            `json:"apiKey"`
+		Enabled        bool              `json:"enabled"`
+		Transformer    string            `json:"transformer"`
+		Model          string            `json:"model"`
+		ModelRedirects map[string]string `json:"modelRedirects"`
+		Remark         string            `json:"remark"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -137,18 +138,27 @@ func (h *Handler) createEndpoint(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Serialize ModelRedirects to JSON string
+	var modelRedirectsJSON string
+	if len(req.ModelRedirects) > 0 {
+		if data, err := json.Marshal(req.ModelRedirects); err == nil {
+			modelRedirectsJSON = string(data)
+		}
+	}
+
 	// Create new endpoint
 	endpoint := &storage.Endpoint{
-		Name:        req.Name,
-		APIUrl:      normalizeAPIUrl(req.APIUrl),
-		APIKey:      req.APIKey,
-		Enabled:     req.Enabled,
-		Transformer: req.Transformer,
-		Model:       req.Model,
-		Remark:      req.Remark,
-		SortOrder:   len(endpoints),
-		CreatedAt:   time.Now(),
-		UpdatedAt:   time.Now(),
+		Name:           req.Name,
+		APIUrl:         normalizeAPIUrl(req.APIUrl),
+		APIKey:         req.APIKey,
+		Enabled:        req.Enabled,
+		Transformer:    req.Transformer,
+		Model:          req.Model,
+		ModelRedirects: modelRedirectsJSON,
+		Remark:         req.Remark,
+		SortOrder:      len(endpoints),
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	if err := h.storage.SaveEndpoint(endpoint); err != nil {
@@ -169,13 +179,14 @@ func (h *Handler) createEndpoint(w http.ResponseWriter, r *http.Request) {
 // updateEndpoint updates an existing endpoint
 func (h *Handler) updateEndpoint(w http.ResponseWriter, r *http.Request, name string) {
 	var req struct {
-		Name        string `json:"name"`
-		APIUrl      string `json:"apiUrl"`
-		APIKey      string `json:"apiKey"`
-		Enabled     bool   `json:"enabled"`
-		Transformer string `json:"transformer"`
-		Model       string `json:"model"`
-		Remark      string `json:"remark"`
+		Name           string            `json:"name"`
+		APIUrl         string            `json:"apiUrl"`
+		APIKey         string            `json:"apiKey"`
+		Enabled        bool              `json:"enabled"`
+		Transformer    string            `json:"transformer"`
+		Model          string            `json:"model"`
+		ModelRedirects map[string]string `json:"modelRedirects"`
+		Remark         string            `json:"remark"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -221,6 +232,18 @@ func (h *Handler) updateEndpoint(w http.ResponseWriter, r *http.Request, name st
 	if req.Model != "" {
 		existing.Model = req.Model
 	}
+
+	// Update ModelRedirects
+	if req.ModelRedirects != nil {
+		if len(req.ModelRedirects) > 0 {
+			if data, err := json.Marshal(req.ModelRedirects); err == nil {
+				existing.ModelRedirects = string(data)
+			}
+		} else {
+			existing.ModelRedirects = ""
+		}
+	}
+
 	existing.Remark = req.Remark
 	existing.UpdatedAt = time.Now()
 

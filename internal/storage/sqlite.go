@@ -82,6 +82,11 @@ func (s *SQLiteStorage) initSchema() error {
 		return err
 	}
 
+	// Migration: Add model_redirects column if it doesn't exist
+	if err := s.migrateModelRedirects(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -110,11 +115,35 @@ func (s *SQLiteStorage) migrateSortOrder() error {
 	return nil
 }
 
+// migrateModelRedirects adds the model_redirects column to existing databases
+func (s *SQLiteStorage) migrateModelRedirects() error {
+	// Check if model_redirects column exists
+	var count int
+	err := s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('endpoints') WHERE name='model_redirects'`).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	// If column doesn't exist, add it with default value
+	if count == 0 {
+		if _, err := s.db.Exec(`ALTER TABLE endpoints ADD COLUMN model_redirects TEXT DEFAULT ''`); err != nil {
+			return err
+		}
+	}
+
+	// Update existing NULL values to empty string (for both new and existing columns)
+	if _, err := s.db.Exec(`UPDATE endpoints SET model_redirects = '' WHERE model_redirects IS NULL`); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, sort_order, created_at, updated_at FROM endpoints ORDER BY sort_order ASC`)
+	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, enabled, transformer, model, model_redirects, remark, sort_order, created_at, updated_at FROM endpoints ORDER BY sort_order ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -123,8 +152,15 @@ func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		var modelRedirects sql.NullString
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &modelRedirects, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
+		}
+		// Handle NULL values
+		if modelRedirects.Valid {
+			ep.ModelRedirects = modelRedirects.String
+		} else {
+			ep.ModelRedirects = ""
 		}
 		endpoints = append(endpoints, ep)
 	}
@@ -136,8 +172,8 @@ func (s *SQLiteStorage) SaveEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, enabled, transformer, model, remark, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		ep.Name, ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder)
+	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, enabled, transformer, model, model_redirects, remark, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ep.Name, ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.ModelRedirects, ep.Remark, ep.SortOrder)
 	if err != nil {
 		return err
 	}
@@ -154,8 +190,8 @@ func (s *SQLiteStorage) UpdateEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, enabled=?, transformer=?, model=?, remark=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
-		ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder, ep.Name)
+	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, enabled=?, transformer=?, model=?, model_redirects=?, remark=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
+		ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.ModelRedirects, ep.Remark, ep.SortOrder, ep.Name)
 	return err
 }
 
@@ -515,7 +551,7 @@ func (s *SQLiteStorage) DetectEndpointConflicts(remoteDBPath string) ([]MergeCon
 
 // getEndpointsFromDB gets endpoints from a specific database (main or attached)
 func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoint, error) {
-	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
+	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, COALESCE(model_redirects, '') as model_redirects, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -525,7 +561,7 @@ func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoin
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.ModelRedirects, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
 		}
 		endpoints = append(endpoints, ep)
@@ -552,6 +588,9 @@ func compareEndpoints(local, remote Endpoint) []string {
 	}
 	if local.Model != remote.Model {
 		conflicts = append(conflicts, "model")
+	}
+	if local.ModelRedirects != remote.ModelRedirects {
+		conflicts = append(conflicts, "modelRedirects")
 	}
 	if local.Remark != remote.Remark {
 		conflicts = append(conflicts, "remark")
@@ -614,8 +653,8 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 		// Insert only new endpoints (ignore conflicts)
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, enabled, transformer, model, model_redirects, remark, sort_order)
+			SELECT name, api_url, api_key, enabled, transformer, model, COALESCE(model_redirects, ''), remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
 		`)
 		return err
@@ -623,8 +662,8 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 		// Replace existing endpoints
 		_, err := tx.Exec(`
 			INSERT OR REPLACE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, enabled, transformer, model, model_redirects, remark, sort_order)
+			SELECT name, api_url, api_key, enabled, transformer, model, COALESCE(model_redirects, ''), remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
 		`)
 		return err

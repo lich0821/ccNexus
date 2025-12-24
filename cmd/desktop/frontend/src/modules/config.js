@@ -32,12 +32,12 @@ export async function updatePort(port) {
     await window.go.main.App.UpdatePort(port);
 }
 
-export async function addEndpoint(name, url, key, transformer, model, remark) {
-    await window.go.main.App.AddEndpoint(name, url, key, transformer, model, remark || '');
+export async function addEndpoint(name, url, key, transformer, model, remark, modelRedirectsJSON) {
+    await window.go.main.App.AddEndpoint(name, url, key, transformer, model, remark || '', modelRedirectsJSON || '');
 }
 
-export async function updateEndpoint(index, name, url, key, transformer, model, remark) {
-    await window.go.main.App.UpdateEndpoint(index, name, url, key, transformer, model, remark || '');
+export async function updateEndpoint(index, name, url, key, transformer, model, remark, modelRedirectsJSON) {
+    await window.go.main.App.UpdateEndpoint(index, name, url, key, transformer, model, remark || '', modelRedirectsJSON || '');
 }
 
 export async function removeEndpoint(index) {
