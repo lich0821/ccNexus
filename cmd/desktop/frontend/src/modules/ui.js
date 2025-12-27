@@ -10,7 +10,7 @@ export function initUI() {
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
                     <h1>🚀 ${t('app.title')}<span id="broadcast-banner" class="broadcast-banner hidden"></span></h1>
-                    <p>${t('header.title')}</p>
+                    <p>${t('header.title')}<span id="festivalToggle" class="festival-toggle hidden" onclick="window.toggleFestivalEffect(); event.stopPropagation();" title="${t('festival.toggle') || '切换氛围效果'}"><span class="festival-toggle-name" id="festivalToggleName"></span><span class="festival-toggle-switch" id="festivalToggleSwitch"></span></span></p>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <div class="port-display" onclick="window.showEditPortModal()" title="${t('header.port')}">
