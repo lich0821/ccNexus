@@ -2,12 +2,17 @@
  * Festival Effects Module - 节日氛围效果模块
  *
  * 通过远程配置文件控制节日效果的开关和参数
- * 支持效果：雪花(christmas)、烟花(firework)
+ * 支持效果：雪花(snow)、烟花(firework)、灯笼(lantern)、爱心(heart)、樱花(sakura)、枫叶(maple)、夏天(summer)
  * 支持10种烟花造型效果
  */
 
 import { Snowflake, createSnowParticles } from '../effects/snow.js';
 import { Firework, createFireworks } from '../effects/firework.js';
+import { Lantern, createLanterns } from '../effects/lantern.js';
+import { Heart, createHearts } from '../effects/heart.js';
+import { Sakura, createSakuras } from '../effects/sakura.js';
+import { Maple, createMaples } from '../effects/maple.js';
+import { SummerElement, createSummerElements } from '../effects/summer.js';
 
 // 配置
 const FESTIVAL_CONFIG_URL = 'https://gitee.com/hea7en/images/raw/master/group/festival.json';
@@ -19,6 +24,11 @@ let canvas = null;
 let ctx = null;
 let particles = [];
 let fireworks = [];
+let lanterns = [];
+let hearts = [];
+let sakuras = [];
+let maples = [];
+let summers = [];
 let fireworkTimer = 0;
 let fireworkConfig = null;
 let animationId = null;
@@ -29,7 +39,13 @@ let isManuallyDisabled = false; // 用户手动关闭的状态
 // 效果名称映射
 const EFFECT_NAMES = {
     'christmas': '飘雪',
-    'firework': '烟花'
+    'snow': '飘雪',
+    'firework': '烟花',
+    'lantern': '灯笼',
+    'heart': '爱心',
+    'sakura': '樱花',
+    'maple': '枫叶',
+    'summer': '夏天'
 };
 
 /**
@@ -39,40 +55,87 @@ export async function initFestivalEffects() {
     try {
         const config = await fetchFestivalConfig();
 
-        if (!config || !config.enabled) {
-            console.log('[Festival] Effects disabled or config not available');
-            hideFestivalToggle();
-            return;
-        }
+        // 配置生效（存在、启用、时间范围内），优先使用配置的效果
+        if (config && config.enabled && isWithinTimeRange(config)) {
+            currentConfig = config;
+            showFestivalToggle(config);
 
-        // 检查时间范围
-        if (!isWithinTimeRange(config)) {
-            console.log('[Festival] Effects not in valid time range');
-            hideFestivalToggle();
-            return;
-        }
-
-        currentConfig = config;
-
-        // 显示开关控件
-        showFestivalToggle(config);
-
-        // 如果用户没有手动关闭，则启动效果
-        if (!isManuallyDisabled) {
-            if (config.effect === 'christmas') {
-                startSnowEffect(config.config);
-            } else if (config.effect === 'firework') {
-                startFireworkEffect(config.config);
+            if (!isManuallyDisabled) {
+                startEffectByType(config.effect, config.config);
             }
+
+            window.addEventListener('resize', handleResize);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            console.log('[Festival] Effects initialized:', config.effect);
+            return;
         }
 
-        window.addEventListener('resize', handleResize);
-        document.addEventListener('visibilitychange', handleVisibilityChange);
+        // 配置不生效（不存在、未启用、时间范围外）时，检查主题默认效果
+        if (document.body.classList.contains('sakura-theme')) {
+            currentConfig = {
+                enabled: true,
+                effect: 'sakura',
+                config: {}
+            };
+            showFestivalToggle(currentConfig);
 
-        console.log('[Festival] Effects initialized:', config.effect);
+            if (!isManuallyDisabled) {
+                startSakuraEffect(currentConfig.config);
+            }
+
+            window.addEventListener('resize', handleResize);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            console.log('[Festival] Sakura theme detected, using sakura effect');
+            return;
+        }
+
+        if (document.body.classList.contains('ocean-theme')) {
+            currentConfig = {
+                enabled: true,
+                effect: 'summer',
+                config: {}
+            };
+            showFestivalToggle(currentConfig);
+
+            if (!isManuallyDisabled) {
+                startSummerEffect(currentConfig.config);
+            }
+
+            window.addEventListener('resize', handleResize);
+            document.addEventListener('visibilitychange', handleVisibilityChange);
+
+            console.log('[Festival] Ocean theme detected, using summer effect');
+            return;
+        }
+
+        console.log('[Festival] Effects disabled or config not available');
+        hideFestivalToggle();
     } catch (error) {
         console.error('[Festival] Failed to initialize:', error);
         hideFestivalToggle();
+    }
+}
+
+/**
+ * 根据效果类型启动对应效果
+ */
+function startEffectByType(effect, config) {
+    if (effect === 'christmas' || effect === 'snow') {
+        startSnowEffect(config);
+    } else if (effect === 'firework') {
+        startFireworkEffect(config);
+    } else if (effect === 'lantern') {
+        startLanternEffect(config);
+    } else if (effect === 'heart') {
+        startHeartEffect(config);
+    } else if (effect === 'sakura') {
+        startSakuraEffect(config);
+    } else if (effect === 'maple') {
+        startMapleEffect(config);
+    } else if (effect === 'summer') {
+        startSummerEffect(config);
     }
 }
 
@@ -238,6 +301,48 @@ function startFireworkEffect(config) {
 }
 
 /**
+ * 启动灯笼效果
+ */
+function startLanternEffect(config) {
+    const effectConfig = {
+        lanternCount: config?.lanternCount || 12,
+        swingSpeed: config?.swingSpeed || 1.0,
+        floatSpeed: config?.floatSpeed || 0.5,
+        opacity: config?.opacity || 0.85
+    };
+
+    createCanvas();
+    lanterns = createLanterns(effectConfig, canvas);
+
+    isRunning = true;
+    animateLanterns();
+
+    // 更新开关状态
+    updateToggleState();
+}
+
+/**
+ * 启动爱心效果
+ */
+function startHeartEffect(config) {
+    const effectConfig = {
+        heartCount: config?.heartCount || 15,
+        speed: config?.speed || 1.0,
+        wind: config?.wind || 0.25,
+        opacity: config?.opacity || 0.85
+    };
+
+    createCanvas();
+    hearts = createHearts(effectConfig, canvas);
+
+    isRunning = true;
+    animateHearts();
+
+    // 更新开关状态
+    updateToggleState();
+}
+
+/**
  * 动画循环（雪花）
  */
 function animate() {
@@ -286,6 +391,146 @@ function animateFireworks() {
 }
 
 /**
+ * 灯笼动画循环
+ */
+function animateLanterns() {
+    if (!isRunning || !ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const lantern of lanterns) {
+        lantern.update();
+        lantern.draw(ctx);
+    }
+
+    animationId = requestAnimationFrame(animateLanterns);
+}
+
+/**
+ * 爱心动画循环
+ */
+function animateHearts() {
+    if (!isRunning || !ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const heart of hearts) {
+        heart.update();
+        heart.draw(ctx);
+    }
+
+    animationId = requestAnimationFrame(animateHearts);
+}
+
+/**
+ * 启动樱花效果
+ */
+function startSakuraEffect(config) {
+    const effectConfig = {
+        sakuraCount: config?.sakuraCount || 20,
+        speed: config?.speed || 1.0,
+        wind: config?.wind || 0.3,
+        opacity: config?.opacity || 0.85
+    };
+
+    createCanvas();
+    sakuras = createSakuras(effectConfig, canvas);
+
+    isRunning = true;
+    animateSakuras();
+
+    updateToggleState();
+}
+
+/**
+ * 樱花动画循环
+ */
+function animateSakuras() {
+    if (!isRunning || !ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const sakura of sakuras) {
+        sakura.update();
+        sakura.draw(ctx);
+    }
+
+    animationId = requestAnimationFrame(animateSakuras);
+}
+
+/**
+ * 启动枫叶效果
+ */
+function startMapleEffect(config) {
+    const effectConfig = {
+        mapleCount: config?.mapleCount || 10,
+        speed: config?.speed || 1.0,
+        wind: config?.wind || 0.4,
+        opacity: config?.opacity || 0.85
+    };
+
+    createCanvas();
+    maples = createMaples(effectConfig, canvas);
+
+    isRunning = true;
+    animateMaples();
+
+    updateToggleState();
+}
+
+/**
+ * 枫叶动画循环
+ */
+function animateMaples() {
+    if (!isRunning || !ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const maple of maples) {
+        maple.update();
+        maple.draw(ctx);
+    }
+
+    animationId = requestAnimationFrame(animateMaples);
+}
+
+/**
+ * 启动夏天效果
+ */
+function startSummerEffect(config) {
+    const effectConfig = {
+        summerCount: config?.summerCount || 12,
+        speed: config?.speed || 1.0,
+        wind: config?.wind || 0.3,
+        opacity: config?.opacity || 0.85
+    };
+
+    createCanvas();
+    summers = createSummerElements(effectConfig, canvas);
+
+    isRunning = true;
+    animateSummer();
+
+    updateToggleState();
+}
+
+/**
+ * 夏天动画循环
+ */
+function animateSummer() {
+    if (!isRunning || !ctx || !canvas) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (const element of summers) {
+        element.update();
+        element.draw(ctx);
+    }
+
+    animationId = requestAnimationFrame(animateSummer);
+}
+
+/**
  * 暂停动画
  */
 function pauseAnimation() {
@@ -304,6 +549,16 @@ function resumeAnimation() {
         isRunning = true;
         if (currentConfig.effect === 'firework') {
             animateFireworks();
+        } else if (currentConfig.effect === 'lantern') {
+            animateLanterns();
+        } else if (currentConfig.effect === 'heart') {
+            animateHearts();
+        } else if (currentConfig.effect === 'sakura') {
+            animateSakuras();
+        } else if (currentConfig.effect === 'maple') {
+            animateMaples();
+        } else if (currentConfig.effect === 'summer') {
+            animateSummer();
         } else if (particles.length > 0) {
             animate();
         }
@@ -339,6 +594,11 @@ export function destroyFestivalEffects() {
     destroyCanvas();
     particles = [];
     fireworks = [];
+    lanterns = [];
+    hearts = [];
+    sakuras = [];
+    maples = [];
+    summers = [];
     fireworkTimer = 0;
     fireworkConfig = null;
     currentConfig = null;
@@ -430,10 +690,20 @@ export function toggleFestivalEffect() {
     } else {
         // 开启效果
         isManuallyDisabled = false;
-        if (currentConfig.effect === 'christmas') {
+        if (currentConfig.effect === 'christmas' || currentConfig.effect === 'snow') {
             startSnowEffect(currentConfig.config);
         } else if (currentConfig.effect === 'firework') {
             startFireworkEffect(currentConfig.config);
+        } else if (currentConfig.effect === 'lantern') {
+            startLanternEffect(currentConfig.config);
+        } else if (currentConfig.effect === 'heart') {
+            startHeartEffect(currentConfig.config);
+        } else if (currentConfig.effect === 'sakura') {
+            startSakuraEffect(currentConfig.config);
+        } else if (currentConfig.effect === 'maple') {
+            startMapleEffect(currentConfig.config);
+        } else if (currentConfig.effect === 'summer') {
+            startSummerEffect(currentConfig.config);
         }
     }
 
@@ -448,6 +718,11 @@ function stopFestivalEffect() {
     destroyCanvas();
     particles = [];
     fireworks = [];
+    lanterns = [];
+    hearts = [];
+    sakuras = [];
+    maples = [];
+    summers = [];
     fireworkTimer = 0;
 
     // 更新开关状态
