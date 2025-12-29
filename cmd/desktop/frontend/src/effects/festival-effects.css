@@ -33,7 +33,7 @@
     opacity: 0.85;
     vertical-align: baseline;
     position: relative;
-    top: -1px;
+    top: 0px;
 }
 
 .festival-toggle:hover {
