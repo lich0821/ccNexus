@@ -499,7 +499,7 @@ function animateMaples() {
  */
 function startSummerEffect(config) {
     const effectConfig = {
-        summerCount: config?.summerCount || 12,
+        summerCount: config?.summerCount || 10,
         speed: config?.speed || 1.0,
         wind: config?.wind || 0.3,
         opacity: config?.opacity || 0.85

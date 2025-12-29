@@ -95,7 +95,10 @@ function renderBanner() {
     `;
 
     // 绑定事件
-    banner.querySelector('.broadcast-banner-close').onclick = closeBanner;
+    banner.querySelector('.broadcast-banner-close').onclick = (e) => {
+        e.stopPropagation();
+        closeBanner();
+    };
     if (msg.link) {
         banner.querySelector('.broadcast-banner-text').onclick = () => {
             window.go.main.App.OpenURL(msg.link);

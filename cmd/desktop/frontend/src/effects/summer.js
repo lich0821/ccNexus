@@ -19,8 +19,8 @@ export class SummerElement {
         this.type = this.getRandomType();
         this.size = 10;
 
-        const speedFactor = 0.4 + (this.size / 50);
-        this.speedY = (Math.random() * 0.5 + 0.4) * (this.config.speed || 1.0) * speedFactor;
+        const speedFactor = 0.35 + (this.size / 50);
+        this.speedY = (Math.random() * 0.4 + 0.3) * (this.config.speed || 1.0) * speedFactor;
         this.speedX = (Math.random() - 0.5) * (this.config.wind || 0.3) * 1.5;
 
         this.swingAngle = Math.random() * Math.PI * 2;
@@ -34,7 +34,7 @@ export class SummerElement {
 
     getRandomType() {
         // 0=西瓜, 1=冰淇淋, 2=阳光, 3=向日葵, 4=冰棍
-        const weights = [30, 20, 10, 20, 20];
+        const weights = [35, 15, 10, 5, 35];
         let r = Math.random() * 100;
         for (let i = 0; i < weights.length; i++) {
             r -= weights[i];
