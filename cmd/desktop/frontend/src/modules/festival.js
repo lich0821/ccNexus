@@ -37,6 +37,7 @@ let currentConfig = null;
 let isManuallyDisabled = false; // 用户手动关闭的状态
 let fullConfig = null; // 完整配置
 let effectCheckTimer = null; // 效果切换定时检查器
+let isCheckingEffect = false; // 防止并发检查
 
 // 效果名称映射
 const EFFECT_NAMES = {
@@ -683,6 +684,7 @@ export function destroyFestivalEffects() {
     fireworkConfig = null;
     currentConfig = null;
     fullConfig = null;
+    isCheckingEffect = false;
 
     // 停止效果切换定时检查
     stopEffectCheckTimer();
@@ -916,30 +918,55 @@ function stopEffectCheckTimer() {
 /**
  * 检查并切换效果
  */
-function checkAndSwitchEffect() {
-    if (!fullConfig || !fullConfig.enabled || isManuallyDisabled) return;
+async function checkAndSwitchEffect() {
+    // 防止并发执行
+    if (isCheckingEffect) return;
+    isCheckingEffect = true;
 
-    const newActiveEffect = findActiveEffect(fullConfig.effects);
-
-    // 判断效果是否需要切换
-    const currentEffect = currentConfig?.effect;
-    const newEffect = newActiveEffect?.effect;
-
-    if (newEffect !== currentEffect) {
-        console.log('[Festival] Effect switching:', currentEffect, '->', newEffect);
-
-        // 停止当前效果
-        stopFestivalEffect();
-
-        if (newActiveEffect) {
-            // 启动新效果
-            currentConfig = newActiveEffect;
-            showFestivalToggle(newActiveEffect);
-            startEffectByType(newActiveEffect.effect, newActiveEffect.config);
-        } else {
-            // 没有有效效果
-            hideFestivalToggle();
-            currentConfig = null;
+    try {
+        // 尝试刷新配置（会自动检查缓存是否过期）
+        const newConfig = await fetchFestivalConfig();
+        if (newConfig) {
+            fullConfig = newConfig;
         }
+
+        // 配置无效或禁用时，停止效果
+        if (!fullConfig || !fullConfig.enabled) {
+            if (isRunning) {
+                console.log('[Festival] Config disabled, stopping effect');
+                stopFestivalEffect();
+                hideFestivalToggle();
+                currentConfig = null;
+            }
+            return;
+        }
+
+        if (isManuallyDisabled) return;
+
+        const newActiveEffect = findActiveEffect(fullConfig.effects);
+
+        // 判断效果是否需要切换
+        const currentEffect = currentConfig?.effect;
+        const newEffect = newActiveEffect?.effect;
+
+        if (newEffect !== currentEffect) {
+            console.log('[Festival] Effect switching:', currentEffect, '->', newEffect);
+
+            // 停止当前效果
+            stopFestivalEffect();
+
+            if (newActiveEffect) {
+                // 启动新效果
+                currentConfig = newActiveEffect;
+                showFestivalToggle(newActiveEffect);
+                startEffectByType(newActiveEffect.effect, newActiveEffect.config);
+            } else {
+                // 没有有效效果
+                hideFestivalToggle();
+                currentConfig = null;
+            }
+        }
+    } finally {
+        isCheckingEffect = false;
     }
 }
