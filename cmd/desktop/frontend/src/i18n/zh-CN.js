@@ -399,6 +399,9 @@ export default {
         noMessages: '暂无消息',
         loadDetailError: '加载会话详情失败',
     },
+    festival: {
+        toggle: '切换开关'
+    },
     common: {
         ok: '确定',
         cancel: '取消',
