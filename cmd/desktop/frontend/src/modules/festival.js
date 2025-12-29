@@ -35,10 +35,11 @@ let animationId = null;
 let isRunning = false;
 let currentConfig = null;
 let isManuallyDisabled = false; // 用户手动关闭的状态
+let fullConfig = null; // 完整配置
+let effectCheckTimer = null; // 效果切换定时检查器
 
 // 效果名称映射
 const EFFECT_NAMES = {
-    'christmas': '飘雪',
     'snow': '飘雪',
     'firework': '烟花',
     'lantern': '灯笼',
@@ -55,23 +56,34 @@ export async function initFestivalEffects() {
     try {
         const config = await fetchFestivalConfig();
 
-        // 配置生效（存在、启用、时间范围内），优先使用配置的效果
-        if (config && config.enabled && isWithinTimeRange(config)) {
-            currentConfig = config;
-            showFestivalToggle(config);
+        // 配置生效（存在、启用、有效果列表）
+        if (config && config.enabled && config.effects && config.effects.length > 0) {
+            // 保存完整配置
+            fullConfig = config;
 
-            if (!isManuallyDisabled) {
-                startEffectByType(config.effect, config.config);
+            // 找到当前有效的效果
+            const activeEffect = findActiveEffect(config.effects);
+
+            if (activeEffect) {
+                currentConfig = activeEffect;
+                showFestivalToggle(activeEffect);
+
+                if (!isManuallyDisabled) {
+                    startEffectByType(activeEffect.effect, activeEffect.config);
+                }
+
+                window.addEventListener('resize', handleResize);
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+
+                // 启动定时检查（用于效果切换）
+                startEffectCheckTimer();
+
+                console.log('[Festival] Effects initialized:', activeEffect.effect);
+                return;
             }
-
-            window.addEventListener('resize', handleResize);
-            document.addEventListener('visibilitychange', handleVisibilityChange);
-
-            console.log('[Festival] Effects initialized:', config.effect);
-            return;
         }
 
-        // 配置不生效（不存在、未启用、时间范围外）时，检查主题默认效果
+        // 配置不生效时，检查主题默认效果
         if (document.body.classList.contains('sakura-theme')) {
             currentConfig = {
                 enabled: true,
@@ -122,7 +134,7 @@ export async function initFestivalEffects() {
  * 根据效果类型启动对应效果
  */
 function startEffectByType(effect, config) {
-    if (effect === 'christmas' || effect === 'snow') {
+    if (effect === 'snow') {
         startSnowEffect(config);
     } else if (effect === 'firework') {
         startFireworkEffect(config);
@@ -191,32 +203,100 @@ async function fetchFestivalConfig() {
 function validateConfig(config) {
     if (typeof config !== 'object' || config === null) return false;
     if (typeof config.enabled !== 'boolean') return false;
-    if (typeof config.effect !== 'string') return false;
+    if (!Array.isArray(config.effects) || config.effects.length === 0) return false;
 
-    // 验证时间参数（可选）
-    if (config.startTime !== undefined && typeof config.startTime !== 'string') {
-        return false;
-    }
-    if (config.endTime !== undefined && typeof config.endTime !== 'string') {
-        return false;
-    }
-
+    // 验证 cacheDuration（可选）
     if (config.cacheDuration !== undefined && (typeof config.cacheDuration !== 'number' || config.cacheDuration < 1 || config.cacheDuration > 86400)) {
         return false;
     }
 
-    if (config.config) {
-        const c = config.config;
-        if (c.particleCount !== undefined && (typeof c.particleCount !== 'number' || c.particleCount < 1 || c.particleCount > 200)) {
+    // 验证每个 effect
+    for (const item of config.effects) {
+        if (!validateEffectItem(item)) return false;
+    }
+
+    return true;
+}
+
+/**
+ * 验证单个效果配置
+ */
+function validateEffectItem(item) {
+    if (typeof item !== 'object' || item === null) return false;
+
+    // 验证 effect 类型
+    const validEffects = ['snow', 'firework', 'lantern', 'heart', 'sakura', 'maple', 'summer'];
+    if (!validEffects.includes(item.effect)) return false;
+
+    // 验证时间参数（可选）
+    if (item.startTime !== undefined && typeof item.startTime !== 'string') return false;
+    if (item.endTime !== undefined && typeof item.endTime !== 'string') return false;
+
+    // 验证 cycle（可选）
+    if (item.cycle !== undefined && !['daily', 'weekly', 'monthly'].includes(item.cycle)) return false;
+
+    // 验证 config（可选）
+    if (item.config && !validateEffectConfig(item.effect, item.config)) return false;
+
+    return true;
+}
+
+/**
+ * 验证效果参数配置
+ */
+function validateEffectConfig(effect, config) {
+    if (typeof config !== 'object' || config === null) return false;
+
+    // 通用参数验证
+    if (config.speed !== undefined && (typeof config.speed !== 'number' || config.speed < 0.1 || config.speed > 5)) {
+        return false;
+    }
+    if (config.wind !== undefined && (typeof config.wind !== 'number' || config.wind < 0 || config.wind > 2)) {
+        return false;
+    }
+    if (config.opacity !== undefined && (typeof config.opacity !== 'number' || config.opacity < 0 || config.opacity > 1)) {
+        return false;
+    }
+
+    // 根据效果类型验证特定参数
+    if (effect === 'snow') {
+        if (config.particleCount !== undefined && (typeof config.particleCount !== 'number' || config.particleCount < 1 || config.particleCount > 200)) {
             return false;
         }
-        if (c.speed !== undefined && (typeof c.speed !== 'number' || c.speed < 0.1 || c.speed > 5)) {
+    } else if (effect === 'firework') {
+        if (config.launchInterval !== undefined && (typeof config.launchInterval !== 'number' || config.launchInterval < 10 || config.launchInterval > 500)) {
             return false;
         }
-        if (c.wind !== undefined && (typeof c.wind !== 'number' || c.wind < 0 || c.wind > 2)) {
+        if (config.maxFireworks !== undefined && (typeof config.maxFireworks !== 'number' || config.maxFireworks < 1 || config.maxFireworks > 20)) {
             return false;
         }
-        if (c.opacity !== undefined && (typeof c.opacity !== 'number' || c.opacity < 0 || c.opacity > 1)) {
+        if (config.burstChance !== undefined && (typeof config.burstChance !== 'number' || config.burstChance < 0 || config.burstChance > 1)) {
+            return false;
+        }
+    } else if (effect === 'lantern') {
+        if (config.lanternCount !== undefined && (typeof config.lanternCount !== 'number' || config.lanternCount < 1 || config.lanternCount > 50)) {
+            return false;
+        }
+        if (config.swingSpeed !== undefined && (typeof config.swingSpeed !== 'number' || config.swingSpeed < 0.1 || config.swingSpeed > 5)) {
+            return false;
+        }
+        if (config.floatSpeed !== undefined && (typeof config.floatSpeed !== 'number' || config.floatSpeed < 0.1 || config.floatSpeed > 5)) {
+            return false;
+        }
+    } else if (effect === 'heart') {
+        if (config.heartCount !== undefined && (typeof config.heartCount !== 'number' || config.heartCount < 1 || config.heartCount > 100)) {
+            return false;
+        }
+    } else if (effect === 'sakura') {
+        if (config.sakuraCount !== undefined && (typeof config.sakuraCount !== 'number' || config.sakuraCount < 1 || config.sakuraCount > 100)) {
+            return false;
+        }
+    } else if (effect === 'maple') {
+        if (config.mapleCount !== undefined && (typeof config.mapleCount !== 'number' || config.mapleCount < 1 || config.mapleCount > 100)) {
+            return false;
+        }
+    } else if (effect === 'summer') {
+        if (config.summerCount !== undefined && (typeof config.summerCount !== 'number' || config.summerCount < 1 || config.summerCount > 100)) {
             return false;
         }
     }
@@ -602,6 +682,10 @@ export function destroyFestivalEffects() {
     fireworkTimer = 0;
     fireworkConfig = null;
     currentConfig = null;
+    fullConfig = null;
+
+    // 停止效果切换定时检查
+    stopEffectCheckTimer();
 
     window.removeEventListener('resize', handleResize);
     document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -690,7 +774,7 @@ export function toggleFestivalEffect() {
     } else {
         // 开启效果
         isManuallyDisabled = false;
-        if (currentConfig.effect === 'christmas' || currentConfig.effect === 'snow') {
+        if (currentConfig.effect === 'snow') {
             startSnowEffect(currentConfig.config);
         } else if (currentConfig.effect === 'firework') {
             startFireworkEffect(currentConfig.config);
@@ -733,33 +817,129 @@ function stopFestivalEffect() {
 window.toggleFestivalEffect = toggleFestivalEffect;
 
 /**
- * 检查配置是否在有效时间范围内
+ * 解析时间字符串，支持 "2025-12-01 00:00:00" 格式
  */
-function isWithinTimeRange(config) {
+function parseTime(str) {
+    return new Date(str.replace(' ', 'T'));
+}
+
+/**
+ * 从 effects 数组中找到当前有效的效果
+ */
+function findActiveEffect(effects) {
     const now = new Date();
 
-    // 检查开始时间
-    if (config.startTime) {
-        const startTime = parseTime(config.startTime);
-        if (startTime > now) {
-            return false;
+    for (const item of effects) {
+        if (isEffectActive(item, now)) {
+            return item;
         }
     }
+    return null;
+}
 
-    // 检查结束时间
-    if (config.endTime) {
-        const endTime = parseTime(config.endTime);
-        if (endTime < now) {
-            return false;
-        }
+/**
+ * 判断单个效果是否在有效时间内（支持 cycle 周期）
+ */
+function isEffectActive(item, now) {
+    // 没有设置时间范围，直接有效
+    if (!item.startTime && !item.endTime) return true;
+
+    const startTime = item.startTime ? parseTime(item.startTime) : null;
+    const endTime = item.endTime ? parseTime(item.endTime) : null;
+
+    // 没有设置 cycle，使用原逻辑（startTime 到 endTime 整段时间内有效）
+    if (!item.cycle) {
+        if (startTime && startTime > now) return false;
+        if (endTime && endTime < now) return false;
+        return true;
+    }
+
+    // 有 cycle 时，检查日期有效期
+    if (startTime) {
+        const startDate = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate());
+        const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (nowDate < startDate) return false;
+    }
+    if (endTime) {
+        const endDate = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate());
+        const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        if (nowDate > endDate) return false;
+    }
+
+    // 提取时间部分（时:分:秒）
+    const timeStart = startTime ? { h: startTime.getHours(), m: startTime.getMinutes(), s: startTime.getSeconds() } : { h: 0, m: 0, s: 0 };
+    const timeEnd = endTime ? { h: endTime.getHours(), m: endTime.getMinutes(), s: endTime.getSeconds() } : { h: 23, m: 59, s: 59 };
+
+    // 当前时间（时:分:秒）转换为秒数便于比较
+    const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    const startSeconds = timeStart.h * 3600 + timeStart.m * 60 + timeStart.s;
+    const endSeconds = timeEnd.h * 3600 + timeEnd.m * 60 + timeEnd.s;
+
+    // 检查当前时间是否在时间段内
+    if (nowSeconds < startSeconds || nowSeconds > endSeconds) return false;
+
+    // 根据 cycle 类型判断
+    if (item.cycle === 'daily') {
+        // 每天都有效，只要时间匹配即可
+        return true;
+    } else if (item.cycle === 'weekly') {
+        // 每周固定周几有效（从 startTime 推断）
+        const targetDayOfWeek = startTime ? startTime.getDay() : 0;
+        return now.getDay() === targetDayOfWeek;
+    } else if (item.cycle === 'monthly') {
+        // 每月固定几号有效（从 startTime 推断）
+        const targetDayOfMonth = startTime ? startTime.getDate() : 1;
+        return now.getDate() === targetDayOfMonth;
     }
 
     return true;
 }
 
 /**
- * 解析时间字符串，支持 "2025-12-01 00:00:00" 格式
+ * 启动效果切换定时检查
  */
-function parseTime(str) {
-    return new Date(str.replace(' ', 'T'));
+function startEffectCheckTimer() {
+    if (effectCheckTimer) clearInterval(effectCheckTimer);
+    effectCheckTimer = setInterval(checkAndSwitchEffect, 60000); // 每分钟检查
+}
+
+/**
+ * 停止效果切换定时检查
+ */
+function stopEffectCheckTimer() {
+    if (effectCheckTimer) {
+        clearInterval(effectCheckTimer);
+        effectCheckTimer = null;
+    }
+}
+
+/**
+ * 检查并切换效果
+ */
+function checkAndSwitchEffect() {
+    if (!fullConfig || !fullConfig.enabled || isManuallyDisabled) return;
+
+    const newActiveEffect = findActiveEffect(fullConfig.effects);
+
+    // 判断效果是否需要切换
+    const currentEffect = currentConfig?.effect;
+    const newEffect = newActiveEffect?.effect;
+
+    if (newEffect !== currentEffect) {
+        console.log('[Festival] Effect switching:', currentEffect, '->', newEffect);
+
+        // 停止当前效果
+        stopFestivalEffect();
+
+        if (newActiveEffect) {
+            // 启动新效果
+            currentConfig = newActiveEffect;
+            showFestivalToggle(newActiveEffect);
+            startEffectByType(newActiveEffect.effect, newActiveEffect.config);
+        } else {
+            // 没有有效效果
+            hideFestivalToggle();
+            currentConfig = null;
+        }
+    }
 }

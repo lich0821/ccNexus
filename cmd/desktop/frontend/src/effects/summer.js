@@ -34,7 +34,7 @@ export class SummerElement {
 
     getRandomType() {
         // 0=西瓜, 1=冰淇淋, 2=阳光, 3=向日葵, 4=冰棍
-        const weights = [35, 15, 10, 5, 35];
+        const weights = [30, 15, 10, 15, 30];
         let r = Math.random() * 100;
         for (let i = 0; i < weights.length; i++) {
             r -= weights[i];
