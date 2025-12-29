@@ -62,6 +62,7 @@
     padding: 2px 6px;
     border-radius: 8px;
     transition: all 0.25s ease;
+    line-height: 1.1;
 }
 
 /* Active state - effect is ON */
