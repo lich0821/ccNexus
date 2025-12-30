@@ -14,7 +14,6 @@ import { initSession } from './modules/session.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import { initBroadcast } from './modules/broadcast.js'
-import { initFestivalEffects } from './modules/festival.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -99,9 +98,6 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize tips
     initTips();
-
-    // Initialize festival effects (snow, leaves, etc.)
-    initFestivalEffects();
 
     // Initialize endpoint success listener
     initEndpointSuccessListener();

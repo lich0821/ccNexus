@@ -398,6 +398,9 @@ export default {
         noMessages: 'No messages',
         loadDetailError: 'Failed to load session detail',
     },
+    festival: {
+        toggle: 'Toggle switch'
+    },
     common: {
         ok: 'OK',
         cancel: 'Cancel',
