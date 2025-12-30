@@ -1,5 +1,6 @@
 import { t } from '../i18n/index.js';
 import { changeLanguage } from './ui.js';
+import { destroyFestivalEffects, initFestivalEffects } from './festival.js';
 
 // Auto theme check interval ID
 let autoThemeIntervalId = null;
@@ -34,6 +35,10 @@ export function applyTheme(theme) {
         document.body.classList.add('quantum-theme');
     }
     // 'light' theme uses default styles, no class needed
+
+    // 重新初始化节日效果（根据主题判断默认效果）
+    destroyFestivalEffects();
+    initFestivalEffects();
 }
 
 // Get theme based on current time and user's auto theme settings

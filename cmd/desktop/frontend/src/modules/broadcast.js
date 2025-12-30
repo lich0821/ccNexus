@@ -58,12 +58,61 @@ async function fetchAndRender() {
     }
 }
 
-// 过滤有效消息（检查时间范围）
+// 过滤有效消息（检查时间范围和周期）
 function filterValidMessages(msgs) {
     const now = new Date();
     return msgs.filter(msg => {
-        if (msg.startTime && parseTime(msg.startTime) > now) return false;
-        if (msg.endTime && parseTime(msg.endTime) < now) return false;
+        // 没有设置时间范围，直接显示
+        if (!msg.startTime && !msg.endTime) return true;
+
+        const startTime = msg.startTime ? parseTime(msg.startTime) : null;
+        const endTime = msg.endTime ? parseTime(msg.endTime) : null;
+
+        // 没有设置 cycle，使用原逻辑（startTime 到 endTime 整段时间内显示）
+        if (!msg.cycle) {
+            if (startTime && startTime > now) return false;
+            if (endTime && endTime < now) return false;
+            return true;
+        }
+
+        // 有 cycle 时，检查日期有效期
+        if (startTime) {
+            const startDate = new Date(startTime.getFullYear(), startTime.getMonth(), startTime.getDate());
+            const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if (nowDate < startDate) return false;
+        }
+        if (endTime) {
+            const endDate = new Date(endTime.getFullYear(), endTime.getMonth(), endTime.getDate());
+            const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if (nowDate > endDate) return false;
+        }
+
+        // 提取时间部分（时:分:秒）
+        const timeStart = startTime ? { h: startTime.getHours(), m: startTime.getMinutes(), s: startTime.getSeconds() } : { h: 0, m: 0, s: 0 };
+        const timeEnd = endTime ? { h: endTime.getHours(), m: endTime.getMinutes(), s: endTime.getSeconds() } : { h: 23, m: 59, s: 59 };
+
+        // 当前时间（时:分:秒）转换为秒数便于比较
+        const nowSeconds = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+        const startSeconds = timeStart.h * 3600 + timeStart.m * 60 + timeStart.s;
+        const endSeconds = timeEnd.h * 3600 + timeEnd.m * 60 + timeEnd.s;
+
+        // 检查当前时间是否在时间段内
+        if (nowSeconds < startSeconds || nowSeconds > endSeconds) return false;
+
+        // 根据 cycle 类型判断
+        if (msg.cycle === 'daily') {
+            // 每天都显示，只要时间匹配即可
+            return true;
+        } else if (msg.cycle === 'weekly') {
+            // 每周固定周几显示（从 startTime 推断）
+            const targetDayOfWeek = startTime ? startTime.getDay() : 0;
+            return now.getDay() === targetDayOfWeek;
+        } else if (msg.cycle === 'monthly') {
+            // 每月固定几号显示（从 startTime 推断）
+            const targetDayOfMonth = startTime ? startTime.getDate() : 1;
+            return now.getDate() === targetDayOfMonth;
+        }
+
         return true;
     });
 }
@@ -95,7 +144,10 @@ function renderBanner() {
     `;
 
     // 绑定事件
-    banner.querySelector('.broadcast-banner-close').onclick = closeBanner;
+    banner.querySelector('.broadcast-banner-close').onclick = (e) => {
+        e.stopPropagation();
+        closeBanner();
+    };
     if (msg.link) {
         banner.querySelector('.broadcast-banner-text').onclick = () => {
             window.go.main.App.OpenURL(msg.link);
