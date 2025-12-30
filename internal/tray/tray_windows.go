@@ -4,21 +4,18 @@
 package tray
 
 import (
-	"time"
+	"runtime"
 
-	"github.com/getlantern/systray"
-	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/energye/systray"
 )
 
 var (
-	showWindow   func()
-	hideWindow   func()
-	quitApp      func()
-	mShow        *systray.MenuItem
-	mQuit        *systray.MenuItem
-	currentLang  string
-	windowOpChan chan func()
-	trayIconData []byte
+	showWindow  func()
+	hideWindow  func()
+	quitApp     func()
+	mShow       *systray.MenuItem
+	mQuit       *systray.MenuItem
+	currentLang string
 )
 
 // Tray menu texts
@@ -45,140 +42,64 @@ var menuTexts = map[string]struct {
 	},
 }
 
-// Setup initializes the system tray using systray library
+// Setup initializes the system tray using energye/systray library
 func Setup(icon []byte, showFunc func(), hideFunc func(), quitFunc func(), language string) {
 	showWindow = showFunc
 	hideWindow = hideFunc
 	quitApp = quitFunc
 	currentLang = language
 
-	// Initialize the window operation channel with buffer size 1
-	// This ensures operations are serialized and prevents goroutine accumulation
-	windowOpChan = make(chan func(), 1)
-
-	// Start a single worker goroutine to handle all window operations
-	go windowOperationWorker()
-
+	// 在独立 goroutine 中运行，并锁定 OS 线程
+	// Windows 消息循环必须在创建窗口的同一线程中运行
 	go func() {
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Error("System tray setup panic: %v", r)
-			}
-		}()
-
+		runtime.LockOSThread()
 		systray.Run(func() {
 			onReady(icon)
-		}, func() {
-			onExit()
-		})
+		}, onExit)
 	}()
-}
-
-// windowOperationWorker processes window operations serially with timeout
-func windowOperationWorker() {
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("Window operation worker panic: %v, restarting...", r)
-			// Restart the worker if it crashes
-			go windowOperationWorker()
-		}
-	}()
-
-	for op := range windowOpChan {
-		if op != nil {
-			done := make(chan struct{})
-			go func() {
-				defer func() {
-					recover()
-					close(done)
-				}()
-				op()
-			}()
-
-			select {
-			case <-done:
-			case <-time.After(3 * time.Second):
-			}
-		}
-	}
 }
 
 func onReady(icon []byte) {
 	if len(icon) > 0 {
-		trayIconData = icon
 		systray.SetIcon(icon)
 	}
 	systray.SetTitle("ccNexus")
 
-	// Set initial menu items
-	updateMenuTexts(currentLang)
-
 	texts := getMenuTexts(currentLang)
 	systray.SetTooltip(texts.Tooltip)
 
-	mShow = systray.AddMenuItem(texts.Show, texts.ShowTip)
-	systray.AddSeparator()
-	mQuit = systray.AddMenuItem(texts.Quit, texts.QuitTip)
-
-	// Handle menu clicks in a separate goroutine
-	go func() {
-		// Add panic recovery to prevent the goroutine from crashing
-		defer func() {
-			if r := recover(); r != nil {
-				logger.Error("Tray menu event handler panic recovered: %v", r)
-				// Restart the event handler
-				go handleMenuEvents()
-			}
-		}()
-		handleMenuEvents()
-	}()
-}
-
-// handleMenuEvents handles the menu click events
-func handleMenuEvents() {
-	// Add panic recovery for this handler as well
-	defer func() {
-		recover()
-	}()
-
-	// Refresh tray icon periodically to keep Windows message loop active
-	heartbeat := time.NewTicker(30 * time.Second)
-	defer heartbeat.Stop()
-
-	for {
-		select {
-		case <-mShow.ClickedCh:
-			if showWindow != nil {
-				// Send operation to the worker channel (non-blocking)
-				// Use select with default to avoid blocking if channel is full
-				select {
-				case windowOpChan <- showWindow:
-					// Operation queued successfully
-				default:
-					// Channel is full, skip duplicate request
-				}
-			}
-
-		case <-mQuit.ClickedCh:
-			if quitApp != nil {
-				quitApp()
-			}
-			systray.Quit()
-			return
-
-		case <-heartbeat.C:
-			if len(trayIconData) > 0 {
-				systray.SetIcon(trayIconData)
-			}
+	// 设置双击事件 - 双击托盘图标显示窗口
+	systray.SetOnDClick(func(menu systray.IMenu) {
+		if showWindow != nil {
+			showWindow()
 		}
-	}
+	})
+
+	// 设置右键事件 - 显示菜单（默认行为，可选）
+	systray.SetOnRClick(func(menu systray.IMenu) {
+		menu.ShowMenu()
+	})
+
+	mShow = systray.AddMenuItem(texts.Show, texts.ShowTip)
+	mShow.Click(func() {
+		if showWindow != nil {
+			showWindow()
+		}
+	})
+
+	systray.AddSeparator()
+
+	mQuit = systray.AddMenuItem(texts.Quit, texts.QuitTip)
+	mQuit.Click(func() {
+		if quitApp != nil {
+			quitApp()
+		}
+		systray.Quit()
+	})
 }
 
 func onExit() {
-	// Close the window operation channel
-	if windowOpChan != nil {
-		close(windowOpChan)
-	}
+	// cleanup if needed
 }
 
 func Quit() {
@@ -187,10 +108,6 @@ func Quit() {
 
 // UpdateLanguage updates the tray menu language
 func UpdateLanguage(language string) {
-	defer func() {
-		recover()
-	}()
-
 	currentLang = language
 	if mShow != nil && mQuit != nil {
 		texts := getMenuTexts(language)
@@ -213,8 +130,4 @@ func getMenuTexts(lang string) struct {
 		return texts
 	}
 	return menuTexts["en"]
-}
-
-func updateMenuTexts(lang string) {
-	currentLang = lang
 }
