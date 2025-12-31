@@ -28,6 +28,31 @@ type WebDAVConfig struct {
 	StatsPath  string `json:"statsPath"`  // Stats backup path (default /ccNexus/stats)
 }
 
+// LocalBackupConfig represents local backup configuration
+type LocalBackupConfig struct {
+	Dir string `json:"dir"` // Local directory to store backups
+}
+
+// S3BackupConfig represents S3-compatible backup configuration
+type S3BackupConfig struct {
+	Endpoint       string `json:"endpoint"`
+	Region         string `json:"region,omitempty"`
+	Bucket         string `json:"bucket"`
+	Prefix         string `json:"prefix,omitempty"`
+	AccessKey      string `json:"accessKey"`
+	SecretKey      string `json:"secretKey"`
+	SessionToken   string `json:"sessionToken,omitempty"`
+	UseSSL         bool   `json:"useSSL"`
+	ForcePathStyle bool   `json:"forcePathStyle"`
+}
+
+// BackupConfig represents backup/sync configuration across providers
+type BackupConfig struct {
+	Provider string             `json:"provider"` // webdav | local | s3
+	Local    *LocalBackupConfig `json:"local,omitempty"`
+	S3       *S3BackupConfig    `json:"s3,omitempty"`
+}
+
 // UpdateConfig represents update configuration
 type UpdateConfig struct {
 	AutoCheck      bool   `json:"autoCheck"`      // Auto check for updates
@@ -49,18 +74,19 @@ type ProxyConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port                int           `json:"port"`
-	Endpoints           []Endpoint    `json:"endpoints"`
-	LogLevel            int           `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language            string        `json:"language"`                      // UI language: en, zh-CN
-	Theme               string        `json:"theme"`                         // UI theme: light, dark
-	ThemeAuto           bool          `json:"themeAuto"`                     // Auto switch theme based on time
-	AutoLightTheme      string        `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
-	AutoDarkTheme       string        `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
-	WindowWidth         int           `json:"windowWidth"`                   // Window width in pixels
-	WindowHeight        int           `json:"windowHeight"`                  // Window height in pixels
-	CloseWindowBehavior string        `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
+	Port                int             `json:"port"`
+	Endpoints           []Endpoint      `json:"endpoints"`
+	LogLevel            int             `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language            string          `json:"language"`                      // UI language: en, zh-CN
+	Theme               string          `json:"theme"`                         // UI theme: light, dark
+	ThemeAuto           bool            `json:"themeAuto"`                     // Auto switch theme based on time
+	AutoLightTheme      string          `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
+	AutoDarkTheme       string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
+	WindowWidth         int             `json:"windowWidth"`                   // Window width in pixels
+	WindowHeight        int             `json:"windowHeight"`                  // Window height in pixels
+	CloseWindowBehavior string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	WebDAV              *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
+	Backup              *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
 	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
 	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
 	Proxy               *ProxyConfig    `json:"proxy,omitempty"`               // HTTP proxy config
@@ -327,6 +353,20 @@ func (c *Config) UpdateWebDAV(webdav *WebDAVConfig) {
 	c.WebDAV = webdav
 }
 
+// GetBackup returns the backup configuration (thread-safe)
+func (c *Config) GetBackup() *BackupConfig {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.Backup
+}
+
+// UpdateBackup updates the backup configuration (thread-safe)
+func (c *Config) UpdateBackup(backup *BackupConfig) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Backup = backup
+}
+
 // GetUpdate returns the Update configuration (thread-safe)
 func (c *Config) GetUpdate() *UpdateConfig {
 	c.mu.RLock()
@@ -526,6 +566,39 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		}
 	}
 
+	// Load Backup config
+	provider, _ := storage.GetConfig("backup_provider")
+	if provider != "" {
+		config.Backup = &BackupConfig{Provider: provider}
+	}
+	if provider == "local" {
+		backupDir, _ := storage.GetConfig("backup_local_dir")
+		config.Backup.Local = &LocalBackupConfig{Dir: backupDir}
+	}
+	if provider == "s3" {
+		s3Endpoint, _ := storage.GetConfig("backup_s3_endpoint")
+		s3Region, _ := storage.GetConfig("backup_s3_region")
+		s3Bucket, _ := storage.GetConfig("backup_s3_bucket")
+		s3Prefix, _ := storage.GetConfig("backup_s3_prefix")
+		s3AccessKey, _ := storage.GetConfig("backup_s3_accessKey")
+		s3SecretKey, _ := storage.GetConfig("backup_s3_secretKey")
+		s3SessionToken, _ := storage.GetConfig("backup_s3_sessionToken")
+		s3UseSSLStr, _ := storage.GetConfig("backup_s3_useSSL")
+		s3ForcePathStyleStr, _ := storage.GetConfig("backup_s3_forcePathStyle")
+
+		config.Backup.S3 = &S3BackupConfig{
+			Endpoint:       s3Endpoint,
+			Region:         s3Region,
+			Bucket:         s3Bucket,
+			Prefix:         s3Prefix,
+			AccessKey:      s3AccessKey,
+			SecretKey:      s3SecretKey,
+			SessionToken:   s3SessionToken,
+			UseSSL:         s3UseSSLStr == "true",
+			ForcePathStyle: s3ForcePathStyleStr == "true",
+		}
+	}
+
 	// Load Update config
 	config.Update = &UpdateConfig{
 		AutoCheck:     true,
@@ -636,6 +709,25 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		storage.SetConfig("webdav_password", c.WebDAV.Password)
 		storage.SetConfig("webdav_configPath", c.WebDAV.ConfigPath)
 		storage.SetConfig("webdav_statsPath", c.WebDAV.StatsPath)
+	}
+
+	// Save Backup config
+	if c.Backup != nil {
+		storage.SetConfig("backup_provider", c.Backup.Provider)
+		if c.Backup.Local != nil {
+			storage.SetConfig("backup_local_dir", c.Backup.Local.Dir)
+		}
+		if c.Backup.S3 != nil {
+			storage.SetConfig("backup_s3_endpoint", c.Backup.S3.Endpoint)
+			storage.SetConfig("backup_s3_region", c.Backup.S3.Region)
+			storage.SetConfig("backup_s3_bucket", c.Backup.S3.Bucket)
+			storage.SetConfig("backup_s3_prefix", c.Backup.S3.Prefix)
+			storage.SetConfig("backup_s3_accessKey", c.Backup.S3.AccessKey)
+			storage.SetConfig("backup_s3_secretKey", c.Backup.S3.SecretKey)
+			storage.SetConfig("backup_s3_sessionToken", c.Backup.S3.SessionToken)
+			storage.SetConfig("backup_s3_useSSL", strconv.FormatBool(c.Backup.S3.UseSSL))
+			storage.SetConfig("backup_s3_forcePathStyle", strconv.FormatBool(c.Backup.S3.ForcePathStyle))
+		}
 	}
 
 	// Save Update config
