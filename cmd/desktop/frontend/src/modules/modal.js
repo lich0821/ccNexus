@@ -41,7 +41,7 @@ export function showNotification(message, type = 'info') {
 // Confirm dialog
 let confirmResolve = null;
 
-function showConfirm(message) {
+export function showConfirm(message) {
     return new Promise((resolve) => {
         confirmResolve = resolve;
         document.getElementById('confirmMessage').textContent = message;

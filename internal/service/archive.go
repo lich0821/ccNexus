@@ -204,3 +204,34 @@ func (a *ArchiveService) GenerateMockArchives(monthsCount int) string {
     data, _ := json.Marshal(result)
     return string(data)
 }
+
+// DeleteArchive deletes all data for a specific month
+func (a *ArchiveService) DeleteArchive(month string) string {
+    if a.storage == nil {
+        result := map[string]interface{}{
+            "success": false,
+            "message": "Storage not initialized",
+        }
+        data, _ := json.Marshal(result)
+        return string(data)
+    }
+
+    err := a.storage.DeleteMonthlyStats(month)
+    if err != nil {
+        logger.Error("Failed to delete archive for %s: %v", month, err)
+        result := map[string]interface{}{
+            "success": false,
+            "message": fmt.Sprintf("Failed to delete archive: %v", err),
+        }
+        data, _ := json.Marshal(result)
+        return string(data)
+    }
+
+    logger.Info("Archive deleted for month: %s", month)
+    result := map[string]interface{}{
+        "success": true,
+        "message": fmt.Sprintf("Archive for %s deleted successfully", month),
+    }
+    data, _ := json.Marshal(result)
+    return string(data)
+}

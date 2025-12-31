@@ -217,16 +217,10 @@ export async function showDataSyncDialog(tab) {
 
   const content = `
         <div class="data-sync-dialog">
-            <div class="data-sync-tabs" style="display: flex; gap: 8px; margin-bottom: 12px;">
-                <button class="btn btn-secondary btn-sm" onclick="window.switchDataSyncTab('webdav')" ${
-                  selectedTab === "webdav" ? "disabled" : ""
-                }>☁️ WebDAV</button>
-                <button class="btn btn-secondary btn-sm" onclick="window.switchDataSyncTab('local')" ${
-                  selectedTab === "local" ? "disabled" : ""
-                }>💾 ${t("backup.local.title")}</button>
-                <button class="btn btn-secondary btn-sm" onclick="window.switchDataSyncTab('s3')" ${
-                  selectedTab === "s3" ? "disabled" : ""
-                }>🪣 ${t("backup.s3.title")}</button>
+            <div class="data-sync-tabs">
+                <button class="sync-tab-btn ${selectedTab === "webdav" ? "active" : ""}" onclick="window.switchDataSyncTab('webdav')">☁️ WebDAV</button>
+                <button class="sync-tab-btn ${selectedTab === "local" ? "active" : ""}" onclick="window.switchDataSyncTab('local')">💾 ${t("backup.local.title")}</button>
+                <button class="sync-tab-btn ${selectedTab === "s3" ? "active" : ""}" onclick="window.switchDataSyncTab('s3')">🪣 ${t("backup.s3.title")}</button>
             </div>
 
             ${renderActiveTabContent()}

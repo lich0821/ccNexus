@@ -209,3 +209,8 @@ window.closeHistoryModal = async () => {
     const { closeHistoryModal } = await import('./modules/history.js');
     closeHistoryModal();
 };
+
+window.deleteHistoryArchive = async () => {
+    const { deleteHistoryArchive } = await import('./modules/history.js');
+    deleteHistoryArchive();
+};

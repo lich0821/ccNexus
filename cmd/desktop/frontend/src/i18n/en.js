@@ -214,7 +214,13 @@ export default {
         errors: 'Errors',
         inputTokens: 'Input Tokens',
         outputTokens: 'Output Tokens',
-        totalTokens: 'Total Tokens'
+        totalTokens: 'Total Tokens',
+        delete: 'Delete',
+        deleteTitle: 'Delete this month\'s data',
+        confirmDelete: 'Are you sure you want to delete the historical data for {month}? This action cannot be undone',
+        deleteSuccess: 'Historical data deleted successfully',
+        deleteFailed: 'Failed to delete',
+        noMonthSelected: 'Please select a month first'
     },
     webdav: {
         title: 'WebDAV Cloud Backup',

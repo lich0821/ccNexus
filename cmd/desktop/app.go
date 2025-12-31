@@ -86,22 +86,12 @@ func (a *App) startup(ctx context.Context) {
 		logger.Error("Failed to create config directory: %v", err)
 	}
 
-	configPath := filepath.Join(configDir, "config.json")
-	statsPath := filepath.Join(configDir, "stats.json")
 	dbPath := filepath.Join(configDir, "ccnexus.db")
-
-	if err := storage.MigrateFromJSON(configPath, statsPath, dbPath); err != nil {
-		logger.Error("Migration failed: %v", err)
-	}
 
 	sqliteStorage, err := storage.NewSQLiteStorage(dbPath)
 	if err != nil {
 		logger.Error("Failed to initialize storage: %v", err)
-		cfg, err := config.Load(configPath)
-		if err != nil {
-			cfg = config.DefaultConfig()
-		}
-		a.config = cfg
+		a.config = config.DefaultConfig()
 		logger.Error("Cannot start without storage")
 		return
 	}
@@ -484,6 +474,7 @@ func (a *App) TestS3Connection(endpoint, region, bucket, prefix, accessKey, secr
 func (a *App) ListArchives() string                { return a.archive.ListArchives() }
 func (a *App) GetArchiveData(month string) string  { return a.archive.GetArchiveData(month) }
 func (a *App) GetArchiveTrend(month string) string { return a.archive.GetArchiveTrend(month) }
+func (a *App) DeleteArchive(month string) string   { return a.archive.DeleteArchive(month) }
 func (a *App) GenerateMockArchives(monthsCount int) string {
 	return a.archive.GenerateMockArchives(monthsCount)
 }
