@@ -3,11 +3,35 @@ package storage
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	_ "modernc.org/sqlite"
 )
+
+// safeConfigKeys 定义可以安全跨设备和跨平台备份/恢复的 app_config 配置项。
+// 这些配置是平台无关的，不包含设备特定或路径相关的值。
+// 不在此列表中的配置项（如 device_id、terminal_*、backup_local_dir、proxy_url 等）
+// 是设备/平台特定的，不应在不同设备间同步。
+var safeConfigKeys = []string{
+	// 应用设置
+	"port", "logLevel", "language",
+	// 主题设置
+	"theme", "themeAuto", "autoLightTheme", "autoDarkTheme",
+	// 窗口关闭行为
+	"closeWindowBehavior",
+	// WebDAV 设置（URL 和凭证是通用的）
+	"webdav_url", "webdav_username", "webdav_password", "webdav_configPath", "webdav_statsPath",
+	// 备份提供商类型（不包括本地路径）
+	"backup_provider",
+	// S3 设置（云配置是通用的）
+	"backup_s3_endpoint", "backup_s3_region", "backup_s3_bucket", "backup_s3_prefix",
+	"backup_s3_accessKey", "backup_s3_secretKey", "backup_s3_sessionToken",
+	"backup_s3_useSSL", "backup_s3_forcePathStyle",
+	// 更新设置
+	"update_autoCheck", "update_checkInterval",
+}
 
 type SQLiteStorage struct {
 	db     *sql.DB
@@ -428,26 +452,44 @@ func (s *SQLiteStorage) GetMonthlyArchiveData(month string) ([]MonthlyArchiveDat
 	return results, rows.Err()
 }
 
-// CreateBackupCopy creates a backup copy of the database without app_config data
+// DeleteMonthlyStats deletes all daily stats for a specific month
+func (s *SQLiteStorage) DeleteMonthlyStats(month string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, err := s.db.Exec(`DELETE FROM daily_stats WHERE strftime('%Y-%m', date) = ?`, month)
+	return err
+}
+
+// CreateBackupCopy 创建数据库备份副本，只保留安全的 app_config 配置项。
+// 设备特定的配置（device_id、终端设置、本地路径等）会被排除。
 func (s *SQLiteStorage) CreateBackupCopy(backupPath string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Use VACUUM INTO to create a copy
+	// 使用 VACUUM INTO 创建数据库副本
 	_, err := s.db.Exec(fmt.Sprintf("VACUUM INTO '%s'", backupPath))
 	if err != nil {
 		return fmt.Errorf("failed to create backup: %w", err)
 	}
 
-	// Open the backup and remove app_config data
+	// 打开备份数据库并清理设备特定的 app_config 数据
 	backupDB, err := sql.Open("sqlite", backupPath)
 	if err != nil {
 		return fmt.Errorf("failed to open backup: %w", err)
 	}
 	defer backupDB.Close()
 
-	// Delete app_config data (device-specific settings)
-	_, err = backupDB.Exec("DELETE FROM app_config")
+	// 删除所有不在安全列表中的 app_config 条目
+	// 这会移除 device_id、terminal_*、backup_local_dir、proxy_url、windowWidth/Height 等
+	placeholders := make([]string, len(safeConfigKeys))
+	args := make([]interface{}, len(safeConfigKeys))
+	for i, key := range safeConfigKeys {
+		placeholders[i] = "?"
+		args[i] = key
+	}
+	query := fmt.Sprintf("DELETE FROM app_config WHERE key NOT IN (%s)", strings.Join(placeholders, ","))
+	_, err = backupDB.Exec(query, args...)
 	if err != nil {
 		return fmt.Errorf("failed to clean app_config: %w", err)
 	}
@@ -560,46 +602,49 @@ func compareEndpoints(local, remote Endpoint) []string {
 	return conflicts
 }
 
-// MergeStrategy defines how to handle conflicts during merge
+// MergeStrategy 定义合并时如何处理冲突
 type MergeStrategy string
 
 const (
-	MergeStrategyKeepLocal      MergeStrategy = "keep_local"      // Keep local on conflict, add new
-	MergeStrategyOverwriteLocal MergeStrategy = "overwrite_local" // Overwrite local on conflict
+	MergeStrategyKeepLocal      MergeStrategy = "keep_local"      // 冲突时保留本地，添加新数据
+	MergeStrategyOverwriteLocal MergeStrategy = "overwrite_local" // 冲突时用备份覆盖本地
 )
 
-// MergeFromBackup merges data from a backup database
+// MergeFromBackup 从备份数据库合并数据
 func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrategy) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// Attach backup database
+	// 挂载备份数据库
 	_, err := s.db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' AS backup", backupDBPath))
 	if err != nil {
 		return fmt.Errorf("failed to attach backup database: %w", err)
 	}
 	defer s.db.Exec("DETACH DATABASE backup")
 
-	// Begin transaction
+	// 开启事务
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	// 1. Merge endpoints based on strategy
+	// 1. 根据策略合并端点配置
 	if err := s.mergeEndpoints(tx, strategy); err != nil {
 		return fmt.Errorf("failed to merge endpoints: %w", err)
 	}
 
-	// 2. Merge daily_stats based on strategy
+	// 2. 根据策略合并每日统计数据
 	if err := s.mergeDailyStats(tx, strategy); err != nil {
 		return fmt.Errorf("failed to merge daily stats: %w", err)
 	}
 
-	// 3. Do NOT merge app_config (keep local device-specific settings)
+	// 3. 合并安全的 app_config 配置项（仅平台无关的设置）
+	if err := s.mergeAppConfig(tx, strategy); err != nil {
+		return fmt.Errorf("failed to merge app config: %w", err)
+	}
 
-	// Commit transaction
+	// 提交事务
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit transaction: %w", err)
 	}
@@ -607,11 +652,11 @@ func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrat
 	return nil
 }
 
-// mergeEndpoints merges endpoints based on strategy
+// mergeEndpoints 根据策略合并端点配置
 func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error {
 	switch strategy {
 	case MergeStrategyKeepLocal:
-		// Insert only new endpoints (ignore conflicts)
+		// 只插入新端点（忽略冲突）
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO endpoints
 			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
@@ -620,7 +665,7 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 		`)
 		return err
 	case MergeStrategyOverwriteLocal:
-		// Replace existing endpoints
+		// 替换已存在的端点
 		_, err := tx.Exec(`
 			INSERT OR REPLACE INTO endpoints
 			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
@@ -633,41 +678,85 @@ func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error
 	}
 }
 
-// mergeDailyStats merges daily stats based on strategy
+// mergeDailyStats 根据策略合并每日统计数据
+// 注意：备份数据的 device_id 会被替换为本地的 device_id，以避免跨设备恢复时产生重复记录
 func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx, strategy MergeStrategy) error {
+	// 获取本地 device_id，如果不存在则使用 'default'
+	var localDeviceID string
+	err := tx.QueryRow(`SELECT COALESCE((SELECT value FROM app_config WHERE key = 'device_id'), 'default')`).Scan(&localDeviceID)
+	if err != nil {
+		localDeviceID = "default"
+	}
+
 	switch strategy {
 	case MergeStrategyKeepLocal:
-		// Keep local data, only insert records that don't exist locally
+		// 保留本地数据，只插入本地不存在的记录
+		// 使用本地 device_id 替代备份的 device_id 以避免重复
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO daily_stats
 			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
-			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
+			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, ?
 			FROM backup.daily_stats
-		`)
+		`, localDeviceID)
 		return err
 	case MergeStrategyOverwriteLocal:
-		// Overwrite local data with backup data
-		// Step 1: Delete conflicting rows from main database
+		// 用备份数据覆盖本地数据
+		// 步骤1：删除主数据库中的冲突记录（只匹配 endpoint_name 和 date）
 		_, err := tx.Exec(`
 			DELETE FROM daily_stats
 			WHERE EXISTS (
 				SELECT 1 FROM backup.daily_stats b
 				WHERE b.endpoint_name = daily_stats.endpoint_name
 				AND b.date = daily_stats.date
-				AND b.device_id = daily_stats.device_id
 			)
 		`)
 		if err != nil {
 			return err
 		}
 
-		// Step 2: Insert backup data directly (no accumulation)
+		// 步骤2：使用本地 device_id 插入备份数据
 		_, err = tx.Exec(`
 			INSERT INTO daily_stats
 			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
-			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id
+			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, ?
 			FROM backup.daily_stats
-		`)
+		`, localDeviceID)
+		return err
+	default:
+		return fmt.Errorf("unknown merge strategy: %s", strategy)
+	}
+}
+
+// mergeAppConfig 根据策略合并安全的 app_config 配置项
+// 只有 safeConfigKeys 中的配置会被合并；设备特定的配置会保留本地值
+func (s *SQLiteStorage) mergeAppConfig(tx *sql.Tx, strategy MergeStrategy) error {
+	// 构建安全配置项的占位符
+	placeholders := make([]string, len(safeConfigKeys))
+	args := make([]interface{}, len(safeConfigKeys))
+	for i, key := range safeConfigKeys {
+		placeholders[i] = "?"
+		args[i] = key
+	}
+	keysFilter := strings.Join(placeholders, ",")
+
+	switch strategy {
+	case MergeStrategyKeepLocal:
+		// 保留本地值，只插入备份中新增的配置项
+		query := fmt.Sprintf(`
+			INSERT OR IGNORE INTO app_config (key, value)
+			SELECT key, value FROM backup.app_config
+			WHERE key IN (%s)
+		`, keysFilter)
+		_, err := tx.Exec(query, args...)
+		return err
+	case MergeStrategyOverwriteLocal:
+		// 用备份值覆盖本地值（仅限安全配置项）
+		query := fmt.Sprintf(`
+			INSERT OR REPLACE INTO app_config (key, value)
+			SELECT key, value FROM backup.app_config
+			WHERE key IN (%s)
+		`, keysFilter)
+		_, err := tx.Exec(query, args...)
 		return err
 	default:
 		return fmt.Errorf("unknown merge strategy: %s", strategy)

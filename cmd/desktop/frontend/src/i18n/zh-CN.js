@@ -214,7 +214,13 @@ export default {
         errors: '错误数',
         inputTokens: '输入Token数',
         outputTokens: '输出Token数',
-        totalTokens: '总Token数'
+        totalTokens: '总Token数',
+        delete: '删除',
+        deleteTitle: '删除该月数据',
+        confirmDelete: '确认删除 {month} 的历史数据吗？此操作不可恢复',
+        deleteSuccess: '历史数据删除成功',
+        deleteFailed: '删除失败',
+        noMonthSelected: '请先选择月份'
     },
     webdav: {
         title: 'WebDAV 云备份',

@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"sync"
 )
@@ -298,45 +297,6 @@ func (c *Config) UpdateAutoDarkTheme(theme string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.AutoDarkTheme = theme
-}
-
-// Load loads configuration from file (used for migration fallback)
-func Load(path string) (*Config, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return DefaultConfig(), nil
-		}
-		return nil, err
-	}
-
-	var config Config
-	if err := json.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	if err := config.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid config: %w", err)
-	}
-
-	return &config, nil
-}
-
-// Save saves configuration to file
-func (c *Config) Save(path string) error {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	data, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // GetWebDAV returns the WebDAV configuration (thread-safe)

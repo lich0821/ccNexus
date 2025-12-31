@@ -14,6 +14,10 @@ export function ApplyUpdate(arg1) {
   return window['go']['main']['App']['ApplyUpdate'](arg1);
 }
 
+export function BackupToProvider(arg1, arg2) {
+  return window['go']['main']['App']['BackupToProvider'](arg1, arg2);
+}
+
 export function BackupToWebDAV(arg1) {
   return window['go']['main']['App']['BackupToWebDAV'](arg1);
 }
@@ -30,12 +34,24 @@ export function ClearLogs() {
   return window['go']['main']['App']['ClearLogs']();
 }
 
+export function DeleteArchive(arg1) {
+  return window['go']['main']['App']['DeleteArchive'](arg1);
+}
+
+export function DeleteBackups(arg1, arg2) {
+  return window['go']['main']['App']['DeleteBackups'](arg1, arg2);
+}
+
 export function DeleteSession(arg1, arg2) {
   return window['go']['main']['App']['DeleteSession'](arg1, arg2);
 }
 
 export function DeleteWebDAVBackups(arg1) {
   return window['go']['main']['App']['DeleteWebDAVBackups'](arg1);
+}
+
+export function DetectBackupConflict(arg1, arg2) {
+  return window['go']['main']['App']['DetectBackupConflict'](arg1, arg2);
 }
 
 export function DetectTerminals() {
@@ -198,6 +214,10 @@ export function ListArchives() {
   return window['go']['main']['App']['ListArchives']();
 }
 
+export function ListBackups(arg1) {
+  return window['go']['main']['App']['ListBackups'](arg1);
+}
+
 export function ListWebDAVBackups() {
   return window['go']['main']['App']['ListWebDAVBackups']();
 }
@@ -224,6 +244,10 @@ export function RenameSession(arg1, arg2, arg3) {
 
 export function ReorderEndpoints(arg1) {
   return window['go']['main']['App']['ReorderEndpoints'](arg1);
+}
+
+export function RestoreFromProvider(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RestoreFromProvider'](arg1, arg2, arg3);
 }
 
 export function RestoreFromWebDAV(arg1, arg2) {
@@ -302,12 +326,20 @@ export function TestEndpointLight(arg1) {
   return window['go']['main']['App']['TestEndpointLight'](arg1);
 }
 
+export function TestS3Connection(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+  return window['go']['main']['App']['TestS3Connection'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
+}
+
 export function TestWebDAVConnection(arg1, arg2, arg3) {
   return window['go']['main']['App']['TestWebDAVConnection'](arg1, arg2, arg3);
 }
 
 export function ToggleEndpoint(arg1, arg2) {
   return window['go']['main']['App']['ToggleEndpoint'](arg1, arg2);
+}
+
+export function UpdateBackupProvider(arg1) {
+  return window['go']['main']['App']['UpdateBackupProvider'](arg1);
 }
 
 export function UpdateConfig(arg1) {
@@ -318,8 +350,16 @@ export function UpdateEndpoint(arg1, arg2, arg3, arg4, arg5, arg6, arg7) {
   return window['go']['main']['App']['UpdateEndpoint'](arg1, arg2, arg3, arg4, arg5, arg6, arg7);
 }
 
+export function UpdateLocalBackupDir(arg1) {
+  return window['go']['main']['App']['UpdateLocalBackupDir'](arg1);
+}
+
 export function UpdatePort(arg1) {
   return window['go']['main']['App']['UpdatePort'](arg1);
+}
+
+export function UpdateS3BackupConfig(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) {
+  return window['go']['main']['App']['UpdateS3BackupConfig'](arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9);
 }
 
 export function UpdateWebDAVConfig(arg1, arg2, arg3) {

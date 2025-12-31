@@ -134,7 +134,14 @@ export function initUI() {
                             <select id="historyMonthSelect"></select>
                         </div>
 
-                        <div class="stats-grid">
+                        <div class="history-stats-wrapper">
+                            <button id="historyDeleteBtn" class="history-delete-btn" onclick="window.deleteHistoryArchive()" title="${t('history.deleteTitle')}">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                </svg>
+                                ${t('history.delete')}
+                            </button>
+                            <div class="stats-grid">
                             <div class="stat-box">
                                 <div class="stat-header">
                                     <div class="stat-label">${t('statistics.totalRequests')}</div>
@@ -167,6 +174,7 @@ export function initUI() {
                                     <span class="stat-text"> ${t('statistics.out')}</span>
                                 </div>
                             </div>
+                        </div>
                         </div>
 
                         <div class="history-details">
