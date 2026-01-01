@@ -333,6 +333,44 @@ body {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
+/* History delete button - positioned above stats cards */
+.history-stats-wrapper {
+    position: relative;
+}
+
+.history-stats-wrapper .history-delete-btn {
+    position: absolute;
+    top: -30px;
+    right: 2px;
+}
+
+.history-delete-btn {
+    background: transparent;
+    border: 1px solid rgba(153, 153, 153, 0.3);
+    color: #666;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.history-delete-btn:hover {
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+    border-color: rgba(255, 107, 107, 0.3);
+    opacity: 1;
+}
+
+.history-delete-btn svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+}
+
 .history-details {
     margin-top: 30px;
 }
@@ -396,7 +434,7 @@ body {
 #historyModal {
     display: none;
     position: fixed;
-    z-index: 10000;
+    z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
@@ -863,6 +901,11 @@ body {
 
 .modal.active {
     display: flex;
+}
+
+/* Confirm dialog should be above all other modals */
+#confirmDialog {
+    z-index: 1500;
 }
 
 /* Welcome/About Modal with blur background */
@@ -2147,6 +2190,37 @@ body {
 /* Data Sync Dialog */
 .data-sync-dialog {
     width: 100%;
+}
+
+.data-sync-tabs {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.sync-tab-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 6px;
+    background: var(--card-bg, #fff);
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.sync-tab-btn:hover:not(.active) {
+    background: var(--hover-bg, #f5f5f5);
+    border-color: var(--border-hover, #ccc);
+}
+
+.sync-tab-btn.active {
+    background: var(--primary-color, #007bff);
+    color: #fff;
+    border-color: var(--primary-color, #007bff);
+    cursor: default;
 }
 
 /* Override modal-content width for generic modal (data sync) */

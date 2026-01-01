@@ -22,16 +22,9 @@ func main() {
         os.Exit(1)
     }
 
-    configPath := filepath.Join(dataDir, "config.json")
-    statsPath := filepath.Join(dataDir, "stats.json")
     dbPath := os.Getenv("CCNEXUS_DB_PATH")
     if dbPath == "" {
         dbPath = filepath.Join(dataDir, "ccnexus.db")
-    }
-
-    if err := storage.MigrateFromJSON(configPath, statsPath, dbPath); err != nil {
-        logger.Error("Migration failed: %v", err)
-        os.Exit(1)
     }
 
     sqliteStorage, err := storage.NewSQLiteStorage(dbPath)

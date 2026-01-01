@@ -7,6 +7,8 @@ export function AddProjectDir(arg1:string):Promise<void>;
 
 export function ApplyUpdate(arg1:string):Promise<string>;
 
+export function BackupToProvider(arg1:string,arg2:string):Promise<void>;
+
 export function BackupToWebDAV(arg1:string):Promise<void>;
 
 export function CancelDownload():Promise<void>;
@@ -15,9 +17,15 @@ export function CheckForUpdates():Promise<string>;
 
 export function ClearLogs():Promise<void>;
 
+export function DeleteArchive(arg1:string):Promise<string>;
+
+export function DeleteBackups(arg1:string,arg2:Array<string>):Promise<void>;
+
 export function DeleteSession(arg1:string,arg2:string):Promise<void>;
 
 export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
+
+export function DetectBackupConflict(arg1:string,arg2:string):Promise<string>;
 
 export function DetectTerminals():Promise<string>;
 
@@ -99,6 +107,8 @@ export function LaunchTerminal(arg1:string):Promise<void>;
 
 export function ListArchives():Promise<string>;
 
+export function ListBackups(arg1:string):Promise<string>;
+
 export function ListWebDAVBackups():Promise<string>;
 
 export function OpenURL(arg1:string):Promise<void>;
@@ -112,6 +122,8 @@ export function RemoveProjectDir(arg1:string):Promise<void>;
 export function RenameSession(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
+
+export function RestoreFromProvider(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
 
@@ -151,14 +163,22 @@ export function TestEndpoint(arg1:number):Promise<string>;
 
 export function TestEndpointLight(arg1:number):Promise<string>;
 
+export function TestS3Connection(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean,arg9:boolean):Promise<string>;
+
 export function TestWebDAVConnection(arg1:string,arg2:string,arg3:string):Promise<string>;
 
 export function ToggleEndpoint(arg1:number,arg2:boolean):Promise<void>;
+
+export function UpdateBackupProvider(arg1:string):Promise<void>;
 
 export function UpdateConfig(arg1:string):Promise<void>;
 
 export function UpdateEndpoint(arg1:number,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string):Promise<void>;
 
+export function UpdateLocalBackupDir(arg1:string):Promise<void>;
+
 export function UpdatePort(arg1:number):Promise<void>;
+
+export function UpdateS3BackupConfig(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string,arg6:string,arg7:string,arg8:boolean,arg9:boolean):Promise<void>;
 
 export function UpdateWebDAVConfig(arg1:string,arg2:string,arg3:string):Promise<void>;

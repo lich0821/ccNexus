@@ -1,5 +1,7 @@
 import { formatTokens } from '../utils/format.js';
 import { t } from '../i18n/index.js';
+import { showConfirm } from './modal.js';
+import { showNotification } from './modal.js';
 
 let currentArchiveMonth = null;
 let archivesList = [];
@@ -97,10 +99,12 @@ function populateMonthSelector(archives) {
         option.textContent = t('history.noData');
         selector.appendChild(option);
         selector.disabled = true;
+        updateDeleteButtonState(false);
         return;
     }
 
     selector.disabled = false;
+    updateDeleteButtonState(true);
 
     // Add options for each archive
     archives.forEach(month => {
@@ -346,4 +350,71 @@ export function getCurrentArchiveMonth() {
 // Get archives list
 export function getArchivesList() {
     return archivesList;
+}
+
+// Format month for display in confirm message
+function formatMonthForConfirm(month) {
+    const lang = localStorage.getItem('language') || 'zh-CN';
+    const [year, monthNum] = month.split('-');
+
+    if (lang === 'zh-CN') {
+        return `${year}年${monthNum}月`;
+    } else {
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                           'July', 'August', 'September', 'October', 'November', 'December'];
+        return `${monthNames[parseInt(monthNum) - 1]} ${year}`;
+    }
+}
+
+// Delete archive for current selected month
+export async function deleteHistoryArchive() {
+    const selector = document.getElementById('historyMonthSelect');
+    if (!selector || !selector.value) {
+        showNotification(t('history.noMonthSelected'), 'error');
+        return;
+    }
+
+    const month = selector.value;
+    const monthDisplay = formatMonthForConfirm(month);
+
+    // Show confirm dialog
+    const confirmed = await showConfirm(t('history.confirmDelete').replace('{month}', monthDisplay));
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const result = await window.go.main.App.DeleteArchive(month);
+        const data = JSON.parse(result);
+
+        if (data.success) {
+            showNotification(t('history.deleteSuccess'), 'success');
+
+            // Reload archives list
+            const archives = await loadArchiveList();
+            populateMonthSelector(archives);
+
+            // Load first archive if available, otherwise show no data
+            if (archives.length > 0) {
+                await loadAndDisplayArchive(archives[0]);
+            } else {
+                showNoDataMessage();
+                // Update delete button state
+                updateDeleteButtonState(false);
+            }
+        } else {
+            showNotification(data.message || t('history.deleteFailed'), 'error');
+        }
+    } catch (error) {
+        console.error('Failed to delete archive:', error);
+        showNotification(t('history.deleteFailed'), 'error');
+    }
+}
+
+// Update delete button visibility/state
+function updateDeleteButtonState(hasData) {
+    const deleteBtn = document.getElementById('historyDeleteBtn');
+    if (deleteBtn) {
+        deleteBtn.style.display = hasData ? 'inline-flex' : 'none';
+    }
 }
