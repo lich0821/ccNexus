@@ -2,9 +2,11 @@ package webdav
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
+	"strings"
 	"time"
+
+	"github.com/lich0821/ccNexus/internal/logger"
 )
 
 // Manager WebDAV 同步管理器
@@ -19,6 +21,17 @@ func NewManager(client *Client) *Manager {
 	}
 }
 
+// ensureDBExtension 确保文件名有 .db 后缀
+func ensureDBExtension(filename string) string {
+	if strings.HasSuffix(filename, ".json") {
+		return strings.TrimSuffix(filename, ".json") + ".db"
+	}
+	if strings.HasSuffix(filename, ".db") {
+		return filename
+	}
+	return filename + ".db"
+}
+
 // DatabaseBackupData represents metadata for database backups
 type DatabaseBackupData struct {
 	BackupTime time.Time `json:"backupTime"` // 备份时间
@@ -27,15 +40,16 @@ type DatabaseBackupData struct {
 
 // BackupDatabase backs up the database file to WebDAV
 func (m *Manager) BackupDatabase(dbPath string, version string, filename string) error {
-	fmt.Printf("[WebDAV] Starting database backup: %s\n", filename)
+	logger.Info("[WebDAV] Starting database backup: %s", filename)
 
 	// Read database file
-	fmt.Printf("[WebDAV] Reading database file: %s\n", dbPath)
+	logger.Info("[WebDAV] Reading database file: %s", dbPath)
 	dbData, err := os.ReadFile(dbPath)
 	if err != nil {
-		return fmt.Errorf("Failed to read database file: %v", err)
+		logger.Error("[WebDAV] Failed to read database file: %v", err)
+		return err
 	}
-	fmt.Printf("[WebDAV] Database file read successfully: %d bytes\n", len(dbData))
+	logger.Info("[WebDAV] Database file read successfully: %d bytes", len(dbData))
 
 	// Create metadata
 	metadata := &DatabaseBackupData{
@@ -46,62 +60,48 @@ func (m *Manager) BackupDatabase(dbPath string, version string, filename string)
 	// Serialize metadata
 	metadataJSON, err := json.MarshalIndent(metadata, "", "  ")
 	if err != nil {
-		return fmt.Errorf("Failed to serialize metadata: %v", err)
+		logger.Error("[WebDAV] Failed to serialize metadata: %v", err)
+		return err
 	}
 
 	// Upload database file (use .db extension)
-	dbFilename := filename
-	if len(dbFilename) > 5 && dbFilename[len(dbFilename)-5:] == ".json" {
-		// Replace .json with .db
-		dbFilename = dbFilename[:len(dbFilename)-5] + ".db"
-	} else if len(dbFilename) < 3 || dbFilename[len(dbFilename)-3:] != ".db" {
-		// Add .db extension if not present
-		dbFilename = dbFilename + ".db"
-	}
-	fmt.Printf("[WebDAV] Uploading database file: %s (%d bytes)\n", dbFilename, len(dbData))
+	dbFilename := ensureDBExtension(filename)
+	logger.Info("[WebDAV] Uploading database file: %s (%d bytes)", dbFilename, len(dbData))
 
 	if err := m.client.UploadBackup(dbFilename, dbData, true); err != nil {
-		fmt.Printf("[WebDAV] Failed to upload database: %v\n", err)
-		return fmt.Errorf("Failed to upload database: %v", err)
+		logger.Error("[WebDAV] Failed to upload database: %v", err)
+		return err
 	}
-	fmt.Printf("[WebDAV] Database uploaded successfully\n")
+	logger.Info("[WebDAV] Database uploaded successfully")
 
 	// Upload metadata file (use .meta.json extension)
 	metaFilename := dbFilename + ".meta.json"
-	fmt.Printf("[WebDAV] Uploading metadata file: %s\n", metaFilename)
+	logger.Info("[WebDAV] Uploading metadata file: %s", metaFilename)
 	if err := m.client.UploadBackup(metaFilename, metadataJSON, true); err != nil {
 		// Non-fatal: metadata upload failed, but database is uploaded
-		// Log warning but don't fail the backup
-		fmt.Printf("[WebDAV] Warning: Failed to upload metadata: %v\n", err)
+		logger.Warn("[WebDAV] Failed to upload metadata: %v", err)
 	} else {
-		fmt.Printf("[WebDAV] Metadata uploaded successfully\n")
+		logger.Info("[WebDAV] Metadata uploaded successfully")
 	}
 
-	fmt.Printf("[WebDAV] Backup completed successfully\n")
+	logger.Info("[WebDAV] Backup completed successfully")
 	return nil
 }
 
 // RestoreDatabase downloads and restores the database file from WebDAV
 func (m *Manager) RestoreDatabase(filename string, targetPath string) error {
 	// Ensure filename has .db extension
-	dbFilename := filename
-	if len(dbFilename) > 5 && dbFilename[len(dbFilename)-5:] == ".json" {
-		// Replace .json with .db
-		dbFilename = dbFilename[:len(dbFilename)-5] + ".db"
-	} else if len(dbFilename) < 3 || dbFilename[len(dbFilename)-3:] != ".db" {
-		// Add .db extension if not present
-		dbFilename = dbFilename + ".db"
-	}
+	dbFilename := ensureDBExtension(filename)
 
 	// Download database file
 	dbData, err := m.client.DownloadBackup(dbFilename, true)
 	if err != nil {
-		return fmt.Errorf("Failed to download database: %v", err)
+		return err
 	}
 
 	// Write to target path
 	if err := os.WriteFile(targetPath, dbData, 0644); err != nil {
-		return fmt.Errorf("Failed to write database file: %v", err)
+		return err
 	}
 
 	return nil
@@ -119,15 +119,11 @@ func (m *Manager) ListConfigBackups() ([]BackupFile, error) {
 	var dbBackups []BackupFile
 	for _, backup := range allBackups {
 		// Skip metadata files
-		if len(backup.Filename) > 10 && backup.Filename[len(backup.Filename)-10:] == ".meta.json" {
+		if strings.HasSuffix(backup.Filename, ".meta.json") {
 			continue
 		}
-		// Include .db files
-		if len(backup.Filename) > 3 && backup.Filename[len(backup.Filename)-3:] == ".db" {
-			dbBackups = append(dbBackups, backup)
-		}
-		// Also include legacy .json files for backward compatibility
-		if len(backup.Filename) > 5 && backup.Filename[len(backup.Filename)-5:] == ".json" {
+		// Include .db files only
+		if strings.HasSuffix(backup.Filename, ".db") {
 			dbBackups = append(dbBackups, backup)
 		}
 	}
@@ -144,9 +140,8 @@ func (m *Manager) DeleteConfigBackups(filenames []string) error {
 		allFilenames = append(allFilenames, filename)
 
 		// Add metadata file if it's a .db file
-		if len(filename) > 3 && filename[len(filename)-3:] == ".db" {
-			metaFilename := filename + ".meta.json"
-			allFilenames = append(allFilenames, metaFilename)
+		if strings.HasSuffix(filename, ".db") {
+			allFilenames = append(allFilenames, filename+".meta.json")
 		}
 	}
 

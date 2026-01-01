@@ -68,6 +68,24 @@ func tempDir() (string, error) {
 	return dir, nil
 }
 
+// tempDirUnique 创建一个唯一的临时子目录，返回目录路径和清理函数
+// 调用者应在操作完成后调用 cleanup 函数清理整个子目录
+func tempDirUnique(prefix string) (dir string, cleanup func(), err error) {
+	baseDir, err := tempDir()
+	if err != nil {
+		return "", nil, err
+	}
+	// 使用时间戳创建唯一子目录
+	subDir := filepath.Join(baseDir, fmt.Sprintf("%s_%d", prefix, time.Now().UnixNano()))
+	if err := os.MkdirAll(subDir, 0755); err != nil {
+		return "", nil, fmt.Errorf("create_temp_dir_failed")
+	}
+	cleanup = func() {
+		_ = os.RemoveAll(subDir)
+	}
+	return subDir, cleanup, nil
+}
+
 func sortBackupsByModTimeDesc(backups []BackupListItem) {
 	sort.SliceStable(backups, func(i, j int) bool {
 		return backups[i].ModTime.After(backups[j].ModTime)

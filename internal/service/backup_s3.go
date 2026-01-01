@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/storage"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -126,10 +127,12 @@ func (b *BackupService) listS3Backups() string {
 			return marshalBackupListResult(false, fmt.Sprintf("获取备份列表失败: %v", obj.Err), nil)
 		}
 		name := obj.Key
+		// Skip metadata files
 		if strings.HasSuffix(name, ".meta.json") {
 			continue
 		}
-		if !strings.HasSuffix(name, ".db") && !strings.HasSuffix(name, ".json") {
+		// Include .db files only
+		if !strings.HasSuffix(name, ".db") {
 			continue
 		}
 		backups = append(backups, BackupListItem{
@@ -162,16 +165,16 @@ func (b *BackupService) backupToS3(filename string) error {
 		return fmt.Errorf("filename_required")
 	}
 
-	// Create temp backup file
-	tmpDir, err := tempDir()
+	// Create temp backup file in unique temp directory
+	tmpDir, cleanup, err := tempDirUnique("s3_backup")
 	if err != nil {
 		return err
 	}
-	tmpPath := filepath.Join(tmpDir, "s3_backup_tmp.db")
-	_ = os.Remove(tmpPath)
-	defer os.Remove(tmpPath)
+	defer cleanup()
 
+	tmpPath := filepath.Join(tmpDir, "backup.db")
 	if err := b.storage.CreateBackupCopy(tmpPath); err != nil {
+		logger.Error("Failed to create backup copy: %v", err)
 		return fmt.Errorf("create_db_backup_failed")
 	}
 
@@ -181,13 +184,15 @@ func (b *BackupService) backupToS3(filename string) error {
 	objectKey := b.s3ObjectKey(cfg.Prefix, filename)
 	_, err = client.FPutObject(ctx, cfg.Bucket, objectKey, tmpPath, minio.PutObjectOptions{ContentType: "application/octet-stream"})
 	if err != nil {
+		logger.Error("Failed to upload backup to S3: %v", err)
 		return fmt.Errorf("backup_upload_failed")
 	}
 
-	metaPath := filepath.Join(tmpDir, "s3_backup_tmp.meta.json")
+	metaPath := filepath.Join(tmpDir, "backup.meta.json")
 	_ = os.WriteFile(metaPath, nowMeta(b.version), 0644)
-	defer os.Remove(metaPath)
-	_, _ = client.FPutObject(ctx, cfg.Bucket, objectKey+".meta.json", metaPath, minio.PutObjectOptions{ContentType: "application/json"})
+	if _, err := client.FPutObject(ctx, cfg.Bucket, objectKey+".meta.json", metaPath, minio.PutObjectOptions{ContentType: "application/json"}); err != nil {
+		logger.Warn("Failed to upload S3 metadata: %v", err)
+	}
 
 	return nil
 }
@@ -207,25 +212,22 @@ func (b *BackupService) downloadS3BackupToTemp(filename string) (string, func(),
 		return "", nil, fmt.Errorf("filename_required")
 	}
 
-	tmpDir, err := tempDir()
+	tmpDir, cleanup, err := tempDirUnique("s3_restore")
 	if err != nil {
 		return "", nil, err
 	}
-	tmpPath := filepath.Join(tmpDir, "s3_restore_tmp.db")
-	_ = os.Remove(tmpPath)
+	tmpPath := filepath.Join(tmpDir, "restore.db")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	objectKey := b.s3ObjectKey(cfg.Prefix, filename)
 	if err := client.FGetObject(ctx, cfg.Bucket, objectKey, tmpPath, minio.GetObjectOptions{}); err != nil {
-		_ = os.Remove(tmpPath)
+		cleanup()
+		logger.Error("Failed to download backup from S3: %v", err)
 		return "", nil, fmt.Errorf("restore_download_failed")
 	}
 
-	cleanup := func() {
-		_ = os.Remove(tmpPath)
-	}
 	return tmpPath, cleanup, nil
 }
 
@@ -264,17 +266,20 @@ func (b *BackupService) restoreFromS3(filename, choice string, reloadConfig func
 	}
 
 	if err := b.storage.MergeFromBackup(tmpPath, strategy); err != nil {
+		logger.Error("Failed to merge from backup: %v", err)
 		return fmt.Errorf("merge_data_failed")
 	}
 
 	configAdapter := storage.NewConfigStorageAdapter(b.storage)
 	newConfig, err := config.LoadFromStorage(configAdapter)
 	if err != nil {
+		logger.Error("Failed to load config from storage: %v", err)
 		return fmt.Errorf("load_config_failed")
 	}
 
 	*b.config = *newConfig
 	if err := reloadConfig(newConfig); err != nil {
+		logger.Error("Failed to reload config: %v", err)
 		return fmt.Errorf("update_proxy_config_failed")
 	}
 	return nil

@@ -333,25 +333,30 @@ export default {
         confirmRestore: 'Are you sure you want to restore from backup \"{filename}\"?\\nThis may merge or overwrite current configuration.',
         enterBackupName: 'Backup filename:',
         local: {
-            title: 'Local',
+            title: 'Local Backup',
             dir: 'Backup Directory',
-            dirPlaceholder: 'Choose a folder to store backups',
-            chooseDir: 'Choose Directory',
-            dirRequired: 'Please choose a backup directory'
+            dirPlaceholder: 'Please select a directory for backups',
+            chooseDir: 'Choose',
+            dirRequired: 'Please choose a backup directory',
+            saveFirst: 'Please save configuration first'
         },
         s3: {
-            title: 'S3',
+            title: 'S3 Backup',
             endpoint: 'Endpoint',
+            endpointPlaceholder: 'e.g. play.min.io',
             region: 'Region',
+            regionPlaceholder: 'e.g. us-east-1',
             bucket: 'Bucket',
             prefix: 'Prefix',
+            prefixPlaceholder: 'e.g. ccNexus/',
             accessKey: 'Access Key',
             secretKey: 'Secret Key',
             sessionToken: 'Session Token',
             useSSL: 'Use HTTPS',
             forcePathStyle: 'Force Path-Style',
             testConnection: 'Test Connection',
-            requiredFields: 'Please fill Endpoint/Bucket/AccessKey/SecretKey'
+            requiredFields: 'Please fill in required fields',
+            saveFirst: 'Please save configuration first'
         },
         errors: {
             backup_provider_invalid: 'Invalid backup provider',
