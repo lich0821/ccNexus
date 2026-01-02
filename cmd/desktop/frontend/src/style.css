@@ -375,6 +375,14 @@ body {
     margin-top: 30px;
 }
 
+.history-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: -5px;
+    padding-right: 3px;
+}
+
 .history-details h3 {
     margin: 0 0 15px 0;
     color: #333;
@@ -383,7 +391,7 @@ body {
 
 .table-container {
     overflow-x: auto;
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -391,7 +399,7 @@ body {
     width: 100%;
     border-collapse: collapse;
     background: white;
-    border-radius: 12px;
+    border-radius: 8px;
     overflow: hidden;
 }
 
@@ -732,6 +740,15 @@ body {
 
 .password-input-wrapper input {
     padding-right: 45px;
+}
+
+/* Hide browser default password reveal button */
+.password-input-wrapper input::-ms-reveal,
+.password-input-wrapper input::-ms-clear,
+.password-input-wrapper input::-webkit-credentials-auto-fill-button,
+.password-input-wrapper input::-webkit-clear-button,
+.password-input-wrapper input::-webkit-textfield-decoration-container {
+    display: none !important;
 }
 
 .password-toggle {
@@ -1213,6 +1230,43 @@ body {
 
 .toggle-switch[style*="width: 40px"] input:checked + .toggle-slider:before {
     transform: translateX(20px);
+}
+
+/* Toggle Container for inline toggle with label */
+.toggle-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.toggle-container .toggle-text {
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+}
+
+/* Toggle Group - horizontal layout for multiple toggles */
+.toggle-group {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    margin-bottom: 10px;
+}
+
+.toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    padding: 10px 12px;
+    background: var(--hover-bg, #f5f5f5);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.toggle-item .toggle-text {
+    font-size: 13px;
+    color: var(--text-primary, #333);
 }
 
 /* Header Link Styles */
@@ -2194,32 +2248,55 @@ body {
 
 .data-sync-tabs {
     display: flex;
-    justify-content: flex-end;
-    gap: 6px;
+    justify-content: center;
+    margin-top: -20px;
     margin-bottom: 16px;
+    background: var(--hover-bg, #f0f0f0);
+    border-radius: 8px;
+    padding: 3px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .sync-tab-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-    border: 1px solid var(--border-color, #e0e0e0);
+    padding: 8px 16px;
+    font-size: 13px;
+    border: none;
     border-radius: 6px;
-    background: var(--card-bg, #fff);
+    background: transparent;
     color: var(--text-secondary, #666);
     cursor: pointer;
     transition: all 0.2s ease;
     font-weight: 500;
+    white-space: nowrap;
+    position: relative;
+}
+
+.sync-tab-btn:not(:first-child)::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: var(--border-color, #d0d0d0);
+    transition: opacity 0.2s ease;
+}
+
+.sync-tab-btn.active::before,
+.sync-tab-btn.active + .sync-tab-btn::before {
+    opacity: 0;
 }
 
 .sync-tab-btn:hover:not(.active) {
-    background: var(--hover-bg, #f5f5f5);
-    border-color: var(--border-hover, #ccc);
+    color: var(--text-primary, #333);
 }
 
 .sync-tab-btn.active {
-    background: var(--primary-color, #007bff);
-    color: #fff;
-    border-color: var(--primary-color, #007bff);
+    background: var(--card-bg, #fff);
+    color: var(--text-primary, #333);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     cursor: default;
 }
 

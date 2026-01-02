@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/storage"
 )
 
@@ -38,10 +39,12 @@ func (b *BackupService) listLocalBackups() string {
 		if name == "" {
 			continue
 		}
-		if filepath.Ext(name) != ".db" && filepath.Ext(name) != ".json" {
+		// Skip metadata files
+		if strings.HasSuffix(name, ".meta.json") {
 			continue
 		}
-		if strings.HasSuffix(name, ".meta.json") {
+		// Include .db files only
+		if filepath.Ext(name) != ".db" {
 			continue
 		}
 
@@ -70,6 +73,7 @@ func (b *BackupService) backupToLocal(filename string) error {
 		return err
 	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
+		logger.Error("Failed to create backup dir: %v", err)
 		return fmt.Errorf("create_backup_dir_failed")
 	}
 
@@ -83,11 +87,13 @@ func (b *BackupService) backupToLocal(filename string) error {
 	_ = os.Remove(tmpPath)
 
 	if err := b.storage.CreateBackupCopy(tmpPath); err != nil {
+		logger.Error("Failed to create backup copy: %v", err)
 		return fmt.Errorf("create_db_backup_failed")
 	}
 
 	if err := os.Rename(tmpPath, finalPath); err != nil {
 		_ = os.Remove(tmpPath)
+		logger.Error("Failed to rename backup file: %v", err)
 		return fmt.Errorf("backup_write_failed")
 	}
 
@@ -141,17 +147,20 @@ func (b *BackupService) restoreFromLocal(filename, choice string, reloadConfig f
 	}
 
 	if err := b.storage.MergeFromBackup(backupPath, strategy); err != nil {
+		logger.Error("Failed to merge from backup: %v", err)
 		return fmt.Errorf("merge_data_failed")
 	}
 
 	configAdapter := storage.NewConfigStorageAdapter(b.storage)
 	newConfig, err := config.LoadFromStorage(configAdapter)
 	if err != nil {
+		logger.Error("Failed to load config from storage: %v", err)
 		return fmt.Errorf("load_config_failed")
 	}
 	*b.config = *newConfig
 
 	if err := reloadConfig(newConfig); err != nil {
+		logger.Error("Failed to reload config: %v", err)
 		return fmt.Errorf("update_proxy_config_failed")
 	}
 
