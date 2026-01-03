@@ -333,25 +333,30 @@ export default {
         confirmRestore: '确认从备份 \"{filename}\" 恢复配置吗？\\n这将合并或覆盖当前配置。',
         enterBackupName: '备份文件名：',
         local: {
-            title: '本地',
+            title: '本地备份',
             dir: '备份目录',
-            dirPlaceholder: '请选择用于存放备份的文件夹',
-            chooseDir: '选择目录',
-            dirRequired: '请选择备份目录'
+            dirPlaceholder: '请选择用于存放备份的目录',
+            chooseDir: '选择',
+            dirRequired: '请选择备份目录',
+            saveFirst: '请先保存配置'
         },
         s3: {
-            title: 'S3',
-            endpoint: 'Endpoint',
-            region: 'Region',
-            bucket: 'Bucket',
-            prefix: 'Prefix',
-            accessKey: 'Access Key',
-            secretKey: 'Secret Key',
-            sessionToken: 'Session Token',
+            title: 'S3备份',
+            endpoint: '服务端点',
+            endpointPlaceholder: '如：play.min.io',
+            region: '区域',
+            regionPlaceholder: '如：us-east-1',
+            bucket: '存储桶',
+            prefix: '路径前缀',
+            prefixPlaceholder: '如：ccNexus/',
+            accessKey: '访问密钥',
+            secretKey: '密钥密码',
+            sessionToken: '会话令牌',
             useSSL: '使用 HTTPS',
             forcePathStyle: '强制 Path-Style',
             testConnection: '测试连接',
-            requiredFields: '请填写 Endpoint/Bucket/AccessKey/SecretKey'
+            requiredFields: '请输入必填信息',
+            saveFirst: '请先保存配置'
         },
         errors: {
             backup_provider_invalid: '备份类型不合法',

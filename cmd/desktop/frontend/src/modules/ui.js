@@ -135,12 +135,6 @@ export function initUI() {
                         </div>
 
                         <div class="history-stats-wrapper">
-                            <button id="historyDeleteBtn" class="history-delete-btn" onclick="window.deleteHistoryArchive()" title="${t('history.deleteTitle')}">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
-                                </svg>
-                                ${t('history.delete')}
-                            </button>
                             <div class="stats-grid">
                             <div class="stat-box">
                                 <div class="stat-header">
@@ -178,7 +172,15 @@ export function initUI() {
                         </div>
 
                         <div class="history-details">
-                            <h3>${t('history.dailyDetails')}</h3>
+                            <div class="history-details-header">
+                                <h3>${t('history.dailyDetails')}</h3>
+                                <button id="historyDeleteBtn" class="history-delete-btn" onclick="window.deleteHistoryArchive()" title="${t('history.deleteTitle')}">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+                                    </svg>
+                                    ${t('history.delete')}
+                                </button>
+                            </div>
                             <div class="table-container">
                                 <table id="historyDailyTable">
                                     <thead>
