@@ -4208,3 +4208,31 @@ body {
     }
 }
 
+
+/* ========================================
+   性能优化：氛围效果开启时禁用弹窗模糊
+   避免氛围效果动画时的性能问题
+   当氛围效果关闭时，模糊效果自动恢复
+   ======================================== */
+
+/* 只在氛围效果开启时禁用所有弹窗的模糊效果 */
+body.festival-active .modal,
+body.festival-active #historyModal,
+body.festival-active #welcomeModal,
+body.festival-active #endpointModal,
+body.festival-active #portModal,
+body.festival-active #genericModal,
+body.festival-active #subModal,
+body.festival-active #settingsModal,
+body.festival-active #autoThemeConfigModal,
+body.festival-active #testResultModal,
+body.festival-active #changelogModal,
+body.festival-active #updateModal,
+body.festival-active #terminalModal,
+body.festival-active #sessionModal,
+body.festival-active #sessionPromptModal,
+body.festival-active #sessionDetailModal {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    transition: backdrop-filter 0.3s ease;
+}

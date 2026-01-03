@@ -309,3 +309,86 @@ func (s *SettingsService) SetProxyURL(proxyURL string) error {
     logger.Info("Proxy URL changed to: %s", proxyURL)
     return nil
 }
+
+// SettingsData represents the settings data for batch save
+type SettingsData struct {
+	CloseWindowBehavior       string `json:"closeWindowBehavior"`
+	ProxyURL                  string `json:"proxyUrl"`
+	Theme                     string `json:"theme"`
+	ThemeAuto                 bool   `json:"themeAuto"`
+	AutoLightTheme            string `json:"autoLightTheme"`
+	AutoDarkTheme             string `json:"autoDarkTheme"`
+	ClaudeNotificationEnabled bool   `json:"claudeNotificationEnabled"`
+	ClaudeNotificationType    string `json:"claudeNotificationType"`
+}
+
+// SaveSettings saves all settings in a single operation to avoid database lock issues
+func (s *SettingsService) SaveSettings(settingsJSON string) error {
+    var settings SettingsData
+    if err := json.Unmarshal([]byte(settingsJSON), &settings); err != nil {
+        return fmt.Errorf("invalid settings format: %w", err)
+    }
+
+    // Validate close window behavior
+    if settings.CloseWindowBehavior != "" &&
+        settings.CloseWindowBehavior != "quit" &&
+        settings.CloseWindowBehavior != "minimize" &&
+        settings.CloseWindowBehavior != "ask" {
+        return fmt.Errorf("invalid close window behavior: %s", settings.CloseWindowBehavior)
+    }
+
+    // Update all settings in memory
+    if settings.CloseWindowBehavior != "" {
+        s.config.UpdateCloseWindowBehavior(settings.CloseWindowBehavior)
+    }
+
+    if settings.Theme != "" {
+        s.config.UpdateTheme(settings.Theme)
+    }
+
+    s.config.UpdateThemeAuto(settings.ThemeAuto)
+
+    // Update auto theme settings
+    if settings.AutoLightTheme != "" {
+        s.config.UpdateAutoLightTheme(settings.AutoLightTheme)
+    }
+    if settings.AutoDarkTheme != "" {
+        s.config.UpdateAutoDarkTheme(settings.AutoDarkTheme)
+    }
+
+    // Update proxy config
+    var proxyCfg *config.ProxyConfig
+    if settings.ProxyURL != "" {
+        proxyCfg = &config.ProxyConfig{URL: settings.ProxyURL}
+    }
+    s.config.UpdateProxy(proxyCfg)
+
+    // Update Claude notification config
+    // Validate notification type
+    if settings.ClaudeNotificationType != "" &&
+        settings.ClaudeNotificationType != "toast" &&
+        settings.ClaudeNotificationType != "dialog" &&
+        settings.ClaudeNotificationType != "disabled" {
+        return fmt.Errorf("invalid notification type: %s", settings.ClaudeNotificationType)
+    }
+    s.config.UpdateClaudeNotification(settings.ClaudeNotificationEnabled, settings.ClaudeNotificationType)
+
+    // Save to storage only once
+    if s.storage != nil {
+        configAdapter := storage.NewConfigStorageAdapter(s.storage)
+        if err := s.config.SaveToStorage(configAdapter); err != nil {
+            return fmt.Errorf("failed to save settings: %w", err)
+        }
+    }
+
+    // Apply Claude notification hook to ~/.claude/settings.json
+    claudeService := NewClaudeConfigService(s.config)
+    if err := claudeService.UpdateNotificationHook(); err != nil {
+        logger.Warn("Failed to update Claude notification hook: %v", err)
+        // Don't fail the whole save operation, just log the warning
+    }
+
+    logger.Info("Settings saved: closeWindowBehavior=%s, theme=%s, themeAuto=%v, proxyUrl=%s, claudeNotification=%v",
+        settings.CloseWindowBehavior, settings.Theme, settings.ThemeAuto, settings.ProxyURL, settings.ClaudeNotificationEnabled)
+    return nil
+}

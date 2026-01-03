@@ -306,6 +306,18 @@ function validateEffectConfig(effect, config) {
 }
 
 /**
+ * 安全地停止当前动画（在启动新效果前调用）
+ * 确保不会有多个动画循环同时运行
+ */
+function ensureAnimationStopped() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    isRunning = false;
+}
+
+/**
  * 创建 Canvas
  */
 function createCanvas() {
@@ -318,6 +330,9 @@ function createCanvas() {
 
     document.body.appendChild(canvas);
     ctx = canvas.getContext('2d');
+
+    // 添加 body class 以禁用弹窗模糊效果（性能优化）
+    document.body.classList.add('festival-active');
 }
 
 /**
@@ -329,12 +344,17 @@ function destroyCanvas() {
         canvas = null;
         ctx = null;
     }
+
+    // 移除 body class 以恢复弹窗模糊效果
+    document.body.classList.remove('festival-active');
 }
 
 /**
  * 启动飘雪效果
  */
 function startSnowEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         particleCount: config?.particleCount || 50,
         speed: config?.speed || 1.0,
@@ -356,6 +376,8 @@ function startSnowEffect(config) {
  * 启动烟花效果
  */
 function startFireworkEffect(config) {
+    ensureAnimationStopped();
+
     fireworkConfig = {
         launchInterval: config?.launchInterval || 130,
         maxFireworks: config?.maxFireworks || 3,
@@ -385,6 +407,8 @@ function startFireworkEffect(config) {
  * 启动灯笼效果
  */
 function startLanternEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         lanternCount: config?.lanternCount || 12,
         swingSpeed: config?.swingSpeed || 1.0,
@@ -406,6 +430,8 @@ function startLanternEffect(config) {
  * 启动爱心效果
  */
 function startHeartEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         heartCount: config?.heartCount || 15,
         speed: config?.speed || 1.0,
@@ -507,6 +533,8 @@ function animateHearts() {
  * 启动樱花效果
  */
 function startSakuraEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         sakuraCount: config?.sakuraCount || 20,
         speed: config?.speed || 1.0,
@@ -543,6 +571,8 @@ function animateSakuras() {
  * 启动枫叶效果
  */
 function startMapleEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         mapleCount: config?.mapleCount || 10,
         speed: config?.speed || 1.0,
@@ -579,6 +609,8 @@ function animateMaples() {
  * 启动夏天效果
  */
 function startSummerEffect(config) {
+    ensureAnimationStopped();
+
     const effectConfig = {
         summerCount: config?.summerCount || 10,
         speed: config?.speed || 1.0,
