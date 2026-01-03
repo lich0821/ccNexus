@@ -418,6 +418,9 @@ func (a *App) SetCloseWindowBehavior(behavior string) error {
 }
 func (a *App) GetProxyURL() string               { return a.settings.GetProxyURL() }
 func (a *App) SetProxyURL(proxyURL string) error { return a.settings.SetProxyURL(proxyURL) }
+func (a *App) SaveSettings(settingsJSON string) error {
+	return a.settings.SaveSettings(settingsJSON)
+}
 
 // ========== WebDAV Bindings ==========
 

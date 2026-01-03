@@ -127,6 +127,8 @@ export function RestoreFromProvider(arg1:string,arg2:string,arg3:string):Promise
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
 
+export function SaveSettings(arg1:string):Promise<void>;
+
 export function SaveTerminalConfig(arg1:string,arg2:Array<string>):Promise<void>;
 
 export function SelectDirectory():Promise<string>;

@@ -254,6 +254,10 @@ export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
 }
 
+export function SaveSettings(arg1) {
+  return window['go']['main']['App']['SaveSettings'](arg1);
+}
+
 export function SaveTerminalConfig(arg1, arg2) {
   return window['go']['main']['App']['SaveTerminalConfig'](arg1, arg2);
 }
