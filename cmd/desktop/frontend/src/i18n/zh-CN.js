@@ -179,6 +179,13 @@ export default {
         proxyUrl: '代理地址',
         proxyUrlPlaceholder: '例如：http://127.0.0.1:7890 或 socks5://127.0.0.1:1080',
         proxyHelp: '配置 HTTP/SOCKS5 代理，留空则直连',
+        claudeNotification: '任务完成通知',
+        notificationOptions: {
+            disabled: '关闭通知',
+            toast: '卡片通知（5秒自动消失）',
+            dialog: '对话框通知（需手动关闭）'
+        },
+        notificationHelp: '当任务完成时发送系统通知提醒（ 注：修改后必须重启终端生效 ）',
         languageHelp: '选择界面显示语言',
         save: '保存',
         cancel: '取消',

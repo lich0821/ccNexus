@@ -624,6 +624,17 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
+                        <label><span class="required">*</span>${t('settings.claudeNotification')}</label>
+                        <select id="settingsNotificationType">
+                            <option value="disabled">${t('settings.notificationOptions.disabled')}</option>
+                            <option value="toast">${t('settings.notificationOptions.toast')}</option>
+                            <option value="dialog">${t('settings.notificationOptions.dialog')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.notificationHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
                         <label><span class="required">*</span>${t('settings.closeWindowBehavior')}</label>
                         <select id="settingsCloseWindowBehavior">
                             <option value="quit">${t('settings.closeWindowOptions.quit')}</option>

@@ -213,6 +213,15 @@ async function loadCurrentSettings() {
         if (proxyInput) {
             proxyInput.value = proxyUrl || '';
         }
+
+        // Load Claude notification settings
+        const claudeNotificationType = config.claudeNotificationType || 'disabled';
+
+        const notificationTypeSelect = document.getElementById('settingsNotificationType');
+
+        if (notificationTypeSelect) {
+            notificationTypeSelect.value = claudeNotificationType;
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -301,6 +310,10 @@ export async function saveSettings() {
         const themeAuto = document.getElementById('settingsThemeAuto').checked;
         const proxyUrl = document.getElementById('settingsProxyUrl').value.trim();
 
+        // Get Claude notification settings
+        const claudeNotificationType = document.getElementById('settingsNotificationType').value;
+        const claudeNotificationEnabled = claudeNotificationType !== 'disabled';
+
         // Get current config for comparison
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
@@ -310,7 +323,9 @@ export async function saveSettings() {
             closeWindowBehavior: closeWindowBehavior,
             proxyUrl: proxyUrl,
             theme: theme,
-            themeAuto: themeAuto
+            themeAuto: themeAuto,
+            claudeNotificationEnabled: claudeNotificationEnabled,
+            claudeNotificationType: claudeNotificationType
         };
         await window.go.main.App.SaveSettings(JSON.stringify(settings));
 

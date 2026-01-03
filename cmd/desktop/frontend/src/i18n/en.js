@@ -179,6 +179,13 @@ export default {
         proxyUrl: 'Proxy URL',
         proxyUrlPlaceholder: 'e.g., http://127.0.0.1:7890 or socks5://127.0.0.1:1080',
         proxyHelp: 'Configure HTTP/SOCKS5 proxy, leave empty for direct connection',
+        claudeNotification: 'Task Completion Notification',
+        notificationOptions: {
+            disabled: 'Disabled',
+            toast: 'Toast (Auto-dismiss in 5s)',
+            dialog: 'Dialog (Manual close)'
+        },
+        notificationHelp: 'Send system notification when task completes (Note: Restart terminal to take effect)',
         languageHelp: 'Select the interface display language',
         save: 'Save',
         cancel: 'Cancel',

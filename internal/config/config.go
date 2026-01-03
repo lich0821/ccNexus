@@ -83,8 +83,10 @@ type Config struct {
 	AutoDarkTheme       string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
 	WindowWidth         int             `json:"windowWidth"`                   // Window width in pixels
 	WindowHeight        int             `json:"windowHeight"`                  // Window height in pixels
-	CloseWindowBehavior string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
-	WebDAV              *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
+	CloseWindowBehavior       string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
+	ClaudeNotificationEnabled bool            `json:"claudeNotificationEnabled"`     // Enable Claude Code task completion notification
+	ClaudeNotificationType    string          `json:"claudeNotificationType"`        // Notification type: toast, dialog, disabled
+	WebDAV                    *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
 	Backup              *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
 	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
 	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
@@ -381,6 +383,21 @@ func (c *Config) UpdateProxy(proxy *ProxyConfig) {
 	c.Proxy = proxy
 }
 
+// GetClaudeNotification returns the Claude notification settings (thread-safe)
+func (c *Config) GetClaudeNotification() (enabled bool, notifType string) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.ClaudeNotificationEnabled, c.ClaudeNotificationType
+}
+
+// UpdateClaudeNotification updates the Claude notification settings (thread-safe)
+func (c *Config) UpdateClaudeNotification(enabled bool, notifType string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.ClaudeNotificationEnabled = enabled
+	c.ClaudeNotificationType = notifType
+}
+
 // StorageAdapter defines the interface needed for loading/saving config
 type StorageAdapter interface {
 	GetEndpoints() ([]StorageEndpoint, error)
@@ -599,6 +616,18 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.Proxy = &ProxyConfig{URL: proxyURL}
 	}
 
+	// Load Claude notification config
+	if enabledStr, err := storage.GetConfig("claude_notification_enabled"); err == nil && enabledStr != "" {
+		config.ClaudeNotificationEnabled = enabledStr == "true"
+	}
+	if notifType, err := storage.GetConfig("claude_notification_type"); err == nil && notifType != "" {
+		config.ClaudeNotificationType = notifType
+	}
+	// Default to "toast" if not set
+	if config.ClaudeNotificationType == "" {
+		config.ClaudeNotificationType = "toast"
+	}
+
 	return config, nil
 }
 
@@ -712,6 +741,10 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 	} else {
 		storage.SetConfig("proxy_url", "")
 	}
+
+	// Save Claude notification config
+	storage.SetConfig("claude_notification_enabled", strconv.FormatBool(c.ClaudeNotificationEnabled))
+	storage.SetConfig("claude_notification_type", c.ClaudeNotificationType)
 
 	return nil
 }
