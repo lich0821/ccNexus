@@ -330,9 +330,6 @@ function createCanvas() {
 
     document.body.appendChild(canvas);
     ctx = canvas.getContext('2d');
-
-    // 添加 body class 以禁用弹窗模糊效果（性能优化）
-    document.body.classList.add('festival-active');
 }
 
 /**
@@ -344,9 +341,6 @@ function destroyCanvas() {
         canvas = null;
         ctx = null;
     }
-
-    // 移除 body class 以恢复弹窗模糊效果
-    document.body.classList.remove('festival-active');
 }
 
 /**

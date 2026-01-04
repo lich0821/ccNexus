@@ -179,13 +179,13 @@ export default {
         proxyUrl: '代理地址',
         proxyUrlPlaceholder: '例如：http://127.0.0.1:7890 或 socks5://127.0.0.1:1080',
         proxyHelp: '配置 HTTP/SOCKS5 代理，留空则直连',
-        claudeNotification: '任务完成通知',
+        claudeNotification: '通知方式',
         notificationOptions: {
             disabled: '关闭通知',
             toast: '卡片通知（5秒自动消失）',
             dialog: '对话框通知（需手动关闭）'
         },
-        notificationHelp: '当任务完成时发送系统通知提醒（ 注：修改后必须重启终端生效 ）',
+        notificationHelp: '当 Claude Code 任务完成时发送通知提醒（ 注：修改后必须重启终端生效 ）',
         languageHelp: '选择界面显示语言',
         save: '保存',
         cancel: '取消',
@@ -430,6 +430,7 @@ export default {
         title: '启动器',
         selectTerminal: '选择终端',
         selectTerminalHelp: '选择用于启动 Claude Code 的终端程序',
+        selectTerminalHelpCodex: '选择用于启动 Codex 的终端程序',
         projectDirs: '项目目录',
         projectDirsHelp: '添加常用的项目目录，点击启动自动打开终端（可先选择会话）',
         addDir: '添加目录',

@@ -378,11 +378,17 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('terminal.selectTerminal')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('terminal.selectTerminal')}</label>
+                            <div class="cli-type-switcher">
+                                <button class="cli-type-btn active" data-cli="claude" onclick="window.switchCliType('claude')">Claude Code</button>
+                                <button class="cli-type-btn" data-cli="codex" onclick="window.switchCliType('codex')">Codex</button>
+                            </div>
+                        </div>
                         <select id="terminalSelect" onchange="window.onTerminalChange()">
                             <option value="">Loading...</option>
                         </select>
-                        <small class="form-help">${t('terminal.selectTerminalHelp')}</small>
+                        <small class="form-help" id="terminalSelectHelp">${t('terminal.selectTerminalHelp')}</small>
                     </div>
                     <div class="form-group">
                         <label><span class="required">*</span>${t('terminal.projectDirs')}</label>
