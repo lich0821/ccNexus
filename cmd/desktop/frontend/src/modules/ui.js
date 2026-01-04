@@ -378,11 +378,17 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('terminal.selectTerminal')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('terminal.selectTerminal')}</label>
+                            <div class="cli-type-switcher">
+                                <button class="cli-type-btn active" data-cli="claude" onclick="window.switchCliType('claude')">Claude Code</button>
+                                <button class="cli-type-btn" data-cli="codex" onclick="window.switchCliType('codex')">Codex</button>
+                            </div>
+                        </div>
                         <select id="terminalSelect" onchange="window.onTerminalChange()">
                             <option value="">Loading...</option>
                         </select>
-                        <small class="form-help">${t('terminal.selectTerminalHelp')}</small>
+                        <small class="form-help" id="terminalSelectHelp">${t('terminal.selectTerminalHelp')}</small>
                     </div>
                     <div class="form-group">
                         <label><span class="required">*</span>${t('terminal.projectDirs')}</label>
@@ -621,6 +627,17 @@ export function initUI() {
                         </div>
                         <p style="color: #666; font-size: 12px; margin-top: 5px;">
                             ${t('settings.themeHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label><span class="required">*</span>${t('settings.claudeNotification')}</label>
+                        <select id="settingsNotificationType">
+                            <option value="disabled">${t('settings.notificationOptions.disabled')}</option>
+                            <option value="toast">${t('settings.notificationOptions.toast')}</option>
+                            <option value="dialog">${t('settings.notificationOptions.dialog')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('settings.notificationHelp')}
                         </p>
                     </div>
                     <div class="form-group">

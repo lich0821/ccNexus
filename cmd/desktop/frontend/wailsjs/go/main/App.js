@@ -42,6 +42,10 @@ export function DeleteBackups(arg1, arg2) {
   return window['go']['main']['App']['DeleteBackups'](arg1, arg2);
 }
 
+export function DeleteCodexSession(arg1) {
+  return window['go']['main']['App']['DeleteCodexSession'](arg1);
+}
+
 export function DeleteSession(arg1, arg2) {
   return window['go']['main']['App']['DeleteSession'](arg1, arg2);
 }
@@ -100,6 +104,14 @@ export function GetAutoLightTheme() {
 
 export function GetChangelog(arg1) {
   return window['go']['main']['App']['GetChangelog'](arg1);
+}
+
+export function GetCodexSessionData(arg1) {
+  return window['go']['main']['App']['GetCodexSessionData'](arg1);
+}
+
+export function GetCodexSessions(arg1) {
+  return window['go']['main']['App']['GetCodexSessions'](arg1);
 }
 
 export function GetConfig() {
@@ -202,6 +214,14 @@ export function InstallUpdate(arg1) {
   return window['go']['main']['App']['InstallUpdate'](arg1);
 }
 
+export function LaunchCodexSessionTerminal(arg1, arg2) {
+  return window['go']['main']['App']['LaunchCodexSessionTerminal'](arg1, arg2);
+}
+
+export function LaunchCodexTerminal(arg1) {
+  return window['go']['main']['App']['LaunchCodexTerminal'](arg1);
+}
+
 export function LaunchSessionTerminal(arg1, arg2) {
   return window['go']['main']['App']['LaunchSessionTerminal'](arg1, arg2);
 }
@@ -238,6 +258,10 @@ export function RemoveProjectDir(arg1) {
   return window['go']['main']['App']['RemoveProjectDir'](arg1);
 }
 
+export function RenameCodexSession(arg1, arg2) {
+  return window['go']['main']['App']['RenameCodexSession'](arg1, arg2);
+}
+
 export function RenameSession(arg1, arg2, arg3) {
   return window['go']['main']['App']['RenameSession'](arg1, arg2, arg3);
 }
@@ -252,6 +276,10 @@ export function RestoreFromProvider(arg1, arg2, arg3) {
 
 export function RestoreFromWebDAV(arg1, arg2) {
   return window['go']['main']['App']['RestoreFromWebDAV'](arg1, arg2);
+}
+
+export function SaveSettings(arg1) {
+  return window['go']['main']['App']['SaveSettings'](arg1);
 }
 
 export function SaveTerminalConfig(arg1, arg2) {

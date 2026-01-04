@@ -45,6 +45,13 @@ func NewSQLiteStorage(dbPath string) (*SQLiteStorage, error) {
 		return nil, err
 	}
 
+	// 设置 busy_timeout，当数据库被锁定时等待最多 5 秒
+	// 这可以避免并发写入时的 SQLITE_BUSY 错误
+	if _, err := db.Exec("PRAGMA busy_timeout = 5000"); err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to set busy_timeout: %w", err)
+	}
+
 	s := &SQLiteStorage{
 		db:     db,
 		dbPath: dbPath,

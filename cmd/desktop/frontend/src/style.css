@@ -700,6 +700,45 @@ body {
     color: #333;
 }
 
+/* CLI Type Switcher */
+.form-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.form-label-row label {
+    margin-bottom: 0;
+}
+
+.cli-type-switcher {
+    display: inline-flex;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.cli-type-btn {
+    padding: 4px 12px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: inherit;
+}
+
+.cli-type-btn:hover {
+    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+}
+
+.cli-type-btn.active {
+    background: var(--bg-tertiary, #f3f4f6);
+    color: var(--primary-color, #667eea);
+    font-weight: 500;
+}
+
 .form-group input,
 .form-group select {
     width: 100%;
@@ -2367,7 +2406,7 @@ body {
 
 /* Sub-modal styles */
 #subModal {
-    backdrop-filter: blur(4px);
+    /* 子弹窗不需要重复加模糊效果 */
 }
 
 #subModal .modal-content {
@@ -2752,7 +2791,7 @@ body {
 
 /* Auto Theme Config Modal Styles */
 #autoThemeConfigModal {
-    backdrop-filter: blur(4px);
+    /* 子弹窗不需要重复的模糊效果 */
 }
 
 #autoThemeConfigModal .modal-content {
@@ -2875,7 +2914,7 @@ body {
 
 /* Changelog Modal */
 #changelogModal {
-    backdrop-filter: blur(4px);
+    /* 子弹窗不需要重复的模糊效果 */
 }
 
 #changelogModal .modal-header {
@@ -3485,7 +3524,8 @@ body {
 /* ========== Session Modal Styles ========== */
 
 #sessionModal {
-    backdrop-filter: blur(4px);
+    /* 不需要重复的遮罩层 */
+    background: transparent;
 }
 
 #sessionModal .session-modal-content {
@@ -3710,7 +3750,8 @@ body {
 /* ========== Session Detail Modal Styles ========== */
 
 #sessionDetailModal {
-    backdrop-filter: blur(4px);
+    /* 子弹窗不需要重复的背景遮罩和模糊效果 */
+    background: transparent;
 }
 
 #sessionDetailModal .modal-header {

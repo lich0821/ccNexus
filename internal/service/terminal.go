@@ -191,3 +191,81 @@ func (t *TerminalService) LaunchSessionTerminal(dir, sessionID string) error {
     }
     return terminal.LaunchTerminalWithSession(terminalID, dir, sessionID)
 }
+
+// LaunchCodexTerminal launches a terminal with Codex
+func (t *TerminalService) LaunchCodexTerminal(dir string) error {
+    terminalCfg := t.config.GetTerminal()
+    terminalID := terminalCfg.SelectedTerminal
+    if terminalID == "" {
+        terminalID = "cmd"
+    }
+
+    logger.Info("Launching Codex terminal in %s", dir)
+    return terminal.LaunchCodexTerminal(terminalID, dir)
+}
+
+// LaunchCodexSessionTerminal launches a terminal with Codex session resume
+func (t *TerminalService) LaunchCodexSessionTerminal(dir, sessionID string) error {
+    terminalCfg := t.config.GetTerminal()
+    terminalID := terminalCfg.SelectedTerminal
+    if terminalID == "" {
+        terminalID = "cmd"
+    }
+
+    logger.Info("Launching Codex terminal with session: %s in %s", sessionID, dir)
+    return terminal.LaunchCodexTerminalWithSession(terminalID, dir, sessionID)
+}
+
+// GetCodexSessions returns Codex sessions for a project directory
+func (t *TerminalService) GetCodexSessions(projectDir string) string {
+    sessions, err := session.GetCodexSessionsForProject(projectDir)
+    if err != nil {
+        logger.Error("Failed to get Codex sessions for %s: %v", projectDir, err)
+        result := map[string]interface{}{
+            "success":  false,
+            "message":  err.Error(),
+            "sessions": []interface{}{},
+        }
+        data, _ := json.Marshal(result)
+        return string(data)
+    }
+
+    result := map[string]interface{}{
+        "success":  true,
+        "sessions": sessions,
+    }
+    data, _ := json.Marshal(result)
+    return string(data)
+}
+
+// GetCodexSessionData returns Codex session messages
+func (t *TerminalService) GetCodexSessionData(sessionID string) string {
+    messages, err := session.GetCodexSessionData(sessionID)
+    if err != nil {
+        logger.Error("Failed to get Codex session data for %s: %v", sessionID, err)
+        result := map[string]interface{}{
+            "success": false,
+            "message": err.Error(),
+            "data":    []interface{}{},
+        }
+        data, _ := json.Marshal(result)
+        return string(data)
+    }
+
+    result := map[string]interface{}{
+        "success": true,
+        "data":    messages,
+    }
+    data, _ := json.Marshal(result)
+    return string(data)
+}
+
+// DeleteCodexSession deletes a Codex session
+func (t *TerminalService) DeleteCodexSession(sessionID string) error {
+    return session.DeleteCodexSession(sessionID)
+}
+
+// RenameCodexSession sets an alias for a Codex session
+func (t *TerminalService) RenameCodexSession(sessionID, alias string) error {
+    return session.RenameCodexSession(sessionID, alias)
+}

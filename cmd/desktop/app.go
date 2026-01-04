@@ -418,6 +418,9 @@ func (a *App) SetCloseWindowBehavior(behavior string) error {
 }
 func (a *App) GetProxyURL() string               { return a.settings.GetProxyURL() }
 func (a *App) SetProxyURL(proxyURL string) error { return a.settings.SetProxyURL(proxyURL) }
+func (a *App) SaveSettings(settingsJSON string) error {
+	return a.settings.SaveSettings(settingsJSON)
+}
 
 // ========== WebDAV Bindings ==========
 
@@ -520,4 +523,30 @@ func (a *App) GetSessionData(projectDir, sessionID string) string {
 }
 func (a *App) LaunchSessionTerminal(dir, sessionID string) error {
 	return a.terminal.LaunchSessionTerminal(dir, sessionID)
+}
+
+// ========== Codex Terminal Bindings ==========
+
+func (a *App) LaunchCodexTerminal(dir string) error {
+	return a.terminal.LaunchCodexTerminal(dir)
+}
+
+func (a *App) LaunchCodexSessionTerminal(dir, sessionID string) error {
+	return a.terminal.LaunchCodexSessionTerminal(dir, sessionID)
+}
+
+func (a *App) GetCodexSessions(projectDir string) string {
+	return a.terminal.GetCodexSessions(projectDir)
+}
+
+func (a *App) GetCodexSessionData(sessionID string) string {
+	return a.terminal.GetCodexSessionData(sessionID)
+}
+
+func (a *App) DeleteCodexSession(sessionID string) error {
+	return a.terminal.DeleteCodexSession(sessionID)
+}
+
+func (a *App) RenameCodexSession(sessionID, alias string) error {
+	return a.terminal.RenameCodexSession(sessionID, alias)
 }

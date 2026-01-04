@@ -1,7 +1,7 @@
-import { DetectTerminals, GetTerminalConfig, SaveTerminalConfig, AddProjectDir, RemoveProjectDir, LaunchTerminal, LaunchSessionTerminal, SelectDirectory } from '../../wailsjs/go/main/App';
+import { DetectTerminals, GetTerminalConfig, SaveTerminalConfig, AddProjectDir, RemoveProjectDir, LaunchTerminal, LaunchSessionTerminal, LaunchCodexTerminal, LaunchCodexSessionTerminal, SelectDirectory } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
-import { getSelectedSession, clearSelectedSession } from './session.js';
+import { getSelectedSession, clearSelectedSession, clearAllSelectedSessions } from './session.js';
 
 // 翻译后端错误消息
 function translateError(error) {
@@ -13,6 +13,12 @@ function translateError(error) {
 
 let terminals = [];
 let terminalConfig = { selectedTerminal: 'cmd', projectDirs: [] };
+let currentCliType = 'claude'; // 'claude' | 'codex'
+
+// 获取当前 CLI 类型
+export function getCurrentCliType() {
+    return currentCliType;
+}
 
 export function initTerminal() {
     window.showTerminalModal = showTerminalModal;
@@ -21,11 +27,31 @@ export function initTerminal() {
     window.addProjectDir = addProjectDir;
     window.removeProjectDir = removeProjectDir;
     window.launchTerminal = launchTerminal;
+    window.switchCliType = switchCliType;
 
     // 监听会话选择事件，更新界面
     window.addEventListener('sessionSelected', () => {
         renderProjectDirs();
     });
+}
+
+function switchCliType(cliType) {
+    currentCliType = cliType;
+    // 更新按钮样式
+    document.querySelectorAll('.cli-type-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.cli === cliType);
+    });
+    // 更新帮助文本
+    const helpText = document.getElementById('terminalSelectHelp');
+    if (helpText) {
+        helpText.textContent = cliType === 'claude'
+            ? t('terminal.selectTerminalHelp')
+            : t('terminal.selectTerminalHelpCodex');
+    }
+    // 切换时清除所有已选会话
+    clearAllSelectedSessions();
+    // 重新渲染项目目录
+    renderProjectDirs();
 }
 
 async function showTerminalModal() {
@@ -226,12 +252,20 @@ async function launchTerminal(dir) {
         // 检查是否有选中的会话
         const selectedSession = getSelectedSession(dir);
 
-        if (selectedSession) {
-            // 恢复会话
-            await LaunchSessionTerminal(dir, selectedSession.sessionId);
+        if (currentCliType === 'codex') {
+            // Codex 启动
+            if (selectedSession) {
+                await LaunchCodexSessionTerminal(dir, selectedSession.sessionId);
+            } else {
+                await LaunchCodexTerminal(dir);
+            }
         } else {
-            // 启动新会话
-            await LaunchTerminal(dir);
+            // Claude Code 启动
+            if (selectedSession) {
+                await LaunchSessionTerminal(dir, selectedSession.sessionId);
+            } else {
+                await LaunchTerminal(dir);
+            }
         }
 
         // 延时后自动关闭模态框

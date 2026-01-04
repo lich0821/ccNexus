@@ -1,5 +1,15 @@
 [
   {
+    "version": "v4.9.1",
+    "date": "2025-12-31",
+    "changes": ["Add history statistics deletion feature"]
+  },
+  {
+    "version": "v4.9.0",
+    "date": "2025-12-31",
+    "changes": ["Fix Windows tray minimization issue", "Add local backup and S3 backup features", "Fix known issues"]
+  },
+  {
     "version": "v4.8.3",
     "date": "2025-12-30",
     "changes": ["Fix known issues", "Add more holiday atmosphere effects"]

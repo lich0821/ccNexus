@@ -1,7 +1,8 @@
-import { GetSessions, DeleteSession, RenameSession, GetSessionData } from '../../wailsjs/go/main/App';
+import { GetSessions, DeleteSession, RenameSession, GetSessionData, GetCodexSessions, GetCodexSessionData, DeleteCodexSession, RenameCodexSession } from '../../wailsjs/go/main/App';
 import { t } from '../i18n/index.js';
 import { showNotification } from './modal.js';
 import { parseMarkdown } from '../utils/markdown.js';
+import { getCurrentCliType } from './terminal.js';
 
 let currentProjectDir = '';
 let sessions = [];
@@ -33,6 +34,13 @@ export function clearSelectedSession(dir) {
     }
 }
 
+// 清除所有已选会话
+export function clearAllSelectedSessions() {
+    for (const key in selectedSessions) {
+        delete selectedSessions[key];
+    }
+}
+
 export async function showSessionModal(projectDir) {
     currentProjectDir = projectDir;
     // 初始化临时选择为当前已确认的选择
@@ -54,7 +62,15 @@ async function loadSessions() {
     listContainer.innerHTML = `<div class="session-loading">${t('session.loading')}</div>`;
 
     try {
-        const result = JSON.parse(await GetSessions(currentProjectDir));
+        const cliType = getCurrentCliType();
+        let result;
+
+        if (cliType === 'codex') {
+            result = JSON.parse(await GetCodexSessions(currentProjectDir));
+        } else {
+            result = JSON.parse(await GetSessions(currentProjectDir));
+        }
+
         if (!result.success) {
             listContainer.innerHTML = `<div class="session-empty">${t('session.loadError')}</div>`;
             return;
@@ -232,7 +248,12 @@ async function deleteSession(sessionId) {
     const scrollTop = listContainer.scrollTop;
 
     try {
-        await DeleteSession(currentProjectDir, sessionId);
+        const cliType = getCurrentCliType();
+        if (cliType === 'codex') {
+            await DeleteCodexSession(sessionId);
+        } else {
+            await DeleteSession(currentProjectDir, sessionId);
+        }
         showNotification(t('session.deleted'), 'success');
         await loadSessions();
         // 恢复滚动位置
@@ -255,7 +276,12 @@ async function renameSession(sessionId) {
     const scrollTop = listContainer.scrollTop;
 
     try {
-        await RenameSession(currentProjectDir, sessionId, newName);
+        const cliType = getCurrentCliType();
+        if (cliType === 'codex') {
+            await RenameCodexSession(sessionId, newName);
+        } else {
+            await RenameSession(currentProjectDir, sessionId, newName);
+        }
         showNotification(t('session.renamed'), 'success');
         await loadSessions();
         // 恢复滚动位置
@@ -376,6 +402,7 @@ async function viewSessionDetail(sessionId) {
     modal.id = 'sessionDetailModal';
     modal.className = 'modal active';
     modal.style.zIndex = '1002';
+    modal.style.background = 'transparent'; // 子弹窗不需要重复的背景遮罩
 
     const displayName = session.alias || session.summary || t('session.noSummary');
 
@@ -397,7 +424,15 @@ async function viewSessionDetail(sessionId) {
 
     // 加载会话数据
     try {
-        const result = JSON.parse(await GetSessionData(currentProjectDir, sessionId));
+        const cliType = getCurrentCliType();
+        let result;
+
+        if (cliType === 'codex') {
+            result = JSON.parse(await GetCodexSessionData(sessionId));
+        } else {
+            result = JSON.parse(await GetSessionData(currentProjectDir, sessionId));
+        }
+
         if (!result.success) {
             document.getElementById('sessionDetailMessages').innerHTML =
                 `<div class="session-empty">${t('session.loadDetailError')}</div>`;

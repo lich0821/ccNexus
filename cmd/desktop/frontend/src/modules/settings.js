@@ -5,8 +5,16 @@ import { destroyFestivalEffects, initFestivalEffects } from './festival.js';
 // Auto theme check interval ID
 let autoThemeIntervalId = null;
 
+// 记录当前已应用的主题，用于避免重复初始化
+let currentAppliedTheme = null;
+
 // Apply theme to body element
 export function applyTheme(theme) {
+    // 如果主题没有变化，直接返回
+    if (currentAppliedTheme === theme) {
+        return;
+    }
+
     // Remove all theme classes first
     document.body.classList.remove('dark-theme', 'green-theme', 'starry-theme', 'sakura-theme', 'sunset-theme', 'ocean-theme', 'mocha-theme', 'cyberpunk-theme', 'aurora-theme', 'holographic-theme', 'quantum-theme');
 
@@ -35,6 +43,9 @@ export function applyTheme(theme) {
         document.body.classList.add('quantum-theme');
     }
     // 'light' theme uses default styles, no class needed
+
+    // 更新当前主题记录
+    currentAppliedTheme = theme;
 
     // 重新初始化节日效果（根据主题判断默认效果）
     destroyFestivalEffects();
@@ -202,6 +213,15 @@ async function loadCurrentSettings() {
         if (proxyInput) {
             proxyInput.value = proxyUrl || '';
         }
+
+        // Load Claude notification settings
+        const claudeNotificationType = config.claudeNotificationType || 'disabled';
+
+        const notificationTypeSelect = document.getElementById('settingsNotificationType');
+
+        if (notificationTypeSelect) {
+            notificationTypeSelect.value = claudeNotificationType;
+        }
     } catch (error) {
         console.error('Failed to load settings:', error);
     }
@@ -254,12 +274,13 @@ export async function saveAutoThemeConfig() {
         const lightTheme = document.getElementById('autoLightTheme').value;
         const darkTheme = document.getElementById('autoDarkTheme').value;
 
-        // Save both themes
-        await window.go.main.App.SetAutoLightTheme(lightTheme);
-        await window.go.main.App.SetAutoDarkTheme(darkTheme);
-
-        // Enable auto mode
-        await window.go.main.App.SetThemeAuto(true);
+        // Use batch save to avoid database lock issues
+        const settings = {
+            themeAuto: true,
+            autoLightTheme: lightTheme,
+            autoDarkTheme: darkTheme
+        };
+        await window.go.main.App.SaveSettings(JSON.stringify(settings));
 
         // Mark checkbox as confirmed so it won't be unchecked when closing modal
         const themeAutoCheckbox = document.getElementById('settingsThemeAuto');
@@ -289,25 +310,24 @@ export async function saveSettings() {
         const themeAuto = document.getElementById('settingsThemeAuto').checked;
         const proxyUrl = document.getElementById('settingsProxyUrl').value.trim();
 
-        // Save close window behavior
-        await window.go.main.App.SetCloseWindowBehavior(closeWindowBehavior);
+        // Get Claude notification settings
+        const claudeNotificationType = document.getElementById('settingsNotificationType').value;
+        const claudeNotificationEnabled = claudeNotificationType !== 'disabled';
 
-        // Save proxy URL
-        await window.go.main.App.SetProxyURL(proxyUrl);
-
-        // Get current config
+        // Get current config for comparison
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
 
-        // Save theme if changed
-        if (config.theme !== theme) {
-            await window.go.main.App.SetTheme(theme);
-        }
-
-        // Handle auto mode changes
-        if (config.themeAuto !== themeAuto) {
-            await window.go.main.App.SetThemeAuto(themeAuto);
-        }
+        // Use batch save to avoid database lock issues
+        const settings = {
+            closeWindowBehavior: closeWindowBehavior,
+            proxyUrl: proxyUrl,
+            theme: theme,
+            themeAuto: themeAuto,
+            claudeNotificationEnabled: claudeNotificationEnabled,
+            claudeNotificationType: claudeNotificationType
+        };
+        await window.go.main.App.SaveSettings(JSON.stringify(settings));
 
         // Apply theme based on final settings
         stopAutoThemeCheck();
