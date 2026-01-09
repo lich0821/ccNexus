@@ -4249,3 +4249,88 @@ body {
     }
 }
 
+/* ========== Page Curl Effect - 页面卷边效果（向内卷） ========== */
+.page-curl {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+/* 卷边下方露出的彩蛋图标 */
+.curl-hidden {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    font-size: 10px;
+    z-index: 1;
+}
+
+/* 整体容器 */
+.curl-corner {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    z-index: 2;
+}
+
+/* 露出的底层 - 背景色三角 */
+.curl-corner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 36px 36px 0;
+    border-color: transparent var(--bg-gradient-start, #667eea) transparent transparent;
+}
+
+/* 卷起的纸张部分 - 弧形边缘 */
+.curl-corner::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            transparent 0%,
+            transparent 50%,
+            rgba(255,255,255,0.98) 50%,
+            rgba(252,252,252,1) 55%,
+            rgba(245,245,245,1) 65%,
+            rgba(235,235,235,1) 80%,
+            rgba(220,220,220,1) 100%
+        );
+    clip-path: polygon(0 0, 0 100%, 100% 100%);
+    filter: drop-shadow(-1px 1px 2px rgba(0, 0, 0, 0.2));
+}
+
+/* 暗色主题适配 */
+[data-theme="dark"] .curl-corner::before {
+    border-color: transparent var(--bg-gradient-start, #1a1a2e) transparent transparent;
+}
+
+[data-theme="dark"] .curl-corner::after {
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            transparent 0%,
+            transparent 50%,
+            rgba(50,50,65,1) 50%,
+            rgba(45,45,60,1) 55%,
+            rgba(40,40,55,1) 65%,
+            rgba(35,35,50,1) 80%,
+            rgba(30,30,45,1) 100%
+        );
+}
+

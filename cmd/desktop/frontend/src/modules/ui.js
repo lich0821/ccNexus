@@ -6,6 +6,12 @@ export function initUI() {
 
     const app = document.getElementById('app');
     app.innerHTML = `
+        <!-- 页面右上角卷边效果 -->
+        <div class="page-curl">
+            <div class="curl-corner"></div>
+            <div class="curl-hidden">🎉</div>
+        </div>
+
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
