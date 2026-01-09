@@ -21,6 +21,8 @@ export function DeleteArchive(arg1:string):Promise<string>;
 
 export function DeleteBackups(arg1:string,arg2:Array<string>):Promise<void>;
 
+export function DeleteCodexSession(arg1:string):Promise<void>;
+
 export function DeleteSession(arg1:string,arg2:string):Promise<void>;
 
 export function DeleteWebDAVBackups(arg1:Array<string>):Promise<void>;
@@ -50,6 +52,10 @@ export function GetAutoDarkTheme():Promise<string>;
 export function GetAutoLightTheme():Promise<string>;
 
 export function GetChangelog(arg1:string):Promise<string>;
+
+export function GetCodexSessionData(arg1:string):Promise<string>;
+
+export function GetCodexSessions(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<string>;
 
@@ -101,6 +107,10 @@ export function HideWindow():Promise<void>;
 
 export function InstallUpdate(arg1:string):Promise<string>;
 
+export function LaunchCodexSessionTerminal(arg1:string,arg2:string):Promise<void>;
+
+export function LaunchCodexTerminal(arg1:string):Promise<void>;
+
 export function LaunchSessionTerminal(arg1:string,arg2:string):Promise<void>;
 
 export function LaunchTerminal(arg1:string):Promise<void>;
@@ -119,6 +129,8 @@ export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function RemoveProjectDir(arg1:string):Promise<void>;
 
+export function RenameCodexSession(arg1:string,arg2:string):Promise<void>;
+
 export function RenameSession(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
@@ -126,6 +138,8 @@ export function ReorderEndpoints(arg1:Array<string>):Promise<void>;
 export function RestoreFromProvider(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function RestoreFromWebDAV(arg1:string,arg2:string):Promise<void>;
+
+export function SaveSettings(arg1:string):Promise<void>;
 
 export function SaveTerminalConfig(arg1:string,arg2:Array<string>):Promise<void>;
 
