@@ -698,12 +698,13 @@ func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx, strategy MergeStrategy) erro
 	switch strategy {
 	case MergeStrategyKeepLocal:
 		// 保留本地数据，只插入本地不存在的记录
-		// 使用本地 device_id 替代备份的 device_id 以避免重复
+		// 使用本地 device_id 替代备份的 device_id，并按 endpoint_name 和 date 聚合避免冲突
 		_, err := tx.Exec(`
 			INSERT OR IGNORE INTO daily_stats
 			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
-			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, ?
+			SELECT endpoint_name, date, SUM(requests), SUM(errors), SUM(input_tokens), SUM(output_tokens), ?
 			FROM backup.daily_stats
+			GROUP BY endpoint_name, date
 		`, localDeviceID)
 		return err
 	case MergeStrategyOverwriteLocal:
@@ -721,12 +722,13 @@ func (s *SQLiteStorage) mergeDailyStats(tx *sql.Tx, strategy MergeStrategy) erro
 			return err
 		}
 
-		// 步骤2：使用本地 device_id 插入备份数据
+		// 步骤2：使用本地 device_id 插入备份数据（按 endpoint_name 和 date 聚合，避免多设备数据冲突）
 		_, err = tx.Exec(`
 			INSERT INTO daily_stats
 			(endpoint_name, date, requests, errors, input_tokens, output_tokens, device_id)
-			SELECT endpoint_name, date, requests, errors, input_tokens, output_tokens, ?
+			SELECT endpoint_name, date, SUM(requests), SUM(errors), SUM(input_tokens), SUM(output_tokens), ?
 			FROM backup.daily_stats
+			GROUP BY endpoint_name, date
 		`, localDeviceID)
 		return err
 	default:
