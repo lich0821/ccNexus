@@ -6,11 +6,8 @@ export function initUI() {
 
     const app = document.getElementById('app');
     app.innerHTML = `
-        <!-- 页面右上角卷边效果 -->
-        <div class="page-curl">
-            <div class="curl-corner"></div>
-            <div class="curl-hidden">🎉</div>
-        </div>
+        <!-- 页面右上角斜拉横幅 -->
+        <div class="ribbon-banner hidden" onclick="window.showSponsorModal()" title="${t('sponsor.ribbonTip')}">${t('sponsor.ribbon')}</div>
 
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
@@ -20,7 +17,7 @@ export function initUI() {
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
                     <div class="port-display" onclick="window.showEditPortModal()" title="${t('header.port')}">
-                        <span style="color: #666; font-size: 14px;">${t('header.port')}: </span>
+                        <span style="color: #666; font-size: 15px; position: relative; top: -0.3px;">${t('header.port')}: </span>
                         <span class="port-number" id="proxyPort">3000</span>
                     </div>
                     <div style="display: flex; gap: 10px;">
@@ -34,7 +31,7 @@ export function initUI() {
                             <span class="update-badge" id="updateBadge"></span>
                         </button>
                         <button class="header-link" onclick="window.showSettingsModal()" title="${t('settings.title')}">
-                            ⚙️
+                            <span style="position: relative; left: 1.2px;">⚙️</span>
                         </button>
                     </div>
                 </div>
@@ -728,6 +725,19 @@ export function initUI() {
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeAutoThemeConfigModal()">${t('settings.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.saveAutoThemeConfig()">${t('settings.save')}</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sponsor Modal -->
+        <div id="sponsorModal" class="modal">
+            <div class="modal-content sponsor-modal-content">
+                <div class="modal-header">
+                    <h2>❤️ ${t('sponsor.title')}</h2>
+                    <button class="modal-close" onclick="window.closeSponsorModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="sponsor-grid"></div>
                 </div>
             </div>
         </div>
