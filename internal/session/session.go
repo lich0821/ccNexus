@@ -303,8 +303,9 @@ func FormatSize(size int64) string {
 
 // MessageData represents a single message in a session
 type MessageData struct {
-	Type    string `json:"type"`    // "user" or "assistant"
-	Content string `json:"content"` // message content
+	Type      string `json:"type"`      // "user" or "assistant"
+	Content   string `json:"content"`   // message content
+	Timestamp int64  `json:"timestamp"` // message timestamp (milliseconds)
 }
 
 // GetSessionData returns all messages for a specific session
@@ -350,9 +351,20 @@ func GetSessionData(projectDir, sessionID string) ([]MessageData, error) {
 
 		content := extractContent(message["content"])
 		if content != "" {
+			// Extract timestamp (in ISO format or Unix milliseconds)
+			var ts int64
+			if timestamp, ok := data["timestamp"].(string); ok {
+				if t, err := time.Parse(time.RFC3339Nano, timestamp); err == nil {
+					ts = t.UnixMilli()
+				}
+			} else if timestamp, ok := data["timestamp"].(float64); ok {
+				ts = int64(timestamp)
+			}
+
 			messages = append(messages, MessageData{
-				Type:    msgType,
-				Content: content,
+				Type:      msgType,
+				Content:   content,
+				Timestamp: ts,
 			})
 		}
 	}

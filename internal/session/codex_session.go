@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 )
 
 // CodexSessionMeta represents the first line of Codex session file
@@ -247,14 +248,25 @@ func GetCodexSessionData(sessionID string) ([]MessageData, error) {
 			if !ok {
 				continue
 			}
+
+			// Extract timestamp
+			var ts int64
+			if timestamp, ok := data["timestamp"].(string); ok {
+				if t, err := time.Parse(time.RFC3339Nano, timestamp); err == nil {
+					ts = t.UnixMilli()
+				}
+			} else if timestamp, ok := data["timestamp"].(float64); ok {
+				ts = int64(timestamp)
+			}
+
 			payloadType, _ := payload["type"].(string)
 			if payloadType == "user_message" {
 				if msg, ok := payload["message"].(string); ok && msg != "" {
-					messages = append(messages, MessageData{Type: "user", Content: msg})
+					messages = append(messages, MessageData{Type: "user", Content: msg, Timestamp: ts})
 				}
 			} else if payloadType == "agent_message" {
 				if msg, ok := payload["message"].(string); ok && msg != "" {
-					messages = append(messages, MessageData{Type: "assistant", Content: msg})
+					messages = append(messages, MessageData{Type: "assistant", Content: msg, Timestamp: ts})
 				}
 			}
 		}
