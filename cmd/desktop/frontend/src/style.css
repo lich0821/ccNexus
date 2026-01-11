@@ -1320,9 +1320,12 @@ body {
     border-radius: 8px;
     color: #667eea;
     font-size: 20px;
+    line-height: 1;
+    text-align: center;
     cursor: pointer;
     transition: all 0.3s ease;
     text-decoration: none;
+    padding: 0;
 }
 
 .header-link:hover {
@@ -1339,6 +1342,7 @@ body {
 .about-btn,
 .check-update-btn {
     position: relative;
+    line-height: 1;
 }
 
 .update-badge {
@@ -3876,6 +3880,13 @@ body {
     color: var(--text-secondary, #888);
 }
 
+.message-time {
+    margin-left: 8px;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--text-tertiary, #999);
+}
+
 /* 消息气泡基础样式 */
 .message-bubble {
     padding: 12px 16px;
@@ -4247,5 +4258,163 @@ body {
         transform: scale(1.1);
         opacity: 0.8;
     }
+}
+
+/* ========== Ribbon Banner - 斜拉式横幅 ========== */
+.ribbon-banner {
+    position: fixed;
+    top: 6px;
+    right: -25px;
+    width: 90px;
+    padding: 2px 0;
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color, #667eea);
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    letter-spacing: 2px;
+    text-indent: 5px;
+    transform: rotate(45deg);
+    z-index: 100;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* 横幅两端的折叠效果 */
+.ribbon-banner::before,
+.ribbon-banner::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    border: 5px solid transparent;
+    border-top-color: rgba(102, 126, 234, 0.15);
+}
+
+.ribbon-banner::before {
+    left: 0;
+    border-left-color: rgba(102, 126, 234, 0.15);
+}
+
+.ribbon-banner::after {
+    right: 0;
+    border-right-color: rgba(102, 126, 234, 0.15);
+}
+
+.ribbon-banner.hidden {
+    display: none;
+}
+
+.ribbon-banner:hover {
+    cursor: pointer;
+    background: rgba(102, 126, 234, 0.2);
+}
+
+/* ========== Sponsor Modal ========== */
+#sponsorModal {
+    backdrop-filter: blur(4px);
+}
+
+.sponsor-modal-content {
+    max-width: min(420px, 90vw);
+    width: 420px;
+}
+
+#sponsorModal .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    border-bottom: none;
+    margin-bottom: 0;
+    position: relative;
+}
+
+#sponsorModal .modal-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 30px;
+    right: 30px;
+    height: 1px;
+    background: var(--border-color, #e9ecef);
+    transform: translateZ(0);
+}
+
+#sponsorModal .modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: var(--text-primary, #333);
+}
+
+#sponsorModal .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #f0f0f0;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 24px;
+    line-height: 1;
+    color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+}
+
+#sponsorModal .modal-close:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: rotate(90deg);
+}
+
+#sponsorModal .modal-body {
+    padding: 25px 30px 30px;
+}
+
+.sponsor-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.sponsor-card {
+    background: var(--bg-secondary, #f8f9fa);
+    border: 1px solid var(--border-color, #e9ecef);
+    border-radius: 12px;
+    padding: 20px 15px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sponsor-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-color, #667eea);
+}
+
+.sponsor-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.sponsor-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary, #333);
+    margin-bottom: 6px;
+}
+
+.sponsor-desc {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    margin-bottom: 8px;
+}
+
+.sponsor-amount {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--primary-color, #667eea);
 }
 

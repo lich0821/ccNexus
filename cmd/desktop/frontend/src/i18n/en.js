@@ -497,6 +497,11 @@ export default {
         close: 'Close',
         retry: 'Retry'
     },
+    sponsor: {
+        ribbon: '❤️SPN',
+        ribbonTip: '❤️Click to support the author',
+        title: 'Support the Author'
+    },
     tips: [
         'Tip: Enable multiple API endpoints for automatic failover',
         'Tip: When an endpoint fails after 2 retries, it automatically switches to the next available one',

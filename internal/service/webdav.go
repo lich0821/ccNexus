@@ -176,6 +176,7 @@ func (w *WebDAVService) RestoreFromWebDAV(filename, choice string, reloadConfig 
 	}
 
 	if err := w.storage.MergeFromBackup(tempRestorePath, strategy); err != nil {
+		logger.Error("合并备份数据失败: %v", err)
 		return fmt.Errorf("merge_data_failed")
 	}
 

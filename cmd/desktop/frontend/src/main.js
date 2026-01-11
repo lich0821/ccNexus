@@ -14,6 +14,7 @@ import { initSession } from './modules/session.js'
 import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTheme, showAutoThemeConfigModal, closeAutoThemeConfigModal, saveAutoThemeConfig } from './modules/settings.js'
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import { initBroadcast } from './modules/broadcast.js'
+import { initSponsor, showSponsorModal, closeSponsorModal, openSponsorLink } from './modules/sponsor.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -133,6 +134,9 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Initialize broadcast banner
     initBroadcast();
 
+    // Initialize sponsor module
+    initSponsor();
+
     // Initialize update settings
     initUpdateSettings();
 
@@ -203,6 +207,9 @@ window.saveSettings = saveSettings;
 window.showAutoThemeConfigModal = showAutoThemeConfigModal;
 window.closeAutoThemeConfigModal = closeAutoThemeConfigModal;
 window.saveAutoThemeConfig = saveAutoThemeConfig;
+window.showSponsorModal = showSponsorModal;
+window.closeSponsorModal = closeSponsorModal;
+window.openSponsorLink = openSponsorLink;
 
 // History modal functions
 window.closeHistoryModal = async () => {
