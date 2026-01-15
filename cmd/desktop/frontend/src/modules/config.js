@@ -15,7 +15,8 @@ export async function loadConfig() {
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
 
-        document.getElementById('proxyPort').textContent = config.port;
+		const listenAddr = config.listenAddr || '127.0.0.1';
+		document.getElementById('proxyPort').textContent = `${listenAddr}:${config.port}`;
         document.getElementById('totalEndpoints').textContent = config.endpoints.length;
 
         const activeCount = config.endpoints.filter(ep => ep.enabled !== false).length;
@@ -30,6 +31,10 @@ export async function loadConfig() {
 
 export async function updatePort(port) {
     await window.go.main.App.UpdatePort(port);
+}
+
+export async function updateNetwork(port, listenAddr) {
+	await window.go.main.App.UpdateNetwork(port, listenAddr);
 }
 
 export async function addEndpoint(name, url, key, transformer, model, remark) {

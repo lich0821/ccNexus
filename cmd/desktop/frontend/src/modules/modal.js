@@ -1,6 +1,6 @@
 import { t } from '../i18n/index.js';
 import { escapeHtml } from '../utils/format.js';
-import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, testEndpointLight, updatePort } from './config.js';
+import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, testEndpointLight, updateNetwork } from './config.js';
 import { setTestState, clearTestState, saveEndpointTestStatus } from './endpoints.js';
 
 let currentEditIndex = -1;
@@ -345,19 +345,30 @@ export async function showEditPortModal() {
     const config = JSON.parse(configStr);
 
     document.getElementById('portInput').value = config.port;
+    const listenAddrInput = document.getElementById('listenAddrInput');
+    if (listenAddrInput) {
+        listenAddrInput.value = config.listenAddr || '127.0.0.1';
+    }
     document.getElementById('portModal').classList.add('active');
 }
 
 export async function savePort() {
     const port = parseInt(document.getElementById('portInput').value);
+    const listenAddrInput = document.getElementById('listenAddrInput');
+    const listenAddr = (listenAddrInput?.value || '').trim() || '127.0.0.1';
 
     if (!port || port < 1 || port > 65535) {
         showNotification(t('modal.portInvalid'), 'error');
         return;
     }
 
+    if (!listenAddr || /\s/.test(listenAddr)) {
+        showNotification(t('modal.listenAddrInvalid'), 'error');
+        return;
+    }
+
     try {
-        await updatePort(port);
+        await updateNetwork(port, listenAddr);
         closePortModal();
         window.loadConfig();
         showNotification(t('modal.portUpdateSuccess'), 'success');
@@ -368,6 +379,14 @@ export async function savePort() {
 
 export function closePortModal() {
     document.getElementById('portModal').classList.remove('active');
+}
+
+export function setListenAddrPreset(addr) {
+    const input = document.getElementById('listenAddrInput');
+    if (input) {
+        input.value = addr;
+        input.focus();
+    }
 }
 
 

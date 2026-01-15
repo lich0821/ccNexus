@@ -382,6 +382,10 @@ export function UpdateLocalBackupDir(arg1) {
   return window['go']['main']['App']['UpdateLocalBackupDir'](arg1);
 }
 
+export function UpdateNetwork(arg1, arg2) {
+	return window['go']['main']['App']['UpdateNetwork'](arg1, arg2);
+}
+
 export function UpdatePort(arg1) {
   return window['go']['main']['App']['UpdatePort'](arg1);
 }

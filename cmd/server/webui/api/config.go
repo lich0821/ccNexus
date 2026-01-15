@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/storage"
@@ -23,16 +24,18 @@ func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 // getConfig returns the full configuration
 func (h *Handler) getConfig(w http.ResponseWriter, r *http.Request) {
 	WriteSuccess(w, map[string]interface{}{
-		"port":     h.config.GetPort(),
-		"logLevel": h.config.GetLogLevel(),
+		"port":       h.config.GetPort(),
+		"listenAddr": h.config.GetListenAddr(),
+		"logLevel":   h.config.GetLogLevel(),
 	})
 }
 
 // updateConfig updates the full configuration
 func (h *Handler) updateConfig(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Port     int `json:"port"`
-		LogLevel int `json:"logLevel"`
+		Port       int    `json:"port"`
+		ListenAddr string `json:"listenAddr"`
+		LogLevel   int    `json:"logLevel"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -43,6 +46,10 @@ func (h *Handler) updateConfig(w http.ResponseWriter, r *http.Request) {
 	// Update port if provided
 	if req.Port > 0 {
 		h.config.UpdatePort(req.Port)
+	}
+
+	if strings.TrimSpace(req.ListenAddr) != "" {
+		h.config.UpdateListenAddr(req.ListenAddr)
 	}
 
 	// Update log level if provided
@@ -68,11 +75,13 @@ func (h *Handler) handleConfigPort(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		WriteSuccess(w, map[string]interface{}{
-			"port": h.config.GetPort(),
+			"port":       h.config.GetPort(),
+			"listenAddr": h.config.GetListenAddr(),
 		})
 	case http.MethodPut:
 		var req struct {
-			Port int `json:"port"`
+			Port       int    `json:"port"`
+			ListenAddr string `json:"listenAddr"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -85,7 +94,13 @@ func (h *Handler) handleConfigPort(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		if strings.TrimSpace(req.ListenAddr) == "" {
+			WriteError(w, http.StatusBadRequest, "Invalid listen address")
+			return
+		}
+
 		h.config.UpdatePort(req.Port)
+		h.config.UpdateListenAddr(req.ListenAddr)
 
 		// Save to storage
 		adapter := storage.NewConfigStorageAdapter(h.storage)
@@ -96,8 +111,9 @@ func (h *Handler) handleConfigPort(w http.ResponseWriter, r *http.Request) {
 		}
 
 		WriteSuccess(w, map[string]interface{}{
-			"port":    req.Port,
-			"message": "Port updated successfully (restart required)",
+			"port":       req.Port,
+			"listenAddr": req.ListenAddr,
+			"message":    "Port and listen address updated successfully (restart required)",
 		})
 	default:
 		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")

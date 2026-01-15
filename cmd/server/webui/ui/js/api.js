@@ -106,8 +106,12 @@ class APIClient {
         return this.request('GET', '/config/port');
     }
 
-    async updatePort(port) {
-        return this.request('PUT', '/config/port', { port });
+	async updatePort(port, listenAddr) {
+		const payload = { port };
+		if (listenAddr) {
+			payload.listenAddr = listenAddr;
+		}
+		return this.request('PUT', '/config/port', payload);
     }
 
     async getLogLevel() {

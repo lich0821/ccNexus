@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -33,17 +34,17 @@ type APIResponse struct {
 
 // Proxy represents the proxy server
 type Proxy struct {
-	config           *config.Config
-	stats            *Stats
-	currentIndex     int
-	mu               sync.RWMutex
-	server           *http.Server
-	activeRequests   map[string]bool              // tracks active requests by endpoint name
-	activeRequestsMu sync.RWMutex                 // protects activeRequests map
-	endpointCtx      map[string]context.Context   // context per endpoint for cancellation
-	endpointCancel   map[string]context.CancelFunc // cancel functions per endpoint
-	ctxMu            sync.RWMutex                 // protects context maps
-	onEndpointSuccess func(endpointName string)   // callback when endpoint request succeeds
+	config            *config.Config
+	stats             *Stats
+	currentIndex      int
+	mu                sync.RWMutex
+	server            *http.Server
+	activeRequests    map[string]bool               // tracks active requests by endpoint name
+	activeRequestsMu  sync.RWMutex                  // protects activeRequests map
+	endpointCtx       map[string]context.Context    // context per endpoint for cancellation
+	endpointCancel    map[string]context.CancelFunc // cancel functions per endpoint
+	ctxMu             sync.RWMutex                  // protects context maps
+	onEndpointSuccess func(endpointName string)     // callback when endpoint request succeeds
 }
 
 // New creates a new Proxy instance
@@ -73,6 +74,8 @@ func (p *Proxy) Start() error {
 // StartWithMux starts the proxy server with an optional custom mux
 func (p *Proxy) StartWithMux(customMux *http.ServeMux) error {
 	port := p.config.GetPort()
+	listenAddr := p.config.GetListenAddr()
+	addr := net.JoinHostPort(listenAddr, fmt.Sprintf("%d", port))
 
 	var mux *http.ServeMux
 	if customMux != nil {
@@ -88,11 +91,11 @@ func (p *Proxy) StartWithMux(customMux *http.ServeMux) error {
 	mux.HandleFunc("/stats", p.handleStats)
 
 	p.server = &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
+		Addr:    addr,
 		Handler: mux,
 	}
 
-	logger.Info("ccNexus starting on port %d", port)
+	logger.Info("ccNexus starting on %s", addr)
 	logger.Info("Configured %d endpoints", len(p.config.GetEndpoints()))
 
 	return p.server.ListenAndServe()

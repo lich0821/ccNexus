@@ -442,6 +442,15 @@ export function initUI() {
                         <label><span class="required">*</span>${t('modal.portLabel')}</label>
                         <input type="number" id="portInput" min="1" max="65535" placeholder="3000">
                     </div>
+					<div class="form-group">
+						<label><span class="required">*</span>${t('modal.listenAddrLabel')}</label>
+						<input type="text" id="listenAddrInput" placeholder="${t('modal.listenAddrPlaceholder')}">
+						<div class="listen-addr-presets">
+							<button class="preset-chip" onclick="window.setListenAddrPreset('0.0.0.0')">${t('modal.listenAddrPresetPublic')}</button>
+							<button class="preset-chip" onclick="window.setListenAddrPreset('192.168.0.0')">${t('modal.listenAddrPresetLAN')}</button>
+							<button class="preset-chip" onclick="window.setListenAddrPreset('127.0.0.1')">${t('modal.listenAddrPresetLocal')}</button>
+						</div>
+					</div>
                     <p style="color: #666; font-size: 14px; margin-top: 10px;">
                         ⚠️ ${t('modal.portNote')}
                     </p>

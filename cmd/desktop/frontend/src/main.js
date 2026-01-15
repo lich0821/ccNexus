@@ -28,6 +28,7 @@ import {
     showEditPortModal,
     savePort,
     closePortModal,
+    setListenAddrPreset,
     showWelcomeModal,
     closeWelcomeModal,
     showWelcomeModalIfFirstTime,
@@ -177,6 +178,7 @@ window.toggleModelDropdown = toggleModelDropdown;
 window.showEditPortModal = showEditPortModal;
 window.savePort = savePort;
 window.closePortModal = closePortModal;
+window.setListenAddrPreset = setListenAddrPreset;
 window.showWelcomeModal = showWelcomeModal;
 window.closeWelcomeModal = closeWelcomeModal;
 window.showChangelogModal = showChangelogModal;

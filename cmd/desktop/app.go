@@ -397,6 +397,9 @@ func (a *App) UpdateConfig(configJSON string) error {
 	return a.settings.UpdateConfig(configJSON, a.proxy)
 }
 func (a *App) UpdatePort(port int) error            { return a.settings.UpdatePort(port) }
+func (a *App) UpdateNetwork(port int, listenAddr string) error {
+	return a.settings.UpdateNetwork(port, listenAddr)
+}
 func (a *App) GetSystemLanguage() string            { return a.settings.GetSystemLanguage() }
 func (a *App) GetLanguage() string                  { return a.settings.GetLanguage() }
 func (a *App) SetLanguage(language string) error    { return a.settings.SetLanguage(language) }

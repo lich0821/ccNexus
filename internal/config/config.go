@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -73,31 +74,33 @@ type ProxyConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port                int             `json:"port"`
-	Endpoints           []Endpoint      `json:"endpoints"`
-	LogLevel            int             `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language            string          `json:"language"`                      // UI language: en, zh-CN
-	Theme               string          `json:"theme"`                         // UI theme: light, dark
-	ThemeAuto           bool            `json:"themeAuto"`                     // Auto switch theme based on time
-	AutoLightTheme      string          `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
-	AutoDarkTheme       string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
-	WindowWidth         int             `json:"windowWidth"`                   // Window width in pixels
-	WindowHeight        int             `json:"windowHeight"`                  // Window height in pixels
+	Port                      int             `json:"port"`
+	ListenAddr                string          `json:"listenAddr"`
+	Endpoints                 []Endpoint      `json:"endpoints"`
+	LogLevel                  int             `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language                  string          `json:"language"`                      // UI language: en, zh-CN
+	Theme                     string          `json:"theme"`                         // UI theme: light, dark
+	ThemeAuto                 bool            `json:"themeAuto"`                     // Auto switch theme based on time
+	AutoLightTheme            string          `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
+	AutoDarkTheme             string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
+	WindowWidth               int             `json:"windowWidth"`                   // Window width in pixels
+	WindowHeight              int             `json:"windowHeight"`                  // Window height in pixels
 	CloseWindowBehavior       string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	ClaudeNotificationEnabled bool            `json:"claudeNotificationEnabled"`     // Enable Claude Code task completion notification
 	ClaudeNotificationType    string          `json:"claudeNotificationType"`        // Notification type: toast, dialog, disabled
 	WebDAV                    *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
-	Backup              *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
-	Update              *UpdateConfig   `json:"update,omitempty"`              // Update configuration
-	Terminal            *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
-	Proxy               *ProxyConfig    `json:"proxy,omitempty"`               // HTTP proxy config
-	mu                  sync.RWMutex
+	Backup                    *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
+	Update                    *UpdateConfig   `json:"update,omitempty"`              // Update configuration
+	Terminal                  *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
+	Proxy                     *ProxyConfig    `json:"proxy,omitempty"`               // HTTP proxy config
+	mu                        sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() *Config {
 	return &Config{
 		Port:         3000,
+		ListenAddr:   "127.0.0.1",
 		LogLevel:     1,       // Default to INFO level
 		Language:     "zh-CN", // Default to Chinese
 		WindowWidth:  1024,    // Default window width
@@ -122,6 +125,10 @@ func DefaultConfig() *Config {
 func (c *Config) Validate() error {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
+
+	if strings.TrimSpace(c.ListenAddr) == "" {
+		return fmt.Errorf("invalid listen address")
+	}
 
 	if c.Port < 1 || c.Port > 65535 {
 		return fmt.Errorf("invalid port: %d", c.Port)
@@ -170,6 +177,16 @@ func (c *Config) GetPort() int {
 	return c.Port
 }
 
+// GetListenAddr returns the configured listen address (thread-safe)
+func (c *Config) GetListenAddr() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	if strings.TrimSpace(c.ListenAddr) == "" {
+		return "127.0.0.1"
+	}
+	return c.ListenAddr
+}
+
 // GetLogLevel returns the configured log level (thread-safe)
 func (c *Config) GetLogLevel() int {
 	c.mu.RLock()
@@ -189,6 +206,17 @@ func (c *Config) UpdatePort(port int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.Port = port
+}
+
+// UpdateListenAddr updates the listen address (thread-safe)
+func (c *Config) UpdateListenAddr(addr string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if strings.TrimSpace(addr) == "" {
+		c.ListenAddr = "127.0.0.1"
+		return
+	}
+	c.ListenAddr = addr
 }
 
 // UpdateLogLevel updates the log level (thread-safe)
@@ -458,6 +486,13 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		config.Port = 3000
 	}
 
+	if listenAddr, err := storage.GetConfig("listenAddr"); err == nil {
+		config.ListenAddr = listenAddr
+	}
+	if strings.TrimSpace(config.ListenAddr) == "" {
+		config.ListenAddr = "127.0.0.1"
+	}
+
 	if logLevelStr, err := storage.GetConfig("logLevel"); err == nil && logLevelStr != "" {
 		if logLevel, err := strconv.Atoi(logLevelStr); err == nil {
 			config.LogLevel = logLevel
@@ -681,6 +716,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 
 	// Save app config
 	storage.SetConfig("port", strconv.Itoa(c.Port))
+	storage.SetConfig("listenAddr", c.ListenAddr)
 	storage.SetConfig("logLevel", strconv.Itoa(c.LogLevel))
 	storage.SetConfig("language", c.Language)
 	storage.SetConfig("theme", c.Theme)

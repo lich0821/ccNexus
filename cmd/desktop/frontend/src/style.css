@@ -1399,6 +1399,31 @@ body {
     font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
+/* Listen address presets */
+.listen-addr-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.preset-chip {
+    border: 1px solid rgba(102, 126, 234, 0.35);
+    background: rgba(102, 126, 234, 0.08);
+    color: #4c51bf;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preset-chip:hover {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.6);
+    transform: translateY(-1px);
+}
+
 /* Endpoint Toggle Button */
 .endpoint-toggle-btn {
     padding: 0 10px;
