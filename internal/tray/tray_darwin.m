@@ -9,7 +9,7 @@
 
 - (void)setupTray:(NSData *)iconData {
     dispatch_async(dispatch_get_main_queue(), ^{
-        [NSApp setActivationPolicy:NSApplicationActivationPolicyAccessory];
+        [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
 
         self.statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength];
 
