@@ -1,11 +1,20 @@
 package convert
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/lich0821/ccNexus/internal/transformer"
+)
+
+const (
+	thinkTagOpen  = "<think>"
+	thinkTagClose = "</think>"
+)
 
 func splitThinkTaggedText(text string) []map[string]interface{} {
 	var blocks []map[string]interface{}
 	for {
-		openIdx := strings.Index(text, "<think>")
+		openIdx := strings.Index(text, thinkTagOpen)
 		if openIdx == -1 {
 			if text != "" {
 				blocks = append(blocks, map[string]interface{}{"type": "text", "text": text})
@@ -15,8 +24,8 @@ func splitThinkTaggedText(text string) []map[string]interface{} {
 		if openIdx > 0 {
 			blocks = append(blocks, map[string]interface{}{"type": "text", "text": text[:openIdx]})
 		}
-		text = text[openIdx+len("<think>"):]
-		closeIdx := strings.Index(text, "</think>")
+		text = text[openIdx+len(thinkTagOpen):]
+		closeIdx := strings.Index(text, thinkTagClose)
 		if closeIdx == -1 {
 			if text != "" {
 				blocks = append(blocks, map[string]interface{}{"type": "text", "text": text})
@@ -26,6 +35,55 @@ func splitThinkTaggedText(text string) []map[string]interface{} {
 		if closeIdx > 0 {
 			blocks = append(blocks, map[string]interface{}{"type": "thinking", "thinking": text[:closeIdx]})
 		}
-		text = text[closeIdx+len("</think>"):]
+		text = text[closeIdx+len(thinkTagClose):]
 	}
+}
+
+func consumeThinkTaggedStream(content string, ctx *transformer.StreamContext, emitText func(string), emitThinking func(string)) {
+	for len(content) > 0 {
+		if ctx.InThinkingTag {
+			closeIdx := strings.Index(content, thinkTagClose)
+			if closeIdx == -1 {
+				text, buffer := splitTrailingPartialTag(content, thinkTagClose)
+				ctx.PendingThinkingText += text
+				ctx.ThinkingBuffer = buffer
+				return
+			}
+			ctx.PendingThinkingText += content[:closeIdx]
+			if ctx.PendingThinkingText != "" {
+				emitThinking(ctx.PendingThinkingText)
+			}
+			ctx.PendingThinkingText = ""
+			ctx.InThinkingTag = false
+			content = content[closeIdx+len(thinkTagClose):]
+			continue
+		}
+
+		openIdx := strings.Index(content, thinkTagOpen)
+		if openIdx == -1 {
+			text, buffer := splitTrailingPartialTag(content, thinkTagOpen)
+			emitText(text)
+			ctx.ThinkingBuffer = buffer
+			return
+		}
+		emitText(content[:openIdx])
+		ctx.InThinkingTag = true
+		content = content[openIdx+len(thinkTagOpen):]
+	}
+}
+
+func splitTrailingPartialTag(s, tag string) (string, string) {
+	if s == "" || tag == "" {
+		return s, ""
+	}
+	max := len(tag) - 1
+	if max > len(s) {
+		max = len(s)
+	}
+	for i := max; i > 0; i-- {
+		if strings.HasPrefix(tag, s[len(s)-i:]) {
+			return s[:len(s)-i], s[len(s)-i:]
+		}
+	}
+	return s, ""
 }

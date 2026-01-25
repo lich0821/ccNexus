@@ -530,40 +530,14 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 			ctx.ThinkingBlockStarted = false
 		}
 
-		for len(content) > 0 {
-			if ctx.InThinkingTag {
-				closeIdx := strings.Index(content, "</think>")
-				if closeIdx == -1 {
-					text, buffer := splitTrailingPartialTag(content, "</think>")
-					ctx.PendingThinkingText += text
-					ctx.ThinkingBuffer = buffer
-					content = ""
-					continue
-				}
-				ctx.PendingThinkingText += content[:closeIdx]
-				if ctx.PendingThinkingText != "" {
-					startThinkingBlock()
-					emitThinking(ctx.PendingThinkingText)
-					stopThinkingBlock()
-				}
-				ctx.PendingThinkingText = ""
-				ctx.InThinkingTag = false
-				content = content[closeIdx+len("</think>"):]
-				continue
+		consumeThinkTaggedStream(content, ctx, emitText, func(text string) {
+			if text == "" {
+				return
 			}
-
-			openIdx := strings.Index(content, "<think>")
-			if openIdx == -1 {
-				text, buffer := splitTrailingPartialTag(content, "<think>")
-				emitText(text)
-				ctx.ThinkingBuffer = buffer
-				content = ""
-				continue
-			}
-			emitText(content[:openIdx])
-			ctx.InThinkingTag = true
-			content = content[openIdx+len("<think>"):]
-		}
+			startThinkingBlock()
+			emitThinking(text)
+			stopThinkingBlock()
+		})
 
 	case "response.output_item.added":
 		if evt.Item != nil && evt.Item.Type == "function_call" {
