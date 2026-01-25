@@ -204,7 +204,7 @@ func OpenAI2RespToClaude(openai2Resp []byte) ([]byte, error) {
 		case "message":
 			for _, part := range item.Content {
 				if part.Type == "output_text" {
-					content = append(content, map[string]interface{}{"type": "text", "text": part.Text})
+					content = append(content, splitThinkTaggedText(part.Text)...)
 				}
 			}
 		case "function_call":
@@ -335,7 +335,7 @@ func ClaudeStreamToOpenAI2(event []byte, ctx *transformer.StreamContext) ([]byte
 			partial := delta["partial_json"].(string)
 			ctx.ToolArguments += partial
 			writeEvent(map[string]interface{}{
-				"type": "response.function_call_arguments.delta",
+				"type":         "response.function_call_arguments.delta",
 				"output_index": ctx.ToolIndex, "delta": partial,
 			})
 		}
@@ -347,7 +347,7 @@ func ClaudeStreamToOpenAI2(event []byte, ctx *transformer.StreamContext) ([]byte
 		if ctx.ToolBlockStarted && blockIdx == ctx.ToolIndex {
 			// function_call_arguments.done
 			writeEvent(map[string]interface{}{
-				"type": "response.function_call_arguments.done",
+				"type":         "response.function_call_arguments.done",
 				"output_index": blockIdx, "arguments": ctx.ToolArguments,
 			})
 			// output_item.done for function_call
@@ -414,7 +414,38 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 	_, jsonData := parseSSE(event)
 	if jsonData == "" || jsonData == "[DONE]" {
 		if jsonData == "[DONE]" {
-			return buildClaudeEvent("message_stop", map[string]interface{}{}), nil
+			var result []byte
+			if ctx.InThinkingTag || ctx.PendingThinkingText != "" || ctx.ThinkingBuffer != "" {
+				pending := ctx.PendingThinkingText + ctx.ThinkingBuffer
+				if pending != "" {
+					if !ctx.ContentBlockStarted {
+						ctx.ContentBlockStarted = true
+						result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
+							"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
+						})...)
+					}
+					result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+						"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": pending},
+					})...)
+				}
+				ctx.InThinkingTag = false
+				ctx.PendingThinkingText = ""
+				ctx.ThinkingBuffer = ""
+			}
+			if ctx.ThinkingBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
+			}
+			if ctx.ContentBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
+				ctx.ContentBlockStarted = false
+			}
+			if ctx.ToolBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ToolIndex})...)
+				ctx.ToolBlockStarted = false
+			}
+			result = append(result, buildClaudeEvent("message_stop", map[string]interface{}{})...)
+			return result, nil
 		}
 		return nil, nil
 	}
@@ -440,18 +471,106 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 		})...)
 
 	case "response.output_text.delta":
-		if !ctx.ContentBlockStarted {
-			ctx.ContentBlockStarted = true
-			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-				"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
+		content := ctx.ThinkingBuffer + evt.Delta
+		ctx.ThinkingBuffer = ""
+
+		startTextBlock := func() {
+			if !ctx.ContentBlockStarted {
+				ctx.ContentBlockStarted = true
+				result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
+					"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
+				})...)
+			}
+		}
+
+		emitText := func(text string) {
+			if text == "" {
+				return
+			}
+			if ctx.ThinkingBlockStarted && !ctx.ContentBlockStarted && !ctx.InThinkingTag {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
+			}
+			startTextBlock()
+			result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+				"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": text},
 			})...)
 		}
-		result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-			"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": evt.Delta},
-		})...)
+
+		startThinkingBlock := func() {
+			if ctx.ContentBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
+				ctx.ContentBlockStarted = false
+				ctx.ContentIndex++
+			}
+			ctx.ThinkingBlockStarted = true
+			ctx.ThinkingIndex = ctx.ContentIndex
+			ctx.ContentIndex++
+			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
+				"index": ctx.ThinkingIndex, "content_block": map[string]interface{}{"type": "thinking", "thinking": ""},
+			})...)
+		}
+
+		emitThinking := func(text string) {
+			if text == "" {
+				return
+			}
+			if !ctx.ThinkingBlockStarted {
+				startThinkingBlock()
+			}
+			result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+				"index": ctx.ThinkingIndex, "delta": map[string]interface{}{"type": "thinking_delta", "thinking": text},
+			})...)
+		}
+
+		stopThinkingBlock := func() {
+			if ctx.ThinkingBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+			}
+			ctx.ThinkingBlockStarted = false
+		}
+
+		for len(content) > 0 {
+			if ctx.InThinkingTag {
+				closeIdx := strings.Index(content, "</think>")
+				if closeIdx == -1 {
+					text, buffer := splitTrailingPartialTag(content, "</think>")
+					ctx.PendingThinkingText += text
+					ctx.ThinkingBuffer = buffer
+					content = ""
+					continue
+				}
+				ctx.PendingThinkingText += content[:closeIdx]
+				if ctx.PendingThinkingText != "" {
+					startThinkingBlock()
+					emitThinking(ctx.PendingThinkingText)
+					stopThinkingBlock()
+				}
+				ctx.PendingThinkingText = ""
+				ctx.InThinkingTag = false
+				content = content[closeIdx+len("</think>"):]
+				continue
+			}
+
+			openIdx := strings.Index(content, "<think>")
+			if openIdx == -1 {
+				text, buffer := splitTrailingPartialTag(content, "<think>")
+				emitText(text)
+				ctx.ThinkingBuffer = buffer
+				content = ""
+				continue
+			}
+			emitText(content[:openIdx])
+			ctx.InThinkingTag = true
+			content = content[openIdx+len("<think>"):]
+		}
 
 	case "response.output_item.added":
 		if evt.Item != nil && evt.Item.Type == "function_call" {
+			if ctx.ThinkingBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
+			}
 			// Close text block if open
 			if ctx.ContentBlockStarted {
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
@@ -486,8 +605,30 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 		}
 
 	case "response.completed":
+		if ctx.InThinkingTag || ctx.PendingThinkingText != "" || ctx.ThinkingBuffer != "" {
+			pending := ctx.PendingThinkingText + ctx.ThinkingBuffer
+			if pending != "" {
+				if !ctx.ContentBlockStarted {
+					ctx.ContentBlockStarted = true
+					result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
+						"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
+					})...)
+				}
+				result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+					"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": pending},
+				})...)
+			}
+			ctx.InThinkingTag = false
+			ctx.PendingThinkingText = ""
+			ctx.ThinkingBuffer = ""
+		}
+		if ctx.ThinkingBlockStarted {
+			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+			ctx.ThinkingBlockStarted = false
+		}
 		if ctx.ContentBlockStarted {
 			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
+			ctx.ContentBlockStarted = false
 		}
 		stopReason := "end_turn"
 		if ctx.ToolIndex > 0 || ctx.CurrentToolID != "" {
