@@ -85,6 +85,47 @@ func flushThinkTaggedStream(ctx *transformer.StreamContext, emitText func(string
 	ctx.PendingThinkingText = ""
 }
 
+func makeThinkEmitters(ctx *transformer.StreamContext, result *[]byte) (func(string), func(string)) {
+	emitText := func(text string) {
+		if text == "" {
+			return
+		}
+		if !ctx.ContentBlockStarted {
+			ctx.ContentBlockStarted = true
+			*result = append(*result, buildClaudeEvent("content_block_start", map[string]interface{}{
+				"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
+			})...)
+		}
+		*result = append(*result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+			"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": text},
+		})...)
+	}
+
+	emitThinking := func(text string) {
+		if text == "" {
+			return
+		}
+		if !ctx.ThinkingBlockStarted {
+			if ctx.ContentBlockStarted {
+				*result = append(*result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
+				ctx.ContentBlockStarted = false
+				ctx.ContentIndex++
+			}
+			ctx.ThinkingBlockStarted = true
+			ctx.ThinkingIndex = ctx.ContentIndex
+			ctx.ContentIndex++
+			*result = append(*result, buildClaudeEvent("content_block_start", map[string]interface{}{
+				"index": ctx.ThinkingIndex, "content_block": map[string]interface{}{"type": "thinking", "thinking": ""},
+			})...)
+		}
+		*result = append(*result, buildClaudeEvent("content_block_delta", map[string]interface{}{
+			"index": ctx.ThinkingIndex, "delta": map[string]interface{}{"type": "thinking_delta", "thinking": text},
+		})...)
+	}
+
+	return emitText, emitThinking
+}
+
 func splitTrailingPartialTag(s, tag string) (string, string) {
 	if s == "" || tag == "" {
 		return s, ""

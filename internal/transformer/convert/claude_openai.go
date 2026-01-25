@@ -447,41 +447,7 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 	if jsonData == "" || jsonData == "[DONE]" {
 		if jsonData == "[DONE]" {
 			var result []byte
-			emitText := func(text string) {
-				if text == "" {
-					return
-				}
-				if !ctx.ContentBlockStarted {
-					ctx.ContentBlockStarted = true
-					result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-						"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
-					})...)
-				}
-				result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-					"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": text},
-				})...)
-			}
-			emitThinking := func(text string) {
-				if text == "" {
-					return
-				}
-				if !ctx.ThinkingBlockStarted {
-					if ctx.ContentBlockStarted {
-						result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
-						ctx.ContentBlockStarted = false
-						ctx.ContentIndex++
-					}
-					ctx.ThinkingBlockStarted = true
-					ctx.ThinkingIndex = ctx.ContentIndex
-					ctx.ContentIndex++
-					result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-						"index": ctx.ThinkingIndex, "content_block": map[string]interface{}{"type": "thinking", "thinking": ""},
-					})...)
-				}
-				result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-					"index": ctx.ThinkingIndex, "delta": map[string]interface{}{"type": "thinking_delta", "thinking": text},
-				})...)
-			}
+			emitText, emitThinking := makeThinkEmitters(ctx, &result)
 			flushThinkTaggedStream(ctx, emitText, emitThinking)
 			// Close any open content blocks before message_stop
 			if ctx.ThinkingBlockStarted {
@@ -580,16 +546,8 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 		content := ctx.ThinkingBuffer + delta.Content
 		ctx.ThinkingBuffer = ""
 
-		startTextBlock := func() {
-			if !ctx.ContentBlockStarted {
-				ctx.ContentBlockStarted = true
-				result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-					"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
-				})...)
-			}
-		}
-
-		emitText := func(text string) {
+		emitText, emitThinking := makeThinkEmitters(ctx, &result)
+		emitTextWithClose := func(text string) {
 			if text == "" {
 				return
 			}
@@ -597,53 +555,20 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
 				ctx.ThinkingBlockStarted = false
 			}
-			startTextBlock()
-			result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-				"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": text},
-			})...)
+			emitText(text)
 		}
-
-		startThinkingBlock := func() {
-			if ctx.ContentBlockStarted {
-				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ContentIndex})...)
-				ctx.ContentBlockStarted = false
-				ctx.ContentIndex++
-			}
-			ctx.ThinkingBlockStarted = true
-			ctx.ThinkingIndex = ctx.ContentIndex
-			ctx.ContentIndex++
-			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-				"index": ctx.ThinkingIndex, "content_block": map[string]interface{}{"type": "thinking", "thinking": ""},
-			})...)
-		}
-
-		emitThinking := func(text string) {
+		emitThinkingWithClose := func(text string) {
 			if text == "" {
 				return
 			}
-			if !ctx.ThinkingBlockStarted {
-				startThinkingBlock()
-			}
-			result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-				"index": ctx.ThinkingIndex, "delta": map[string]interface{}{"type": "thinking_delta", "thinking": text},
-			})...)
-		}
-
-		stopThinkingBlock := func() {
+			emitThinking(text)
 			if ctx.ThinkingBlockStarted {
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
 			}
-			ctx.ThinkingBlockStarted = false
 		}
 
-		consumeThinkTaggedStream(content, ctx, emitText, func(text string) {
-			if text == "" {
-				return
-			}
-			startThinkingBlock()
-			emitThinking(text)
-			stopThinkingBlock()
-		})
+		consumeThinkTaggedStream(content, ctx, emitTextWithClose, emitThinkingWithClose)
 	}
 
 	// Tool calls

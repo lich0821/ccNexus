@@ -153,20 +153,14 @@ func TestOpenAIStreamToClaudeWithThinking(t *testing.T) {
 
 	fullEvents := strings.Join(allEvents, "")
 
-	if !strings.Contains(fullEvents, "\"type\":\"thinking\"") {
-		t.Errorf("Expected thinking block start, but not found")
-	}
+	assertContains(t, fullEvents, "\"type\":\"thinking\"", "Expected thinking block start, but not found")
 	if !strings.Contains(fullEvents, "\"thinking\":\"Thinking...\"") {
 		if !(strings.Contains(fullEvents, "\"thinking\":\"Thinking\"") && strings.Contains(fullEvents, "\"thinking\":\"...\"")) {
 			t.Errorf("Expected thinking delta chunks, but not found")
 		}
 	}
-	if !strings.Contains(fullEvents, "\"type\":\"content_block_stop\"") {
-		t.Errorf("Expected content block stop, but not found")
-	}
-	if !strings.Contains(fullEvents, "\"text\":\"Hello!\"") {
-		t.Errorf("Expected text delta 'Hello!', but not found")
-	}
+	assertContains(t, fullEvents, "\"type\":\"content_block_stop\"", "Expected content block stop, but not found")
+	assertContains(t, fullEvents, "\"text\":\"Hello!\"", "Expected text delta 'Hello!', but not found")
 }
 
 func TestOpenAIStreamToClaudeUsageHasDelta(t *testing.T) {
@@ -223,21 +217,11 @@ func TestOpenAIStreamToClaudeWithThinkingSingleChunk(t *testing.T) {
 	}
 
 	fullEvents := string(events)
-	if !strings.Contains(fullEvents, "\"type\":\"thinking\"") {
-		t.Errorf("Expected thinking block start")
-	}
-	if !strings.Contains(fullEvents, "\"thinking\":\"Reasoning\"") {
-		t.Errorf("Expected thinking delta 'Reasoning'")
-	}
-	if !strings.Contains(fullEvents, "\"type\":\"content_block_stop\"") {
-		t.Errorf("Expected content block stop")
-	}
-	if !strings.Contains(fullEvents, "\"type\":\"text\"") {
-		t.Errorf("Expected text block start")
-	}
-	if !strings.Contains(fullEvents, "\"text\":\"Hello!\"") {
-		t.Errorf("Expected text delta 'Hello!'")
-	}
+	assertContains(t, fullEvents, "\"type\":\"thinking\"", "Expected thinking block start")
+	assertContains(t, fullEvents, "\"thinking\":\"Reasoning\"", "Expected thinking delta 'Reasoning'")
+	assertContains(t, fullEvents, "\"type\":\"content_block_stop\"", "Expected content block stop")
+	assertContains(t, fullEvents, "\"type\":\"text\"", "Expected text block start")
+	assertContains(t, fullEvents, "\"text\":\"Hello!\"", "Expected text delta 'Hello!'")
 }
 
 func TestOpenAIStreamToClaudeWithThinkingSplitTag(t *testing.T) {
@@ -266,12 +250,9 @@ func TestOpenAIStreamToClaudeWithThinkingSplitTag(t *testing.T) {
 	}
 
 	fullEvents := strings.Join(allEvents, "")
-	if !strings.Contains(fullEvents, "\"type\":\"thinking\"") {
-		t.Errorf("Expected thinking block start, but not found")
-	}
-	if strings.Contains(fullEvents, "<think>") || strings.Contains(fullEvents, "</think>") {
-		t.Errorf("Unexpected think tags leaked into output")
-	}
+	assertContains(t, fullEvents, "\"type\":\"thinking\"", "Expected thinking block start, but not found")
+	assertNotContains(t, fullEvents, "<think>", "Unexpected think tag leaked into output")
+	assertNotContains(t, fullEvents, "</think>", "Unexpected think tag leaked into output")
 }
 
 func TestOpenAIStreamToClaudeWithThinkingMissingCloseDone(t *testing.T) {
@@ -295,17 +276,24 @@ func TestOpenAIStreamToClaudeWithThinkingMissingCloseDone(t *testing.T) {
 	}
 
 	fullEvents := strings.Join(allEvents, "")
-	if strings.Contains(fullEvents, "<think>") || strings.Contains(fullEvents, "</think>") {
-		t.Errorf("Unexpected think tags leaked into output")
+	assertNotContains(t, fullEvents, "<think>", "Unexpected think tag leaked into output")
+	assertNotContains(t, fullEvents, "</think>", "Unexpected think tag leaked into output")
+	assertContains(t, fullEvents, "\"type\":\"thinking\"", "Expected thinking block for missing close")
+	assertContains(t, fullEvents, "\"thinking\":\"this is some thinking content\"", "Expected thinking delta 'this is some thinking content', but not found")
+	assertContains(t, fullEvents, "\"type\":\"content_block_stop\"", "Expected thinking block stop, but not found")
+}
+
+func assertContains(t *testing.T, haystack, needle, msg string) {
+	t.Helper()
+	if !strings.Contains(haystack, needle) {
+		t.Error(msg)
 	}
-	if !strings.Contains(fullEvents, "\"type\":\"thinking\"") {
-		t.Errorf("Expected thinking block for missing close")
-	}
-	if !strings.Contains(fullEvents, "\"thinking\":\"this is some thinking content\"") {
-		t.Errorf("Expected thinking delta 'this is some thinking content', but not found")
-	}
-	if !strings.Contains(fullEvents, "\"type\":\"content_block_stop\"") {
-		t.Errorf("Expected thinking block stop, but not found")
+}
+
+func assertNotContains(t *testing.T, haystack, needle, msg string) {
+	t.Helper()
+	if strings.Contains(haystack, needle) {
+		t.Error(msg)
 	}
 }
 
