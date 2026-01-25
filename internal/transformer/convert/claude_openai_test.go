@@ -157,7 +157,9 @@ func TestOpenAIStreamToClaudeWithThinking(t *testing.T) {
 		t.Errorf("Expected thinking block start, but not found")
 	}
 	if !strings.Contains(fullEvents, "\"thinking\":\"Thinking...\"") {
-		t.Errorf("Expected thinking delta 'Thinking...', but not found")
+		if !(strings.Contains(fullEvents, "\"thinking\":\"Thinking\"") && strings.Contains(fullEvents, "\"thinking\":\"...\"")) {
+			t.Errorf("Expected thinking delta chunks, but not found")
+		}
 	}
 	if !strings.Contains(fullEvents, "\"type\":\"content_block_stop\"") {
 		t.Errorf("Expected content block stop, but not found")
@@ -296,11 +298,11 @@ func TestOpenAIStreamToClaudeWithThinkingMissingCloseDone(t *testing.T) {
 	if strings.Contains(fullEvents, "<think>") || strings.Contains(fullEvents, "</think>") {
 		t.Errorf("Unexpected think tags leaked into output")
 	}
-	if strings.Contains(fullEvents, "\"type\":\"thinking\"") {
-		t.Errorf("Did not expect thinking block for missing close")
+	if !strings.Contains(fullEvents, "\"type\":\"thinking\"") {
+		t.Errorf("Expected thinking block for missing close")
 	}
-	if !strings.Contains(fullEvents, "\"text\":\"this is some thinking content\"") {
-		t.Errorf("Expected text delta 'this is some thinking content', but not found")
+	if !strings.Contains(fullEvents, "\"thinking\":\"this is some thinking content\"") {
+		t.Errorf("Expected thinking delta 'this is some thinking content', but not found")
 	}
 	if !strings.Contains(fullEvents, "\"type\":\"content_block_stop\"") {
 		t.Errorf("Expected thinking block stop, but not found")

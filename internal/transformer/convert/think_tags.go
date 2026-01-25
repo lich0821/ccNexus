@@ -45,15 +45,15 @@ func consumeThinkTaggedStream(content string, ctx *transformer.StreamContext, em
 			closeIdx := strings.Index(content, thinkTagClose)
 			if closeIdx == -1 {
 				text, buffer := splitTrailingPartialTag(content, thinkTagClose)
-				ctx.PendingThinkingText += text
+				if text != "" {
+					emitThinking(text)
+				}
 				ctx.ThinkingBuffer = buffer
 				return
 			}
-			ctx.PendingThinkingText += content[:closeIdx]
-			if ctx.PendingThinkingText != "" {
-				emitThinking(ctx.PendingThinkingText)
+			if closeIdx > 0 {
+				emitThinking(content[:closeIdx])
 			}
-			ctx.PendingThinkingText = ""
 			ctx.InThinkingTag = false
 			content = content[closeIdx+len(thinkTagClose):]
 			continue
@@ -70,6 +70,19 @@ func consumeThinkTaggedStream(content string, ctx *transformer.StreamContext, em
 		ctx.InThinkingTag = true
 		content = content[openIdx+len(thinkTagOpen):]
 	}
+}
+
+func flushThinkTaggedStream(ctx *transformer.StreamContext, emitText func(string), emitThinking func(string)) {
+	if ctx.InThinkingTag {
+		if ctx.ThinkingBuffer != "" {
+			emitThinking(ctx.ThinkingBuffer)
+		}
+	} else if ctx.ThinkingBuffer != "" {
+		emitText(ctx.ThinkingBuffer)
+	}
+	ctx.InThinkingTag = false
+	ctx.ThinkingBuffer = ""
+	ctx.PendingThinkingText = ""
 }
 
 func splitTrailingPartialTag(s, tag string) (string, string) {
