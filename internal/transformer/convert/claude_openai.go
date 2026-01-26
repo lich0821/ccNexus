@@ -37,6 +37,7 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 			var textParts []string
 			var toolCalls []transformer.OpenAIToolCall
 			var toolResults []transformer.OpenAIMessage
+			hasThinking := false
 
 			for _, block := range content {
 				m, ok := block.(map[string]interface{})
@@ -51,22 +52,35 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 				case "thinking":
 					// Skip thinking blocks - they are Claude's internal reasoning
 					// and should not be forwarded to other APIs
+					hasThinking = true
 					continue
 				case "tool_use":
 					args, _ := json.Marshal(m["input"])
+					id, ok := m["id"].(string)
+					if !ok || id == "" {
+						continue
+					}
+					name, ok := m["name"].(string)
+					if !ok || name == "" {
+						continue
+					}
 					toolCalls = append(toolCalls, transformer.OpenAIToolCall{
-						ID:   m["id"].(string),
+						ID:   id,
 						Type: "function",
 						Function: struct {
 							Name      string `json:"name"`
 							Arguments string `json:"arguments"`
-						}{Name: m["name"].(string), Arguments: string(args)},
+						}{Name: name, Arguments: string(args)},
 					})
 				case "tool_result":
+					callID, ok := m["tool_use_id"].(string)
+					if !ok || callID == "" {
+						continue
+					}
 					toolResults = append(toolResults, transformer.OpenAIMessage{
 						Role:       "tool",
 						Content:    extractToolResultContent(m["content"]),
-						ToolCallID: m["tool_use_id"].(string),
+						ToolCallID: callID,
 					})
 				}
 			}
@@ -81,6 +95,11 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 					openaiMsg.ToolCalls = toolCalls
 				}
 				messages = append(messages, openaiMsg)
+			} else if hasThinking && msg.Role == "assistant" {
+				messages = append(messages, transformer.OpenAIMessage{
+					Role:    "assistant",
+					Content: "(thinking...)",
+				})
 			}
 
 			// Add tool result messages
@@ -317,7 +336,7 @@ func OpenAIRespToClaude(openaiResp []byte) ([]byte, error) {
 	if len(resp.Choices) > 0 {
 		choice := resp.Choices[0]
 		if choice.Message.Content != "" {
-			content = append(content, map[string]interface{}{"type": "text", "text": choice.Message.Content})
+			content = append(content, splitThinkTaggedText(choice.Message.Content)...)
 		}
 		for _, tc := range choice.Message.ToolCalls {
 			var args map[string]interface{}
@@ -428,6 +447,8 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 	if jsonData == "" || jsonData == "[DONE]" {
 		if jsonData == "[DONE]" {
 			var result []byte
+			emitText, emitThinking := makeThinkEmitters(ctx, &result)
+			flushThinkTaggedStream(ctx, emitText, emitThinking)
 			// Close any open content blocks before message_stop
 			if ctx.ThinkingBlockStarted {
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
@@ -476,11 +497,34 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 	}
 
 	if len(chunk.Choices) == 0 {
+		if chunk.Usage != nil {
+			usageObj := map[string]interface{}{
+				"input_tokens":  chunk.Usage.PromptTokens,
+				"output_tokens": chunk.Usage.CompletionTokens,
+			}
+			msgDelta := map[string]interface{}{
+				"delta": map[string]interface{}{},
+				"usage": usageObj,
+			}
+			result = append(result, buildClaudeEvent("message_delta", msgDelta)...)
+		}
 		return result, nil
 	}
 
 	choice := chunk.Choices[0]
 	delta := choice.Delta
+	if chunk.Usage != nil && delta.Role == "" && delta.Content == "" && delta.ReasoningContent == "" && len(delta.ToolCalls) == 0 && choice.FinishReason == nil {
+		usageObj := map[string]interface{}{
+			"input_tokens":  chunk.Usage.PromptTokens,
+			"output_tokens": chunk.Usage.CompletionTokens,
+		}
+		msgDelta := map[string]interface{}{
+			"delta": map[string]interface{}{},
+			"usage": usageObj,
+		}
+		result = append(result, buildClaudeEvent("message_delta", msgDelta)...)
+		return result, nil
+	}
 
 	// Reasoning/Thinking content (before text content)
 	if delta.ReasoningContent != "" {
@@ -499,20 +543,32 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 
 	// Text content
 	if delta.Content != "" {
-		// Close thinking block if transitioning to text
-		if ctx.ThinkingBlockStarted && !ctx.ContentBlockStarted {
-			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
-			ctx.ThinkingBlockStarted = false
+		content := ctx.ThinkingBuffer + delta.Content
+		ctx.ThinkingBuffer = ""
+
+		emitText, emitThinking := makeThinkEmitters(ctx, &result)
+		emitTextWithClose := func(text string) {
+			if text == "" {
+				return
+			}
+			if ctx.ThinkingBlockStarted && !ctx.ContentBlockStarted && !ctx.InThinkingTag {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
+			}
+			emitText(text)
 		}
-		if !ctx.ContentBlockStarted {
-			ctx.ContentBlockStarted = true
-			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
-				"index": ctx.ContentIndex, "content_block": map[string]interface{}{"type": "text", "text": ""},
-			})...)
+		emitThinkingWithClose := func(text string) {
+			if text == "" {
+				return
+			}
+			emitThinking(text)
+			if ctx.ThinkingBlockStarted {
+				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
+				ctx.ThinkingBlockStarted = false
+			}
 		}
-		result = append(result, buildClaudeEvent("content_block_delta", map[string]interface{}{
-			"index": ctx.ContentIndex, "delta": map[string]interface{}{"type": "text_delta", "text": delta.Content},
-		})...)
+
+		consumeThinkTaggedStream(content, ctx, emitTextWithClose, emitThinkingWithClose)
 	}
 
 	// Tool calls
@@ -667,4 +723,3 @@ func extractToolResultContent(content interface{}) string {
 	}
 	return ""
 }
-
