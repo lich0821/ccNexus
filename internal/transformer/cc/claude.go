@@ -76,11 +76,23 @@ func (t *ClaudeTransformer) TransformResponseWithContext(resp []byte, isStreamin
 				} else if eventType == "message_delta" {
 					// Fallback: fill input_tokens if 0
 					if usage, ok := event["usage"].(map[string]interface{}); ok {
+						modified := false
+
 						if input, ok := usage["input_tokens"].(float64); ok && int(input) == 0 && ctx.InputTokens > 0 {
 							usage["input_tokens"] = ctx.InputTokens
-							modified, _ := json.Marshal(event)
+							modified = true
+						}
+
+						// Fallback: fill output_tokens if 0
+						if output, ok := usage["output_tokens"].(float64); ok && int(output) == 0 && ctx.OutputTokens > 0 {
+							usage["output_tokens"] = ctx.OutputTokens
+							modified = true
+						}
+
+						if modified {
+							modifiedData, _ := json.Marshal(event)
 							result.WriteString("data: ")
-							result.Write(modified)
+							result.Write(modifiedData)
 							result.WriteString("\n")
 							continue
 						}
