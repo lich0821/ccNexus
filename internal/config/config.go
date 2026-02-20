@@ -64,6 +64,7 @@ type UpdateConfig struct {
 type TerminalConfig struct {
 	SelectedTerminal string   `json:"selectedTerminal"` // Selected terminal ID
 	ProjectDirs      []string `json:"projectDirs"`      // Project directories
+	ClaudeCommand    string   `json:"claudeCommand"`    // Custom launcher command, defaults to "claude"
 }
 
 // ProxyConfig represents HTTP proxy configuration
@@ -357,6 +358,7 @@ func (c *Config) GetTerminal() *TerminalConfig {
 		return &TerminalConfig{
 			SelectedTerminal: "cmd",
 			ProjectDirs:      []string{},
+			ClaudeCommand:    "",
 		}
 	}
 	return c.Terminal
@@ -600,6 +602,7 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 	config.Terminal = &TerminalConfig{
 		SelectedTerminal: "cmd",
 		ProjectDirs:      []string{},
+		ClaudeCommand:    "",
 	}
 	if selectedTerminal, err := storage.GetConfig("terminal_selected"); err == nil && selectedTerminal != "" {
 		config.Terminal.SelectedTerminal = selectedTerminal
@@ -609,6 +612,9 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		if err := json.Unmarshal([]byte(projectDirsStr), &dirs); err == nil {
 			config.Terminal.ProjectDirs = dirs
 		}
+	}
+	if claudeCmd, err := storage.GetConfig("terminal_claudeCommand"); err == nil {
+		config.Terminal.ClaudeCommand = claudeCmd
 	}
 
 	// Load Proxy config
@@ -733,6 +739,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		if dirsJSON, err := json.Marshal(c.Terminal.ProjectDirs); err == nil {
 			storage.SetConfig("terminal_projectDirs", string(dirsJSON))
 		}
+		storage.SetConfig("terminal_claudeCommand", c.Terminal.ClaudeCommand)
 	}
 
 	// Save Proxy config

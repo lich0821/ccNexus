@@ -16,7 +16,18 @@ func LaunchTerminal(terminalID, dir string) error {
 
 // LaunchTerminalWithSession launches a terminal with optional session resume
 func LaunchTerminalWithSession(terminalID, dir, sessionID string) error {
-	cliCmd := getClaudeCommand(sessionID)
+	cliCmd := getClaudeCommand(sessionID, "")
+	return launchTerminalWithCli(terminalID, dir, cliCmd)
+}
+
+// LaunchTerminalWithCustomCmd launches a terminal with a custom CLI command
+func LaunchTerminalWithCustomCmd(terminalID, dir, customCmd string) error {
+	return LaunchSessionTerminalWithCustomCmd(terminalID, dir, "", customCmd)
+}
+
+// LaunchSessionTerminalWithCustomCmd launches a terminal with a custom CLI command and optional session
+func LaunchSessionTerminalWithCustomCmd(terminalID, dir, sessionID, customCmd string) error {
+	cliCmd := getClaudeCommand(sessionID, customCmd)
 	return launchTerminalWithCli(terminalID, dir, cliCmd)
 }
 
@@ -89,10 +100,14 @@ func getShellType(shell string) shellType {
 
 // getClaudeCommand returns the claude command with optional session resume
 // On macOS, prepends npm initialization to handle lazy-loaded Node environments (nvm, fnm, etc.)
-func getClaudeCommand(sessionID string) string {
-	cmd := "claude"
+func getClaudeCommand(sessionID, customCmd string) string {
+	base := "claude"
+	if customCmd != "" {
+		base = customCmd
+	}
+	cmd := base
 	if sessionID != "" {
-		cmd = fmt.Sprintf("claude -r %s", shellEscape(sessionID))
+		cmd = fmt.Sprintf("%s -r %s", base, shellEscape(sessionID))
 	}
 	if runtime.GOOS == "darwin" {
 		// Trigger npm lazy-loading for nvm/fnm environments
@@ -239,7 +254,7 @@ func buildThirdPartyTerminalCommand(shell, dir, claudeCmd string) string {
 }
 
 func buildLaunchCommand(termInfo TerminalInfo, dir, sessionID string) *exec.Cmd {
-	claudeCmd := getClaudeCommand(sessionID)
+	claudeCmd := getClaudeCommand(sessionID, "")
 	return buildLaunchCommandWithCli(termInfo, dir, claudeCmd)
 }
 

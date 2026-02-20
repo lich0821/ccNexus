@@ -446,6 +446,8 @@ export default {
         confirmDelete: '确定要删除此项目目录吗？',
         addDirFailed: '添加目录失败',
         dirExists: '目录已存在',
+        launcherCommand: '启动命令',
+        launcherCommandHelp: '自定义 Claude Code 启动命令，默认为 claude（例如：hapi）',
         // 错误消息
         errors: {
             directory_already_exists: '目录已存在'
