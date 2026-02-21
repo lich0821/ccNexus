@@ -446,6 +446,8 @@ export default {
         confirmDelete: 'Are you sure you want to delete this project directory?',
         addDirFailed: 'Failed to add directory',
         dirExists: 'Directory already exists',
+        launcherCommand: 'Launcher Command',
+        launcherCommandHelp: 'Custom CLI command to launch Claude Code, defaults to claude (e.g., hapi)',
         // Error messages
         errors: {
             directory_already_exists: 'Directory already exists'

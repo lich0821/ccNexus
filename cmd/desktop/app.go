@@ -505,8 +505,8 @@ func (a *App) SendUpdateNotification(title, message string) error {
 
 func (a *App) DetectTerminals() string   { return a.terminal.DetectTerminals() }
 func (a *App) GetTerminalConfig() string { return a.terminal.GetTerminalConfig() }
-func (a *App) SaveTerminalConfig(selectedTerminal string, projectDirs []string) error {
-	return a.terminal.SaveTerminalConfig(selectedTerminal, projectDirs)
+func (a *App) SaveTerminalConfig(selectedTerminal string, projectDirs []string, claudeCommand string) error {
+	return a.terminal.SaveTerminalConfig(selectedTerminal, projectDirs, claudeCommand)
 }
 func (a *App) AddProjectDir(dir string) error       { return a.terminal.AddProjectDir(dir) }
 func (a *App) RemoveProjectDir(dir string) error    { return a.terminal.RemoveProjectDir(dir) }

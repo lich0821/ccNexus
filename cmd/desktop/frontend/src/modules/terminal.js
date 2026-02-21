@@ -24,6 +24,7 @@ export function initTerminal() {
     window.showTerminalModal = showTerminalModal;
     window.closeTerminalModal = closeTerminalModal;
     window.onTerminalChange = onTerminalChange;
+    window.onClaudeCommandChange = onClaudeCommandChange;
     window.addProjectDir = addProjectDir;
     window.removeProjectDir = removeProjectDir;
     window.launchTerminal = launchTerminal;
@@ -87,6 +88,11 @@ async function loadTerminalConfig() {
         if (select && terminalConfig.selectedTerminal) {
             select.value = terminalConfig.selectedTerminal;
         }
+        // Update claudeCommand input
+        const cmdInput = document.getElementById('claudeCommandInput');
+        if (cmdInput) {
+            cmdInput.value = terminalConfig.claudeCommand || '';
+        }
     } catch (err) {
         console.error('Failed to load terminal config:', err);
     }
@@ -105,9 +111,19 @@ async function onTerminalChange() {
     const select = document.getElementById('terminalSelect');
     terminalConfig.selectedTerminal = select.value;
     try {
-        await SaveTerminalConfig(terminalConfig.selectedTerminal, terminalConfig.projectDirs);
+        await SaveTerminalConfig(terminalConfig.selectedTerminal, terminalConfig.projectDirs, terminalConfig.claudeCommand || '');
     } catch (err) {
         console.error('Failed to save terminal config:', err);
+    }
+}
+
+async function onClaudeCommandChange() {
+    const cmdInput = document.getElementById('claudeCommandInput');
+    terminalConfig.claudeCommand = cmdInput ? cmdInput.value.trim() : '';
+    try {
+        await SaveTerminalConfig(terminalConfig.selectedTerminal, terminalConfig.projectDirs, terminalConfig.claudeCommand);
+    } catch (err) {
+        console.error('Failed to save claude command:', err);
     }
 }
 

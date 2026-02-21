@@ -394,6 +394,12 @@ export function initUI() {
                         <small class="form-help" id="terminalSelectHelp">${t('terminal.selectTerminalHelp')}</small>
                     </div>
                     <div class="form-group">
+                        <label>${t('terminal.launcherCommand')}</label>
+                        <input type="text" id="claudeCommandInput" placeholder="claude"
+                               oninput="window.onClaudeCommandChange()">
+                        <small class="form-help">${t('terminal.launcherCommandHelp')}</small>
+                    </div>
+                    <div class="form-group">
                         <label><span class="required">*</span>${t('terminal.projectDirs')}</label>
                         <small class="form-help">${t('terminal.projectDirsHelp')}</small>
                         <div id="projectDirList" class="project-dir-list">
