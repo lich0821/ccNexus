@@ -806,6 +806,7 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 		if err := storage.SetConfig("terminal_claudeCommand", c.Terminal.ClaudeCommand); err != nil {
 			return fmt.Errorf("failed to save terminal_claudeCommand config: %w", err)
 		}
+		storage.SetConfig("terminal_claudeCommand", c.Terminal.ClaudeCommand)
 	}
 
 	// Save Proxy config
