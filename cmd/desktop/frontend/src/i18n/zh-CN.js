@@ -42,7 +42,25 @@ export default {
         viewCompact: '列表视图',
         dragToReorder: '拖拽排序',
         moreActions: '更多操作',
-        disabled: '已禁用'
+        disabled: '已禁用',
+
+        // 筛选功能
+        filterTypeTooltip: '按端点类型筛选',
+        filterAvailabilityTooltip: '按可用性筛选',
+        filterEnabledTooltip: '按启用状态筛选',
+        filterClearDimension: '清空',
+        filterApply: '确定',
+        filterClearAll: '清除所有筛选',
+        filterActiveWarning: '筛选模式激活 - 拖拽排序已禁用',
+        filterAvailable: '可用',
+        filterUnknown: '未知',
+        filterUnavailable: '不可用',
+        filterEnabled: '启用',
+        filterDisabled: '禁用',
+        dragDisabledDuringFilter: '筛选模式下无法拖拽排序，请先清除筛选',
+        noMatchingEndpoints: '没有符合筛选条件的端点',
+        filterStatsTotal: '共 {total} 个端点',
+        filterStatsFiltered: '显示 {filtered} / {total} 个端点'
     },
     modal: {
         addEndpoint: '添加端点',

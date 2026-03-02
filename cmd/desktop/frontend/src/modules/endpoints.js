@@ -2,6 +2,7 @@ import { t } from '../i18n/index.js';
 import { formatTokens, maskApiKey } from '../utils/format.js';
 import { getEndpointStats } from './stats.js';
 import { toggleEndpoint, testAllEndpointsZeroCost } from './config.js';
+import { filterEndpoints, isFilterActive, updateFilterStats } from './filters.js';
 
 const ENDPOINT_TEST_STATUS_KEY = 'ccNexus_endpointTestStatus';
 const ENDPOINT_VIEW_MODE_KEY = 'ccNexus_endpointViewMode';
@@ -131,10 +132,30 @@ export async function renderEndpoints(endpoints) {
         console.error('Failed to get current endpoint:', error);
     }
 
-    if (endpoints.length === 0) {
+    // 应用筛选
+    const filteredEndpoints = filterEndpoints(endpoints);
+    const isFiltered = isFilterActive();
+
+    // 更新筛选统计
+    updateFilterStats(endpoints.length, filteredEndpoints.length);
+
+    // 空状态处理
+    if (filteredEndpoints.length === 0) {
         container.innerHTML = `
-            <div class="empty-state">
-                <p>${t('endpoints.noEndpoints')}</p>
+            <div class="empty-state" style="text-align: center; padding: 60px 20px; color: #999;">
+                <div style="font-size: 48px; margin-bottom: 15px;">🔍</div>
+                <p style="font-size: 16px; margin-bottom: 20px;">
+                    ${isFiltered ? t('endpoints.noMatchingEndpoints') : t('endpoints.noEndpoints')}
+                </p>
+                ${isFiltered ? `
+                    <button class="btn btn-primary" onclick="window.clearAllFilters()">
+                        🔄 ${t('endpoints.clearFilters')}
+                    </button>
+                ` : `
+                    <button class="btn btn-primary" onclick="window.showAddEndpointModal()">
+                        ➕ ${t('header.addEndpoint')}
+                    </button>
+                `}
             </div>
         `;
         return;
@@ -144,7 +165,7 @@ export async function renderEndpoints(endpoints) {
 
     const endpointStats = getEndpointStats();
     // Display endpoints in config file order (no sorting by enabled status)
-    const sortedEndpoints = endpoints.map((ep, index) => {
+    const sortedEndpoints = filteredEndpoints.map((ep, index) => {
         const stats = endpointStats[ep.name] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
         return { endpoint: ep, originalIndex: index, stats, enabled };
@@ -154,7 +175,7 @@ export async function renderEndpoints(endpoints) {
     const viewMode = getEndpointViewMode();
     if (viewMode === 'compact') {
         container.classList.add('compact-view');
-        renderCompactView(sortedEndpoints, container, currentEndpointName);
+        renderCompactView(sortedEndpoints, container, currentEndpointName, isFiltered);
         return;
     } else {
         container.classList.remove('compact-view');
@@ -169,9 +190,19 @@ export async function renderEndpoints(endpoints) {
 
         const item = document.createElement('div');
         item.className = 'endpoint-item';
-        item.draggable = true;
         item.dataset.name = ep.name;
         item.dataset.index = index;
+
+        // 筛选激活时禁用拖拽
+        if (isFiltered) {
+            item.draggable = false;
+            item.style.cursor = 'default';
+            item.title = t('endpoints.dragDisabledDuringFilter');
+        } else {
+            item.draggable = true;
+            setupDragAndDrop(item, container);
+        }
+
         // 获取测试状态：true=成功显示✅，false=失败显示❌，undefined/unknown=未测试/未知显示⚠️
         const testStatus = getEndpointTestStatus(ep.name);
         let testStatusIcon = '⚠️';
@@ -473,7 +504,7 @@ export async function checkAllEndpointsOnStartup() {
 }
 
 // 渲染简洁视图
-function renderCompactView(sortedEndpoints, container, currentEndpointName) {
+function renderCompactView(sortedEndpoints, container, currentEndpointName, isFiltered) {
     sortedEndpoints.forEach(({ endpoint: ep, originalIndex: index, stats }) => {
         const enabled = ep.enabled !== undefined ? ep.enabled : true;
         const transformer = ep.transformer || 'claude';
@@ -494,9 +525,18 @@ function renderCompactView(sortedEndpoints, container, currentEndpointName) {
 
         const item = document.createElement('div');
         item.className = 'endpoint-item-compact';
-        item.draggable = true;
         item.dataset.name = ep.name;
         item.dataset.index = index;
+
+        // 筛选激活时禁用拖拽
+        if (isFiltered) {
+            item.draggable = false;
+            item.style.cursor = 'default';
+            item.title = t('endpoints.dragDisabledDuringFilter');
+        } else {
+            item.draggable = true;
+            setupCompactDragAndDrop(item, container);
+        }
 
         // 截断 URL 显示
         const displayUrl = ep.apiUrl.length > 40 ? ep.apiUrl.substring(0, 40) + '...' : ep.apiUrl;

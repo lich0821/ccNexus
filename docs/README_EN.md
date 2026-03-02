@@ -18,6 +18,7 @@
 - **Multi-Endpoint Rotation**: Automatic failover, switches to next endpoint on failure
 - **API Format Conversion**: Supports Claude, OpenAI, Gemini format conversion
 - **Real-time Statistics**: Request count, error count, token usage monitoring
+- **Endpoint Filtering**: Multi-select filtering by type, availability, and status for quick endpoint location
 - **WebDAV Sync**: Sync configuration and data across devices
 - **Cross-Platform**: Windows, macOS, Linux
 

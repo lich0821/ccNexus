@@ -231,6 +231,69 @@ export function initUI() {
                                 </svg>
                             </button>
                         </div>
+
+                        <!-- 筛选下拉按钮组 -->
+                        <div class="filter-dropdowns">
+                            <!-- 类型筛选 -->
+                            <div class="filter-dropdown" data-filter="types">
+                                <button class="filter-dropdown-btn" title="${t('endpoints.filterTypeTooltip')}">
+                                    <span class="filter-icon">📑</span>
+                                    <span class="filter-badge hidden" id="filterBadgeTypes">0</span>
+                                    <span class="filter-arrow">▼</span>
+                                </button>
+                                <div class="filter-dropdown-panel hidden">
+                                    <div class="panel-options">
+                                        <label><input type="checkbox" value="claude"> Claude</label>
+                                        <label><input type="checkbox" value="gemini"> Gemini</label>
+                                        <label><input type="checkbox" value="openai"> OpenAI</label>
+                                        <label><input type="checkbox" value="openai2"> OpenAI2</label>
+                                    </div>
+                                    <div class="panel-footer">
+                                        <button class="btn-clear-dimension">${t('endpoints.filterClearDimension')}</button>
+                                        <button class="btn-apply">${t('endpoints.filterApply')}</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 可用性筛选 -->
+                            <div class="filter-dropdown" data-filter="availabilities">
+                                <button class="filter-dropdown-btn" title="${t('endpoints.filterAvailabilityTooltip')}">
+                                    <span class="filter-icon">🔌</span>
+                                    <span class="filter-badge hidden" id="filterBadgeAvailabilities">0</span>
+                                    <span class="filter-arrow">▼</span>
+                                </button>
+                                <div class="filter-dropdown-panel hidden">
+                                    <div class="panel-options">
+                                        <label><input type="checkbox" value="available"> ${t('endpoints.filterAvailable')}</label>
+                                        <label><input type="checkbox" value="unknown"> ${t('endpoints.filterUnknown')}</label>
+                                        <label><input type="checkbox" value="unavailable"> ${t('endpoints.filterUnavailable')}</label>
+                                    </div>
+                                    <div class="panel-footer">
+                                        <button class="btn-clear-dimension">${t('endpoints.filterClearDimension')}</button>
+                                        <button class="btn-apply">${t('endpoints.filterApply')}</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 启用状态筛选 -->
+                            <div class="filter-dropdown" data-filter="enabledStates">
+                                <button class="filter-dropdown-btn" title="${t('endpoints.filterEnabledTooltip')}">
+                                    <span class="filter-icon">⚡</span>
+                                    <span class="filter-badge hidden" id="filterBadgeEnabledStates">0</span>
+                                    <span class="filter-arrow">▼</span>
+                                </button>
+                                <div class="filter-dropdown-panel hidden">
+                                    <div class="panel-options">
+                                        <label><input type="checkbox" value="enabled"> ${t('endpoints.filterEnabled')}</label>
+                                        <label><input type="checkbox" value="disabled"> ${t('endpoints.filterDisabled')}</label>
+                                    </div>
+                                    <div class="panel-footer">
+                                        <button class="btn-clear-dimension">${t('endpoints.filterClearDimension')}</button>
+                                        <button class="btn-apply">${t('endpoints.filterApply')}</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     <div style="display: flex; gap: 10px;">
                         ${isShowBtn ? `
@@ -245,6 +308,16 @@ export function initUI() {
                         </button>
                     </div>
                 </div>
+
+
+                <!-- 筛选激活警告条 -->
+                <div id="filterActiveBanner" class="filter-active-banner hidden">
+                    ⚠️ ${t('endpoints.filterActiveWarning')}
+                    <button class="banner-btn" onclick="window.clearAllFilters()">
+                        ${t('endpoints.filterClearAll')}
+                    </button>
+                </div>
+
                 <div id="endpointPanel" class="endpoint-panel">
                     <div id="endpointList" class="endpoint-list">
                         <div class="loading">${t('endpoints.title')}...</div>

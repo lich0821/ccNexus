@@ -15,6 +15,7 @@ import { showSettingsModal, closeSettingsModal, saveSettings, applyTheme, initTh
 import { checkUpdatesOnStartup, checkForUpdates, initUpdateSettings } from './modules/updater.js'
 import { initBroadcast } from './modules/broadcast.js'
 import { initSponsor, showSponsorModal, closeSponsorModal, openSponsorLink } from './modules/sponsor.js'
+import { initFilterDropdowns, clearAllFilters } from './modules/filters.js'
 import {
     showAddEndpointModal,
     editEndpoint,
@@ -65,6 +66,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize endpoint view mode
     initEndpointViewMode();
+
+    // Initialize filter dropdowns
+    initFilterDropdowns();
 
     // Initialize terminal module
     initTerminal();
@@ -201,6 +205,7 @@ window.showDataSyncDialog = showDataSyncDialog;
 window.switchStatsPeriod = switchStatsPeriod;
 window.toggleEndpointPanel = toggleEndpointPanel;
 window.switchEndpointViewMode = switchEndpointViewMode;
+window.clearAllFilters = clearAllFilters;
 window.showSettingsModal = showSettingsModal;
 window.closeSettingsModal = closeSettingsModal;
 window.saveSettings = saveSettings;

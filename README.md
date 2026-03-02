@@ -18,6 +18,7 @@
 - **多端点轮换**：自动故障转移，一个失败自动切换下一个
 - **API 格式转换**：支持 Claude、OpenAI、Gemini 格式互转
 - **实时统计**：请求数、错误数、Token 用量监控
+- **端点筛选**：按类型、可用性、启用状态多选筛选，快速定位端点
 - **WebDAV 同步**：多设备间同步配置和数据
 - **跨平台**：Windows、macOS、Linux
 - **[Docker](docs/README_DOCKER.md)**：纯后端 HTTP 服务，并提供容器化运行

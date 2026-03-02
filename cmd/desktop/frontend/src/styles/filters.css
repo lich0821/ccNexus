@@ -1,0 +1,233 @@
+/**
+ * 端点筛选器样式 - 图标下拉多选
+ */
+
+/* 筛选下拉按钮组 */
+.filter-dropdowns {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* 单个下拉容器 */
+.filter-dropdown {
+    position: relative;
+}
+
+/* 下拉按钮（复用视图切换按钮样式） */
+.filter-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    background: var(--card-bg, #ffffff);
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    position: relative;
+}
+
+.filter-dropdown-btn:hover {
+    border-color: var(--primary-color, #667eea);
+    transform: translateY(-1px);
+}
+
+/* 激活状态（有筛选时） */
+.filter-dropdown-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+.filter-dropdown-btn.active .filter-arrow {
+    color: white;
+}
+
+/* 图标 */
+.filter-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+/* 徽章（已选数量） */
+.filter-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: #e74c3c;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 5px;
+    border-radius: 10px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.filter-badge.hidden {
+    display: none;
+}
+
+/* 箭头 */
+.filter-arrow {
+    font-size: 10px;
+    color: var(--text-tertiary, #999);
+    transition: transform 0.2s ease;
+}
+
+/* 下拉面板 */
+.filter-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 160px;
+    background: var(--card-bg, #ffffff);
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.filter-dropdown-panel.hidden {
+    display: none;
+}
+
+/* 选项区域 */
+.panel-options {
+    padding: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.panel-options label {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.2s ease;
+    font-size: 13px;
+    color: var(--text-primary, #333);
+}
+
+.panel-options label:hover {
+    background: var(--bg-secondary, #f8f9fa);
+}
+
+.panel-options input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+/* 底部按钮 */
+.panel-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    border-top: 1px solid var(--border-light, #e0e0e0);
+    gap: 6px;
+}
+
+.panel-footer button {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-clear-dimension {
+    background: transparent;
+    color: var(--text-secondary, #666);
+    border: 1px solid var(--border-color, #ddd) !important;
+}
+
+.btn-clear-dimension:hover {
+    background: var(--bg-secondary, #f8f9fa);
+}
+
+.btn-apply {
+    background: var(--primary-color, #667eea);
+    color: white;
+}
+
+.btn-apply:hover {
+    background: #764ba2;
+    transform: translateY(-1px);
+}
+
+/* 保留警告条样式 */
+.filter-active-banner {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+    border-left: 4px solid #e17055;
+    padding: 10px 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 500;
+    color: #2d3436;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-active-banner.hidden {
+    display: none;
+}
+
+.banner-btn {
+    background: #2d3436;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.banner-btn:hover {
+    background: #636e72;
+    transform: translateY(-1px);
+}
+
+/* 筛选模式下禁用拖拽的视觉提示（保留） */
+.endpoint-item[draggable="false"],
+.endpoint-item-compact[draggable="false"] {
+    cursor: default !important;
+}
+
+.endpoint-item[draggable="false"]::after,
+.endpoint-item-compact[draggable="false"]::after {
+    content: '🔒';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.endpoint-item[draggable="false"]:hover::after,
+.endpoint-item-compact[draggable="false"]:hover::after {
+    opacity: 0.3;
+}
