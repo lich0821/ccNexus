@@ -1,5 +1,52 @@
 [
   {
+    "version": "v4.13.0",
+    "date": "2026-01-06",
+    "changes": [
+      "Stats update migrated from polling to event-driven, eliminating performance overhead",
+      "Implemented 4-period cache architecture, reducing period switching latency from 200ms to <5ms",
+      "Fixed endpoint cards not updating stats after period switching or filtering",
+      "Optimized initialization order to ensure endpoint cards display correct stats"
+    ]
+  },
+  {
+    "version": "v4.12.0",
+    "date": "2025-01-03",
+    "changes": ["Added endpoint filtering feature with multi-select by transformer type/enabled status/test status", "Added custom launcher command configuration"]
+  },
+  {
+    "version": "v4.11.1",
+    "date": "2025-01-02",
+    "changes": ["Optimized startup endpoint testing with concurrent execution for faster startup"]
+  },
+  {
+    "version": "v4.11.0",
+    "date": "2025-01-02",
+    "changes": [
+      "Completed 12 critical fixes for stability and performance",
+      "Added custom Launcher Command configuration",
+      "Support <think> tag compatibility",
+      "Fixed Mac Dock display issue",
+      "Added fallback for token usage in streaming responses",
+      "Display request size in HTTP/2 stream error logs"
+    ]
+  },
+  {
+    "version": "v4.10.2",
+    "date": "2025-01-01",
+    "changes": ["Fixed data backup and restore error"]
+  },
+  {
+    "version": "v4.10.1",
+    "date": "2025-01-01",
+    "changes": ["OpenAI to Claude streaming logic supports think tags"]
+  },
+  {
+    "version": "v4.10.0",
+    "date": "2025-01-01",
+    "changes": ["Added CodeX launcher feature with completion notification", "Beautified local backup and S3 backup UI"]
+  },
+  {
     "version": "v4.9.1",
     "date": "2025-12-31",
     "changes": ["Add history statistics deletion feature"]
