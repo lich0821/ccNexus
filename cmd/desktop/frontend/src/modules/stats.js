@@ -1,14 +1,50 @@
 import { formatTokens } from '../utils/format.js';
 
-let endpointStats = {};
+let endpointStats = {}; // Backward compatibility - stores current period only
+let endpointStatsCache = {}; // { endpoint1: { daily: {...}, yesterday: {...}, weekly: {...}, monthly: {...} } }
+let totalStatsCache = {}; // { daily: {...}, yesterday: {...}, weekly: {...}, monthly: {...} }
 let currentPeriod = 'daily'; // 'daily', 'weekly', 'monthly'
 
 export function getEndpointStats() {
-    return endpointStats;
+    // Dynamically build endpoint stats from 4-period cache for current period
+    const period = currentPeriod;
+    const result = {};
+
+    for (const [name, periods] of Object.entries(endpointStatsCache)) {
+        result[name] = periods[period] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+    }
+
+    // Fallback: if cache is empty (during initialization), return old cache for backward compatibility
+    return Object.keys(result).length > 0 ? result : endpointStats;
 }
 
 export function getCurrentPeriod() {
     return currentPeriod;
+}
+
+// Update 4-period cache for a single endpoint
+export function updateEndpointStatsCache(endpointName, periodData) {
+    if (!endpointStatsCache[endpointName]) {
+        endpointStatsCache[endpointName] = {};
+    }
+    Object.assign(endpointStatsCache[endpointName], periodData);
+}
+
+// Update 4-period cache for totals
+export function updateTotalStatsCache(periodData) {
+    Object.assign(totalStatsCache, periodData);
+}
+
+// Get stats for a specific endpoint and period
+export function getEndpointPeriodStats(endpointName, period) {
+    return endpointStatsCache[endpointName]?.[period] ||
+           { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+}
+
+// Get total stats for a specific period
+export function getTotalPeriodStats(period) {
+    return totalStatsCache[period] ||
+           { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
 }
 
 // Load statistics (legacy function for backward compatibility)
@@ -92,7 +128,23 @@ export async function loadStatsByPeriod(period = 'daily') {
         // Load and display trend for current period
         await loadTrend(period);
 
-        // Store endpoint stats for today
+        // Store endpoint stats in 4-period cache structure
+        for (const [name, periodStats] of Object.entries(stats.endpoints || {})) {
+            if (!endpointStatsCache[name]) {
+                endpointStatsCache[name] = {};
+            }
+            endpointStatsCache[name][period] = periodStats;
+        }
+
+        // Store aggregated totals in 4-period cache
+        totalStatsCache[period] = {
+            requests: stats.totalRequests || 0,
+            errors: stats.totalErrors || 0,
+            inputTokens: stats.totalInputTokens || 0,
+            outputTokens: stats.totalOutputTokens || 0
+        };
+
+        // Backward compatibility: update old single-period cache
         endpointStats = stats.endpoints || {};
 
         return stats;
@@ -182,11 +234,51 @@ export async function switchStatsPeriod(period) {
         }
     });
 
-    // Load stats for the selected period
-    await loadStatsByPeriod(period);
+    // Check if cache has data for this period
+    const cachedTotals = totalStatsCache[period];
+    const hasCache = cachedTotals && Object.keys(endpointStatsCache).length > 0;
+
+    if (hasCache) {
+        // Fast path: update DOM from cache
+        updateDOMFromCache(period);
+        await loadTrend(period); // Still load trend from backend
+    } else {
+        // Fallback path: load from backend if cache miss
+        await loadStatsByPeriod(period);
+    }
 
     // Reload endpoint list to update endpoint stats cards
     if (window.loadConfig) {
         window.loadConfig();
     }
+}
+
+// Update DOM elements from cached data (zero-delay switching)
+function updateDOMFromCache(period) {
+    const totals = totalStatsCache[period];
+    if (!totals) return;
+
+    document.getElementById('periodTotalRequests').textContent = totals.requests || 0;
+    document.getElementById('periodSuccess').textContent = (totals.requests - totals.errors) || 0;
+    document.getElementById('periodFailed').textContent = totals.errors || 0;
+
+    const totalTokens = (totals.inputTokens || 0) + (totals.outputTokens || 0);
+    document.getElementById('periodTotalTokens').textContent = formatTokens(totalTokens);
+    document.getElementById('periodInputTokens').textContent = formatTokens(totals.inputTokens || 0);
+    document.getElementById('periodOutputTokens').textContent = formatTokens(totals.outputTokens || 0);
+
+    // Sync old endpointStats cache for backward compatibility
+    // This ensures any code still directly accessing endpointStats gets current period data
+    endpointStats = {};
+    for (const [name, periods] of Object.entries(endpointStatsCache)) {
+        endpointStats[name] = periods[period] || { requests: 0, errors: 0, inputTokens: 0, outputTokens: 0 };
+    }
+}
+
+// DEPRECATED: Incremental stats update is no longer used
+// Header stats are now updated directly in main.js handleStatsUpdate() using backend-provided totals
+// This function is kept for backward compatibility only
+export function updateStatsIncremental(endpointName, data) {
+    console.warn('updateStatsIncremental is deprecated, header stats are now updated by handleStatsUpdate in main.js');
+    // Function body retained for backward compatibility but not actively used
 }

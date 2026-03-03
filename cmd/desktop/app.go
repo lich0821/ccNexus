@@ -127,6 +127,15 @@ func (a *App) startup(ctx context.Context) {
 		runtime.EventsEmit(ctx, "endpoint:success", endpointName)
 	})
 
+	// Set callback for stats updates to emit real-time events with 4-period data
+	a.proxy.GetStats().SetOnStatsUpdated(func(endpointName string, endpointPeriods, totalPeriods map[string]interface{}) {
+		runtime.EventsEmit(ctx, "stats:updated", map[string]interface{}{
+			"endpointName": endpointName,
+			"endpoint":     endpointPeriods,
+			"totals":       totalPeriods,
+		})
+	})
+
 	// Initialize services
 	version := a.GetVersion()
 	a.stats = service.NewStatsService(a.proxy, a.config)

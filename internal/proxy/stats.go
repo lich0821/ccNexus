@@ -75,6 +75,9 @@ type Stats struct {
 	saveMu        sync.Mutex
 	saveDebounce  time.Duration
 	lastSaveError error
+
+	// Event callback for stats updates (4-period data)
+	onStatsUpdated func(endpointName string, endpointPeriods, totalPeriods map[string]interface{})
 }
 
 // NewStats creates a new Stats instance
@@ -84,6 +87,11 @@ func NewStats(storage StatsStorage, deviceID string) *Stats {
 		deviceID:     deviceID,
 		saveDebounce: 2 * time.Second, // Debounce save operations by 2 seconds
 	}
+}
+
+// SetOnStatsUpdated sets the callback for stats update events
+func (s *Stats) SetOnStatsUpdated(callback func(endpointName string, endpointPeriods, totalPeriods map[string]interface{})) {
+	s.onStatsUpdated = callback
 }
 
 // RecordRequest records a request for an endpoint
@@ -103,6 +111,7 @@ func (s *Stats) RecordRequest(endpointName string) {
 	if err := s.storage.RecordDailyStat(stat); err != nil {
 		logger.Error("Failed to record request: %v", err)
 	}
+	// Don't emit event here - wait for RecordTokens which is always called after
 }
 
 // RecordError records an error for an endpoint
@@ -121,6 +130,9 @@ func (s *Stats) RecordError(endpointName string) {
 
 	if err := s.storage.RecordDailyStat(stat); err != nil {
 		logger.Error("Failed to record error: %v", err)
+	} else {
+		// Emit stats update event for errors (not followed by RecordTokens)
+		s.emitStatsUpdate(endpointName)
 	}
 }
 
@@ -140,7 +152,50 @@ func (s *Stats) RecordTokens(endpointName string, inputTokens, outputTokens int)
 
 	if err := s.storage.RecordDailyStat(stat); err != nil {
 		logger.Error("Failed to record tokens: %v", err)
+	} else {
+		// Emit stats update event after successful record
+		s.emitStatsUpdate(endpointName)
 	}
+}
+
+// emitStatsUpdate queries current stats for the endpoint and emits an update event
+func (s *Stats) emitStatsUpdate(endpointName string) {
+	if s.onStatsUpdated == nil {
+		return
+	}
+
+	today, yesterday, weekStart, monthStart := getPeriodDates()
+
+	// 1. Query 4-period stats for the single endpoint
+	dailyStats, _ := s.storage.GetDailyStats(endpointName, today, today)
+	yesterdayStats, _ := s.storage.GetDailyStats(endpointName, yesterday, yesterday)
+	weeklyStats, _ := s.storage.GetDailyStats(endpointName, weekStart, today)
+	monthlyStats, _ := s.storage.GetDailyStats(endpointName, monthStart, today)
+
+	// Aggregate single endpoint data for all 4 periods
+	endpointPeriods := map[string]interface{}{
+		"daily":     aggregateDailyStats(dailyStats),
+		"yesterday": aggregateDailyStats(yesterdayStats),
+		"weekly":    aggregateDailyStats(weeklyStats),
+		"monthly":   aggregateDailyStats(monthlyStats),
+	}
+
+	// 2. Query aggregated stats for all endpoints across 4 periods
+	dailyTotals, _ := s.storage.GetPeriodStatsAggregated(today, today)
+	yesterdayTotals, _ := s.storage.GetPeriodStatsAggregated(yesterday, yesterday)
+	weeklyTotals, _ := s.storage.GetPeriodStatsAggregated(weekStart, today)
+	monthlyTotals, _ := s.storage.GetPeriodStatsAggregated(monthStart, today)
+
+	// Aggregate totals for all endpoints
+	totalPeriods := map[string]interface{}{
+		"daily":     sumAllEndpoints(dailyTotals),
+		"yesterday": sumAllEndpoints(yesterdayTotals),
+		"weekly":    sumAllEndpoints(weeklyTotals),
+		"monthly":   sumAllEndpoints(monthlyTotals),
+	}
+
+	// 3. Push event with both single endpoint 4-period and total 4-period data
+	s.onStatsUpdated(endpointName, endpointPeriods, totalPeriods)
 }
 
 // scheduleSave schedules a save operation with debounce to avoid frequent writes
@@ -479,4 +534,67 @@ func (s *Stats) GetLastSaveError() error {
 	s.saveMu.Lock()
 	defer s.saveMu.Unlock()
 	return s.lastSaveError
+}
+
+// getPeriodDates calculates start dates for today, yesterday, this week, and this month
+func getPeriodDates() (today, yesterday, weekStart, monthStart string) {
+	now := time.Now()
+	today = now.Format("2006-01-02")
+	yesterday = now.AddDate(0, 0, -1).Format("2006-01-02")
+
+	// Week starts on Monday (weekday 1)
+	weekday := int(now.Weekday())
+	if weekday == 0 {
+		weekday = 7 // Adjust Sunday to 7
+	}
+	weekStart = now.AddDate(0, 0, -(weekday-1)).Format("2006-01-02")
+
+	// First day of current month
+	monthStart = time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location()).Format("2006-01-02")
+
+	return
+}
+
+// aggregateDailyStats aggregates daily statistics for a single endpoint across multiple days
+func aggregateDailyStats(stats []interface{}) map[string]interface{} {
+	var totalRequests, totalErrors int
+	var totalInputTokens, totalOutputTokens int64
+
+	for _, stat := range stats {
+		if dailyStat := extractDailyRecord(stat); dailyStat != nil {
+			totalRequests += dailyStat.Requests
+			totalErrors += dailyStat.Errors
+			totalInputTokens += int64(dailyStat.InputTokens)
+			totalOutputTokens += int64(dailyStat.OutputTokens)
+		}
+	}
+
+	return map[string]interface{}{
+		"requests":     totalRequests,
+		"errors":       totalErrors,
+		"inputTokens":  totalInputTokens,
+		"outputTokens": totalOutputTokens,
+	}
+}
+
+// sumAllEndpoints aggregates statistics across all endpoints
+func sumAllEndpoints(endpointStats map[string]interface{}) map[string]interface{} {
+	var totalRequests, totalErrors int
+	var totalInputTokens, totalOutputTokens int64
+
+	for _, data := range endpointStats {
+		if stats := extractStatsData(data); stats != nil {
+			totalRequests += stats.Requests
+			totalErrors += stats.Errors
+			totalInputTokens += stats.InputTokens
+			totalOutputTokens += stats.OutputTokens
+		}
+	}
+
+	return map[string]interface{}{
+		"requests":     totalRequests,
+		"errors":       totalErrors,
+		"inputTokens":  totalInputTokens,
+		"outputTokens": totalOutputTokens,
+	}
 }

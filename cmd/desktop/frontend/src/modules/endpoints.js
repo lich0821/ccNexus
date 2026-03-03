@@ -913,3 +913,40 @@ async function handleContainerDrop(e) {
         }
     }
 }
+
+// Incremental endpoint stats update - updates only the numbers in the endpoint card without re-rendering
+export function updateEndpointStatsIncremental(endpointName, data) {
+    // Find endpoint card by name (works for both detail and compact views)
+    const endpointCard = document.querySelector(`[data-name="${endpointName}"]`);
+    if (!endpointCard) {
+        return; // Endpoint not found or filtered out
+    }
+
+    const totalTokens = (data.inputTokens || 0) + (data.outputTokens || 0);
+
+    // Update stats in detail view
+    const paragraphs = endpointCard.querySelectorAll('p');
+    for (const p of paragraphs) {
+        const text = p.textContent;
+
+        // Update requests/errors line
+        if (text.includes('📊') && text.includes(t('endpoints.requests'))) {
+            p.innerHTML = `📊 ${t('endpoints.requests')}: ${data.requests} | ${t('endpoints.errors')}: ${data.errors}`;
+        }
+
+        // Update tokens line
+        if (text.includes('🎯') && text.includes(t('endpoints.tokens'))) {
+            p.innerHTML = `🎯 ${t('endpoints.tokens')}: ${formatTokens(totalTokens)} (${t('statistics.in')}: ${formatTokens(data.inputTokens)}, ${t('statistics.out')}: ${formatTokens(data.outputTokens)})`;
+        }
+    }
+
+    // Update stats in compact view
+    const compactStats = endpointCard.querySelector('.compact-stats');
+    if (compactStats) {
+        compactStats.textContent = `📊 ${data.requests} | 🎯 ${formatTokens(totalTokens)}`;
+
+        // Update tooltip
+        const tooltip = `${t('endpoints.requests')}: ${data.requests} | ${t('endpoints.errors')}: ${data.errors}\n${t('statistics.in')}: ${formatTokens(data.inputTokens)} | ${t('statistics.out')}: ${formatTokens(data.outputTokens)}`;
+        compactStats.title = tooltip;
+    }
+}
