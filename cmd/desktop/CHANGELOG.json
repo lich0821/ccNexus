@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.13.3",
+    "date": "2026-03-07",
+    "changes": [
+      "Fixed incorrect endpoint count in the statistics bar by syncing visible active/total endpoint counters after config reload"
+    ]
+  },
+  {
     "version": "v4.13.2",
     "date": "2026-03-07",
     "changes": [
