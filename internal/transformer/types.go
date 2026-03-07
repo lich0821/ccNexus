@@ -358,6 +358,7 @@ type OpenAI2Request struct {
 	Input           interface{}   `json:"input"`                  // string or []OpenAI2InputItem
 	Instructions    string        `json:"instructions,omitempty"` // system prompt
 	Tools           []OpenAI2Tool `json:"tools,omitempty"`
+	ToolChoice      interface{}   `json:"tool_choice,omitempty"`
 	Stream          bool          `json:"stream,omitempty"`
 	MaxOutputTokens int           `json:"max_output_tokens,omitempty"`
 	Temperature     *float64      `json:"temperature,omitempty"`
