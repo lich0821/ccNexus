@@ -1,5 +1,12 @@
 [
   {
+    "version": "v4.13.2",
+    "date": "2026-03-07",
+    "changes": [
+      "Fixed endpoint index mismatch after filtering to prevent edit/test/delete/toggle actions from targeting the wrong endpoint"
+    ]
+  },
+  {
     "version": "v4.13.1",
     "date": "2026-03-07",
     "changes": [
