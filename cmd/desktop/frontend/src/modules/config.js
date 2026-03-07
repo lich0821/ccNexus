@@ -20,6 +20,11 @@ export async function loadConfig() {
 
         const activeCount = config.endpoints.filter(ep => ep.enabled !== false).length;
         document.getElementById('activeEndpoints').textContent = activeCount;
+        // Keep the visible stats bar endpoint count in sync with current config.
+        const activeDisplayEl = document.getElementById('activeEndpointsDisplay');
+        const totalDisplayEl = document.getElementById('totalEndpointsDisplay');
+        if (activeDisplayEl) activeDisplayEl.textContent = activeCount;
+        if (totalDisplayEl) totalDisplayEl.textContent = config.endpoints.length;
 
         return config;
     } catch (error) {
