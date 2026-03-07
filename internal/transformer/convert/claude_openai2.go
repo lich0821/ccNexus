@@ -28,23 +28,25 @@ func ClaudeReqToOpenAI2(claudeReq []byte, model string) ([]byte, error) {
 	// Convert messages to input
 	var input []map[string]interface{}
 	for _, msg := range req.Messages {
-		item := map[string]interface{}{
-			"type": "message",
-			"role": msg.Role,
-		}
-
-		var contentParts []map[string]interface{}
 		switch content := msg.Content.(type) {
 		case string:
-			contentParts = append(contentParts, map[string]interface{}{
-				"type": "input_text",
-				"text": content,
+			textType := "input_text"
+			if msg.Role == "assistant" {
+				textType = "output_text"
+			}
+			input = append(input, map[string]interface{}{
+				"type": "message",
+				"role": msg.Role,
+				"content": []map[string]interface{}{
+					{
+						"type": textType,
+						"text": content,
+					},
+				},
 			})
 		case []interface{}:
-			contentParts = convertClaudeContentToOpenAI2(content, msg.Role)
+			input = append(input, convertClaudeMessageToOpenAI2Items(content, msg.Role)...)
 		}
-		item["content"] = contentParts
-		input = append(input, item)
 	}
 	openai2Req["input"] = input
 
@@ -63,9 +65,77 @@ func ClaudeReqToOpenAI2(claudeReq []byte, model string) ([]byte, error) {
 			})
 		}
 		openai2Req["tools"] = tools
+
+		// Preserve tool forcing semantics for Responses API backends.
+		if mapped := mapClaudeToolChoiceToOpenAI2(req.ToolChoice); mapped != nil {
+			openai2Req["tool_choice"] = mapped
+		} else {
+			// For first turn, prefer required to avoid "plan-only" responses.
+			// After at least one tool_result exists, switch to auto to prevent
+			// forced repeated tool calls in later turns.
+			if hasClaudeToolResult(req.Messages) {
+				openai2Req["tool_choice"] = "auto"
+			} else {
+				openai2Req["tool_choice"] = "required"
+			}
+		}
 	}
 
 	return json.Marshal(openai2Req)
+}
+
+func mapClaudeToolChoiceToOpenAI2(toolChoice interface{}) interface{} {
+	if toolChoice == nil {
+		return nil
+	}
+
+	switch tc := toolChoice.(type) {
+	case map[string]interface{}:
+		choiceType, _ := tc["type"].(string)
+		switch choiceType {
+		case "tool":
+			if name, ok := tc["name"].(string); ok && name != "" {
+				return map[string]interface{}{
+					"type": "function",
+					"name": name,
+				}
+			}
+		case "any":
+			return "required"
+		case "auto":
+			return "auto"
+		case "none":
+			return "none"
+		}
+	case string:
+		switch tc {
+		case "any":
+			return "required"
+		default:
+			return tc
+		}
+	}
+
+	return nil
+}
+
+func hasClaudeToolResult(messages []transformer.ClaudeMessage) bool {
+	for _, msg := range messages {
+		blocks, ok := msg.Content.([]interface{})
+		if !ok {
+			continue
+		}
+		for _, block := range blocks {
+			m, ok := block.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			if t, _ := m["type"].(string); t == "tool_result" {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // OpenAI2ReqToClaude converts OpenAI Responses API request to Claude request
@@ -210,9 +280,13 @@ func OpenAI2RespToClaude(openai2Resp []byte) ([]byte, error) {
 		case "function_call":
 			var args map[string]interface{}
 			json.Unmarshal([]byte(item.Arguments), &args)
+			toolID := item.CallID
+			if toolID == "" {
+				toolID = item.ID
+			}
 			content = append(content, map[string]interface{}{
 				"type":  "tool_use",
-				"id":    item.CallID,
+				"id":    toolID,
 				"name":  item.Name,
 				"input": args,
 			})
@@ -429,7 +503,10 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ToolIndex})...)
 				ctx.ToolBlockStarted = false
 			}
-			result = append(result, buildClaudeEvent("message_stop", map[string]interface{}{})...)
+			if !ctx.FinishReasonSent {
+				result = append(result, buildClaudeEvent("message_stop", map[string]interface{}{})...)
+				ctx.FinishReasonSent = true
+			}
 			return result, nil
 		}
 		return nil, nil
@@ -498,6 +575,9 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 			ctx.ToolBlockStarted = true
 			ctx.ToolIndex = ctx.ContentIndex
 			ctx.CurrentToolID = evt.Item.CallID
+			if ctx.CurrentToolID == "" {
+				ctx.CurrentToolID = evt.Item.ID
+			}
 			ctx.CurrentToolName = evt.Item.Name
 			ctx.ToolArguments = ""
 			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
@@ -541,6 +621,8 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
 			"usage": map[string]interface{}{"output_tokens": 0},
 		})...)
+		result = append(result, buildClaudeEvent("message_stop", map[string]interface{}{})...)
+		ctx.FinishReasonSent = true
 	}
 
 	return result, nil
@@ -548,11 +630,24 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 
 // Helper functions
 
-func convertClaudeContentToOpenAI2(content []interface{}, role string) []map[string]interface{} {
-	var parts []map[string]interface{}
-	contentType := "input_text"
+func convertClaudeMessageToOpenAI2Items(content []interface{}, role string) []map[string]interface{} {
+	var items []map[string]interface{}
+	var messageParts []map[string]interface{}
+	textType := "input_text"
 	if role == "assistant" {
-		contentType = "output_text"
+		textType = "output_text"
+	}
+
+	flushMessage := func() {
+		if len(messageParts) == 0 {
+			return
+		}
+		items = append(items, map[string]interface{}{
+			"type":    "message",
+			"role":    role,
+			"content": messageParts,
+		})
+		messageParts = nil
 	}
 
 	for _, block := range content {
@@ -560,26 +655,52 @@ func convertClaudeContentToOpenAI2(content []interface{}, role string) []map[str
 		if !ok {
 			continue
 		}
-		switch m["type"] {
+
+		blockType, _ := m["type"].(string)
+		switch blockType {
 		case "text":
-			parts = append(parts, map[string]interface{}{"type": contentType, "text": m["text"]})
+			text, _ := m["text"].(string)
+			messageParts = append(messageParts, map[string]interface{}{"type": textType, "text": text})
 		case "thinking":
 			// Skip thinking blocks - they are Claude's internal reasoning
 			continue
 		case "tool_use":
+			flushMessage()
+			callID, _ := m["id"].(string)
+			name, _ := m["name"].(string)
 			args, _ := json.Marshal(m["input"])
-			parts = append(parts, map[string]interface{}{
-				"type": "output_text",
-				"text": fmt.Sprintf("[Tool Call: %s(%s)]", m["name"], string(args)),
+			items = append(items, map[string]interface{}{
+				"type":      "function_call",
+				"call_id":   callID,
+				"name":      name,
+				"arguments": string(args),
 			})
 		case "tool_result":
-			parts = append(parts, map[string]interface{}{
-				"type": "input_text",
-				"text": fmt.Sprintf("[Tool Result: %v]", m["content"]),
+			flushMessage()
+			callID, _ := m["tool_use_id"].(string)
+			items = append(items, map[string]interface{}{
+				"type":    "function_call_output",
+				"call_id": callID,
+				"output":  toolResultToString(m["content"]),
 			})
 		}
 	}
-	return parts
+	flushMessage()
+
+	return items
+}
+
+func toolResultToString(content interface{}) string {
+	switch v := content.(type) {
+	case string:
+		return v
+	default:
+		data, err := json.Marshal(v)
+		if err != nil {
+			return fmt.Sprint(v)
+		}
+		return string(data)
+	}
 }
 
 func convertOpenAI2InputToClaude(input interface{}) []map[string]interface{} {
@@ -619,6 +740,9 @@ func convertOpenAI2InputToClaude(input interface{}) []map[string]interface{} {
 			case "function_call":
 				// Convert to Claude tool_use
 				callID, _ := itemMap["call_id"].(string)
+				if callID == "" {
+					callID, _ = itemMap["id"].(string)
+				}
 				name, _ := itemMap["name"].(string)
 				argsStr, _ := itemMap["arguments"].(string)
 				var args interface{}

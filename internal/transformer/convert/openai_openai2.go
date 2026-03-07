@@ -61,6 +61,15 @@ func OpenAIReqToOpenAI2(openaiReq []byte, model string) ([]byte, error) {
 			}
 		}
 		openai2Req["tools"] = tools
+
+		// Preserve explicit tool routing semantics when moving to Responses API.
+		if mapped := mapOpenAIToolChoiceToOpenAI2(req.ToolChoice); mapped != nil {
+			openai2Req["tool_choice"] = mapped
+		} else {
+			// Keep explicit default for compatibility with providers that do not
+			// treat omitted tool_choice as "auto".
+			openai2Req["tool_choice"] = "auto"
+		}
 	}
 
 	return json.Marshal(openai2Req)
@@ -178,7 +187,66 @@ func OpenAI2ReqToOpenAI(openai2Req []byte, model string) ([]byte, error) {
 		}
 	}
 
+	if req.ToolChoice != nil {
+		openaiReq.ToolChoice = mapOpenAI2ToolChoiceToOpenAI(req.ToolChoice)
+	}
+
 	return json.Marshal(openaiReq)
+}
+
+func mapOpenAIToolChoiceToOpenAI2(toolChoice interface{}) interface{} {
+	if toolChoice == nil {
+		return nil
+	}
+
+	switch tc := toolChoice.(type) {
+	case string:
+		return tc
+	case map[string]interface{}:
+		choiceType, _ := tc["type"].(string)
+		if choiceType != "function" {
+			return nil
+		}
+
+		// Chat Completions shape: {"type":"function","function":{"name":"..."}}
+		if fn, ok := tc["function"].(map[string]interface{}); ok {
+			if name, ok := fn["name"].(string); ok && name != "" {
+				return map[string]interface{}{"type": "function", "name": name}
+			}
+		}
+
+		// Responses-compatible shape already.
+		if name, ok := tc["name"].(string); ok && name != "" {
+			return map[string]interface{}{"type": "function", "name": name}
+		}
+	}
+
+	return nil
+}
+
+func mapOpenAI2ToolChoiceToOpenAI(toolChoice interface{}) interface{} {
+	if toolChoice == nil {
+		return nil
+	}
+
+	switch tc := toolChoice.(type) {
+	case string:
+		return tc
+	case map[string]interface{}:
+		choiceType, _ := tc["type"].(string)
+		if choiceType == "function" {
+			if name, ok := tc["name"].(string); ok && name != "" {
+				return map[string]interface{}{
+					"type": "function",
+					"function": map[string]string{
+						"name": name,
+					},
+				}
+			}
+		}
+	}
+
+	return nil
 }
 
 // OpenAIRespToOpenAI2 converts OpenAI Chat response to OpenAI Responses response
