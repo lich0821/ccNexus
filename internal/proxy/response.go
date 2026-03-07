@@ -67,15 +67,30 @@ func extractTokenUsage(responseBody []byte) (int, int) {
 		return 0, 0
 	}
 
+	if usage, ok := resp["usage"].(map[string]interface{}); ok {
+		return extractInputOutputTokens(usage)
+	}
+
+	return 0, 0
+}
+
+// extractInputOutputTokens normalizes usage fields across API formats.
+// Supports:
+// - Claude/OpenAI Responses: input_tokens/output_tokens
+// - OpenAI Chat: prompt_tokens/completion_tokens
+func extractInputOutputTokens(usage map[string]interface{}) (int, int) {
 	var inputTokens, outputTokens int
 
-	if usage, ok := resp["usage"].(map[string]interface{}); ok {
-		if input, ok := usage["input_tokens"].(float64); ok {
-			inputTokens = int(input)
-		}
-		if output, ok := usage["output_tokens"].(float64); ok {
-			outputTokens = int(output)
-		}
+	if input, ok := usage["input_tokens"].(float64); ok {
+		inputTokens = int(input)
+	} else if input, ok := usage["prompt_tokens"].(float64); ok {
+		inputTokens = int(input)
+	}
+
+	if output, ok := usage["output_tokens"].(float64); ok {
+		outputTokens = int(output)
+	} else if output, ok := usage["completion_tokens"].(float64); ok {
+		outputTokens = int(output)
 	}
 
 	return inputTokens, outputTokens

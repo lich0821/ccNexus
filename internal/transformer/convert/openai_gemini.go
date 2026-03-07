@@ -194,6 +194,9 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 		return nil, nil
 	}
 
+	// Sync Gemini usage metadata to context
+	syncGeminiUsageMetadata(&resp, ctx)
+
 	if len(resp.Candidates) == 0 {
 		return nil, nil
 	}
@@ -233,7 +236,8 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 		if hasToolCall || candidate.FinishReason == "TOOL_CODE" {
 			finishReason = "tool_calls"
 		}
-		chunk, _ := buildOpenAIChunk("gemini-chunk", model, "", nil, finishReason)
+		usage := currentOpenAIUsage(ctx)
+		chunk, _ := buildOpenAIChunkWithUsage("gemini-chunk", model, "", nil, finishReason, usage)
 		result.Write(chunk)
 		result.WriteString("data: [DONE]\n\n")
 	}

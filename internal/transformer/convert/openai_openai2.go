@@ -342,8 +342,11 @@ func OpenAI2RespToOpenAI(openai2Resp []byte, model string) ([]byte, error) {
 		"usage": map[string]interface{}{
 			"prompt_tokens":     resp.Usage.InputTokens,
 			"completion_tokens": resp.Usage.OutputTokens,
-			"total_tokens":      resp.Usage.InputTokens + resp.Usage.OutputTokens,
+			"total_tokens":      resp.Usage.TotalTokens,
 		},
+	}
+	if resp.Usage.TotalTokens == 0 {
+		openaiResp["usage"].(map[string]interface{})["total_tokens"] = resp.Usage.InputTokens + resp.Usage.OutputTokens
 	}
 
 	return json.Marshal(openaiResp)
@@ -539,11 +542,27 @@ func OpenAI2StreamToOpenAI(event []byte, ctx *transformer.StreamContext, model s
 		return nil, nil
 
 	case "response.completed":
+		if evt.Response != nil {
+			if evt.Response.Usage.InputTokens > 0 {
+				ctx.InputTokens = evt.Response.Usage.InputTokens
+			}
+			if evt.Response.Usage.OutputTokens > 0 {
+				ctx.OutputTokens = evt.Response.Usage.OutputTokens
+			}
+		}
 		finishReason := "stop"
 		if ctx.CurrentToolID != "" {
 			finishReason = "tool_calls"
 		}
-		return buildOpenAIChunk(ctx.MessageID, model, "", nil, finishReason)
+		usage := map[string]interface{}{
+			"prompt_tokens":     ctx.InputTokens,
+			"completion_tokens": ctx.OutputTokens,
+			"total_tokens":      ctx.InputTokens + ctx.OutputTokens,
+		}
+		if evt.Response != nil && evt.Response.Usage.TotalTokens > 0 {
+			usage["total_tokens"] = evt.Response.Usage.TotalTokens
+		}
+		return buildOpenAIChunkWithUsage(ctx.MessageID, model, "", nil, finishReason, usage)
 	}
 
 	return nil, nil

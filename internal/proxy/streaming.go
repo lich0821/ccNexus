@@ -223,25 +223,54 @@ func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputToke
 		}
 
 		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if jsonData == "" || jsonData == "[DONE]" {
+			continue
+		}
 		var event map[string]interface{}
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue
 		}
 
+		applyUsage := func(usage map[string]interface{}) {
+			in, out := extractInputOutputTokens(usage)
+			if in > 0 {
+				*inputTokens = in
+			}
+			if out > 0 {
+				*outputTokens = out
+			}
+		}
+
+		// Claude-style events
 		eventType, _ := event["type"].(string)
 		if eventType == "message_start" {
 			if message, ok := event["message"].(map[string]interface{}); ok {
 				if usage, ok := message["usage"].(map[string]interface{}); ok {
-					if input, ok := usage["input_tokens"].(float64); ok {
-						*inputTokens = int(input)
-					}
+					applyUsage(usage)
 				}
 			}
 		} else if eventType == "message_delta" {
 			if usage, ok := event["usage"].(map[string]interface{}); ok {
-				if output, ok := usage["output_tokens"].(float64); ok {
-					*outputTokens = int(output)
-				}
+				applyUsage(usage)
+			}
+		}
+
+		// OpenAI Responses-style events
+		if response, ok := event["response"].(map[string]interface{}); ok {
+			if usage, ok := response["usage"].(map[string]interface{}); ok {
+				applyUsage(usage)
+			}
+		}
+
+		// OpenAI Chat chunk-style usage (top-level)
+		if usage, ok := event["usage"].(map[string]interface{}); ok {
+			applyUsage(usage)
+		}
+
+		// Some providers wrap payloads with object=...
+		if obj, ok := event["object"].(string); ok && strings.Contains(obj, "chat.completion") {
+			if usage, ok := event["usage"].(map[string]interface{}); ok {
+				applyUsage(usage)
 			}
 		}
 	}
@@ -272,12 +301,34 @@ func (p *Proxy) extractTextFromEvent(transformedEvent []byte, outputText *string
 					outputText.WriteString(text)
 				}
 			}
-		}
-
-		// Handle standard delta.text format
-		if delta, ok := event["delta"].(map[string]interface{}); ok {
+		} else if delta, ok := event["delta"].(map[string]interface{}); ok {
+			// Handle standard delta.text format
 			if text, ok := delta["text"].(string); ok {
 				outputText.WriteString(text)
+			}
+		}
+
+		// Handle OpenAI Responses stream text delta format
+		if eventType == "response.output_text.delta" {
+			if delta, ok := event["delta"].(string); ok {
+				outputText.WriteString(delta)
+			}
+		}
+
+		// Handle OpenAI Chat stream chunk format (choices[].delta.content)
+		if choices, ok := event["choices"].([]interface{}); ok {
+			for _, choice := range choices {
+				choiceMap, ok := choice.(map[string]interface{})
+				if !ok {
+					continue
+				}
+				delta, ok := choiceMap["delta"].(map[string]interface{})
+				if !ok {
+					continue
+				}
+				if text, ok := delta["content"].(string); ok {
+					outputText.WriteString(text)
+				}
 			}
 		}
 	}
