@@ -771,6 +771,18 @@ body {
     border-color: #667eea;
 }
 
+.form-group input:disabled,
+.form-group select:disabled,
+.form-input:disabled,
+.field-locked {
+    background-color: var(--bg-tertiary, #f3f4f6) !important;
+    color: var(--text-secondary, #6b7280) !important;
+    border-color: var(--border-color, #d1d5db) !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+    opacity: 0.85;
+}
+
 .password-input-wrapper {
     position: relative;
     display: flex;
@@ -1682,6 +1694,109 @@ body {
     background: #BDBDBD;
     cursor: not-allowed;
     transform: none;
+}
+
+/* Token Pool Modal */
+.token-pool-proxy-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+}
+
+.token-pool-proxy-bar input {
+    flex: 1;
+    min-width: 280px;
+}
+
+.token-pool-proxy-help {
+    font-size: 12px;
+    color: var(--text-secondary, #6b7280);
+    margin-bottom: 12px;
+}
+
+.token-pool-status-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.token-pool-enabled-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text-secondary, #6b7280);
+}
+
+.token-pool-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+}
+
+.token-pool-more-wrap {
+    position: relative;
+}
+
+.token-pool-more-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    min-width: 140px;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #d1d5db);
+    background: var(--modal-bg, #fff);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    z-index: 30;
+}
+
+.token-pool-more-menu.show {
+    display: block;
+}
+
+.token-pool-more-menu button {
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-primary, #333);
+    font-size: 12px;
+    text-align: left;
+    padding: 8px 10px;
+    cursor: pointer;
+}
+
+.token-pool-more-menu button:hover {
+    background: var(--hover-bg, #f3f4f6);
+}
+
+.token-pool-more-menu .token-pool-delete {
+    color: #ef4444;
+}
+
+.token-pool-error-modal-content {
+    max-width: min(760px, 92vw) !important;
+    width: min(760px, 92vw) !important;
+}
+
+.token-pool-error-pre {
+    margin: 0;
+    max-height: min(56vh, 520px);
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--bg-tertiary, #f3f4f6);
+    border: 1px solid var(--border-color, #d1d5db);
+    border-radius: 8px;
+    color: var(--text-primary, #333);
+    padding: 12px;
+    font-size: 12px;
+    line-height: 1.45;
 }
 
 /* Modern Confirm Dialog - Windows Style */
@@ -4417,4 +4532,3 @@ body {
     font-weight: 500;
     color: var(--primary-color, #667eea);
 }
-

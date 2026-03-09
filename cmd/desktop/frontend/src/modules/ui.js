@@ -386,10 +386,24 @@ export function initUI() {
                         <input type="text" id="endpointName" placeholder="${t('modal.namePlaceholder')}">
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('modal.apiUrl')}</label>
-                        <input type="text" id="endpointUrl" placeholder="${t('modal.apiUrlPlaceholder')}">
+                        <label><span class="required">*</span>${t('modal.authMode')}</label>
+                        <select id="endpointAuthMode" onchange="window.handleAuthModeChange()">
+                            <option value="api_key">${t('modal.authModeApiKey')}</option>
+                            <option value="token_pool">${t('modal.authModeTokenPool')}</option>
+                            <option value="codex_token_pool">${t('modal.authModeCodexTokenPool')}</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('modal.authModeHelp')}
+                        </p>
                     </div>
                     <div class="form-group">
+                        <label><span class="required">*</span>${t('modal.apiUrl')}</label>
+                        <input type="text" id="endpointUrl" placeholder="${t('modal.apiUrlPlaceholder')}">
+                        <p id="endpointUrlHelp" style="color: #666; font-size: 12px; margin-top: 5px;">
+                            ${t('modal.apiUrlHelp')}
+                        </p>
+                    </div>
+                    <div class="form-group" id="endpointKeyGroup">
                         <label><span class="required">*</span>${t('modal.apiKey')}</label>
                         <div class="password-input-wrapper">
                             <input type="password" id="endpointKey" placeholder="${t('modal.apiKeyPlaceholder')}">
@@ -439,6 +453,7 @@ export function initUI() {
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button class="btn btn-secondary" id="manageTokenPoolBtn" style="display: none;" onclick="window.openEndpointTokenPoolFromModal()">🪪 ${t('modal.manageTokenPool')}</button>
                     <button class="btn btn-secondary" onclick="window.closeModal()">${t('modal.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.saveEndpoint()">${t('modal.save')}</button>
                 </div>

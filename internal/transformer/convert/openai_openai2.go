@@ -44,7 +44,6 @@ func OpenAIReqToOpenAI2(openaiReq []byte, model string) ([]byte, error) {
 		input = append(input, item)
 	}
 	openai2Req["input"] = input
-
 	// TODO: max_output_tokens is standard OpenAI Responses API param but some
 	// third-party endpoints (e.g. SiliconFlow) don't support it. Skipping for compatibility.
 

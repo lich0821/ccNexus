@@ -7,8 +7,10 @@ class Endpoints {
     constructor() {
         this.container = document.getElementById('view-container');
         this.endpoints = [];
+        this.tokenPools = {};
         this.currentEndpoint = null;
         this.draggedIndex = null;
+        this.currentTokenPoolEndpoint = null;
     }
 
     async render() {
@@ -38,6 +40,7 @@ class Endpoints {
         try {
             const data = await api.getEndpoints();
             this.endpoints = data.endpoints || [];
+            this.tokenPools = data.tokenPools || {};
 
             // Get current endpoint
             try {
@@ -78,6 +81,7 @@ class Endpoints {
                             <th>API URL</th>
                             <th>Transformer</th>
                             <th>Model</th>
+                            <th>Token Pool</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -124,6 +128,7 @@ class Endpoints {
                 </td>
                 <td>${getTransformerLabel(ep.transformer)}</td>
                 <td>${this.escapeHtml(ep.model || '-')}</td>
+                <td>${this.renderTokenPoolSummary(this.tokenPools[ep.name])}</td>
                 <td>${getStatusBadge(ep.enabled)}</td>
                 <td>
                     <div class="flex gap-2">
@@ -134,6 +139,9 @@ class Endpoints {
                         ` : ''}
                         <button class="btn btn-sm btn-secondary test-btn" data-name="${this.escapeHtml(ep.name)}">
                             Test
+                        </button>
+                        <button class="btn btn-sm btn-secondary token-pool-btn" data-name="${this.escapeHtml(ep.name)}">
+                            Token Pool
                         </button>
                         <label class="toggle-switch">
                             <input type="checkbox" class="toggle-endpoint" data-name="${this.escapeHtml(ep.name)}" ${ep.enabled ? 'checked' : ''}>
@@ -148,6 +156,20 @@ class Endpoints {
                     </div>
                 </td>
             </tr>
+        `;
+    }
+
+    renderTokenPoolSummary(pool) {
+        if (!pool || !pool.total) {
+            return '<span class="text-muted">0</span>';
+        }
+
+        return `
+            <div style="font-size: 12px; line-height: 1.4;">
+                <div>Total: <strong>${pool.total}</strong></div>
+                <div>A:${pool.active || 0} E:${pool.expiring || 0} X:${pool.expired || 0} I:${pool.invalid || 0}</div>
+                <div>C:${pool.cooldown || 0} R:${pool.needRefresh || 0} D:${pool.disabled || 0}</div>
+            </div>
         `;
     }
 
@@ -175,6 +197,11 @@ class Endpoints {
         // Switch buttons
         document.querySelectorAll('.switch-btn').forEach(btn => {
             btn.addEventListener('click', () => this.switchEndpoint(btn.dataset.name));
+        });
+
+        // Token pool buttons
+        document.querySelectorAll('.token-pool-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.showTokenPoolModal(btn.dataset.name));
         });
 
         // Copy buttons
@@ -567,6 +594,250 @@ class Endpoints {
         } catch (error) {
             notifications.error('Failed to delete endpoint: ' + error.message);
         }
+    }
+
+    async showTokenPoolModal(endpointName) {
+        this.currentTokenPoolEndpoint = endpointName;
+
+        try {
+            const result = await api.getEndpointCredentials(endpointName);
+            const credentials = result.credentials || [];
+            const stats = result.stats || {};
+            const modalContainer = document.getElementById('modal-container');
+
+            modalContainer.innerHTML = `
+                <div class="modal-overlay">
+                    <div class="modal" style="max-width: 960px; width: 95vw;">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Token Pool: ${this.escapeHtml(endpointName)}</h3>
+                            <button class="modal-close" id="close-modal">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-2" style="font-size: 13px;">
+                                <strong>Total:</strong> ${stats.total || 0}
+                                <span style="margin-left: 12px;"><strong>Active:</strong> ${stats.active || 0}</span>
+                                <span style="margin-left: 12px;"><strong>Expiring:</strong> ${stats.expiring || 0}</span>
+                                <span style="margin-left: 12px;"><strong>Need Refresh:</strong> ${stats.needRefresh || 0}</span>
+                                <span style="margin-left: 12px;"><strong>Expired:</strong> ${stats.expired || 0}</span>
+                                <span style="margin-left: 12px;"><strong>Invalid:</strong> ${stats.invalid || 0}</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Batch Import JSON</label>
+                                <textarea class="form-textarea" id="token-import-json" style="min-height: 140px;" placeholder='Paste one item / array / {"items":[...]}'></textarea>
+                                <label style="display: inline-flex; gap: 8px; align-items: center; margin-top: 8px;">
+                                    <input type="checkbox" id="token-import-overwrite">
+                                    Overwrite existing account_id/email
+                                </label>
+                                <div style="margin-top: 8px;">
+                                    <button class="btn btn-primary" id="token-import-btn">Import</button>
+                                </div>
+                            </div>
+
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Account</th>
+                                            <th>Email</th>
+                                            <th>Status</th>
+                                            <th>Expires At</th>
+                                            <th>Last Error</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${this.renderCredentialRows(credentials)}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="refresh-token-pool-btn">Refresh</button>
+                            <button class="btn btn-secondary" id="close-token-pool-btn">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
+            document.getElementById('close-token-pool-btn').addEventListener('click', () => this.closeModal());
+            document.getElementById('refresh-token-pool-btn').addEventListener('click', () => this.showTokenPoolModal(endpointName));
+            document.getElementById('token-import-btn').addEventListener('click', () => this.importEndpointCredentials(endpointName));
+
+            document.querySelectorAll('.token-enable-toggle').forEach(toggle => {
+                toggle.addEventListener('change', () => this.updateCredentialEnabled(endpointName, toggle.dataset.id, toggle.checked));
+            });
+            document.querySelectorAll('.token-update-btn').forEach(btn => {
+                btn.addEventListener('click', () => this.updateCredentialToken(endpointName, btn.dataset.id));
+            });
+            document.querySelectorAll('.token-activate-btn').forEach(btn => {
+                btn.addEventListener('click', () => this.activateCredential(endpointName, btn.dataset.id));
+            });
+            document.querySelectorAll('.token-delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => this.deleteCredential(endpointName, btn.dataset.id));
+            });
+        } catch (error) {
+            notifications.error('Failed to load token pool: ' + error.message);
+        }
+    }
+
+    renderCredentialRows(credentials) {
+        if (!credentials || credentials.length === 0) {
+            return '<tr><td colspan="7" class="text-center text-muted">No credentials imported</td></tr>';
+        }
+
+        return credentials.map(cred => `
+            <tr>
+                <td>${cred.id}</td>
+                <td><code>${this.escapeHtml(cred.accountId || '-')}</code></td>
+                <td>${this.escapeHtml(cred.email || '-')}</td>
+                <td>${this.renderCredentialStatusBadge(cred.status)}</td>
+                <td>${this.escapeHtml(this.formatDateTime(cred.expiresAt))}</td>
+                <td style="max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${this.escapeHtml(cred.lastError || '')}">
+                    ${this.escapeHtml(cred.lastError || '-')}
+                </td>
+                <td>
+                    <div class="flex gap-2">
+                        <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px;">
+                            <input type="checkbox" class="token-enable-toggle" data-id="${cred.id}" ${cred.enabled ? 'checked' : ''}>
+                            Enabled
+                        </label>
+                        <button class="btn btn-sm btn-secondary token-update-btn" data-id="${cred.id}">Update</button>
+                        <button class="btn btn-sm btn-secondary token-activate-btn" data-id="${cred.id}">Activate</button>
+                        <button class="btn btn-sm btn-danger token-delete-btn" data-id="${cred.id}">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    renderCredentialStatusBadge(status) {
+        const normalized = status || 'unknown';
+        const colorMap = {
+            active: '#10b981',
+            expiring: '#f59e0b',
+            need_refresh: '#f97316',
+            expired: '#ef4444',
+            invalid: '#ef4444',
+            cooldown: '#6366f1',
+            disabled: '#6b7280'
+        };
+        const color = colorMap[normalized] || '#6b7280';
+        return `<span style="display:inline-block;padding:2px 8px;border-radius:999px;background:${color};color:#fff;font-size:12px;">${this.escapeHtml(normalized)}</span>`;
+    }
+
+    async importEndpointCredentials(endpointName) {
+        const jsonInput = document.getElementById('token-import-json');
+        const overwriteInput = document.getElementById('token-import-overwrite');
+        const raw = (jsonInput?.value || '').trim();
+
+        if (!raw) {
+            notifications.warning('Please paste credential JSON first');
+            return;
+        }
+
+        let payload;
+        try {
+            payload = JSON.parse(raw);
+        } catch {
+            notifications.error('Invalid JSON');
+            return;
+        }
+
+        let requestBody;
+        if (Array.isArray(payload)) {
+            requestBody = { items: payload, overwrite: overwriteInput?.checked === true };
+        } else if (payload.items && Array.isArray(payload.items)) {
+            requestBody = { ...payload, overwrite: overwriteInput?.checked === true };
+        } else {
+            requestBody = { items: [payload], overwrite: overwriteInput?.checked === true };
+        }
+
+        try {
+            const result = await api.importEndpointCredentials(endpointName, requestBody);
+            notifications.success(`Import done: +${result.created || 0}, updated ${result.updated || 0}, skipped ${result.skipped || 0}, failed ${result.failed || 0}`);
+            jsonInput.value = '';
+            await this.showTokenPoolModal(endpointName);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Import failed: ' + error.message);
+        }
+    }
+
+    async updateCredentialEnabled(endpointName, credentialId, enabled) {
+        try {
+            await api.updateEndpointCredential(endpointName, credentialId, { enabled });
+            notifications.success(`Credential ${enabled ? 'enabled' : 'disabled'}`);
+            await this.showTokenPoolModal(endpointName);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to update credential: ' + error.message);
+            await this.showTokenPoolModal(endpointName);
+        }
+    }
+
+    async activateCredential(endpointName, credentialId) {
+        try {
+            await api.updateEndpointCredential(endpointName, credentialId, { status: 'active' });
+            notifications.success('Credential activated');
+            await this.showTokenPoolModal(endpointName);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to activate credential: ' + error.message);
+        }
+    }
+
+    async updateCredentialToken(endpointName, credentialId) {
+        const accessToken = prompt('New access token');
+        if (!accessToken) {
+            return;
+        }
+
+        const expiresAt = prompt('expiresAt (RFC3339, optional)', '');
+        const payload = {
+            accessToken: accessToken.trim(),
+            status: 'active'
+        };
+        if (expiresAt && expiresAt.trim()) {
+            payload.expiresAt = expiresAt.trim();
+        }
+
+        try {
+            await api.updateEndpointCredential(endpointName, credentialId, payload);
+            notifications.success('Credential token updated');
+            await this.showTokenPoolModal(endpointName);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to update token: ' + error.message);
+        }
+    }
+
+    async deleteCredential(endpointName, credentialId) {
+        if (!confirm(`Delete credential #${credentialId}?`)) {
+            return;
+        }
+
+        try {
+            await api.deleteEndpointCredential(endpointName, credentialId);
+            notifications.success('Credential deleted');
+            await this.showTokenPoolModal(endpointName);
+            await this.loadEndpoints();
+        } catch (error) {
+            notifications.error('Failed to delete credential: ' + error.message);
+        }
+    }
+
+    formatDateTime(value) {
+        if (!value) {
+            return '-';
+        }
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+        return date.toLocaleString();
     }
 
     closeModal() {

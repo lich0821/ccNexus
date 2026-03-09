@@ -12,6 +12,7 @@ import (
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
+	"github.com/lich0821/ccNexus/internal/storage"
 )
 
 // SSEEvent represents a Server-Sent Event
@@ -33,22 +34,23 @@ type APIResponse struct {
 
 // Proxy represents the proxy server
 type Proxy struct {
-	config           *config.Config
-	stats            *Stats
-	currentIndex     int
-	mu               sync.RWMutex
-	server           *http.Server
-	httpClient       *http.Client                 // Reusable HTTP client with connection pool
-	activeRequests   map[string]bool              // tracks active requests by endpoint name
-	activeRequestsMu sync.RWMutex                 // protects activeRequests map
-	endpointCtx      map[string]context.Context   // context per endpoint for cancellation
-	endpointCancel   map[string]context.CancelFunc // cancel functions per endpoint
-	ctxMu            sync.RWMutex                 // protects context maps
-	onEndpointSuccess func(endpointName string)   // callback when endpoint request succeeds
+	config            *config.Config
+	storage           *storage.SQLiteStorage
+	stats             *Stats
+	currentIndex      int
+	mu                sync.RWMutex
+	server            *http.Server
+	httpClient        *http.Client                  // Reusable HTTP client with connection pool
+	activeRequests    map[string]bool               // tracks active requests by endpoint name
+	activeRequestsMu  sync.RWMutex                  // protects activeRequests map
+	endpointCtx       map[string]context.Context    // context per endpoint for cancellation
+	endpointCancel    map[string]context.CancelFunc // cancel functions per endpoint
+	ctxMu             sync.RWMutex                  // protects context maps
+	onEndpointSuccess func(endpointName string)     // callback when endpoint request succeeds
 }
 
 // New creates a new Proxy instance
-func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy {
+func New(cfg *config.Config, statsStorage StatsStorage, sqliteStorage *storage.SQLiteStorage, deviceID string) *Proxy {
 	stats := NewStats(statsStorage, deviceID)
 
 	// Create a reusable HTTP client with connection pool
@@ -61,7 +63,7 @@ func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy 
 			IdleConnTimeout:        90 * time.Second,
 			TLSHandshakeTimeout:    10 * time.Second,
 			ExpectContinueTimeout:  1 * time.Second,
-			ResponseHeaderTimeout:  30 * time.Second,
+			ResponseHeaderTimeout:  90 * time.Second,
 			WriteBufferSize:        128 * 1024, // 128KB write buffer for large SSE streams
 			ReadBufferSize:         128 * 1024, // 128KB read buffer for large SSE streams
 			MaxResponseHeaderBytes: 64 * 1024,  // 64KB max response headers
@@ -70,6 +72,7 @@ func New(cfg *config.Config, statsStorage StatsStorage, deviceID string) *Proxy 
 
 	return &Proxy{
 		config:         cfg,
+		storage:        sqliteStorage,
 		stats:          stats,
 		currentIndex:   0,
 		httpClient:     httpClient,
@@ -239,7 +242,9 @@ func (p *Proxy) rotateEndpoint() config.Endpoint {
 	p.currentIndex = (oldIndex + 1) % len(endpoints)
 
 	newEndpoint := endpoints[p.currentIndex]
-	logger.Debug("[SWITCH] %s → %s (#%d)", oldEndpoint.Name, newEndpoint.Name, p.currentIndex+1)
+	if len(endpoints) > 1 && oldEndpoint.Name != newEndpoint.Name {
+		logger.Debug("[SWITCH] %s → %s (#%d)", oldEndpoint.Name, newEndpoint.Name, p.currentIndex+1)
+	}
 
 	return newEndpoint
 }
@@ -331,9 +336,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	maxRetries := len(endpoints) * 2
+	maxRetries := p.computeMaxRetries(endpoints)
 	endpointAttempts := 0
 	lastEndpointName := ""
+	refreshedCredentialAttempts := make(map[int64]bool)
 
 	for retry := 0; retry < maxRetries; retry++ {
 		endpoint := p.getCurrentEndpoint()
@@ -350,6 +356,58 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		endpointAttempts++
 		p.markRequestActive(endpoint.Name)
+
+		authMode := config.NormalizeAuthMode(endpoint.AuthMode)
+		apiKey := strings.TrimSpace(endpoint.APIKey)
+		credentialID := int64(0)
+		var selectedCredential *storage.EndpointCredential
+		if config.IsTokenPoolAuthMode(authMode) {
+			credential, err := p.selectCredential(endpoint.Name)
+			if err != nil {
+				logger.Warn("[%s] Failed to select token pool credential: %v", endpoint.Name, err)
+				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
+				if endpointAttempts >= 2 {
+					p.rotateEndpoint()
+					endpointAttempts = 0
+				}
+				continue
+			}
+			if credential == nil || strings.TrimSpace(credential.AccessToken) == "" {
+				logger.Warn("[%s] No usable token in token pool", endpoint.Name)
+				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
+				if endpointAttempts >= 2 {
+					p.rotateEndpoint()
+					endpointAttempts = 0
+				}
+				continue
+			}
+			selectedCredential = credential
+			if shouldTryCredentialRefresh(credential, time.Now().UTC()) {
+				refreshed, refreshErr := p.refreshCredential(endpoint, credential)
+				if refreshErr != nil {
+					logger.Warn("[%s] Preflight credential refresh failed (id=%d): %v", endpoint.Name, credential.ID, refreshErr)
+				} else {
+					selectedCredential = refreshed
+					refreshedCredentialAttempts[refreshed.ID] = true
+				}
+			}
+			apiKey = strings.TrimSpace(credential.AccessToken)
+			if selectedCredential != nil {
+				apiKey = strings.TrimSpace(selectedCredential.AccessToken)
+				credentialID = selectedCredential.ID
+			}
+		} else if apiKey == "" {
+			logger.Warn("[%s] API key mode but apiKey is empty", endpoint.Name)
+			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
+			if endpointAttempts >= 2 {
+				p.rotateEndpoint()
+				endpointAttempts = 0
+			}
+			continue
+		}
 
 		trans, err := prepareTransformerForClient(clientFormat, endpoint)
 		if err != nil {
@@ -397,7 +455,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		proxyReq, err := buildProxyRequest(r, endpoint, transformedBody, transformerName)
+		proxyReq, err := buildProxyRequest(r, endpoint, apiKey, transformedBody, transformerName, selectedCredential)
 		if err != nil {
 			logger.Error("[%s] Failed to create request: %v", endpoint.Name, err)
 			p.stats.RecordError(endpoint.Name)
@@ -413,6 +471,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		resp, err := sendRequest(ctx, proxyReq, p.httpClient, p.config)
 		if err != nil {
 			logger.Error("[%s] Request failed: %v", endpoint.Name, err)
+			if isTransientNetworkError(err) {
+				logger.Warn("[%s] Transient network error, retrying same endpoint: %v", endpoint.Name, err)
+				p.markRequestInactive(endpoint.Name)
+				time.Sleep(300 * time.Millisecond)
+				endpointAttempts = 0
+				continue
+			}
+			p.markCredentialFailure(credentialID, 0, err.Error())
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -423,7 +489,39 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentType := resp.Header.Get("Content-Type")
-		isStreaming := contentType == "text/event-stream" || (streamReq.Stream && strings.Contains(contentType, "text/event-stream"))
+		isStreaming := shouldHandleAsStreamingResponse(contentType, streamReq.Stream, endpoint, transformerName)
+		logger.Debug("[%s] Upstream response status=%d content-type=%s (client stream=%v)", endpoint.Name, resp.StatusCode, contentType, streamReq.Stream)
+
+		// Codex backend enforces stream=true upstream for /responses in some environments.
+		// Bridge to non-stream client responses regardless of upstream Content-Type quirks.
+		if resp.StatusCode == http.StatusOK && !streamReq.Stream && shouldAggregateCodexStreaming(endpoint, transformerName) {
+			inputTokens, outputTokens, outputText, err := p.handleStreamingAsNonStreaming(w, resp, endpoint, trans)
+			if err == nil {
+				// Fallback: estimate tokens when usage is missing.
+				if inputTokens == 0 || outputTokens == 0 {
+					inputTokens, outputTokens = p.estimateTokens(bodyBytes, outputText, inputTokens, outputTokens, endpoint.Name)
+				}
+
+				p.stats.RecordRequest(endpoint.Name)
+				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+				p.markCredentialSuccess(credentialID)
+				p.markRequestInactive(endpoint.Name)
+				if p.onEndpointSuccess != nil {
+					p.onEndpointSuccess(endpoint.Name)
+				}
+				logger.Debug("[%s] Request completed successfully (aggregated non-stream)", endpoint.Name)
+				return
+			}
+			logger.Warn("[%s] Failed to aggregate streaming response as non-stream: %v", endpoint.Name, err)
+			p.markCredentialFailure(credentialID, 0, err.Error())
+			p.stats.RecordError(endpoint.Name)
+			p.markRequestInactive(endpoint.Name)
+			if endpointAttempts >= 2 {
+				p.rotateEndpoint()
+				endpointAttempts = 0
+			}
+			continue
+		}
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
 			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes)
@@ -435,6 +533,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			p.stats.RecordRequest(endpoint.Name)
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+			p.markCredentialSuccess(credentialID)
 			p.markRequestInactive(endpoint.Name)
 			if p.onEndpointSuccess != nil {
 				p.onEndpointSuccess(endpoint.Name)
@@ -448,6 +547,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				p.stats.RecordRequest(endpoint.Name)
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+				p.markCredentialSuccess(credentialID)
 				p.markRequestInactive(endpoint.Name)
 				if p.onEndpointSuccess != nil {
 					p.onEndpointSuccess(endpoint.Name)
@@ -471,6 +571,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 			logger.Warn("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
+			p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -487,12 +588,64 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			respBody, _ = io.ReadAll(resp.Body)
 		}
 		resp.Body.Close()
+		skipCredentialPenalty := false
+
+		// Token pool mode: on 401/403, invalidate current credential and retry within the same endpoint.
+		if (resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden) && credentialID > 0 {
+			errMsg := string(respBody)
+			if len(errMsg) > 500 {
+				errMsg = errMsg[:500] + "..."
+			}
+			if !shouldTreatCredentialAuthFailure(resp.StatusCode, errMsg) {
+				skipCredentialPenalty = true
+				logger.Warn("[%s] Upstream %d looks like route/gateway denial, skipping credential invalidation", endpoint.Name, resp.StatusCode)
+			}
+			if skipCredentialPenalty {
+				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
+			} else {
+				if selectedCredential != nil &&
+					isCodexProviderType(selectedCredential.ProviderType) &&
+					strings.TrimSpace(selectedCredential.RefreshToken) != "" &&
+					!refreshedCredentialAttempts[credentialID] {
+					refreshedCredentialAttempts[credentialID] = true
+					refreshed, refreshErr := p.refreshCredential(endpoint, selectedCredential)
+					if refreshErr == nil {
+						logger.Info("[%s] Credential refreshed after %d, retrying with updated token (id=%d)", endpoint.Name, resp.StatusCode, credentialID)
+						p.markRequestInactive(endpoint.Name)
+						endpointAttempts = 0
+						if refreshed != nil && refreshed.ID > 0 {
+							refreshedCredentialAttempts[refreshed.ID] = true
+						}
+						continue
+					}
+					logger.Warn("[%s] Credential refresh failed after %d (id=%d): %v", endpoint.Name, resp.StatusCode, credentialID, refreshErr)
+				}
+				p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
+				p.stats.RecordError(endpoint.Name)
+				p.markRequestInactive(endpoint.Name)
+				endpointAttempts = 0
+				logger.Warn("[%s] Credential auth failed (%d), retrying with next token", endpoint.Name, resp.StatusCode)
+				continue
+			}
+		}
+
 		p.markRequestInactive(endpoint.Name)
 		// Log non-200 responses for debugging
 		if resp.StatusCode != http.StatusOK {
 			errMsg := string(respBody)
 			if len(errMsg) > 500 {
 				errMsg = errMsg[:500] + "..."
+			}
+			if resp.StatusCode == http.StatusBadRequest &&
+				strings.Contains(errMsg, "api.responses.write") &&
+				strings.Contains(transformerName, "openai2") {
+				logger.Warn("[%s] Upstream rejected /v1/responses scope (api.responses.write). Try transformer=openai (chat/completions) for this token.", endpoint.Name)
+			}
+			if skipCredentialPenalty {
+				p.markCredentialFailure(credentialID, 0, errMsg)
+			} else {
+				p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
 			}
 			logger.Warn("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
@@ -512,4 +665,123 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.Error(w, "All endpoints failed", http.StatusServiceUnavailable)
+}
+
+func (p *Proxy) selectCredential(endpointName string) (*storage.EndpointCredential, error) {
+	if p.storage == nil {
+		return nil, nil
+	}
+	return p.storage.GetUsableEndpointCredential(endpointName, time.Now().UTC())
+}
+
+func (p *Proxy) markCredentialSuccess(credentialID int64) {
+	if credentialID <= 0 || p.storage == nil {
+		return
+	}
+	if err := p.storage.MarkCredentialSuccess(credentialID, time.Now().UTC()); err != nil {
+		logger.Warn("Failed to mark credential success (id=%d): %v", credentialID, err)
+	}
+}
+
+func (p *Proxy) markCredentialFailure(credentialID int64, statusCode int, errMsg string) {
+	if credentialID <= 0 || p.storage == nil {
+		return
+	}
+	if err := p.storage.MarkCredentialFailure(credentialID, statusCode, errMsg, time.Now().UTC()); err != nil {
+		logger.Warn("Failed to mark credential failure (id=%d): %v", credentialID, err)
+	}
+}
+
+func (p *Proxy) computeMaxRetries(endpoints []config.Endpoint) int {
+	baseRetries := len(endpoints) * 2
+	if p.storage == nil || len(endpoints) == 0 {
+		return baseRetries
+	}
+
+	extraRetries := 0
+	for _, endpoint := range endpoints {
+		if !config.IsTokenPoolAuthMode(endpoint.AuthMode) {
+			continue
+		}
+
+		stats, err := p.storage.GetTokenPoolStats(endpoint.Name)
+		if err != nil {
+			logger.Warn("[%s] Failed to load token pool stats: %v", endpoint.Name, err)
+			continue
+		}
+
+		usable := stats.Active + stats.Expiring + stats.NeedRefresh
+		if usable > 1 {
+			extraRetries += usable - 1
+		}
+	}
+
+	maxRetries := baseRetries + extraRetries
+	if maxRetries < baseRetries {
+		return baseRetries
+	}
+	return maxRetries
+}
+
+func shouldAggregateCodexStreaming(endpoint config.Endpoint, transformerName string) bool {
+	if !strings.Contains(transformerName, "openai2") {
+		return false
+	}
+	url := strings.ToLower(strings.TrimSpace(endpoint.APIUrl))
+	return strings.Contains(url, "chatgpt.com/backend-api/codex")
+}
+
+// shouldHandleAsStreamingResponse determines if an upstream 200 response should be
+// processed as SSE. Some Codex upstreams intermittently omit Content-Type even when
+// stream=true and body is SSE.
+func shouldHandleAsStreamingResponse(contentType string, clientRequestedStream bool, endpoint config.Endpoint, transformerName string) bool {
+	if strings.Contains(strings.ToLower(strings.TrimSpace(contentType)), "text/event-stream") {
+		return true
+	}
+	if !clientRequestedStream {
+		return false
+	}
+	// Codex /responses may return SSE with an empty content-type header.
+	if shouldAggregateCodexStreaming(endpoint, transformerName) {
+		return true
+	}
+	return false
+}
+
+func shouldTreatCredentialAuthFailure(statusCode int, body string) bool {
+	if statusCode == http.StatusUnauthorized {
+		return true
+	}
+	if statusCode != http.StatusForbidden {
+		return false
+	}
+
+	lower := strings.ToLower(strings.TrimSpace(body))
+	if strings.HasPrefix(lower, "<!doctype html") ||
+		strings.HasPrefix(lower, "<html") ||
+		strings.Contains(lower, "<head>") ||
+		strings.Contains(lower, "<body") {
+		return false
+	}
+	return true
+}
+
+func isTransientNetworkError(err error) bool {
+	if err == nil {
+		return false
+	}
+	message := strings.ToLower(strings.TrimSpace(err.Error()))
+	if strings.Contains(message, "eof") {
+		return true
+	}
+	if strings.Contains(message, "timeout awaiting response headers") {
+		return true
+	}
+	if strings.Contains(message, "i/o timeout") {
+		return true
+	}
+	if strings.Contains(message, "connection reset by peer") {
+		return true
+	}
+	return false
 }

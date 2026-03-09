@@ -72,6 +72,22 @@ class APIClient {
         return this.request('POST', '/endpoints/fetch-models', { apiUrl, apiKey, transformer });
     }
 
+    async getEndpointCredentials(name) {
+        return this.request('GET', `/endpoints/${encodeURIComponent(name)}/credentials`);
+    }
+
+    async importEndpointCredentials(name, data) {
+        return this.request('POST', `/endpoints/${encodeURIComponent(name)}/credentials/import`, data);
+    }
+
+    async updateEndpointCredential(name, id, data) {
+        return this.request('PATCH', `/endpoints/${encodeURIComponent(name)}/credentials/${id}`, data);
+    }
+
+    async deleteEndpointCredential(name, id) {
+        return this.request('DELETE', `/endpoints/${encodeURIComponent(name)}/credentials/${id}`);
+    }
+
     // Statistics
     async getStatsSummary() {
         return this.request('GET', '/stats/summary');

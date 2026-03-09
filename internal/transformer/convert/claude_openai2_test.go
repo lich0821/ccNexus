@@ -120,6 +120,35 @@ func TestOpenAI2StreamToClaudeCompletesWithoutDone(t *testing.T) {
 	}
 }
 
+func TestOpenAI2StreamToClaudePropagatesUsageFromCompleted(t *testing.T) {
+	ctx := transformer.NewStreamContext()
+	ctx.ModelName = "claude-3-sonnet-20240229"
+
+	chunks := []string{
+		`data: {"type":"response.created","response":{"id":"resp_1","object":"response","status":"in_progress"}}`,
+		`data: {"type":"response.completed","response":{"id":"resp_1","object":"response","status":"completed","usage":{"input_tokens":7,"output_tokens":3,"total_tokens":10}}}`,
+	}
+
+	var allEvents []string
+	for _, chunk := range chunks {
+		events, err := OpenAI2StreamToClaude([]byte(chunk), ctx)
+		if err != nil {
+			t.Fatalf("OpenAI2StreamToClaude failed: %v", err)
+		}
+		if events != nil {
+			allEvents = append(allEvents, string(events))
+		}
+	}
+
+	fullEvents := strings.Join(allEvents, "")
+	if !strings.Contains(fullEvents, `"usage":{"output_tokens":3}`) {
+		t.Fatalf("expected message_delta usage output_tokens=3, got: %s", fullEvents)
+	}
+	if ctx.InputTokens != 7 || ctx.OutputTokens != 3 {
+		t.Fatalf("expected context usage input=7 output=3, got input=%d output=%d", ctx.InputTokens, ctx.OutputTokens)
+	}
+}
+
 func TestClaudeReqToOpenAI2PreservesToolChain(t *testing.T) {
 	claudeReq := `{
 		"model": "claude-sonnet-4-20250514",
@@ -245,6 +274,12 @@ func TestClaudeReqToOpenAI2MapsToolChoiceAnyToRequired(t *testing.T) {
 
 	if req["tool_choice"] != "required" {
 		t.Fatalf("expected tool_choice=required, got %#v", req["tool_choice"])
+	}
+	if _, ok := req["store"]; ok {
+		t.Fatalf("did not expect store in generic claude->openai2 conversion, got %#v", req["store"])
+	}
+	if _, ok := req["instructions"]; ok {
+		t.Fatalf("did not expect instructions without system prompt, got %#v", req["instructions"])
 	}
 }
 

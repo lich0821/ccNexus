@@ -17,6 +17,7 @@
 
 - **多端点轮换**：自动故障转移，一个失败自动切换下一个
 - **API 格式转换**：支持 Claude、OpenAI、Gemini 格式互转
+- **Codex Token Pool**：支持批量导入 `access_token/refresh_token`，自动轮换、自动刷新、失效隔离与状态管理
 - **实时统计**：事件驱动的零延迟统计更新，支持今日/昨日/本周/本月四周期快速切换
 - **端点筛选**：按类型、可用性、启用状态多选筛选，快速定位端点
 - **WebDAV 同步**：多设备间同步配置和数据
@@ -42,7 +43,12 @@
 
 ### 2. 添加端点
 
-点击「添加端点」，填写 API 地址、密钥、选择转换器（claude/openai/gemini）。
+点击「添加端点」，填写 API 地址、密钥、选择转换器（claude/openai/gemini/openai2）。
+
+如需使用 Codex Token Pool：
+- 认证方式选择 `Codex Token Pool`
+- 在 Token Pool 页面导入一批 token JSON（支持 `access_token` + `refresh_token`）
+- 系统会自动进行 token 轮换、401 后刷新与状态管理（active/expiring/need_refresh/invalid 等）
 
 ### 3. 配置 CC
 

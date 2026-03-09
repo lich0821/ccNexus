@@ -1,9 +1,14 @@
 import { t } from '../i18n/index.js';
 import { escapeHtml } from '../utils/format.js';
 import { addEndpoint, updateEndpoint, removeEndpoint, testEndpoint, testEndpointLight, updatePort } from './config.js';
-import { setTestState, clearTestState, saveEndpointTestStatus } from './endpoints.js';
+import { setTestState, clearTestState, saveEndpointTestStatus, openTokenPoolModal } from './endpoints.js';
 
 let currentEditIndex = -1;
+const AUTH_MODE_API_KEY = 'api_key';
+const AUTH_MODE_TOKEN_POOL = 'token_pool';
+const AUTH_MODE_CODEX_TOKEN_POOL = 'codex_token_pool';
+const CODEX_FIXED_API_URL = 'https://chatgpt.com/backend-api/codex';
+const CODEX_FIXED_TRANSFORMER = 'openai2';
 
 // Show error toast
 function showError(message) {
@@ -94,52 +99,163 @@ export function togglePasswordVisibility() {
     }
 }
 
+function getEndpointAuthMode() {
+    const mode = document.getElementById('endpointAuthMode')?.value;
+    if (mode === AUTH_MODE_CODEX_TOKEN_POOL) {
+        return AUTH_MODE_CODEX_TOKEN_POOL;
+    }
+    if (mode === AUTH_MODE_TOKEN_POOL) {
+        return AUTH_MODE_TOKEN_POOL;
+    }
+    return AUTH_MODE_API_KEY;
+}
+
+function isTokenPoolMode(mode) {
+    return mode === AUTH_MODE_TOKEN_POOL || mode === AUTH_MODE_CODEX_TOKEN_POOL;
+}
+
+function isCodexTokenPoolMode(mode) {
+    return mode === AUTH_MODE_CODEX_TOKEN_POOL;
+}
+
+function updateManageTokenPoolButton() {
+    const btn = document.getElementById('manageTokenPoolBtn');
+    if (!btn) {
+        return;
+    }
+    const isEditMode = currentEditIndex >= 0;
+    const isTokenPool = isTokenPoolMode(getEndpointAuthMode());
+    btn.style.display = isEditMode && isTokenPool ? 'inline-block' : 'none';
+}
+
+export function handleAuthModeChange() {
+	const authMode = getEndpointAuthMode();
+	const keyGroup = document.getElementById('endpointKeyGroup');
+	const keyInput = document.getElementById('endpointKey');
+	const fetchModelsBtn = document.getElementById('fetchModelsBtn');
+	const urlHelp = document.getElementById('endpointUrlHelp');
+	const urlInput = document.getElementById('endpointUrl');
+	const transformerSelect = document.getElementById('endpointTransformer');
+
+	const isTokenPool = isTokenPoolMode(authMode);
+	const isCodexTokenPool = isCodexTokenPoolMode(authMode);
+    if (keyGroup) {
+        keyGroup.style.display = isTokenPool ? 'none' : 'block';
+    }
+	if (keyInput) {
+		keyInput.disabled = isTokenPool;
+	}
+	if (urlInput) {
+		urlInput.disabled = isCodexTokenPool;
+		urlInput.readOnly = isCodexTokenPool;
+		urlInput.classList.toggle('field-locked', isCodexTokenPool);
+		urlInput.title = isCodexTokenPool ? t('modal.codexLockedFieldTip') : '';
+		if (isCodexTokenPool) {
+			urlInput.value = CODEX_FIXED_API_URL;
+		}
+	}
+	if (transformerSelect) {
+		transformerSelect.disabled = isCodexTokenPool;
+		transformerSelect.classList.toggle('field-locked', isCodexTokenPool);
+		transformerSelect.title = isCodexTokenPool ? t('modal.codexLockedFieldTip') : '';
+		if (isCodexTokenPool) {
+			transformerSelect.value = CODEX_FIXED_TRANSFORMER;
+		}
+	}
+	if (fetchModelsBtn) {
+		fetchModelsBtn.disabled = false;
+		fetchModelsBtn.title = isTokenPool ? t('modal.fetchModelsUsingTokenPool') : t('modal.fetchModels');
+	}
+	if (urlHelp) {
+		if (isCodexTokenPool) {
+			urlHelp.textContent = t('modal.codexTokenPoolApiUrlHelp');
+		} else {
+			urlHelp.textContent = isTokenPool ? t('modal.tokenPoolApiUrlHelp') : t('modal.apiUrlHelp');
+		}
+	}
+	if (isCodexTokenPool) {
+		handleTransformerChange();
+	}
+	updateManageTokenPoolButton();
+}
+
 // Endpoint Modal
 export function showAddEndpointModal() {
-    currentEditIndex = -1;
-    document.getElementById('modalTitle').textContent = '➕ ' + t('modal.addEndpoint');
+	currentEditIndex = -1;
+	document.getElementById('modalTitle').textContent = '➕ ' + t('modal.addEndpoint');
     document.getElementById('endpointName').value = '';
     document.getElementById('endpointUrl').value = '';
     document.getElementById('endpointKey').value = '';
     document.getElementById('endpointKey').type = 'password';
     document.getElementById('eyeIcon').innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    document.getElementById('endpointAuthMode').value = 'api_key';
     document.getElementById('endpointTransformer').value = 'claude';
     document.getElementById('endpointModel').value = '';
     document.getElementById('endpointRemark').value = '';
+    handleAuthModeChange();
+    updateManageTokenPoolButton();
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
 }
 
 export async function editEndpoint(index) {
-    currentEditIndex = index;
-    const configStr = await window.go.main.App.GetConfig();
-    const config = JSON.parse(configStr);
-    const ep = config.endpoints[index];
+	currentEditIndex = index;
+	const configStr = await window.go.main.App.GetConfig();
+	const config = JSON.parse(configStr);
+	const ep = config.endpoints[index];
 
-    document.getElementById('modalTitle').textContent = '✏️ ' + t('modal.editEndpoint');
+	document.getElementById('modalTitle').textContent = '✏️ ' + t('modal.editEndpoint');
     document.getElementById('endpointName').value = ep.name;
     document.getElementById('endpointUrl').value = ep.apiUrl;
     document.getElementById('endpointKey').value = ep.apiKey;
     document.getElementById('endpointKey').type = 'password';
     document.getElementById('eyeIcon').innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    document.getElementById('endpointAuthMode').value = ep.authMode || 'api_key';
     document.getElementById('endpointTransformer').value = ep.transformer || 'claude';
     document.getElementById('endpointModel').value = ep.model || '';
     document.getElementById('endpointRemark').value = ep.remark || '';
 
+    handleAuthModeChange();
+    updateManageTokenPoolButton();
     handleTransformerChange();
     document.getElementById('endpointModal').classList.add('active');
 }
 
+export async function openEndpointTokenPoolFromModal() {
+    if (currentEditIndex < 0) {
+        return;
+    }
+    if (!isTokenPoolMode(getEndpointAuthMode())) {
+        showNotification(t('modal.tokenPoolOnlyForTokenMode'), 'warning');
+        return;
+    }
+    const endpointName = document.getElementById('endpointName')?.value?.trim() || '';
+    closeModal();
+    await openTokenPoolModal(currentEditIndex, endpointName);
+}
+
 export async function saveEndpoint() {
-    const name = document.getElementById('endpointName').value.trim();
-    const url = document.getElementById('endpointUrl').value.trim();
-    const key = document.getElementById('endpointKey').value.trim();
-    const transformer = document.getElementById('endpointTransformer').value;
+	const name = document.getElementById('endpointName').value.trim();
+	let url = document.getElementById('endpointUrl').value.trim();
+	let key = document.getElementById('endpointKey').value.trim();
+	const authMode = getEndpointAuthMode();
+	let transformer = document.getElementById('endpointTransformer').value;
     const model = document.getElementById('endpointModel').value.trim();
     const remark = document.getElementById('endpointRemark').value.trim();
+    const isCodexTokenPool = isCodexTokenPoolMode(authMode);
 
-    if (!name || !url || !key) {
+    if (isCodexTokenPool) {
+        url = CODEX_FIXED_API_URL;
+        transformer = CODEX_FIXED_TRANSFORMER;
+        key = '';
+    }
+
+    if (!name || !url) {
         showError(t('modal.requiredFields'));
+        return;
+    }
+    if (authMode === AUTH_MODE_API_KEY && !key) {
+        showError(t('modal.requiredApiKey'));
         return;
     }
 
@@ -162,9 +278,9 @@ export async function saveEndpoint() {
 
     try {
         if (currentEditIndex === -1) {
-            await addEndpoint(name, url, key, transformer, model, remark);
+            await addEndpoint(name, url, key, authMode, transformer, model, remark);
         } else {
-            await updateEndpoint(currentEditIndex, name, url, key, transformer, model, remark);
+            await updateEndpoint(currentEditIndex, name, url, key, authMode, transformer, model, remark);
         }
 
         closeModal();
@@ -230,9 +346,11 @@ let fetchedModels = [];
 
 // Fetch models from API
 export async function fetchModels() {
-    const apiUrl = document.getElementById('endpointUrl').value.trim();
+    const authMode = getEndpointAuthMode();
+    const isCodexTokenPool = isCodexTokenPoolMode(authMode);
+    const apiUrl = isCodexTokenPool ? CODEX_FIXED_API_URL : document.getElementById('endpointUrl').value.trim();
     const apiKey = document.getElementById('endpointKey').value.trim();
-    const transformer = document.getElementById('endpointTransformer').value;
+    const transformer = isCodexTokenPool ? CODEX_FIXED_TRANSFORMER : document.getElementById('endpointTransformer').value;
     const fetchBtn = document.getElementById('fetchModelsBtn');
     const fetchIcon = document.getElementById('fetchModelsIcon');
     const modelInput = document.getElementById('endpointModel');
@@ -243,7 +361,7 @@ export async function fetchModels() {
         showNotification(t('modal.fetchModelsNoUrl'), 'error');
         return;
     }
-    if (!apiKey) {
+    if (!isTokenPoolMode(authMode) && !apiKey) {
         showNotification(t('modal.fetchModelsNoKey'), 'error');
         return;
     }

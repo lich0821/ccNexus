@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/lich0821/ccNexus/internal/config"
 	_ "modernc.org/sqlite"
 )
 
@@ -88,11 +89,35 @@ func (s *SQLiteStorage) initSchema() error {
 		name TEXT UNIQUE NOT NULL,
 		api_url TEXT NOT NULL,
 		api_key TEXT NOT NULL,
+		auth_mode TEXT NOT NULL DEFAULT 'api_key',
 		enabled BOOLEAN DEFAULT TRUE,
 		transformer TEXT DEFAULT 'claude',
 		model TEXT,
 		remark TEXT,
 		sort_order INTEGER DEFAULT 0,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS endpoint_credentials (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		endpoint_name TEXT NOT NULL,
+		provider_type TEXT NOT NULL DEFAULT 'codex',
+		account_id TEXT,
+		email TEXT,
+		access_token TEXT NOT NULL,
+		refresh_token TEXT,
+		id_token TEXT,
+		last_refresh DATETIME,
+		expires_at DATETIME,
+		status TEXT NOT NULL DEFAULT 'active',
+		enabled BOOLEAN DEFAULT TRUE,
+		failure_count INTEGER DEFAULT 0,
+		cooldown_until DATETIME,
+		last_checked_at DATETIME,
+		last_used_at DATETIME,
+		last_error TEXT,
+		remark TEXT,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
@@ -119,6 +144,9 @@ func (s *SQLiteStorage) initSchema() error {
 	CREATE INDEX IF NOT EXISTS idx_daily_stats_date ON daily_stats(date);
 	CREATE INDEX IF NOT EXISTS idx_daily_stats_endpoint ON daily_stats(endpoint_name);
 	CREATE INDEX IF NOT EXISTS idx_daily_stats_device ON daily_stats(device_id);
+	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_endpoint ON endpoint_credentials(endpoint_name);
+	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_status ON endpoint_credentials(status);
+	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_expires_at ON endpoint_credentials(expires_at);
 	`
 
 	if _, err := s.db.Exec(schema); err != nil {
@@ -127,6 +155,9 @@ func (s *SQLiteStorage) initSchema() error {
 
 	// Migration: Add sort_order column if it doesn't exist
 	if err := s.migrateSortOrder(); err != nil {
+		return err
+	}
+	if err := s.migrateAuthMode(); err != nil {
 		return err
 	}
 
@@ -158,11 +189,28 @@ func (s *SQLiteStorage) migrateSortOrder() error {
 	return nil
 }
 
+func (s *SQLiteStorage) migrateAuthMode() error {
+	var count int
+	err := s.db.QueryRow(`SELECT COUNT(*) FROM pragma_table_info('endpoints') WHERE name='auth_mode'`).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	if count == 0 {
+		if _, err := s.db.Exec(`ALTER TABLE endpoints ADD COLUMN auth_mode TEXT NOT NULL DEFAULT 'api_key'`); err != nil {
+			return err
+		}
+	}
+
+	_, err = s.db.Exec(`UPDATE endpoints SET auth_mode='api_key' WHERE auth_mode IS NULL OR auth_mode=''`)
+	return err
+}
+
 func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, sort_order, created_at, updated_at FROM endpoints ORDER BY sort_order ASC`)
+	rows, err := s.db.Query(`SELECT id, name, api_url, api_key, auth_mode, enabled, transformer, model, remark, sort_order, created_at, updated_at FROM endpoints ORDER BY sort_order ASC`)
 	if err != nil {
 		return nil, err
 	}
@@ -171,9 +219,10 @@ func (s *SQLiteStorage) GetEndpoints() ([]Endpoint, error) {
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.AuthMode, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
 		}
+		normalizeEndpointAuthMode(&ep)
 		endpoints = append(endpoints, ep)
 	}
 
@@ -184,8 +233,10 @@ func (s *SQLiteStorage) SaveEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, enabled, transformer, model, remark, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-		ep.Name, ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder)
+	normalizeEndpointAuthMode(ep)
+
+	result, err := s.db.Exec(`INSERT INTO endpoints (name, api_url, api_key, auth_mode, enabled, transformer, model, remark, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		ep.Name, ep.APIUrl, ep.APIKey, ep.AuthMode, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder)
 	if err != nil {
 		return err
 	}
@@ -202,14 +253,20 @@ func (s *SQLiteStorage) UpdateEndpoint(ep *Endpoint) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, enabled=?, transformer=?, model=?, remark=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
-		ep.APIUrl, ep.APIKey, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder, ep.Name)
+	normalizeEndpointAuthMode(ep)
+
+	_, err := s.db.Exec(`UPDATE endpoints SET api_url=?, api_key=?, auth_mode=?, enabled=?, transformer=?, model=?, remark=?, sort_order=?, updated_at=CURRENT_TIMESTAMP WHERE name=?`,
+		ep.APIUrl, ep.APIKey, ep.AuthMode, ep.Enabled, ep.Transformer, ep.Model, ep.Remark, ep.SortOrder, ep.Name)
 	return err
 }
 
 func (s *SQLiteStorage) DeleteEndpoint(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if _, err := s.db.Exec(`DELETE FROM endpoint_credentials WHERE endpoint_name=?`, name); err != nil {
+		return err
+	}
 
 	_, err := s.db.Exec(`DELETE FROM endpoints WHERE name=?`, name)
 	return err
@@ -617,7 +674,19 @@ func (s *SQLiteStorage) DetectEndpointConflicts(remoteDBPath string) ([]MergeCon
 
 // getEndpointsFromDB gets endpoints from a specific database (main or attached)
 func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoint, error) {
-	query := fmt.Sprintf(`SELECT id, name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
+	var authModeColumnCount int
+	columnCheck := fmt.Sprintf(`SELECT COUNT(*) FROM %s.pragma_table_info('endpoints') WHERE name='auth_mode'`, dbName)
+	if err := db.QueryRow(columnCheck).Scan(&authModeColumnCount); err != nil {
+		return nil, err
+	}
+
+	query := ""
+	if authModeColumnCount > 0 {
+		query = fmt.Sprintf(`SELECT id, name, api_url, api_key, COALESCE(auth_mode, 'api_key') as auth_mode, enabled, transformer, model, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
+	} else {
+		query = fmt.Sprintf(`SELECT id, name, api_url, api_key, 'api_key' as auth_mode, enabled, transformer, model, remark, COALESCE(sort_order, 0) as sort_order, created_at, updated_at FROM %s.endpoints`, dbName)
+	}
+
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -627,13 +696,40 @@ func (s *SQLiteStorage) getEndpointsFromDB(db *sql.DB, dbName string) ([]Endpoin
 	var endpoints []Endpoint
 	for rows.Next() {
 		var ep Endpoint
-		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
+		if err := rows.Scan(&ep.ID, &ep.Name, &ep.APIUrl, &ep.APIKey, &ep.AuthMode, &ep.Enabled, &ep.Transformer, &ep.Model, &ep.Remark, &ep.SortOrder, &ep.CreatedAt, &ep.UpdatedAt); err != nil {
 			return nil, err
 		}
+		normalizeEndpointAuthMode(&ep)
 		endpoints = append(endpoints, ep)
 	}
 
 	return endpoints, rows.Err()
+}
+
+func normalizeEndpointAuthMode(ep *Endpoint) {
+	if ep == nil {
+		return
+	}
+	normalized := config.Endpoint{
+		Name:        ep.Name,
+		APIUrl:      ep.APIUrl,
+		APIKey:      ep.APIKey,
+		AuthMode:    ep.AuthMode,
+		Enabled:     ep.Enabled,
+		Transformer: ep.Transformer,
+		Model:       ep.Model,
+		Remark:      ep.Remark,
+	}
+	if normalized.Transformer == "" {
+		normalized.Transformer = "claude"
+	}
+	config.ApplyEndpointAuthModeRules(&normalized)
+	ep.APIUrl = normalized.APIUrl
+	ep.APIKey = normalized.APIKey
+	ep.AuthMode = normalized.AuthMode
+	ep.Transformer = normalized.Transformer
+	ep.Model = normalized.Model
+	ep.Remark = normalized.Remark
 }
 
 // compareEndpoints compares two endpoints and returns conflicting fields
@@ -645,6 +741,9 @@ func compareEndpoints(local, remote Endpoint) []string {
 	}
 	if local.APIKey != remote.APIKey {
 		conflicts = append(conflicts, "apiKey")
+	}
+	if config.NormalizeAuthMode(local.AuthMode) != config.NormalizeAuthMode(remote.AuthMode) {
+		conflicts = append(conflicts, "authMode")
 	}
 	if local.Enabled != remote.Enabled {
 		conflicts = append(conflicts, "enabled")
@@ -714,24 +813,34 @@ func (s *SQLiteStorage) MergeFromBackup(backupDBPath string, strategy MergeStrat
 
 // mergeEndpoints 根据策略合并端点配置
 func (s *SQLiteStorage) mergeEndpoints(tx *sql.Tx, strategy MergeStrategy) error {
+	var backupHasAuthMode int
+	if err := tx.QueryRow(`SELECT COUNT(*) FROM backup.pragma_table_info('endpoints') WHERE name='auth_mode'`).Scan(&backupHasAuthMode); err != nil {
+		return err
+	}
+
+	selectAuthMode := "'api_key'"
+	if backupHasAuthMode > 0 {
+		selectAuthMode = "COALESCE(auth_mode, 'api_key')"
+	}
+
 	switch strategy {
 	case MergeStrategyKeepLocal:
 		// 只插入新端点（忽略冲突）
-		_, err := tx.Exec(`
+		_, err := tx.Exec(fmt.Sprintf(`
 			INSERT OR IGNORE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, auth_mode, enabled, transformer, model, remark, sort_order)
+			SELECT name, api_url, api_key, %s, enabled, transformer, model, remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
-		`)
+		`, selectAuthMode))
 		return err
 	case MergeStrategyOverwriteLocal:
 		// 替换已存在的端点
-		_, err := tx.Exec(`
+		_, err := tx.Exec(fmt.Sprintf(`
 			INSERT OR REPLACE INTO endpoints
-			(name, api_url, api_key, enabled, transformer, model, remark, sort_order)
-			SELECT name, api_url, api_key, enabled, transformer, model, remark, COALESCE(sort_order, 0)
+			(name, api_url, api_key, auth_mode, enabled, transformer, model, remark, sort_order)
+			SELECT name, api_url, api_key, %s, enabled, transformer, model, remark, COALESCE(sort_order, 0)
 			FROM backup.endpoints
-		`)
+		`, selectAuthMode))
 		return err
 	default:
 		return fmt.Errorf("unknown merge strategy: %s", strategy)

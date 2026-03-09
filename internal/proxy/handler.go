@@ -35,6 +35,9 @@ func (p *Proxy) handleHealth(w http.ResponseWriter, r *http.Request) {
 
 // maskAPIKey masks an API key for security, showing only first 4 and last 4 characters
 func maskAPIKey(key string) string {
+	if key == "" {
+		return ""
+	}
 	if len(key) <= 8 {
 		return "****"
 	}

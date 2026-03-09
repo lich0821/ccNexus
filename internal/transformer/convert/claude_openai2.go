@@ -523,12 +523,18 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 	case "response.created":
 		if evt.Response != nil {
 			ctx.MessageID = evt.Response.ID
+			if evt.Response.Usage.InputTokens > 0 {
+				ctx.InputTokens = evt.Response.Usage.InputTokens
+			}
+			if evt.Response.Usage.OutputTokens > 0 {
+				ctx.OutputTokens = evt.Response.Usage.OutputTokens
+			}
 		}
 		result = append(result, buildClaudeEvent("message_start", map[string]interface{}{
 			"message": map[string]interface{}{
 				"id": ctx.MessageID, "type": "message", "role": "assistant", "content": []interface{}{},
 				"model": ctx.ModelName, "stop_reason": nil, "stop_sequence": nil,
-				"usage": map[string]interface{}{"input_tokens": 0, "output_tokens": 0},
+				"usage": map[string]interface{}{"input_tokens": ctx.InputTokens, "output_tokens": ctx.OutputTokens},
 			},
 		})...)
 
@@ -603,6 +609,14 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 		}
 
 	case "response.completed":
+		if evt.Response != nil {
+			if evt.Response.Usage.InputTokens > 0 {
+				ctx.InputTokens = evt.Response.Usage.InputTokens
+			}
+			if evt.Response.Usage.OutputTokens > 0 {
+				ctx.OutputTokens = evt.Response.Usage.OutputTokens
+			}
+		}
 		emitText, emitThinking := makeThinkEmitters(ctx, &result)
 		flushThinkTaggedStream(ctx, emitText, emitThinking)
 		if ctx.ThinkingBlockStarted {
@@ -619,7 +633,7 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
 			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
-			"usage": map[string]interface{}{"output_tokens": 0},
+			"usage": map[string]interface{}{"output_tokens": ctx.OutputTokens},
 		})...)
 		result = append(result, buildClaudeEvent("message_stop", map[string]interface{}{})...)
 		ctx.FinishReasonSent = true

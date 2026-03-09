@@ -5,10 +5,12 @@ import (
 	_ "embed"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -35,6 +37,24 @@ type WailsInfo struct {
 	Info struct {
 		ProductVersion string `json:"productVersion"`
 	} `json:"info"`
+}
+
+type desktopImportCredentialItem struct {
+	IDToken      string `json:"id_token"`
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	AccountID    string `json:"account_id"`
+	LastRefresh  string `json:"last_refresh"`
+	Email        string `json:"email"`
+	Type         string `json:"type"`
+	Expired      string `json:"expired"`
+	Remark       string `json:"remark"`
+	Enabled      *bool  `json:"enabled"`
+}
+
+type desktopImportCredentialsRequest struct {
+	Items  []desktopImportCredentialItem `json:"items"`
+	Remark string                        `json:"remark"`
 }
 
 // App struct
@@ -121,7 +141,7 @@ func (a *App) startup(ctx context.Context) {
 	}
 
 	statsAdapter := storage.NewStatsStorageAdapter(sqliteStorage)
-	a.proxy = proxy.New(cfg, statsAdapter, deviceID)
+	a.proxy = proxy.New(cfg, statsAdapter, sqliteStorage, deviceID)
 
 	a.proxy.SetOnEndpointSuccess(func(endpointName string) {
 		runtime.EventsEmit(ctx, "endpoint:success", endpointName)
@@ -377,12 +397,12 @@ func (a *App) GetStatsTrendByPeriod(period string) string {
 
 // ========== Endpoint Bindings ==========
 
-func (a *App) AddEndpoint(name, apiUrl, apiKey, transformer, model, remark string) error {
-	return a.endpoint.AddEndpoint(name, apiUrl, apiKey, transformer, model, remark)
+func (a *App) AddEndpoint(name, apiUrl, apiKey, authMode, transformer, model, remark string) error {
+	return a.endpoint.AddEndpoint(name, apiUrl, apiKey, authMode, transformer, model, remark)
 }
 func (a *App) RemoveEndpoint(index int) error { return a.endpoint.RemoveEndpoint(index) }
-func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, transformer, model, remark string) error {
-	return a.endpoint.UpdateEndpoint(index, name, apiUrl, apiKey, transformer, model, remark)
+func (a *App) UpdateEndpoint(index int, name, apiUrl, apiKey, authMode, transformer, model, remark string) error {
+	return a.endpoint.UpdateEndpoint(index, name, apiUrl, apiKey, authMode, transformer, model, remark)
 }
 func (a *App) ToggleEndpoint(index int, enabled bool) error {
 	return a.endpoint.ToggleEndpoint(index, enabled)
@@ -397,6 +417,251 @@ func (a *App) TestEndpointLight(index int) string { return a.endpoint.TestEndpoi
 func (a *App) TestAllEndpointsZeroCost() string   { return a.endpoint.TestAllEndpointsZeroCost() }
 func (a *App) FetchModels(apiUrl, apiKey, transformer string) string {
 	return a.endpoint.FetchModels(apiUrl, apiKey, transformer)
+}
+
+func (a *App) GetEndpointCredentials(index int) string {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+
+	credentials, err := a.storage.GetEndpointCredentials(endpointName)
+	if err != nil {
+		return desktopErrorJSON(fmt.Errorf("failed to get credentials: %w", err))
+	}
+	stats, err := a.storage.GetTokenPoolStats(endpointName)
+	if err != nil {
+		return desktopErrorJSON(fmt.Errorf("failed to get token pool stats: %w", err))
+	}
+
+	for i := range credentials {
+		credentials[i].AccessToken = maskDesktopToken(credentials[i].AccessToken)
+		credentials[i].RefreshToken = maskDesktopToken(credentials[i].RefreshToken)
+		credentials[i].IDToken = maskDesktopToken(credentials[i].IDToken)
+	}
+
+	return desktopSuccessJSON(map[string]interface{}{
+		"credentials": credentials,
+		"stats":       stats,
+	})
+}
+
+func (a *App) ImportEndpointCredentials(index int, payload string, overwrite bool) string {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+
+	request, items, err := parseDesktopImportPayload(payload)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+
+	existing, err := a.storage.GetEndpointCredentials(endpointName)
+	if err != nil {
+		return desktopErrorJSON(fmt.Errorf("failed to get existing credentials: %w", err))
+	}
+
+	accountIndex := make(map[string]storage.EndpointCredential)
+	emailIndex := make(map[string]storage.EndpointCredential)
+	for _, cred := range existing {
+		if cred.AccountID != "" {
+			accountIndex[cred.AccountID] = cred
+		}
+		if cred.Email != "" {
+			emailIndex[cred.Email] = cred
+		}
+	}
+
+	created := 0
+	updated := 0
+	skipped := 0
+	failed := 0
+	errors := make([]string, 0)
+
+	for i, item := range items {
+		if strings.TrimSpace(item.AccessToken) == "" {
+			failed++
+			errors = append(errors, fmt.Sprintf("item[%d]: access_token is required", i))
+			continue
+		}
+
+		expiresAt, err := parseDesktopOptionalTime(item.Expired)
+		if err != nil {
+			failed++
+			errors = append(errors, fmt.Sprintf("item[%d]: invalid expired: %v", i, err))
+			continue
+		}
+		lastRefresh, err := parseDesktopOptionalTime(item.LastRefresh)
+		if err != nil {
+			failed++
+			errors = append(errors, fmt.Sprintf("item[%d]: invalid last_refresh: %v", i, err))
+			continue
+		}
+
+		enabled := true
+		if item.Enabled != nil {
+			enabled = *item.Enabled
+		}
+
+		cred := storage.EndpointCredential{
+			EndpointName: endpointName,
+			ProviderType: strings.TrimSpace(item.Type),
+			AccountID:    strings.TrimSpace(item.AccountID),
+			Email:        strings.TrimSpace(item.Email),
+			AccessToken:  strings.TrimSpace(item.AccessToken),
+			RefreshToken: strings.TrimSpace(item.RefreshToken),
+			IDToken:      strings.TrimSpace(item.IDToken),
+			LastRefresh:  lastRefresh,
+			ExpiresAt:    expiresAt,
+			Status:       "active",
+			Enabled:      enabled,
+			Remark:       strings.TrimSpace(item.Remark),
+		}
+		if cred.ProviderType == "" {
+			cred.ProviderType = "codex"
+		}
+		if cred.Remark == "" {
+			cred.Remark = strings.TrimSpace(request.Remark)
+		}
+
+		existingCredential := findDesktopExistingCredential(accountIndex, emailIndex, &cred)
+		if existingCredential == nil {
+			if err := a.storage.SaveEndpointCredential(&cred); err != nil {
+				failed++
+				errors = append(errors, fmt.Sprintf("item[%d]: save failed: %v", i, err))
+				continue
+			}
+			created++
+		} else {
+			if !overwrite {
+				skipped++
+				continue
+			}
+
+			cred.ID = existingCredential.ID
+			if item.Enabled == nil {
+				cred.Enabled = existingCredential.Enabled
+			}
+			if cred.Remark == "" {
+				cred.Remark = existingCredential.Remark
+			}
+			if cred.RefreshToken == "" {
+				cred.RefreshToken = existingCredential.RefreshToken
+			}
+			if cred.IDToken == "" {
+				cred.IDToken = existingCredential.IDToken
+			}
+			if cred.LastRefresh == nil {
+				cred.LastRefresh = existingCredential.LastRefresh
+			}
+			if cred.ExpiresAt == nil {
+				cred.ExpiresAt = existingCredential.ExpiresAt
+			}
+
+			if err := a.storage.UpdateEndpointCredential(&cred); err != nil {
+				failed++
+				errors = append(errors, fmt.Sprintf("item[%d]: update failed: %v", i, err))
+				continue
+			}
+			updated++
+		}
+
+		if cred.AccountID != "" {
+			accountIndex[cred.AccountID] = cred
+		}
+		if cred.Email != "" {
+			emailIndex[cred.Email] = cred
+		}
+	}
+
+	return desktopSuccessJSON(map[string]interface{}{
+		"created":   created,
+		"updated":   updated,
+		"skipped":   skipped,
+		"failed":    failed,
+		"processed": len(items),
+		"errors":    errors,
+	})
+}
+
+func (a *App) SetEndpointCredentialEnabled(index int, credentialID int64, enabled bool) error {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return err
+	}
+	return a.updateDesktopCredential(endpointName, credentialID, func(cred *storage.EndpointCredential) error {
+		cred.Enabled = enabled
+		return nil
+	})
+}
+
+func (a *App) ActivateEndpointCredential(index int, credentialID int64) error {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return err
+	}
+	return a.updateDesktopCredential(endpointName, credentialID, func(cred *storage.EndpointCredential) error {
+		cred.Status = "active"
+		return nil
+	})
+}
+
+func (a *App) UpdateEndpointCredentialToken(index int, credentialID int64, accessToken, expiresAt string) error {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return err
+	}
+	return a.updateDesktopCredential(endpointName, credentialID, func(cred *storage.EndpointCredential) error {
+		token := strings.TrimSpace(accessToken)
+		if token == "" {
+			return fmt.Errorf("access token is required")
+		}
+		cred.AccessToken = token
+		cred.Status = "active"
+		cred.FailureCount = 0
+		cred.CooldownUntil = nil
+		cred.LastError = ""
+
+		parsedExpiresAt, err := parseDesktopOptionalTime(expiresAt)
+		if err != nil {
+			return fmt.Errorf("invalid expiresAt: %w", err)
+		}
+		cred.ExpiresAt = parsedExpiresAt
+		return nil
+	})
+}
+
+func (a *App) DeleteEndpointCredential(index int, credentialID int64) error {
+	if credentialID <= 0 {
+		return fmt.Errorf("credential id is required")
+	}
+
+	logger.Info("Delete credential request: endpointIndex=%d credentialID=%d", index, credentialID)
+
+	cred, err := a.storage.GetCredentialByID(credentialID)
+	if err != nil {
+		logger.Warn("Delete credential failed to load id=%d: %v", credentialID, err)
+		return fmt.Errorf("failed to get credential: %w", err)
+	}
+	if cred == nil {
+		logger.Warn("Delete credential not found id=%d", credentialID)
+		return fmt.Errorf("credential not found")
+	}
+
+	// Keep index-based ownership check for diagnostics, but delete by credential ID endpoint
+	// to avoid stale index issues after filtering/reordering.
+	if endpointName, idxErr := a.getEndpointNameByIndex(index); idxErr == nil && endpointName != cred.EndpointName {
+		logger.Warn("Credential delete endpoint mismatch: index endpoint=%s credential endpoint=%s id=%d", endpointName, cred.EndpointName, credentialID)
+	}
+
+	if err := a.storage.DeleteEndpointCredential(cred.EndpointName, credentialID); err != nil {
+		logger.Warn("Delete credential failed endpoint=%s id=%d: %v", cred.EndpointName, credentialID, err)
+		return err
+	}
+
+	logger.Info("Delete credential success endpoint=%s id=%d", cred.EndpointName, credentialID)
+	return nil
 }
 
 // ========== Settings Bindings ==========
@@ -427,6 +692,10 @@ func (a *App) SetCloseWindowBehavior(behavior string) error {
 }
 func (a *App) GetProxyURL() string               { return a.settings.GetProxyURL() }
 func (a *App) SetProxyURL(proxyURL string) error { return a.settings.SetProxyURL(proxyURL) }
+func (a *App) GetCodexProxyURL() string          { return a.settings.GetCodexProxyURL() }
+func (a *App) SetCodexProxyURL(proxyURL string) error {
+	return a.settings.SetCodexProxyURL(proxyURL)
+}
 func (a *App) SaveSettings(settingsJSON string) error {
 	return a.settings.SaveSettings(settingsJSON)
 }
@@ -497,6 +766,108 @@ func (a *App) CheckForUpdates() string   { return a.update.CheckForUpdates() }
 func (a *App) GetUpdateSettings() string { return a.update.GetUpdateSettings() }
 func (a *App) SetUpdateSettings(autoCheck bool, checkInterval int) error {
 	return a.update.SetUpdateSettings(autoCheck, checkInterval)
+}
+
+func (a *App) getEndpointNameByIndex(index int) (string, error) {
+	endpoints := a.config.GetEndpoints()
+	if index < 0 || index >= len(endpoints) {
+		return "", fmt.Errorf("endpoint index out of range")
+	}
+	return endpoints[index].Name, nil
+}
+
+func (a *App) updateDesktopCredential(endpointName string, credentialID int64, updateFn func(cred *storage.EndpointCredential) error) error {
+	cred, err := a.storage.GetCredentialByID(credentialID)
+	if err != nil {
+		return fmt.Errorf("failed to get credential: %w", err)
+	}
+	if cred == nil || cred.EndpointName != endpointName {
+		return fmt.Errorf("credential not found")
+	}
+
+	if err := updateFn(cred); err != nil {
+		return err
+	}
+
+	return a.storage.UpdateEndpointCredential(cred)
+}
+
+func parseDesktopImportPayload(payload string) (*desktopImportCredentialsRequest, []desktopImportCredentialItem, error) {
+	raw := strings.TrimSpace(payload)
+	if raw == "" {
+		return nil, nil, fmt.Errorf("payload is required")
+	}
+
+	var request desktopImportCredentialsRequest
+	if err := json.Unmarshal([]byte(raw), &request); err == nil && len(request.Items) > 0 {
+		return &request, request.Items, nil
+	}
+
+	var items []desktopImportCredentialItem
+	if err := json.Unmarshal([]byte(raw), &items); err == nil && len(items) > 0 {
+		return &desktopImportCredentialsRequest{Items: items}, items, nil
+	}
+
+	var single desktopImportCredentialItem
+	if err := json.Unmarshal([]byte(raw), &single); err == nil && strings.TrimSpace(single.AccessToken) != "" {
+		return &desktopImportCredentialsRequest{Items: []desktopImportCredentialItem{single}}, []desktopImportCredentialItem{single}, nil
+	}
+
+	return nil, nil, fmt.Errorf("payload must be credential object, array, or {items:[...]}")
+}
+
+func findDesktopExistingCredential(accountIndex map[string]storage.EndpointCredential, emailIndex map[string]storage.EndpointCredential, cred *storage.EndpointCredential) *storage.EndpointCredential {
+	if cred.AccountID != "" {
+		if existing, ok := accountIndex[cred.AccountID]; ok {
+			return &existing
+		}
+	}
+	if cred.Email != "" {
+		if existing, ok := emailIndex[cred.Email]; ok {
+			return &existing
+		}
+	}
+	return nil
+}
+
+func parseDesktopOptionalTime(value string) (*time.Time, error) {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse(time.RFC3339, trimmed)
+	if err != nil {
+		return nil, err
+	}
+	utc := parsed.UTC()
+	return &utc, nil
+}
+
+func maskDesktopToken(token string) string {
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return ""
+	}
+	if len(token) <= 10 {
+		return "****"
+	}
+	return token[:6] + "..." + token[len(token)-4:]
+}
+
+func desktopSuccessJSON(data interface{}) string {
+	result, _ := json.Marshal(map[string]interface{}{
+		"success": true,
+		"data":    data,
+	})
+	return string(result)
+}
+
+func desktopErrorJSON(err error) string {
+	result, _ := json.Marshal(map[string]interface{}{
+		"success": false,
+		"error":   err.Error(),
+	})
+	return string(result)
 }
 func (a *App) SkipVersion(version string) error { return a.update.SkipVersion(version) }
 func (a *App) DownloadUpdate(url, filename string) error {

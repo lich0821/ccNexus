@@ -27,6 +27,9 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 			w.Header().Add(key, value)
 		}
 	}
+	if strings.TrimSpace(w.Header().Get("Content-Type")) == "" {
+		w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	}
 	w.WriteHeader(resp.StatusCode)
 
 	flusher, ok := w.(http.Flusher)
@@ -124,6 +127,10 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 			eventData := buffer.Bytes()
 			logger.DebugLog("[%s] SSE Event #%d (Original): %s", endpoint.Name, eventCount, string(eventData))
 
+			// Extract usage from original upstream events first. Some transformers may
+			// not preserve usage fields in transformed events.
+			p.extractTokensFromEvent(eventData, &inputTokens, &outputTokens)
+
 			// Check if this is a message_stop event (Token Usage Fallback)
 			isMessageStop := p.isMessageStopEvent(eventData)
 			if isMessageStop && outputTokens == 0 && outputText.Len() > 0 {
@@ -190,6 +197,108 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 
 	resp.Body.Close()
 	return inputTokens, outputTokens, outputText.String()
+}
+
+// handleStreamingAsNonStreaming aggregates SSE and returns a single non-stream response.
+// This is used for Codex endpoints that require stream=true upstream while client requested non-stream.
+func (p *Proxy) handleStreamingAsNonStreaming(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer) (int, int, string, error) {
+	var reader io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gzipReader, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			resp.Body.Close()
+			return 0, 0, "", err
+		}
+		defer gzipReader.Close()
+		reader = gzipReader
+	}
+	defer resp.Body.Close()
+
+	scanner := bufio.NewScanner(reader)
+	buf := make([]byte, 0, 128*1024)
+	scanner.Buffer(buf, 2*1024*1024)
+
+	var completedPayload []byte
+	var lastJSONPayload []byte
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if !strings.HasPrefix(line, "data:") {
+			continue
+		}
+		jsonData := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+		if jsonData == "" || jsonData == "[DONE]" {
+			continue
+		}
+		lastJSONPayload = []byte(jsonData)
+
+		var event map[string]interface{}
+		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
+			continue
+		}
+		if eventType, _ := event["type"].(string); eventType != "response.completed" {
+			continue
+		}
+
+		if responseObj, ok := event["response"]; ok {
+			payload, err := json.Marshal(responseObj)
+			if err != nil {
+				return 0, 0, "", err
+			}
+			completedPayload = payload
+		} else {
+			completedPayload = []byte(jsonData)
+		}
+		break
+	}
+	if err := scanner.Err(); err != nil {
+		return 0, 0, "", err
+	}
+	if len(completedPayload) == 0 {
+		if len(lastJSONPayload) == 0 {
+			return 0, 0, "", fmt.Errorf("stream closed before response.completed")
+		}
+		// Fallback for providers that don't emit type=response.completed but still
+		// provide final JSON payload in the stream.
+		completedPayload = lastJSONPayload
+	}
+
+	transformedResp, err := trans.TransformResponse(completedPayload, false)
+	if err != nil {
+		return 0, 0, "", err
+	}
+
+	for key, values := range resp.Header {
+		if key == "Content-Length" || key == "Content-Encoding" || key == "Content-Type" {
+			continue
+		}
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(resp.StatusCode)
+	w.Write(transformedResp)
+
+	inputTokens, outputTokens := extractTokenUsage(transformedResp)
+	transformedInputTokens, transformedOutputTokens := inputTokens, outputTokens
+	upstreamInputTokens, upstreamOutputTokens := extractTokenUsage(completedPayload)
+	if inputTokens == 0 && upstreamInputTokens > 0 {
+		inputTokens = upstreamInputTokens
+	}
+	if outputTokens == 0 && upstreamOutputTokens > 0 {
+		outputTokens = upstreamOutputTokens
+	}
+	outputText := extractResponseOutputText(transformedResp)
+
+	logger.Debug(
+		"[%s] Aggregated usage transformed(in=%d,out=%d) upstream(in=%d,out=%d) outputTextLen=%d",
+		endpoint.Name,
+		transformedInputTokens, transformedOutputTokens,
+		upstreamInputTokens, upstreamOutputTokens,
+		len(outputText),
+	)
+
+	return inputTokens, outputTokens, outputText, nil
 }
 
 // formatRequestSize formats byte size into human-readable string

@@ -28,6 +28,12 @@ func TestOpenAIReqToOpenAI2DefaultsToolChoiceAutoWhenToolsPresent(t *testing.T) 
 	if req["tool_choice"] != "auto" {
 		t.Fatalf("expected tool_choice=auto, got %#v", req["tool_choice"])
 	}
+	if _, ok := req["store"]; ok {
+		t.Fatalf("did not expect store in generic openai2 conversion, got %#v", req["store"])
+	}
+	if _, ok := req["instructions"]; ok {
+		t.Fatalf("did not expect instructions without system prompt, got %#v", req["instructions"])
+	}
 }
 
 func TestOpenAI2RespToOpenAIPreservesTotalTokens(t *testing.T) {
