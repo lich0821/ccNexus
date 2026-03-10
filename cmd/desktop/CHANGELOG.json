@@ -1,12 +1,13 @@
 [
   {
-    "version": "v5.0.0",
+    "version": "v5.0.1",
     "date": "2026-03-10",
     "changes": [
       "Added Codex Token Pool authentication mode with endpoint-level credential pool support",
       "Implemented credential lifecycle management: bulk import/update/delete, enable/disable, activation, status tracking, and refresh-on-401",
       "Added dedicated Token Pool management UI for Desktop and Web, including Codex proxy configuration and improved action layout",
       "Hardened Codex /responses handling with stream enforcement compatibility and improved retry/failover behavior",
+      "Made endpoint model optional and only override upstream model when a value is provided (Codex Token Pool friendly)",
       "Fixed token accounting issues where request counts increased but token totals stayed unchanged in specific Codex streaming scenarios",
       "Updated endpoint behavior for Codex mode with fixed upstream route and transformer constraints for better compatibility"
     ]
