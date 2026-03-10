@@ -259,10 +259,7 @@ export async function saveEndpoint() {
         return;
     }
 
-    if (transformer !== 'claude' && !model) {
-        showError(t('modal.modelRequired').replace('{transformer}', transformer));
-        return;
-    }
+    // Model is optional: only override when provided.
 
     // Check for duplicate endpoint name
     const configStr = await window.go.main.App.GetConfig();
@@ -322,20 +319,17 @@ export function handleTransformerChange() {
     // Clear fetched models when transformer changes
     clearFetchedModels();
 
+    modelRequired.style.display = 'none';
     if (transformer === 'claude') {
-        modelRequired.style.display = 'none';
         modelInput.placeholder = 'e.g., claude-3-5-sonnet-20241022';
         modelHelpText.textContent = t('modal.modelHelpClaude');
     } else if (transformer === 'openai') {
-        modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gpt-4-turbo';
         modelHelpText.textContent = t('modal.modelHelpOpenAI');
     } else if (transformer === 'openai2') {
-        modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gpt-4.1';
         modelHelpText.textContent = t('modal.modelHelpOpenAI2');
     } else if (transformer === 'gemini') {
-        modelRequired.style.display = 'inline';
         modelInput.placeholder = 'e.g., gemini-pro';
         modelHelpText.textContent = t('modal.modelHelpGemini');
     }

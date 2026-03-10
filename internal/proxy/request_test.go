@@ -55,6 +55,19 @@ func TestNormalizeTargetPathForBaseURLOnCodexBackend(t *testing.T) {
 	}
 }
 
+func TestOverrideModelInPayload(t *testing.T) {
+	raw := []byte(`{"model":"gpt-5.3-codex","stream":true}`)
+	out := overrideModelInPayload(raw, "gpt-5.2-codex")
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(out, &payload); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if payload["model"] != "gpt-5.2-codex" {
+		t.Fatalf("expected model override to gpt-5.2-codex, got %#v", payload["model"])
+	}
+}
+
 func TestShouldHandleAsStreamingResponseForCodexWithoutContentType(t *testing.T) {
 	endpoint := config.Endpoint{
 		Name:        "TokenPool",

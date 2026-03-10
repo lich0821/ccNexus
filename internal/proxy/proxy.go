@@ -444,6 +444,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			cleanedBody = transformedBody
 		}
 		transformedBody = cleanedBody
+		if config.NormalizeAuthMode(endpoint.AuthMode) == config.AuthModeCodexTokenPool {
+			transformedBody = overrideModelInPayload(transformedBody, endpoint.Model)
+		}
 
 		var thinkingEnabled bool
 		if strings.Contains(transformerName, "openai") {

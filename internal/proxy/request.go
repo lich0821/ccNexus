@@ -328,6 +328,27 @@ func ensureCodexResponsesPayload(payload []byte) []byte {
 	return updated
 }
 
+func overrideModelInPayload(payload []byte, model string) []byte {
+	if strings.TrimSpace(model) == "" {
+		return payload
+	}
+	trimmed := strings.TrimSpace(string(payload))
+	if trimmed == "" || strings.HasPrefix(trimmed, "[") {
+		return payload
+	}
+
+	var body map[string]interface{}
+	if err := json.Unmarshal(payload, &body); err != nil {
+		return payload
+	}
+	body["model"] = model
+	updated, err := json.Marshal(body)
+	if err != nil {
+		return payload
+	}
+	return updated
+}
+
 // sendRequest sends the HTTP request and returns the response
 func sendRequest(ctx context.Context, proxyReq *http.Request, httpClient *http.Client, cfg *config.Config) (*http.Response, error) {
 	proxyReq = proxyReq.WithContext(ctx)
