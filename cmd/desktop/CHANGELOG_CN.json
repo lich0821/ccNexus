@@ -1,5 +1,14 @@
 [
   {
+    "version": "v5.2.0",
+    "date": "2026-03-11",
+    "changes": [
+      "新增 Token Pool 凭证使用统计（请求/错误/Token），支持快捷查看",
+      "新增单条凭证刷新 Token 功能，并优化更新 Token 的交互",
+      "优化 Token Pool 列表展示：最近使用高亮、状态/错误显示更清晰"
+    ]
+  },
+  {
     "version": "v5.1.0",
     "date": "2026-03-11",
     "changes": [

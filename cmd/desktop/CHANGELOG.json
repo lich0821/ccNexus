@@ -1,5 +1,14 @@
 [
   {
+    "version": "v5.2.0",
+    "date": "2026-03-11",
+    "changes": [
+      "Added per-credential Token Pool usage stats (requests/errors/tokens) with quick view",
+      "Added per-credential token refresh and improved the token update prompt",
+      "Refined the Token Pool list UI with latest-used highlighting and clearer status/error display"
+    ]
+  },
+  {
     "version": "v5.1.0",
     "date": "2026-03-11",
     "changes": [

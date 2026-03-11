@@ -18,6 +18,7 @@
 - **Multi-Endpoint Rotation**: Automatic failover, switches to next endpoint on failure
 - **API Format Conversion**: Supports Claude, OpenAI, Gemini format conversion
 - **Codex Token Pool**: Bulk import `access_token/refresh_token` credentials with auto-rotation, auto-refresh, invalid-token isolation, and status management
+- **Token Pool Usage Insights**: Per-credential requests/errors/token counts with quick view
 - **Real-time Statistics**: Event-driven zero-latency stats updates with instant switching between 4 periods (daily/yesterday/weekly/monthly)
 - **Endpoint Filtering**: Multi-select filtering by type, availability, and status for quick endpoint location
 - **WebDAV Sync**: Sync configuration and data across devices
