@@ -49,8 +49,6 @@ func (e *EndpointService) createHTTPClient(timeout time.Duration, targetURL stri
 		} else {
 			logger.Warn("Failed to create proxy transport: %v, using direct connection", err)
 		}
-	} else {
-		logger.Debug("No proxy configured, using direct connection for request")
 	}
 
 	return client

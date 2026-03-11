@@ -37,6 +37,7 @@ type EndpointCredential struct {
 	LastError     string                `json:"lastError,omitempty"`
 	Remark        string                `json:"remark,omitempty"`
 	RateLimits    *CredentialRateLimits `json:"rateLimits,omitempty"`
+	Usage         *CredentialUsage      `json:"usage,omitempty"`
 	CreatedAt     time.Time             `json:"createdAt"`
 	UpdatedAt     time.Time             `json:"updatedAt"`
 }
@@ -74,6 +75,15 @@ type CredentialRateLimits struct {
 	Error        string               `json:"error,omitempty"`
 	UpdatedAt    *time.Time           `json:"updatedAt,omitempty"`
 	Data         *CodexRateLimitsData `json:"data,omitempty"`
+}
+
+type CredentialUsage struct {
+	CredentialID int64      `json:"credentialId"`
+	Requests     int        `json:"requests"`
+	Errors       int        `json:"errors"`
+	InputTokens  int        `json:"inputTokens"`
+	OutputTokens int        `json:"outputTokens"`
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
 }
 
 type TokenPoolStats struct {
@@ -122,6 +132,8 @@ type Storage interface {
 	GetCredentialRateLimitsByEndpoint(endpointName string) (map[int64]*CredentialRateLimits, error)
 	GetCredentialRateLimits(credentialID int64) (*CredentialRateLimits, error)
 	UpsertCredentialRateLimits(credentialID int64, data *CodexRateLimitsData, status, errMsg string, updatedAt time.Time) error
+	GetCredentialUsageByEndpoint(endpointName string) (map[int64]*CredentialUsage, error)
+	UpsertCredentialUsage(credentialID int64, endpointName string, requestsDelta, errorsDelta, inputTokensDelta, outputTokensDelta int, updatedAt time.Time) error
 
 	// Stats
 	RecordDailyStat(stat *DailyStat) error

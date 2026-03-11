@@ -1724,6 +1724,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    align-items: center;
+    text-align: center;
 }
 
 .token-pool-enabled-inline {
@@ -1867,6 +1869,15 @@ body {
     text-overflow: ellipsis;
 }
 
+.token-pool-rate-error-text {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.token-pool-row-active {
+    background: rgba(16, 185, 129, 0.08);
+}
+
 .token-pool-rate-status {
     display: inline-flex;
     align-items: center;
@@ -1912,6 +1923,33 @@ body {
     padding: 12px;
     font-size: 12px;
     line-height: 1.45;
+}
+
+.token-pool-usage-modal-content {
+    max-width: min(520px, 92vw) !important;
+    width: min(520px, 92vw) !important;
+}
+
+.token-pool-usage-body {
+    padding: 6px 2px;
+}
+
+.token-pool-usage-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 16px;
+    font-size: 13px;
+    color: var(--text-primary, #111827);
+}
+
+.token-pool-usage-grid > div:nth-child(odd) {
+    color: var(--text-secondary, #6b7280);
+    font-weight: 600;
+}
+
+.token-pool-usage-empty {
+    color: var(--text-secondary, #6b7280);
+    font-size: 13px;
 }
 
 /* Modern Confirm Dialog - Windows Style */

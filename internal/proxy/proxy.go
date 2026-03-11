@@ -315,6 +315,9 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
+	requestStart := time.Now()
+	reqBytes := len(bodyBytes)
+
 	// Detect client format
 	clientFormat := detectClientFormat(r.URL.Path)
 
@@ -448,6 +451,11 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			transformedBody = overrideModelInPayload(transformedBody, endpoint.Model)
 		}
 
+		modelName := strings.TrimSpace(streamReq.Model)
+		if modelName == "" || (authMode == config.AuthModeCodexTokenPool && strings.TrimSpace(endpoint.Model) != "") {
+			modelName = endpoint.Model
+		}
+
 		var thinkingEnabled bool
 		if strings.Contains(transformerName, "openai") {
 			var openaiReq map[string]interface{}
@@ -470,6 +478,22 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		proxyURL := resolveProxyURLForRequest(p.config, proxyReq.URL)
+		proxyLabel := strings.TrimSpace(proxyURL)
+		if streamReq.Stream {
+			if proxyLabel == "" {
+				logger.Debug("[%s] Streaming %s %d", endpoint.Name, modelName, reqBytes)
+			} else {
+				logger.Debug("[%s] Streaming %s %d %s", endpoint.Name, modelName, reqBytes, proxyLabel)
+			}
+		} else {
+			if proxyLabel == "" {
+				logger.Debug("[%s] Requesting %s %d", endpoint.Name, modelName, reqBytes)
+			} else {
+				logger.Debug("[%s] Requesting %s %d %s", endpoint.Name, modelName, reqBytes, proxyLabel)
+			}
+		}
+
 		ctx := p.getEndpointContext(endpoint.Name)
 		resp, err := sendRequest(ctx, proxyReq, p.httpClient, p.config)
 		if err != nil {
@@ -482,6 +506,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			p.markCredentialFailure(credentialID, 0, err.Error())
+			p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -497,7 +522,6 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 		contentType := resp.Header.Get("Content-Type")
 		isStreaming := shouldHandleAsStreamingResponse(contentType, streamReq.Stream, endpoint, transformerName)
-		logger.Debug("[%s] Upstream response status=%d content-type=%s (client stream=%v)", endpoint.Name, resp.StatusCode, contentType, streamReq.Stream)
 
 		// Codex backend enforces stream=true upstream for /responses in some environments.
 		// Bridge to non-stream client responses regardless of upstream Content-Type quirks.
@@ -511,16 +535,19 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 				p.stats.RecordRequest(endpoint.Name)
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+				p.recordCredentialUsage(credentialID, endpoint.Name, 1, 0, inputTokens, outputTokens)
 				p.markCredentialSuccess(credentialID)
 				p.markRequestInactive(endpoint.Name)
 				if p.onEndpointSuccess != nil {
 					p.onEndpointSuccess(endpoint.Name)
 				}
-				logger.Debug("[%s] Request completed successfully (aggregated non-stream)", endpoint.Name)
+				totalElapsed := time.Since(requestStart).Round(time.Millisecond)
+				logger.Debug("[%s] Requested tokens=%d/%d latency=%s cred_id=%d", endpoint.Name, inputTokens, outputTokens, totalElapsed, credentialID)
 				return
 			}
 			logger.Warn("[%s] Failed to aggregate streaming response as non-stream: %v", endpoint.Name, err)
 			p.markCredentialFailure(credentialID, 0, err.Error())
+			p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -531,7 +558,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes, credentialID)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, modelName, bodyBytes, credentialID)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {
@@ -540,12 +567,14 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 
 			p.stats.RecordRequest(endpoint.Name)
 			p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+			p.recordCredentialUsage(credentialID, endpoint.Name, 1, 0, inputTokens, outputTokens)
 			p.markCredentialSuccess(credentialID)
 			p.markRequestInactive(endpoint.Name)
 			if p.onEndpointSuccess != nil {
 				p.onEndpointSuccess(endpoint.Name)
 			}
-			logger.Debug("[%s] Request completed successfully (streaming)", endpoint.Name)
+			totalElapsed := time.Since(requestStart).Round(time.Millisecond)
+			logger.Debug("[%s] Requested tokens=%d/%d latency=%s cred_id=%d", endpoint.Name, inputTokens, outputTokens, totalElapsed, credentialID)
 			return
 		}
 
@@ -554,14 +583,16 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			if err == nil {
 				p.stats.RecordRequest(endpoint.Name)
 				p.stats.RecordTokens(endpoint.Name, inputTokens, outputTokens)
+				p.recordCredentialUsage(credentialID, endpoint.Name, 1, 0, inputTokens, outputTokens)
 				p.markCredentialSuccess(credentialID)
-				p.markRequestInactive(endpoint.Name)
-				if p.onEndpointSuccess != nil {
-					p.onEndpointSuccess(endpoint.Name)
-				}
-				logger.Debug("[%s] Request completed successfully", endpoint.Name)
-				return
+			p.markRequestInactive(endpoint.Name)
+			if p.onEndpointSuccess != nil {
+				p.onEndpointSuccess(endpoint.Name)
 			}
+			totalElapsed := time.Since(requestStart).Round(time.Millisecond)
+			logger.Debug("[%s] Requested tokens=%d/%d latency=%s cred_id=%d", endpoint.Name, inputTokens, outputTokens, totalElapsed, credentialID)
+			return
+		}
 		}
 
 		if shouldRetry(resp.StatusCode) {
@@ -579,6 +610,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			logger.Warn("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Request failed %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
+			p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 			p.stats.RecordError(endpoint.Name)
 			p.markRequestInactive(endpoint.Name)
 			if endpointAttempts >= 2 {
@@ -629,6 +661,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 					logger.Warn("[%s] Credential refresh failed after %d (id=%d): %v", endpoint.Name, resp.StatusCode, credentialID, refreshErr)
 				}
 				p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
+				p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
 				endpointAttempts = 0
@@ -651,8 +684,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			}
 			if skipCredentialPenalty {
 				p.markCredentialFailure(credentialID, 0, errMsg)
+				p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 			} else {
 				p.markCredentialFailure(credentialID, resp.StatusCode, errMsg)
+				p.recordCredentialUsage(credentialID, endpoint.Name, 0, 1, 0, 0)
 			}
 			logger.Warn("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
 			logger.DebugLog("[%s] Response %d: %s", endpoint.Name, resp.StatusCode, errMsg)
@@ -687,6 +722,15 @@ func (p *Proxy) markCredentialSuccess(credentialID int64) {
 	}
 	if err := p.storage.MarkCredentialSuccess(credentialID, time.Now().UTC()); err != nil {
 		logger.Warn("Failed to mark credential success (id=%d): %v", credentialID, err)
+	}
+}
+
+func (p *Proxy) recordCredentialUsage(credentialID int64, endpointName string, requests, errors, inputTokens, outputTokens int) {
+	if credentialID <= 0 || p.storage == nil {
+		return
+	}
+	if err := p.storage.UpsertCredentialUsage(credentialID, endpointName, requests, errors, inputTokens, outputTokens, time.Now().UTC()); err != nil {
+		logger.Warn("Failed to record credential usage (id=%d): %v", credentialID, err)
 	}
 }
 

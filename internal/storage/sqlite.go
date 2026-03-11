@@ -130,6 +130,16 @@ func (s *SQLiteStorage) initSchema() error {
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 
+	CREATE TABLE IF NOT EXISTS credential_usage (
+		credential_id INTEGER PRIMARY KEY,
+		endpoint_name TEXT NOT NULL,
+		requests INTEGER DEFAULT 0,
+		errors INTEGER DEFAULT 0,
+		input_tokens INTEGER DEFAULT 0,
+		output_tokens INTEGER DEFAULT 0,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
 	CREATE TABLE IF NOT EXISTS daily_stats (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		endpoint_name TEXT NOT NULL,
@@ -156,6 +166,7 @@ func (s *SQLiteStorage) initSchema() error {
 	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_status ON endpoint_credentials(status);
 	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_expires_at ON endpoint_credentials(expires_at);
 	CREATE INDEX IF NOT EXISTS idx_credential_rate_limits_updated ON credential_rate_limits(updated_at);
+	CREATE INDEX IF NOT EXISTS idx_credential_usage_endpoint ON credential_usage(endpoint_name);
 	`
 
 	if _, err := s.db.Exec(schema); err != nil {

@@ -452,6 +452,31 @@ func (a *App) FetchCodexRateLimitsForCredential(index int, credentialID int64) s
 	return desktopSuccessJSON(result)
 }
 
+func (a *App) RefreshEndpointCredential(index int, credentialID int64) string {
+	if credentialID <= 0 {
+		return desktopErrorJSON(fmt.Errorf("credential id is required"))
+	}
+	endpoint, err := a.getEndpointByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	if a.proxy == nil {
+		return desktopErrorJSON(fmt.Errorf("proxy unavailable"))
+	}
+	refreshed, err := a.proxy.RefreshCodexCredential(*endpoint, credentialID)
+	if err != nil {
+		if a.storage != nil {
+			_ = a.storage.MarkCredentialFailure(credentialID, 0, err.Error(), time.Now().UTC())
+		}
+		return desktopErrorJSON(err)
+	}
+	return desktopSuccessJSON(map[string]interface{}{
+		"id":        refreshed.ID,
+		"accountId": refreshed.AccountID,
+		"expiresAt": refreshed.ExpiresAt,
+	})
+}
+
 func (a *App) GetEndpointCredentials(index int) string {
 	endpointName, err := a.getEndpointNameByIndex(index)
 	if err != nil {
@@ -467,6 +492,11 @@ func (a *App) GetEndpointCredentials(index int) string {
 		logger.Warn("Failed to load rate limits: %v", err)
 		rateLimits = nil
 	}
+	usage, err := a.storage.GetCredentialUsageByEndpoint(endpointName)
+	if err != nil {
+		logger.Warn("Failed to load credential usage: %v", err)
+		usage = nil
+	}
 	stats, err := a.storage.GetTokenPoolStats(endpointName)
 	if err != nil {
 		return desktopErrorJSON(fmt.Errorf("failed to get token pool stats: %w", err))
@@ -479,6 +509,11 @@ func (a *App) GetEndpointCredentials(index int) string {
 		if rateLimits != nil {
 			if entry, ok := rateLimits[credentials[i].ID]; ok {
 				credentials[i].RateLimits = entry
+			}
+		}
+		if usage != nil {
+			if entry, ok := usage[credentials[i].ID]; ok {
+				credentials[i].Usage = entry
 			}
 		}
 	}

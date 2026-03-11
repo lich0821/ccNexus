@@ -78,7 +78,7 @@ func (p *Proxy) refreshCredential(endpoint config.Endpoint, credential *storage.
 
 	resp, err := p.codexRefreshHTTPClient().Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("refresh request failed: %w", err)
+		return nil, fmt.Errorf("refresh request failed (%s): %w", codexOAuthTokenURL, err)
 	}
 	defer resp.Body.Close()
 
@@ -87,7 +87,7 @@ func (p *Proxy) refreshCredential(endpoint config.Endpoint, credential *storage.
 		return nil, fmt.Errorf("read refresh response failed: %w", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("refresh failed (%d): %s", resp.StatusCode, truncateForLog(string(body), 200))
+		return nil, fmt.Errorf("refresh failed (%d): %s", resp.StatusCode, truncateForLog(string(body), 2000))
 	}
 
 	var tokenResp codexRefreshTokenResponse
@@ -131,6 +131,33 @@ func (p *Proxy) refreshCredential(endpoint config.Endpoint, credential *storage.
 	}
 	logger.Info("[%s] Refreshed token pool credential id=%d", endpoint.Name, credential.ID)
 	return &updated, nil
+}
+
+func (p *Proxy) RefreshCodexCredential(endpoint config.Endpoint, credentialID int64) (*storage.EndpointCredential, error) {
+	if p == nil || p.storage == nil {
+		return nil, fmt.Errorf("token storage is unavailable")
+	}
+	if credentialID <= 0 {
+		return nil, fmt.Errorf("credential id is required")
+	}
+	if config.NormalizeAuthMode(endpoint.AuthMode) != config.AuthModeCodexTokenPool {
+		return nil, fmt.Errorf("codex token pool required")
+	}
+
+	cred, err := p.storage.GetCredentialByID(credentialID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load credential: %w", err)
+	}
+	if cred == nil || cred.EndpointName != endpoint.Name {
+		return nil, fmt.Errorf("credential not found")
+	}
+
+	refreshed, err := p.refreshCredential(endpoint, cred)
+	if err != nil {
+		p.markCredentialFailure(credentialID, 0, err.Error())
+		return nil, err
+	}
+	return refreshed, nil
 }
 
 func (p *Proxy) codexRefreshHTTPClient() *http.Client {

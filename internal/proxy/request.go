@@ -367,7 +367,6 @@ func sendRequest(ctx context.Context, proxyReq *http.Request, httpClient *http.C
 			clientWithProxy.Transport = httpClient.Transport
 		} else {
 			clientWithProxy.Transport = transport
-			logger.Debug("Using proxy: %s", proxyURL)
 		}
 
 		return clientWithProxy.Do(proxyReq)

@@ -282,6 +282,10 @@ export function Quit() {
   return window['go']['main']['App']['Quit']();
 }
 
+export function RefreshEndpointCredential(arg1, arg2) {
+  return window['go']['main']['App']['RefreshEndpointCredential'](arg1, arg2);
+}
+
 export function RemoveEndpoint(arg1) {
   return window['go']['main']['App']['RemoveEndpoint'](arg1);
 }

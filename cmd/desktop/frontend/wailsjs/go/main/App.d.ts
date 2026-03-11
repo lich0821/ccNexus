@@ -141,6 +141,8 @@ export function OpenURL(arg1:string):Promise<void>;
 
 export function Quit():Promise<void>;
 
+export function RefreshEndpointCredential(arg1:number,arg2:number):Promise<string>;
+
 export function RemoveEndpoint(arg1:number):Promise<void>;
 
 export function RemoveProjectDir(arg1:string):Promise<void>;
