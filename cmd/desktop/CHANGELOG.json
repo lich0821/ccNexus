@@ -1,5 +1,17 @@
 [
   {
+    "version": "v5.1.0",
+    "date": "2026-03-11",
+    "changes": [
+      "Added Codex rate limit/credits fetching with manual refresh (including per-credential refresh)",
+      "Captured Codex rate limit snapshots from API responses and SSE events for better accuracy",
+      "Added rate limit storage and Token Pool display with compact summary + tooltip details",
+      "Added multi-file JSON import for credential pools",
+      "Improved Token Pool UI: masked email display, fixed timestamp format, compact stats bar, refined layout and actions",
+      "Added per-credential rate limit refresh feedback showing the latest usage summary"
+    ]
+  },
+  {
     "version": "v5.0.1",
     "date": "2026-03-10",
     "changes": [
