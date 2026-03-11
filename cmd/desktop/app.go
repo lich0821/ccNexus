@@ -419,6 +419,39 @@ func (a *App) FetchModels(apiUrl, apiKey, transformer string) string {
 	return a.endpoint.FetchModels(apiUrl, apiKey, transformer)
 }
 
+func (a *App) FetchCodexRateLimits(index int) string {
+	endpoint, err := a.getEndpointByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	if a.proxy == nil {
+		return desktopErrorJSON(fmt.Errorf("proxy unavailable"))
+	}
+	result, err := a.proxy.FetchCodexRateLimits(*endpoint, 0)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	return desktopSuccessJSON(result)
+}
+
+func (a *App) FetchCodexRateLimitsForCredential(index int, credentialID int64) string {
+	if credentialID <= 0 {
+		return desktopErrorJSON(fmt.Errorf("invalid credential id"))
+	}
+	endpoint, err := a.getEndpointByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	if a.proxy == nil {
+		return desktopErrorJSON(fmt.Errorf("proxy unavailable"))
+	}
+	result, err := a.proxy.FetchCodexRateLimits(*endpoint, credentialID)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	return desktopSuccessJSON(result)
+}
+
 func (a *App) GetEndpointCredentials(index int) string {
 	endpointName, err := a.getEndpointNameByIndex(index)
 	if err != nil {
@@ -429,6 +462,11 @@ func (a *App) GetEndpointCredentials(index int) string {
 	if err != nil {
 		return desktopErrorJSON(fmt.Errorf("failed to get credentials: %w", err))
 	}
+	rateLimits, err := a.storage.GetCredentialRateLimitsByEndpoint(endpointName)
+	if err != nil {
+		logger.Warn("Failed to load rate limits: %v", err)
+		rateLimits = nil
+	}
 	stats, err := a.storage.GetTokenPoolStats(endpointName)
 	if err != nil {
 		return desktopErrorJSON(fmt.Errorf("failed to get token pool stats: %w", err))
@@ -438,6 +476,11 @@ func (a *App) GetEndpointCredentials(index int) string {
 		credentials[i].AccessToken = maskDesktopToken(credentials[i].AccessToken)
 		credentials[i].RefreshToken = maskDesktopToken(credentials[i].RefreshToken)
 		credentials[i].IDToken = maskDesktopToken(credentials[i].IDToken)
+		if rateLimits != nil {
+			if entry, ok := rateLimits[credentials[i].ID]; ok {
+				credentials[i].RateLimits = entry
+			}
+		}
 	}
 
 	return desktopSuccessJSON(map[string]interface{}{
@@ -456,10 +499,91 @@ func (a *App) ImportEndpointCredentials(index int, payload string, overwrite boo
 	if err != nil {
 		return desktopErrorJSON(err)
 	}
+	if request != nil && strings.TrimSpace(request.Remark) != "" {
+		remark := strings.TrimSpace(request.Remark)
+		for i := range items {
+			if strings.TrimSpace(items[i].Remark) == "" {
+				items[i].Remark = remark
+			}
+		}
+	}
 
+	result, err := a.importDesktopCredentials(endpointName, items, overwrite, 0, nil)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	return desktopSuccessJSON(result)
+}
+
+func (a *App) ImportEndpointCredentialsFromFiles(index int, overwrite bool) string {
+	endpointName, err := a.getEndpointNameByIndex(index)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+
+	paths, err := runtime.OpenMultipleFilesDialog(a.ctx, runtime.OpenDialogOptions{
+		Title: "Select JSON files",
+		Filters: []runtime.FileFilter{
+			{DisplayName: "JSON", Pattern: "*.json"},
+		},
+	})
+	if err != nil {
+		return desktopErrorJSON(fmt.Errorf("open file dialog failed: %w", err))
+	}
+	if len(paths) == 0 {
+		return desktopErrorJSON(fmt.Errorf("no files selected"))
+	}
+
+	items := make([]desktopImportCredentialItem, 0)
+	errors := make([]string, 0)
+	failedFiles := 0
+
+	for _, filePath := range paths {
+		raw, err := os.ReadFile(filePath)
+		if err != nil {
+			failedFiles++
+			errors = append(errors, fmt.Sprintf("%s: read failed: %v", filepath.Base(filePath), err))
+			continue
+		}
+		request, fileItems, err := parseDesktopImportPayload(string(raw))
+		if err != nil {
+			failedFiles++
+			errors = append(errors, fmt.Sprintf("%s: %v", filepath.Base(filePath), err))
+			continue
+		}
+		if request != nil && strings.TrimSpace(request.Remark) != "" {
+			remark := strings.TrimSpace(request.Remark)
+			for i := range fileItems {
+				if strings.TrimSpace(fileItems[i].Remark) == "" {
+					fileItems[i].Remark = remark
+				}
+			}
+		}
+		items = append(items, fileItems...)
+	}
+
+	if len(items) == 0 {
+		return desktopSuccessJSON(map[string]interface{}{
+			"created":   0,
+			"updated":   0,
+			"skipped":   0,
+			"failed":    failedFiles,
+			"processed": 0,
+			"errors":    errors,
+		})
+	}
+
+	result, err := a.importDesktopCredentials(endpointName, items, overwrite, failedFiles, errors)
+	if err != nil {
+		return desktopErrorJSON(err)
+	}
+	return desktopSuccessJSON(result)
+}
+
+func (a *App) importDesktopCredentials(endpointName string, items []desktopImportCredentialItem, overwrite bool, seedFailed int, seedErrors []string) (map[string]interface{}, error) {
 	existing, err := a.storage.GetEndpointCredentials(endpointName)
 	if err != nil {
-		return desktopErrorJSON(fmt.Errorf("failed to get existing credentials: %w", err))
+		return nil, fmt.Errorf("failed to get existing credentials: %w", err)
 	}
 
 	accountIndex := make(map[string]storage.EndpointCredential)
@@ -476,8 +600,8 @@ func (a *App) ImportEndpointCredentials(index int, payload string, overwrite boo
 	created := 0
 	updated := 0
 	skipped := 0
-	failed := 0
-	errors := make([]string, 0)
+	failed := seedFailed
+	errors := append([]string{}, seedErrors...)
 
 	for i, item := range items {
 		if strings.TrimSpace(item.AccessToken) == "" {
@@ -520,9 +644,6 @@ func (a *App) ImportEndpointCredentials(index int, payload string, overwrite boo
 		}
 		if cred.ProviderType == "" {
 			cred.ProviderType = "codex"
-		}
-		if cred.Remark == "" {
-			cred.Remark = strings.TrimSpace(request.Remark)
 		}
 
 		existingCredential := findDesktopExistingCredential(accountIndex, emailIndex, &cred)
@@ -575,14 +696,14 @@ func (a *App) ImportEndpointCredentials(index int, payload string, overwrite boo
 		}
 	}
 
-	return desktopSuccessJSON(map[string]interface{}{
+	return map[string]interface{}{
 		"created":   created,
 		"updated":   updated,
 		"skipped":   skipped,
 		"failed":    failed,
 		"processed": len(items),
 		"errors":    errors,
-	})
+	}, nil
 }
 
 func (a *App) SetEndpointCredentialEnabled(index int, credentialID int64, enabled bool) error {
@@ -774,6 +895,15 @@ func (a *App) getEndpointNameByIndex(index int) (string, error) {
 		return "", fmt.Errorf("endpoint index out of range")
 	}
 	return endpoints[index].Name, nil
+}
+
+func (a *App) getEndpointByIndex(index int) (*config.Endpoint, error) {
+	endpoints := a.config.GetEndpoints()
+	if index < 0 || index >= len(endpoints) {
+		return nil, fmt.Errorf("endpoint index out of range")
+	}
+	ep := endpoints[index]
+	return &ep, nil
 }
 
 func (a *App) updateDesktopCredential(endpointName string, credentialID int64, updateFn func(cred *storage.EndpointCredential) error) error {

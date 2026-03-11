@@ -491,6 +491,10 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
+		if resp.StatusCode == http.StatusOK {
+			p.captureCodexRateLimitsFromHeaders(endpoint, credentialID, resp.Header)
+		}
+
 		contentType := resp.Header.Get("Content-Type")
 		isStreaming := shouldHandleAsStreamingResponse(contentType, streamReq.Stream, endpoint, transformerName)
 		logger.Debug("[%s] Upstream response status=%d content-type=%s (client stream=%v)", endpoint.Name, resp.StatusCode, contentType, streamReq.Stream)
@@ -498,7 +502,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		// Codex backend enforces stream=true upstream for /responses in some environments.
 		// Bridge to non-stream client responses regardless of upstream Content-Type quirks.
 		if resp.StatusCode == http.StatusOK && !streamReq.Stream && shouldAggregateCodexStreaming(endpoint, transformerName) {
-			inputTokens, outputTokens, outputText, err := p.handleStreamingAsNonStreaming(w, resp, endpoint, trans)
+			inputTokens, outputTokens, outputText, err := p.handleStreamingAsNonStreaming(w, resp, endpoint, trans, credentialID)
 			if err == nil {
 				// Fallback: estimate tokens when usage is missing.
 				if inputTokens == 0 || outputTokens == 0 {
@@ -527,7 +531,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if resp.StatusCode == http.StatusOK && isStreaming {
-			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes)
+			inputTokens, outputTokens, outputText := p.handleStreamingResponse(w, resp, endpoint, trans, transformerName, thinkingEnabled, streamReq.Model, bodyBytes, credentialID)
 
 			// Fallback: estimate tokens when usage is 0
 			if inputTokens == 0 || outputTokens == 0 {

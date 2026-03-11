@@ -348,30 +348,33 @@ function ensureTokenPoolModal() {
             <div class="modal-header">
                 <h2 id="tokenPoolTitle">🪪 Token Pool</h2>
             </div>
-            <div class="modal-body" style="padding: 12px 20px 16px 20px;">
-                <div id="tokenPoolHint" style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">Ready</div>
-                <div id="tokenPoolStats" style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;"></div>
+            <div class="modal-body" style="padding: 6px 20px 16px 20px;">
+                <div id="tokenPoolHint" style="font-size: 12px; color: #6b7280; margin-bottom: 8px; display: none;"></div>
+                <div id="tokenPoolStats" style="display: block; margin-bottom: 12px;"></div>
                 <div class="token-pool-proxy-bar">
-                    <label for="tokenPoolProxyUrl" style="font-size: 13px; font-weight: 600;">Codex Proxy</label>
+                    <label for="tokenPoolProxyUrl" class="token-pool-proxy-label" style="font-size: 13px; font-weight: 600;" title="Only applies to Codex requests and credential refresh.">Codex Proxy</label>
                     <input id="tokenPoolProxyUrl" class="form-input" type="text" placeholder="${t('settings.proxyUrlPlaceholder')}">
                     <button class="btn btn-secondary" id="tokenPoolProxySaveBtn">Save</button>
                     <button class="btn btn-secondary" id="tokenPoolProxyClearBtn">Clear</button>
                 </div>
-                <div class="token-pool-proxy-help">Only applies to Codex requests and credential refresh.</div>
 
                 <div class="form-group">
-                    <label>Batch Import JSON</label>
-                    <textarea id="tokenPoolImportInput" style="width: 100%; min-height: 140px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" placeholder='Paste one object / array / {"items":[...]}'></textarea>
-                    <div style="margin-top: 8px; font-size: 14px; line-height: 1.4; display: flex; align-items: center; gap: 8px;">
-                        <label class="toggle-switch" style="margin: 0;">
-                            <input type="checkbox" id="tokenPoolOverwrite">
-                            <span class="toggle-slider"></span>
-                        </label>
-                        <label for="tokenPoolOverwrite" style="display: inline; margin: 0; white-space: normal; word-break: normal; overflow-wrap: normal; cursor: pointer;">Overwrite existing account/email</label>
+                    <div class="token-pool-import-header">
+                        <label>Batch Import JSON</label>
+                        <div class="token-pool-overwrite">
+                            <label class="toggle-switch" style="margin: 0;">
+                                <input type="checkbox" id="tokenPoolOverwrite">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <label for="tokenPoolOverwrite" class="token-pool-overwrite-label">Overwrite existing account/email</label>
+                        </div>
                     </div>
+                    <textarea id="tokenPoolImportInput" style="width: 100%; min-height: 140px; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px;" placeholder='Paste one object / array / {"items":[...]}'></textarea>
                     <div style="margin-top: 8px;">
                         <button class="btn btn-primary" id="tokenPoolImportBtn">Import</button>
+                        <button class="btn btn-secondary" id="tokenPoolImportFilesBtn">Import Files</button>
                         <button class="btn btn-secondary" id="tokenPoolRefreshBtn">Refresh</button>
+                        <button class="btn btn-secondary" id="tokenPoolRateRefreshBtn">Refresh Limits</button>
                     </div>
                 </div>
 
@@ -383,6 +386,7 @@ function ensureTokenPoolModal() {
                                 <th style="padding: 8px; text-align: left;">Email</th>
                                 <th style="padding: 8px; text-align: left;">Status</th>
                                 <th style="padding: 8px; text-align: left;">Expires At</th>
+                                <th style="padding: 8px; text-align: left; width: 220px; max-width: 220px;">Rate Limits</th>
                                 <th style="padding: 8px; text-align: left;">Last Error</th>
                                 <th style="padding: 8px; text-align: left;">Actions</th>
                             </tr>
@@ -413,8 +417,12 @@ function ensureTokenPoolModal() {
     });
     modal.querySelector('#tokenPoolCloseBtn').addEventListener('click', closeModal);
     modal.querySelector('#tokenPoolImportBtn').addEventListener('click', handleTokenPoolImport);
+    modal.querySelector('#tokenPoolImportFilesBtn').addEventListener('click', handleTokenPoolFileImport);
     modal.querySelector('#tokenPoolRefreshBtn').addEventListener('click', async () => {
         await loadTokenPoolData(tokenPoolCurrentIndex);
+    });
+    modal.querySelector('#tokenPoolRateRefreshBtn').addEventListener('click', async () => {
+        await refreshTokenPoolRateLimits(tokenPoolCurrentIndex);
     });
     modal.querySelector('#tokenPoolProxySaveBtn').addEventListener('click', async () => {
         await saveTokenPoolProxySetting();
@@ -475,6 +483,27 @@ function maskTokenPoolAccountID(accountId) {
     return `${raw.slice(0, 8)}*`;
 }
 
+function maskTokenPoolEmail(email) {
+    const raw = (email || '').trim();
+    if (!raw || !raw.includes('@')) {
+        return raw || '-';
+    }
+    const [local, domain] = raw.split('@');
+    if (!local || !domain) {
+        return raw;
+    }
+    const localMasked = local.length <= 2
+        ? `${local[0] || ''}*`
+        : `${local[0]}*${local.slice(-2)}`;
+    const domainParts = domain.split('.');
+    const tld = domainParts.length > 1 ? domainParts[domainParts.length - 1] : '';
+    const firstLabel = domainParts[0] || '';
+    const domainMasked = firstLabel
+        ? `${firstLabel[0]}*${tld ? tld : ''}`
+        : `*${tld ? tld : ''}`;
+    return `${localMasked}@${domainMasked}`;
+}
+
 function ensureTokenPoolErrorModal() {
     let modal = document.getElementById('tokenPoolErrorModal');
     if (modal) {
@@ -526,7 +555,14 @@ function formatTokenPoolTime(value) {
     if (Number.isNaN(date.getTime())) {
         return value;
     }
-    return date.toLocaleString();
+    const pad = (num) => String(num).padStart(2, '0');
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 function renderTokenPoolStatus(status, enabled = true) {
@@ -557,28 +593,31 @@ function renderTokenPoolStats(stats = {}) {
         ['Cooldown', stats.cooldown || 0],
         ['Disabled', stats.disabled || 0]
     ];
-    return items.map(([label, value]) => `
-        <div style="padding: 6px 10px; border-radius: 8px; background: rgba(148, 163, 184, 0.15);">
-            <strong>${label}:</strong> ${value}
-        </div>
-    `).join('');
+
+    const parts = items.map(([label, value]) => {
+        const highlight = value > 0 && label !== 'Total' && label !== 'Active' ? ' token-pool-stat-alert' : '';
+        return `<span class="token-pool-stat${highlight}"><strong>${label}</strong> ${value}</span>`;
+    });
+
+    return `<div class="token-pool-stats-line">${parts.join('<span class="token-pool-stat-sep">·</span>')}</div>`;
 }
 
 function renderTokenPoolRows(credentials = []) {
     if (!credentials.length) {
-        return `<tr><td colspan="6" style="padding: 16px; text-align: center; color: #6b7280;">No credentials</td></tr>`;
+        return `<tr><td colspan="7" style="padding: 16px; text-align: center; color: #6b7280;">No credentials</td></tr>`;
     }
 
     return credentials.map((cred) => `
         <tr style="border-top: 1px solid rgba(148, 163, 184, 0.2);">
             <td style="padding: 8px;"><code title="${escapeHtml(cred.accountId || '')}">${escapeHtml(maskTokenPoolAccountID(cred.accountId))}</code></td>
-            <td style="padding: 8px;">${escapeHtml(cred.email || '-')}</td>
+            <td style="padding: 8px;"><span title="${escapeHtml(cred.email || '')}">${escapeHtml(maskTokenPoolEmail(cred.email))}</span></td>
             <td style="padding: 8px;">
                 <div class="token-pool-status-cell">
                     ${renderTokenPoolStatus(cred.status, cred.enabled)}
                 </div>
             </td>
-            <td style="padding: 8px;">${escapeHtml(formatTokenPoolTime(cred.expiresAt))}</td>
+            <td style="padding: 8px; white-space: nowrap;">${escapeHtml(formatTokenPoolTime(cred.expiresAt))}</td>
+            <td style="padding: 8px; width: 220px; max-width: 220px;">${renderTokenPoolRateLimits(cred.rateLimits)}</td>
             <td style="padding: 8px;">
                 ${(cred.lastError || '').trim()
                     ? `<button type="button" class="btn btn-secondary token-pool-error-view" data-error="${escapeHtml(cred.lastError)}" style="padding: 4px 8px; font-size: 12px;">View</button>`
@@ -591,6 +630,7 @@ function renderTokenPoolRows(credentials = []) {
                         <button type="button" class="btn btn-secondary token-pool-more-toggle" data-id="${cred.id}" style="padding: 4px 8px; font-size: 12px;">More</button>
                         <div class="token-pool-more-menu">
                             <button type="button" class="token-pool-activate" data-id="${cred.id}">Activate</button>
+                            <button type="button" class="token-pool-rate-refresh" data-id="${cred.id}">Refresh limits</button>
                             <button type="button" class="token-pool-update" data-id="${cred.id}">Update token</button>
                             <button type="button" class="token-pool-delete" data-id="${cred.id}">Delete</button>
                         </div>
@@ -601,10 +641,120 @@ function renderTokenPoolRows(credentials = []) {
     `).join('');
 }
 
+function formatTokenPoolWindowLabel(windowMinutes) {
+    if (!windowMinutes || windowMinutes <= 0) {
+        return '';
+    }
+    if (windowMinutes % (60 * 24) === 0) {
+        return `${windowMinutes / (60 * 24)}d`;
+    }
+    if (windowMinutes % 60 === 0) {
+        return `${windowMinutes / 60}h`;
+    }
+    return `${windowMinutes}m`;
+}
+
+function renderTokenPoolRateLimits(rateLimits) {
+    if (!rateLimits) {
+        return '-';
+    }
+    const status = (rateLimits.status || '').trim();
+    const updatedAt = rateLimits.updatedAt ? formatTokenPoolTime(rateLimits.updatedAt) : '-';
+    const data = rateLimits.data || {};
+    const snapshot = data.snapshot || {};
+    const primary = snapshot.primary || {};
+    const secondary = snapshot.secondary || {};
+    const usedPercent = typeof primary.usedPercent === 'number' ? Math.round(primary.usedPercent) : null;
+    const primaryWindowMinutes = primary.windowMinutes;
+    const secondaryUsedPercent = typeof secondary.usedPercent === 'number' ? Math.round(secondary.usedPercent) : null;
+    const secondaryWindowMinutes = secondary.windowMinutes;
+    const primaryLabel = formatTokenPoolWindowLabel(primaryWindowMinutes);
+    const secondaryLabel = formatTokenPoolWindowLabel(secondaryWindowMinutes);
+    const parts = [];
+    if (primaryLabel || usedPercent !== null) {
+        const pct = usedPercent !== null ? `${usedPercent}%` : '';
+        parts.push(`${pct}@${primaryLabel || 'window'}`.replace(/^@/, '').trim());
+    }
+    if (secondaryLabel || secondaryUsedPercent !== null) {
+        const pct = secondaryUsedPercent !== null ? `${secondaryUsedPercent}%` : '';
+        parts.push(`${pct}@${secondaryLabel || 'short'}`.replace(/^@/, '').trim());
+    }
+    const summary = parts.join(' · ');
+    const credits = snapshot.credits || {};
+    const creditText = credits.unlimited
+        ? 'unlimited'
+        : credits.balance
+            ? `balance ${credits.balance}`
+            : credits.hasCredits
+                ? 'has credits'
+                : '';
+    const primaryReset = primary.resetsAt ? formatTokenPoolTime(new Date(primary.resetsAt * 1000).toISOString()) : '';
+    const secondaryReset = secondary.resetsAt ? formatTokenPoolTime(new Date(secondary.resetsAt * 1000).toISOString()) : '';
+    const metaParts = [];
+    if (creditText) {
+        metaParts.push(creditText);
+    }
+    if (!summary && status === 'ok') {
+        metaParts.push('ok');
+    }
+
+    const detailLines = [];
+    if (summary) {
+        detailLines.push(summary);
+    }
+    if (primaryReset) {
+        detailLines.push(`reset ${primaryLabel || 'primary'} ${primaryReset}`.trim());
+    }
+    if (secondaryReset) {
+        detailLines.push(`reset ${secondaryLabel || 'secondary'} ${secondaryReset}`.trim());
+    }
+    if (creditText) {
+        detailLines.push(`credits ${creditText}`);
+    }
+    if (updatedAt) {
+        detailLines.push(`updated ${updatedAt}`);
+    }
+    const detailTitle = detailLines.join(' · ');
+
+    const errorText = (rateLimits.error || '').trim();
+    if (status && status !== 'ok') {
+        return `
+            <div class="token-pool-rate-cell" title="${escapeHtml(detailTitle)}">
+                <span class="token-pool-rate-status token-pool-rate-status-${escapeHtml(status)}">${escapeHtml(status)}</span>
+                ${errorText ? `<button type="button" class="btn btn-secondary token-pool-rate-error-view" data-error="${escapeHtml(errorText)}" style="padding: 4px 8px; font-size: 12px;">View</button>` : ''}
+                <div class="token-pool-rate-meta">Updated: ${escapeHtml(updatedAt)}</div>
+            </div>
+        `;
+    }
+
+    if (!summary && !metaParts.length) {
+        return '-';
+    }
+
+    const mainLine = escapeHtml(summary || metaParts.shift() || '');
+    const metaLine = metaParts.length ? escapeHtml(metaParts.join(' · ')) : '';
+    return `
+        <div class="token-pool-rate-cell" title="${escapeHtml(detailTitle)}">
+            <div class="token-pool-rate-main">${mainLine}</div>
+            ${metaLine ? `<div class="token-pool-rate-meta">${metaLine}</div>` : ''}
+        </div>
+    `;
+}
+
 function closeAllTokenPoolActionMenus(scope = document) {
     scope.querySelectorAll('.token-pool-more-menu.show').forEach((menu) => {
         menu.classList.remove('show');
     });
+}
+
+function setTokenPoolHint(modal, text) {
+    const hintEl = modal.querySelector('#tokenPoolHint');
+    if (!hintEl) {
+        return;
+    }
+    const message = (text || '').trim();
+    hintEl.textContent = message;
+    hintEl.style.display = message ? 'block' : 'none';
 }
 
 async function loadTokenPoolData(index) {
@@ -613,16 +763,11 @@ async function loadTokenPoolData(index) {
     }
 
     const modal = ensureTokenPoolModal();
-    const hintEl = modal.querySelector('#tokenPoolHint');
-    if (hintEl) {
-        hintEl.textContent = 'Loading token pool...';
-    }
+    setTokenPoolHint(modal, 'Loading token pool...');
     const raw = await window.go.main.App.GetEndpointCredentials(index);
     const parsed = parseAppJSON(raw);
     if (!parsed.success) {
-        if (hintEl) {
-            hintEl.textContent = `Load failed: ${parsed.error || 'unknown error'}`;
-        }
+        setTokenPoolHint(modal, `Load failed: ${parsed.error || 'unknown error'}`);
         throw new Error(parsed.error || 'Failed to load token pool');
     }
 
@@ -634,9 +779,7 @@ async function loadTokenPoolData(index) {
     const bodyEl = modal.querySelector('#tokenPoolTableBody');
     statsEl.innerHTML = renderTokenPoolStats(stats);
     bodyEl.innerHTML = renderTokenPoolRows(credentials);
-    if (hintEl) {
-        hintEl.textContent = `Loaded ${credentials.length} credential(s).`;
-    }
+    setTokenPoolHint(modal, '');
 
     bodyEl.querySelectorAll('.token-pool-toggle-action').forEach((button) => {
         button.addEventListener('click', async () => {
@@ -708,6 +851,14 @@ async function loadTokenPoolData(index) {
         });
     });
 
+    bodyEl.querySelectorAll('.token-pool-rate-error-view').forEach((button) => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            showTokenPoolErrorDialog(button.dataset.error || '');
+        });
+    });
+
     bodyEl.querySelectorAll('.token-pool-update').forEach((button) => {
         button.addEventListener('click', async () => {
             const accessToken = prompt('New access token');
@@ -732,6 +883,43 @@ async function loadTokenPoolData(index) {
                 showNotification(`Failed: ${message}`, 'error');
             }
             closeAllTokenPoolActionMenus(bodyEl);
+        });
+    });
+
+    bodyEl.querySelectorAll('.token-pool-rate-refresh').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const credentialID = Number(button.dataset.id);
+            if (!Number.isFinite(credentialID) || credentialID <= 0) {
+                showNotification('Invalid credential id', 'error');
+                return;
+            }
+            const row = button.closest('tr');
+            const accountText = row?.querySelector('td code')?.textContent?.trim() || '';
+            const label = accountText ? `${accountText} (#${credentialID})` : `#${credentialID}`;
+            const modal = ensureTokenPoolModal();
+            try {
+                setTokenPoolHint(modal, `Refreshing rate limits for ${label}...`);
+                const raw = await window.go.main.App.FetchCodexRateLimitsForCredential(tokenPoolCurrentIndex, credentialID);
+                const result = parseAppJSON(raw);
+                if (!result.success) {
+                    throw new Error(result.error || 'Failed to refresh rate limits');
+                }
+                const data = result.data || {};
+                const detail = `updated ${data.updated || 0}, failed ${data.failed || 0}, skipped ${data.skipped || 0}`;
+                await loadTokenPoolData(tokenPoolCurrentIndex);
+                const refreshedRow = modal.querySelector(`.token-pool-rate-refresh[data-id="${credentialID}"]`)?.closest('tr');
+                const rateMain = refreshedRow?.querySelector('.token-pool-rate-main')?.textContent?.trim();
+                const rateStatus = refreshedRow?.querySelector('.token-pool-rate-status')?.textContent?.trim();
+                const rateSummary = rateMain || rateStatus || '-';
+                showNotification(`Rate limits refreshed for ${label}: ${rateSummary} (${detail})`, 'success');
+                setTokenPoolHint(modal, `Rate limits refreshed for ${label}: ${rateSummary} (${detail})`);
+            } catch (error) {
+                const message = error?.message || String(error);
+                showNotification(`Rate limits refresh failed: ${message}`, 'error');
+                setTokenPoolHint(modal, `Rate limits refresh failed: ${message}`);
+            } finally {
+                closeAllTokenPoolActionMenus(bodyEl);
+            }
         });
     });
 
@@ -767,6 +955,41 @@ async function loadTokenPoolData(index) {
             closeAllTokenPoolActionMenus(bodyEl);
         });
     });
+}
+
+async function refreshTokenPoolRateLimits(index) {
+    if (index < 0) {
+        return;
+    }
+
+    const modal = ensureTokenPoolModal();
+    const button = modal.querySelector('#tokenPoolRateRefreshBtn');
+    try {
+        if (button) {
+            button.disabled = true;
+            button.textContent = 'Refreshing...';
+        }
+        setTokenPoolHint(modal, 'Fetching rate limits...');
+
+        const raw = await window.go.main.App.FetchCodexRateLimits(index);
+        const result = parseAppJSON(raw);
+        if (!result.success) {
+            throw new Error(result.error || 'Failed to fetch rate limits');
+        }
+
+        const data = result.data || {};
+        showNotification(`Rate limits refreshed: ${data.updated || 0} updated, ${data.failed || 0} failed, ${data.skipped || 0} skipped`, 'success');
+        await loadTokenPoolData(index);
+    } catch (error) {
+        const message = error?.message || String(error);
+        showNotification(`Rate limits refresh failed: ${message}`, 'error');
+        setTokenPoolHint(modal, `Rate limits refresh failed: ${message}`);
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.textContent = 'Refresh Limits';
+        }
+    }
 }
 
 async function handleTokenPoolImport() {
@@ -811,6 +1034,49 @@ async function handleTokenPoolImport() {
     } catch (error) {
         const message = error?.message || String(error);
         showNotification(`Import failed: ${message}`, 'error');
+    }
+}
+
+async function handleTokenPoolFileImport() {
+    if (tokenPoolCurrentIndex < 0) {
+        return;
+    }
+
+    const modal = ensureTokenPoolModal();
+    const overwrite = modal.querySelector('#tokenPoolOverwrite')?.checked === true;
+
+    try {
+        setTokenPoolHint(modal, 'Opening file picker...');
+        const resultRaw = await window.go.main.App.ImportEndpointCredentialsFromFiles(tokenPoolCurrentIndex, overwrite);
+        const result = parseAppJSON(resultRaw);
+        if (!result.success) {
+            throw new Error(result.error || 'Import failed');
+        }
+
+        const data = result.data || {};
+        if ((data.processed || 0) === 0 && (data.failed || 0) === 0) {
+            showNotification('No files selected', 'warning');
+            setTokenPoolHint(modal, 'No files selected.');
+            return;
+        }
+
+        showNotification(
+            `Import files: +${data.created || 0}, updated ${data.updated || 0}, skipped ${data.skipped || 0}, failed ${data.failed || 0}`,
+            (data.failed || 0) > 0 ? 'warning' : 'success'
+        );
+        await loadTokenPoolData(tokenPoolCurrentIndex);
+        if (window.loadConfig) {
+            window.loadConfig();
+        }
+    } catch (error) {
+        const message = error?.message || String(error);
+        if (message.toLowerCase().includes('no files selected')) {
+            showNotification('No files selected', 'warning');
+            setTokenPoolHint(modal, 'No files selected.');
+            return;
+        }
+        showNotification(`Import files failed: ${message}`, 'error');
+        setTokenPoolHint(modal, `Import files failed: ${message}`);
     }
 }
 

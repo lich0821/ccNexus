@@ -122,6 +122,14 @@ func (s *SQLiteStorage) initSchema() error {
 		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
 
+	CREATE TABLE IF NOT EXISTS credential_rate_limits (
+		credential_id INTEGER PRIMARY KEY,
+		snapshot_json TEXT,
+		last_status TEXT,
+		last_error TEXT,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
 	CREATE TABLE IF NOT EXISTS daily_stats (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		endpoint_name TEXT NOT NULL,
@@ -147,6 +155,7 @@ func (s *SQLiteStorage) initSchema() error {
 	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_endpoint ON endpoint_credentials(endpoint_name);
 	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_status ON endpoint_credentials(status);
 	CREATE INDEX IF NOT EXISTS idx_endpoint_credentials_expires_at ON endpoint_credentials(expires_at);
+	CREATE INDEX IF NOT EXISTS idx_credential_rate_limits_updated ON credential_rate_limits(updated_at);
 	`
 
 	if _, err := s.db.Exec(schema); err != nil {
@@ -264,6 +273,14 @@ func (s *SQLiteStorage) DeleteEndpoint(name string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if _, err := s.db.Exec(`
+		DELETE FROM credential_rate_limits
+		WHERE credential_id IN (
+			SELECT id FROM endpoint_credentials WHERE endpoint_name=?
+		)
+	`, name); err != nil {
+		return err
+	}
 	if _, err := s.db.Exec(`DELETE FROM endpoint_credentials WHERE endpoint_name=?`, name); err != nil {
 		return err
 	}

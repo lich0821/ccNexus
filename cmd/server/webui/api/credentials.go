@@ -96,6 +96,11 @@ func (h *Handler) listEndpointCredentials(w http.ResponseWriter, r *http.Request
 		WriteError(w, http.StatusInternalServerError, "Failed to get endpoint credentials")
 		return
 	}
+	rateLimits, err := h.storage.GetCredentialRateLimitsByEndpoint(endpointName)
+	if err != nil {
+		logger.Warn("Failed to load rate limits: %v", err)
+		rateLimits = nil
+	}
 
 	stats, err := h.storage.GetTokenPoolStats(endpointName)
 	if err != nil {
@@ -106,6 +111,11 @@ func (h *Handler) listEndpointCredentials(w http.ResponseWriter, r *http.Request
 		credentials[i].AccessToken = maskToken(credentials[i].AccessToken)
 		credentials[i].RefreshToken = maskToken(credentials[i].RefreshToken)
 		credentials[i].IDToken = maskToken(credentials[i].IDToken)
+		if rateLimits != nil {
+			if entry, ok := rateLimits[credentials[i].ID]; ok {
+				credentials[i].RateLimits = entry
+			}
+		}
 	}
 
 	WriteSuccess(w, map[string]interface{}{

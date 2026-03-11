@@ -72,6 +72,7 @@ func TestHandleStreamingResponseExtractsUsageFromOriginalEvent(t *testing.T) {
 		false,
 		"gpt-4.1",
 		[]byte(`{}`),
+		0,
 	)
 
 	if in != 7 || out != 5 {

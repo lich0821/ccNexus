@@ -317,6 +317,9 @@ func (s *SQLiteStorage) DeleteEndpointCredential(endpointName string, id int64) 
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	if _, err := s.db.Exec(`DELETE FROM credential_rate_limits WHERE credential_id=?`, id); err != nil {
+		return err
+	}
 	result, err := s.db.Exec(`DELETE FROM endpoint_credentials WHERE endpoint_name=? AND id=?`, endpointName, id)
 	if err != nil {
 		return err

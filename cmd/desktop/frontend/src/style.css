@@ -1181,6 +1181,10 @@ body {
     flex-shrink: 0;
 }
 
+#tokenPoolModal .modal-header {
+    padding: 20px 30px 12px 30px;
+}
+
 .modal-body {
     padding: 0 30px;
     overflow-y: auto;
@@ -1777,6 +1781,117 @@ body {
 
 .token-pool-more-menu .token-pool-delete {
     color: #ef4444;
+}
+
+.token-pool-import-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.token-pool-import-header > label {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.token-pool-overwrite {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.token-pool-overwrite-label {
+    margin: 0;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.token-pool-stats-line {
+    display: block;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: rgba(148, 163, 184, 0.15);
+    font-size: 12px;
+    color: var(--text-primary, #111827);
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.token-pool-stat {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    font-weight: 600;
+}
+
+.token-pool-stat strong {
+    font-weight: 700;
+    display: inline;
+}
+
+.token-pool-stat-sep {
+    margin: 0 6px;
+    color: var(--text-secondary, #6b7280);
+}
+
+.token-pool-stat-alert {
+    color: #f59e0b;
+}
+
+.token-pool-rate-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-width: 210px;
+}
+
+.token-pool-rate-main {
+    font-weight: 600;
+    color: var(--text-primary, #111827);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.token-pool-rate-meta {
+    font-size: 11px;
+    color: var(--text-secondary, #6b7280);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.token-pool-rate-status {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background: #6b7280;
+}
+
+.token-pool-rate-status-unauthorized,
+.token-pool-rate-status-blocked,
+.token-pool-rate-status-error {
+    background: #ef4444;
+}
+
+.token-pool-rate-status-network,
+.token-pool-rate-status-upstream {
+    background: #f59e0b;
+}
+
+.token-pool-rate-status-parse_error,
+.token-pool-rate-status-empty {
+    background: #6366f1;
 }
 
 .token-pool-error-modal-content {
