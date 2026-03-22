@@ -39,6 +39,8 @@ COPY --from=builder /app/ccnexus-server /app/ccnexus-server
 ENV CCNEXUS_DATA_DIR=/data
 ENV CCNEXUS_PORT=3000
 ENV CCNEXUS_DB_PATH=/data/ccnexus.db
+ENV CCNEXUS_BASIC_AUTH_ENABLED=true
+ENV CCNEXUS_BASIC_AUTH_USERNAME=admin
 
 # Expose HTTP API port
 EXPOSE 3000

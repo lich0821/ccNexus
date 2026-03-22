@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/proxy"
@@ -13,6 +14,7 @@ type Handler struct {
 	config  *config.Config
 	proxy   *proxy.Proxy
 	storage *storage.SQLiteStorage
+	auth    AuthConfig
 }
 
 // NewHandler creates a new API handler
@@ -21,31 +23,61 @@ func NewHandler(cfg *config.Config, p *proxy.Proxy, s *storage.SQLiteStorage) *H
 		config:  cfg,
 		proxy:   p,
 		storage: s,
+		auth: AuthConfig{
+			Enabled:  cfg.BasicAuthEnabled,
+			Username: cfg.BasicAuthUsername,
+			Password: cfg.BasicAuthPassword,
+		},
 	}
 }
 
-// RegisterRoutes registers all API routes
-func (h *Handler) RegisterRoutes(mux *http.ServeMux) {
-	// Endpoint management
-	mux.HandleFunc("/api/endpoints", h.handleEndpoints)
-	mux.HandleFunc("/api/endpoints/", h.handleEndpointByName)
-	mux.HandleFunc("/api/endpoints/current", h.handleCurrentEndpoint)
-	mux.HandleFunc("/api/endpoints/switch", h.handleSwitchEndpoint)
-	mux.HandleFunc("/api/endpoints/reorder", h.handleReorderEndpoints)
-	mux.HandleFunc("/api/endpoints/fetch-models", h.handleFetchModels)
+// ServeHTTP implements http.Handler interface
+func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	if !strings.HasPrefix(path, "/") {
+		path = "/" + path
+	}
 
-	// Statistics
-	mux.HandleFunc("/api/stats/summary", h.handleStatsSummary)
-	mux.HandleFunc("/api/stats/daily", h.handleStatsDaily)
-	mux.HandleFunc("/api/stats/weekly", h.handleStatsWeekly)
-	mux.HandleFunc("/api/stats/monthly", h.handleStatsMonthly)
-	mux.HandleFunc("/api/stats/trends", h.handleStatsTrends)
+	authMiddleware := BasicAuthMiddleware(h.auth)
 
-	// Configuration
-	mux.HandleFunc("/api/config", h.handleConfig)
-	mux.HandleFunc("/api/config/port", h.handleConfigPort)
-	mux.HandleFunc("/api/config/log-level", h.handleConfigLogLevel)
-
-	// Real-time events
-	mux.HandleFunc("/api/events", h.handleEvents)
+	switch path {
+	case "/api/endpoints":
+		authMiddleware(http.HandlerFunc(h.handleEndpoints)).ServeHTTP(w, r)
+	case "/api/endpoints/current":
+		authMiddleware(http.HandlerFunc(h.handleCurrentEndpoint)).ServeHTTP(w, r)
+	case "/api/endpoints/switch":
+		authMiddleware(http.HandlerFunc(h.handleSwitchEndpoint)).ServeHTTP(w, r)
+	case "/api/endpoints/reorder":
+		authMiddleware(http.HandlerFunc(h.handleReorderEndpoints)).ServeHTTP(w, r)
+	case "/api/endpoints/fetch-models":
+		authMiddleware(http.HandlerFunc(h.handleFetchModels)).ServeHTTP(w, r)
+	case "/api/stats/summary":
+		authMiddleware(http.HandlerFunc(h.handleStatsSummary)).ServeHTTP(w, r)
+	case "/api/stats/daily":
+		authMiddleware(http.HandlerFunc(h.handleStatsDaily)).ServeHTTP(w, r)
+	case "/api/stats/weekly":
+		authMiddleware(http.HandlerFunc(h.handleStatsWeekly)).ServeHTTP(w, r)
+	case "/api/stats/monthly":
+		authMiddleware(http.HandlerFunc(h.handleStatsMonthly)).ServeHTTP(w, r)
+	case "/api/stats/trends":
+		authMiddleware(http.HandlerFunc(h.handleStatsTrends)).ServeHTTP(w, r)
+	case "/api/config":
+		authMiddleware(http.HandlerFunc(h.handleConfig)).ServeHTTP(w, r)
+	case "/api/config/port":
+		authMiddleware(http.HandlerFunc(h.handleConfigPort)).ServeHTTP(w, r)
+	case "/api/config/log-level":
+		authMiddleware(http.HandlerFunc(h.handleConfigLogLevel)).ServeHTTP(w, r)
+	case "/api/config/basic-auth":
+		authMiddleware(http.HandlerFunc(h.handleBasicAuthConfig)).ServeHTTP(w, r)
+	case "/api/config/basic-auth/reset-password":
+		authMiddleware(http.HandlerFunc(h.handleResetBasicAuthPassword)).ServeHTTP(w, r)
+	case "/api/events":
+		authMiddleware(http.HandlerFunc(h.handleEvents)).ServeHTTP(w, r)
+	default:
+		if strings.HasPrefix(path, "/api/endpoints/") {
+			authMiddleware(http.HandlerFunc(h.handleEndpointByName)).ServeHTTP(w, r)
+			return
+		}
+		http.NotFound(w, r)
+	}
 }
