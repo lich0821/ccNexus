@@ -47,6 +47,7 @@ type Proxy struct {
 	endpointCancel    map[string]context.CancelFunc // cancel functions per endpoint
 	ctxMu             sync.RWMutex                  // protects context maps
 	onEndpointSuccess func(endpointName string)     // callback when endpoint request succeeds
+	modelsCache       *ModelsCache                  // Cache for /v1/models endpoint
 }
 
 // New creates a new Proxy instance
@@ -79,6 +80,7 @@ func New(cfg *config.Config, statsStorage StatsStorage, sqliteStorage *storage.S
 		activeRequests: make(map[string]bool),
 		endpointCtx:    make(map[string]context.Context),
 		endpointCancel: make(map[string]context.CancelFunc),
+		modelsCache:    NewModelsCache(cfg.ModelsCacheTTL),
 	}
 }
 
@@ -106,6 +108,7 @@ func (p *Proxy) StartWithMux(customMux *http.ServeMux) error {
 	// Register proxy routes
 	mux.HandleFunc("/", p.handleProxy)
 	mux.HandleFunc("/v1/messages/count_tokens", p.handleCountTokens)
+	mux.HandleFunc("/v1/models", p.handleModels)
 	mux.HandleFunc("/health", p.handleHealth)
 	mux.HandleFunc("/stats", p.handleStats)
 

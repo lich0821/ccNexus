@@ -172,6 +172,8 @@ type Config struct {
 	CloseWindowBehavior       string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
 	ClaudeNotificationEnabled bool            `json:"claudeNotificationEnabled"`     // Enable Claude Code task completion notification
 	ClaudeNotificationType    string          `json:"claudeNotificationType"`        // Notification type: toast, dialog, disabled
+	ModelsCacheTTL            int             `json:"modelsCacheTTL,omitempty"`      // /v1/models cache TTL in minutes, default 30
+	ModelsCacheRefreshEnabled bool            `json:"modelsCacheRefreshEnabled,omitempty"` // Enable ?refresh=true parameter, default false
 	WebDAV                    *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
 	Backup                    *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
 	Update                    *UpdateConfig   `json:"update,omitempty"`              // Update configuration
@@ -189,6 +191,8 @@ func DefaultConfig() *Config {
 		Language:     "zh-CN", // Default to Chinese
 		WindowWidth:  1024,    // Default window width
 		WindowHeight: 768,     // Default window height
+		ModelsCacheTTL:              30,    // Default 30 minutes
+		ModelsCacheRefreshEnabled:  false, // Default disabled
 		Endpoints: []Endpoint{
 			{
 				Name:        "Claude Official",
@@ -575,6 +579,19 @@ func LoadFromStorage(storage StorageAdapter) (*Config, error) {
 		}
 	}
 
+	if modelsCacheTTLStr, err := storage.GetConfig("modelsCacheTTL"); err == nil && modelsCacheTTLStr != "" {
+		if modelsCacheTTL, err := strconv.Atoi(modelsCacheTTLStr); err == nil {
+			config.ModelsCacheTTL = modelsCacheTTL
+		}
+	}
+	if config.ModelsCacheTTL == 0 {
+		config.ModelsCacheTTL = 30 // Default 30 minutes
+	}
+
+	if modelsCacheRefreshEnabledStr, err := storage.GetConfig("modelsCacheRefreshEnabled"); err == nil && modelsCacheRefreshEnabledStr != "" {
+		config.ModelsCacheRefreshEnabled = modelsCacheRefreshEnabledStr == "true"
+	}
+
 	if lang, err := storage.GetConfig("language"); err == nil {
 		config.Language = lang
 	}
@@ -819,6 +836,12 @@ func (c *Config) SaveToStorage(storage StorageAdapter) error {
 	}
 	if err := storage.SetConfig("logLevel", strconv.Itoa(c.LogLevel)); err != nil {
 		return fmt.Errorf("failed to save logLevel config: %w", err)
+	}
+	if err := storage.SetConfig("modelsCacheTTL", strconv.Itoa(c.ModelsCacheTTL)); err != nil {
+		return fmt.Errorf("failed to save modelsCacheTTL config: %w", err)
+	}
+	if err := storage.SetConfig("modelsCacheRefreshEnabled", strconv.FormatBool(c.ModelsCacheRefreshEnabled)); err != nil {
+		return fmt.Errorf("failed to save modelsCacheRefreshEnabled config: %w", err)
 	}
 	if err := storage.SetConfig("language", c.Language); err != nil {
 		return fmt.Errorf("failed to save language config: %w", err)
