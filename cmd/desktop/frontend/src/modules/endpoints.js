@@ -4,6 +4,19 @@ import { getEndpointStats } from './stats.js';
 import { toggleEndpoint, testAllEndpointsZeroCost } from './config.js';
 import { filterEndpoints, isFilterActive, updateFilterStats } from './filters.js';
 
+// 提取基础名称，移除副本后缀
+function extractBaseName(name) {
+    // 移除类似 "(Copy)", "(副本)", "(Copy) 1", "(副本) 1" 等后缀
+    // 使用固定的模式匹配，避免在函数内部调用 t()
+    const copyPattern = /\(Copy\)(?:\s+\d+)?$/;
+    const chineseCopyPattern = /\(副本\)(?:\s+\d+)?$/;
+    
+    let baseName = name.replace(copyPattern, '').trim();
+    baseName = baseName.replace(chineseCopyPattern, '').trim();
+    
+    return baseName;
+}
+
 const ENDPOINT_TEST_STATUS_KEY = 'ccNexus_endpointTestStatus';
 const ENDPOINT_VIEW_MODE_KEY = 'ccNexus_endpointViewMode';
 
@@ -260,6 +273,7 @@ export async function renderEndpoints(endpoints) {
                     <span class="toggle-slider"></span>
                 </label>
                 <button class="btn-card btn-secondary" data-action="test" data-index="${index}">${t('endpoints.test')}</button>
+                <button class="btn-card btn-secondary" data-action="copy" data-index="${index}">${t('endpoints.copy')}</button>
                 <button class="btn-card btn-secondary" data-action="edit" data-index="${index}">${t('endpoints.edit')}</button>
                 <button class="btn-card btn-danger" data-action="delete" data-index="${index}">${t('endpoints.delete')}</button>
             </div>
@@ -280,6 +294,11 @@ export async function renderEndpoints(endpoints) {
         testBtn.addEventListener('click', () => {
             const idx = parseInt(testBtn.getAttribute('data-index'));
             window.testEndpoint(idx, testBtn);
+        });
+        const copyBtn = item.querySelector('[data-action="copy"]');
+        copyBtn.addEventListener('click', () => {
+            const idx = parseInt(copyBtn.getAttribute('data-index'));
+            copyEndpointConfig(idx, copyBtn);
         });
         editBtn.addEventListener('click', () => {
             const idx = parseInt(editBtn.getAttribute('data-index'));
@@ -1308,6 +1327,81 @@ export async function openTokenPoolModal(index, endpointName = '') {
     }
 }
 
+// 克隆端点配置（创建副本）
+function copyEndpointConfig(index, button) {
+    const allEndpoints = window.config?.endpoints || [];
+    
+    if (index < 0 || index >= allEndpoints.length) {
+        const errorMsg = `Invalid index ${index} for cloning endpoint. Total endpoints: ${allEndpoints.length} at ${new Date().toISOString()}`;
+        console.error(errorMsg);
+        if (typeof window.logError === 'function') {
+            window.logError(errorMsg);
+        }
+        showNotification(t('endpoints.cloneFailed') + ': ' + (t('endpoints.invalidIndex') || `Invalid index ${index}`), 'error');
+        return;
+    }
+    
+    const endpoint = allEndpoints[index];
+    
+    if (endpoint) {
+        const clonedEndpoint = { ...endpoint };
+        
+        const baseName = extractBaseName(endpoint.name);
+        const copySuffix = '(Copy)';
+        
+        let newName = `${baseName}${copySuffix}`;
+        let counter = 1;
+        while (allEndpoints.some(ep => ep.name === newName)) {
+            newName = `${baseName}${copySuffix} ${counter}`;
+            counter++;
+        }
+        clonedEndpoint.name = newName;
+        
+        if (clonedEndpoint.authMode === "token_pool") {
+            delete clonedEndpoint.apiKey;
+        }
+        
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+        setTimeout(() => { button.innerHTML = originalHTML; }, 1000);
+        
+        showNotification(t('endpoints.cloned') || 'Endpoint cloned successfully', 'success');
+        
+        window.clonedEndpointData = clonedEndpoint;
+        
+        if (typeof window.showAddEndpointModalWithPreset === 'function') {
+            try {
+                window.showAddEndpointModalWithPreset(clonedEndpoint);
+            } catch (error) {
+                const errorMsg = `Error calling showAddEndpointModalWithPreset at ${new Date().toISOString()}: ${error.message}\nStack: ${error.stack}`;
+                console.error(errorMsg);
+                try {
+                    if (typeof window.logError === 'function') {
+                        window.logError(errorMsg);
+                    }
+                } catch (logErr) {
+                    console.error('Failed to call logError:', logErr);
+                }
+                showNotification(t('endpoints.cloneFailed') + ': ' + error.message || `Failed to clone endpoint: ${error.message}`, 'error');
+            }
+        } else {
+            const errorMsg = `showAddEndpointModalWithPreset function is not available at ${new Date().toISOString()}`;
+            console.error(errorMsg);
+            if (typeof window.logError === 'function') {
+                window.logError(errorMsg);
+            }
+            showNotification(t('endpoints.cloneFailed') + ': ' + t('endpoints.functionUnavailable') || 'Failed to clone endpoint: Function not available', 'error');
+        }
+    } else {
+        const errorMsg = `Failed to clone endpoint: endpoint data not found at index ${index} at ${new Date().toISOString()}`;
+        console.error(errorMsg);
+        if (typeof window.logError === 'function') {
+            window.logError(errorMsg);
+        }
+        showNotification(t('endpoints.cloneFailed') + ': ' + (t('endpoints.noEndpointAtIdxWithIndex') || `No endpoint found at index ${index}`), 'error');
+    }
+}
+
 export function toggleEndpointPanel() {
     const panel = document.getElementById('endpointPanel');
     const icon = document.getElementById('endpointToggleIcon');
@@ -1569,6 +1663,7 @@ function renderCompactView(sortedEndpoints, container, currentEndpointName, isFi
                     <div class="compact-more-menu">
                         <button data-action="test" data-index="${index}">🧪 ${t('endpoints.test')}</button>
                         <button data-action="edit" data-index="${index}">✏️ ${t('endpoints.edit')}</button>
+                        <button data-action="copy" data-index="${index}">📋 ${t('endpoints.copy')}</button>
                         <button data-action="delete" data-index="${index}" class="danger">🗑️ ${t('endpoints.delete')}</button>
                     </div>
                 </div>
@@ -1657,6 +1752,14 @@ function bindCompactItemEvents(item, index, enabled) {
         const idx = parseInt(testBtn.getAttribute('data-index'));
         window.testEndpoint(idx, testBtn);
     });
+
+    // 复制按钮
+    const copyBtn = item.querySelector('[data-action="copy"]');
+    copyBtn.addEventListener('click', () => {
+        closeAllDropdowns();
+        const idx = parseInt(copyBtn.getAttribute('data-index'));
+        copyEndpointConfig(idx, copyBtn);
+});
 
     // 编辑按钮
     editBtn.addEventListener('click', () => {

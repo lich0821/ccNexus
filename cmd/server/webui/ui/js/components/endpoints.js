@@ -150,6 +150,9 @@ class Endpoints {
                         <button class="btn btn-sm btn-secondary edit-btn" data-name="${this.escapeHtml(ep.name)}">
                             Edit
                         </button>
+                        <button class="btn btn-sm btn-secondary clone-btn" data-name="${this.escapeHtml(ep.name)}">
+                            Clone
+                        </button>
                         <button class="btn btn-sm btn-danger delete-btn" data-name="${this.escapeHtml(ep.name)}">
                             Delete
                         </button>
@@ -187,6 +190,11 @@ class Endpoints {
         // Edit buttons
         document.querySelectorAll('.edit-btn').forEach(btn => {
             btn.addEventListener('click', () => this.showEditModal(btn.dataset.name));
+        });
+
+        // Clone buttons
+        document.querySelectorAll('.clone-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.cloneEndpoint(btn.dataset.name));
         });
 
         // Delete buttons
@@ -315,19 +323,29 @@ class Endpoints {
         }
     }
 
-    showEndpointModal(endpoint) {
-        const isEdit = !!endpoint;
+    showEndpointModal(endpoint, isClone = false) {
+        const isEdit = !!endpoint && !isClone;
         const modalContainer = document.getElementById('modal-container');
+
+        // For clone mode: show masked value like edit mode
+        const apiKeyValue = endpoint ? '****' : '';
+        const apiKeyPlaceholder = 'sk-...';
+        const apiKeyHint = isEdit ? '<small class="text-muted">Leave as **** to keep existing key</small>' : (isClone ? '<small class="text-muted">Leave as **** to keep existing key</small>' : '');
+        const cloneHiddenInput = isClone ? '<input type="hidden" name="isClone" value="true">' : '';
+        const cloneFromValue = endpoint?.cloneFrom || '';
+        const cloneFromInput = isClone && cloneFromValue ? `<input type="hidden" name="cloneFrom" value="${cloneFromValue}">` : '';
 
         modalContainer.innerHTML = `
             <div class="modal-overlay">
                 <div class="modal">
                     <div class="modal-header">
-                        <h3 class="modal-title">${isEdit ? 'Edit' : 'Add'} Endpoint</h3>
+                        <h3 class="modal-title">${isClone ? 'Clone Endpoint' : (isEdit ? 'Edit' : 'Add')} Endpoint</h3>
                         <button class="modal-close" id="close-modal">×</button>
                     </div>
                     <div class="modal-body">
                         <form id="endpoint-form">
+                            ${cloneHiddenInput}
+                            ${cloneFromInput}
                             <div class="form-group">
                                 <label class="form-label">Name *</label>
                                 <input type="text" class="form-input" name="name" value="${endpoint ? this.escapeHtml(endpoint.name) : ''}" required ${isEdit ? 'readonly' : ''}>
@@ -338,8 +356,8 @@ class Endpoints {
                             </div>
                             <div class="form-group">
                                 <label class="form-label">API Key *</label>
-                                <input type="password" class="form-input" name="apiKey" value="${endpoint ? '****' : ''}" placeholder="sk-..." required>
-                                ${endpoint ? '<small class="text-muted">Leave as **** to keep existing key</small>' : ''}
+                                <input type="password" class="form-input" name="apiKey" value="${apiKeyValue}" placeholder="${apiKeyPlaceholder}" required>
+                                ${apiKeyHint}
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Transformer *</label>
@@ -383,7 +401,10 @@ class Endpoints {
 
         document.getElementById('close-modal').addEventListener('click', () => this.closeModal());
         document.getElementById('cancel-btn').addEventListener('click', () => this.closeModal());
-        document.getElementById('save-btn').addEventListener('click', () => this.saveEndpoint(isEdit, endpoint?.name));
+        document.getElementById('save-btn').addEventListener('click', () => {
+            const isClone = !!document.querySelector('input[name="isClone"]');
+            this.saveEndpoint(isEdit, endpoint?.name, isClone);
+        });
         document.getElementById('fetch-models-btn').addEventListener('click', () => this.fetchModels());
     }
 
@@ -481,7 +502,7 @@ class Endpoints {
         });
     }
 
-    async saveEndpoint(isEdit, originalName) {
+    async saveEndpoint(isEdit, originalName, isClone = false) {
         const form = document.getElementById('endpoint-form');
         const formData = new FormData(form);
 
@@ -495,9 +516,15 @@ class Endpoints {
             enabled: formData.get('enabled') === 'on'
         };
 
-        // If editing and API key is ****, don't send it
-        if (isEdit && data.apiKey === '****') {
+        // If editing and API key is ****, don't send it (keep existing)
+        if ((isEdit || isClone) && data.apiKey === '****') {
             delete data.apiKey;
+        }
+
+        // For clone mode, add cloneFrom field if available
+        const cloneFromInput = document.querySelector('input[name="cloneFrom"]');
+        if (isClone && cloneFromInput && cloneFromInput.value) {
+            data.cloneFrom = cloneFromInput.value;
         }
 
         try {
@@ -593,6 +620,41 @@ class Endpoints {
             await this.loadEndpoints();
         } catch (error) {
             notifications.error('Failed to delete endpoint: ' + error.message);
+        }
+    }
+
+    async cloneEndpoint(name) {
+        const endpoint = this.endpoints.find(ep => ep.name === name);
+        if (!endpoint) {
+            notifications.error('Endpoint not found');
+            return;
+        }
+
+        // Extract base name and add (Copy) suffix
+        const baseName = name.replace(/\(Copy\)(?:\s+\d+)?$/, '').trim();
+        let newName = `${baseName} (Copy)`;
+        let counter = 1;
+        while (this.endpoints.some(ep => ep.name === newName)) {
+            newName = `${baseName} (Copy) ${counter}`;
+            counter++;
+        }
+
+        // Create cloned endpoint - don't include apiKey, use cloneFrom instead
+        const clonedEndpoint = {
+            name: newName,
+            apiUrl: endpoint.apiUrl,
+            transformer: endpoint.transformer,
+            model: endpoint.model,
+            remark: endpoint.remark,
+            enabled: endpoint.enabled,
+            cloneFrom: name  // Reference to source endpoint
+        };
+
+        try {
+            this.showEndpointModal(clonedEndpoint, true);
+            notifications.success('Endpoint cloned. Please save to create a new endpoint.');
+        } catch (error) {
+            notifications.error('Failed to clone endpoint: ' + error.message);
         }
     }
 
