@@ -19,6 +19,7 @@ import { initFilterDropdowns, clearAllFilters } from './modules/filters.js'
 import { formatTokens } from './utils/format.js'
 import {
     showAddEndpointModal,
+    showAddEndpointModalWithPreset,
     editEndpoint,
     saveEndpoint,
     openEndpointTokenPoolFromModal,
@@ -223,6 +224,7 @@ async function loadConfigAndRender() {
 // Expose functions to window for onclick handlers
 window.loadConfig = loadConfigAndRender;
 window.showAddEndpointModal = showAddEndpointModal;
+window.showAddEndpointModalWithPreset = showAddEndpointModalWithPreset;
 window.editEndpoint = editEndpoint;
 window.saveEndpoint = saveEndpoint;
 window.openEndpointTokenPoolFromModal = openEndpointTokenPoolFromModal;
