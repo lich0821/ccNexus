@@ -1,6 +1,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"net/http"
 	"os"
@@ -38,6 +40,21 @@ func main() {
 	if err != nil {
 		logger.Error("Unable to load configuration: %v", err)
 		os.Exit(1)
+	}
+
+	if cfg.BasicAuthEnabled && cfg.BasicAuthPassword == "" {
+		randomPassword := generateRandomPassword(16)
+		cfg.BasicAuthPassword = randomPassword
+		logger.Info("======================================")
+		logger.Info("  Basic Auth 密码已随机生成")
+		logger.Info("  用户名: %s", cfg.BasicAuthUsername)
+		logger.Info("  密码: %s", randomPassword)
+		logger.Info("  请妥善保存，密码不会再次显示")
+		logger.Info("======================================")
+		adapter := storage.NewConfigStorageAdapter(sqliteStorage)
+		_ = cfg.SaveToStorage(adapter)
+	} else if cfg.BasicAuthEnabled {
+		logger.Info("Basic Auth 已启用，用户名: %s", cfg.BasicAuthUsername)
 	}
 
 	applyEnvOverrides(cfg)
@@ -142,6 +159,19 @@ func applyEnvOverrides(cfg *config.Config) {
 			logger.Warn("Invalid CCNEXUS_LOG_LEVEL value %q: %v", levelStr, err)
 		}
 	}
+
+	if authEnabled := os.Getenv("CCNEXUS_BASIC_AUTH_ENABLED"); authEnabled != "" {
+		enabled := authEnabled == "1" || authEnabled == "true"
+		cfg.BasicAuthEnabled = enabled
+	}
+
+	if username := os.Getenv("CCNEXUS_BASIC_AUTH_USERNAME"); username != "" {
+		cfg.BasicAuthUsername = username
+	}
+
+	if password := os.Getenv("CCNEXUS_BASIC_AUTH_PASSWORD"); password != "" {
+		cfg.BasicAuthPassword = password
+	}
 }
 
 func setLogLevels(level int) {
@@ -150,4 +180,16 @@ func setLogLevels(level int) {
 	}
 	logger.GetLogger().SetMinLevel(logger.LogLevel(level))
 	logger.GetLogger().SetConsoleLevel(logger.LogLevel(level))
+}
+
+func generateRandomPassword(length int) string {
+	bytes := make([]byte, length)
+	if _, err := rand.Read(bytes); err != nil {
+		fallback := make([]byte, length)
+		for i := range fallback {
+			fallback[i] = byte(i*7%26 + 'a')
+		}
+		return string(fallback)
+	}
+	return hex.EncodeToString(bytes)[:length]
 }

@@ -1,12 +1,20 @@
 package api
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"net/http"
 
 	"github.com/lich0821/ccNexus/internal/logger"
 	"github.com/lich0821/ccNexus/internal/storage"
 )
+
+type BasicAuthConfigRequest struct {
+	Enabled  bool   `json:"enabled"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
 
 // handleConfig handles GET and PUT for full configuration
 func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -18,6 +26,76 @@ func (h *Handler) handleConfig(w http.ResponseWriter, r *http.Request) {
 	default:
 		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
+}
+
+func (h *Handler) handleBasicAuthConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		WriteSuccess(w, map[string]interface{}{
+			"enabled":  h.config.BasicAuthEnabled,
+			"username": h.config.BasicAuthUsername,
+			"password": "***",
+		})
+	case http.MethodPut:
+		var req BasicAuthConfigRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			WriteError(w, http.StatusBadRequest, "Invalid request body")
+			return
+		}
+
+		h.config.BasicAuthEnabled = req.Enabled
+		if req.Username != "" {
+			h.config.BasicAuthUsername = req.Username
+		}
+		if req.Password != "" && req.Password != "***" {
+			h.config.BasicAuthPassword = req.Password
+		}
+
+		adapter := storage.NewConfigStorageAdapter(h.storage)
+		if err := h.config.SaveToStorage(adapter); err != nil {
+			logger.Error("Failed to save config: %v", err)
+			WriteError(w, http.StatusInternalServerError, "Failed to save configuration")
+			return
+		}
+
+		WriteSuccess(w, map[string]interface{}{
+			"message": "Basic Auth configuration updated",
+			"enabled":  h.config.BasicAuthEnabled,
+			"username": h.config.BasicAuthUsername,
+		})
+	default:
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
+}
+
+func (h *Handler) handleResetBasicAuthPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		WriteError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	bytes := make([]byte, 16)
+	if _, err := rand.Read(bytes); err != nil {
+		WriteError(w, http.StatusInternalServerError, "Failed to generate password")
+		return
+	}
+	newPassword := hex.EncodeToString(bytes)[:16]
+
+	h.config.BasicAuthPassword = newPassword
+
+	adapter := storage.NewConfigStorageAdapter(h.storage)
+	if err := h.config.SaveToStorage(adapter); err != nil {
+		logger.Error("Failed to save config: %v", err)
+		WriteError(w, http.StatusInternalServerError, "Failed to save configuration")
+		return
+	}
+
+	logger.Info("Basic Auth password has been reset via API")
+
+	WriteSuccess(w, map[string]interface{}{
+		"message":  "Password reset successfully",
+		"password": newPassword,
+	})
 }
 
 // getConfig returns the full configuration
