@@ -160,6 +160,12 @@ func (p *Proxy) UpdateConfig(cfg *config.Config) error {
 		p.currentIndex = 0
 	}
 
+	// Clear models cache to force refresh with new endpoints
+	if p.modelsCache != nil {
+		p.modelsCache.Clear()
+		logger.Debug("[CONFIG UPDATE] Cleared models cache")
+	}
+
 	logger.Info("Configuration updated: %d endpoints configured", len(cfg.GetEndpoints()))
 	return nil
 }
