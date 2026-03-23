@@ -15,6 +15,9 @@ export async function loadConfig() {
         const configStr = await window.go.main.App.GetConfig();
         const config = JSON.parse(configStr);
 
+        // 保存到全局变量，供克隆等功能使用
+        window.config = config;
+
         document.getElementById('proxyPort').textContent = config.port;
         document.getElementById('totalEndpoints').textContent = config.endpoints.length;
 

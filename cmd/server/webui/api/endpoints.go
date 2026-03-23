@@ -119,11 +119,25 @@ func (h *Handler) createEndpoint(w http.ResponseWriter, r *http.Request) {
 		Transformer string `json:"transformer"`
 		Model       string `json:"model"`
 		Remark      string `json:"remark"`
+		CloneFrom   string `json:"cloneFrom"` // Clone from existing endpoint name
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		WriteError(w, http.StatusBadRequest, "Invalid request body")
 		return
+	}
+
+	// If cloning, get API key from source endpoint
+	if req.CloneFrom != "" && req.APIKey == "" {
+		endpoints, err := h.storage.GetEndpoints()
+		if err == nil {
+			for _, ep := range endpoints {
+				if ep.Name == req.CloneFrom {
+					req.APIKey = ep.APIKey
+					break
+				}
+			}
+		}
 	}
 
 	authMode := config.NormalizeAuthMode(req.AuthMode)

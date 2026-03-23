@@ -198,6 +198,25 @@ export function showAddEndpointModal() {
     document.getElementById('endpointModal').classList.add('active');
 }
 
+// 使用预设数据打开添加端点模态框
+export function showAddEndpointModalWithPreset(presetData) {
+	currentEditIndex = -1;
+	document.getElementById('modalTitle').textContent = '➕ ' + t('modal.addEndpoint');
+	document.getElementById('endpointName').value = presetData.name || '';
+	document.getElementById('endpointUrl').value = presetData.apiUrl || '';
+	document.getElementById('endpointKey').value = presetData.apiKey || '';
+	document.getElementById('endpointKey').type = 'password';
+	document.getElementById('eyeIcon').innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+	document.getElementById('endpointAuthMode').value = presetData.authMode || 'api_key';
+	document.getElementById('endpointTransformer').value = presetData.transformer || 'claude';
+	document.getElementById('endpointModel').value = presetData.model || '';
+	document.getElementById('endpointRemark').value = presetData.remark || '';
+	handleAuthModeChange();
+	updateManageTokenPoolButton();
+	handleTransformerChange();
+	document.getElementById('endpointModal').classList.add('active');
+}
+
 export async function editEndpoint(index) {
 	currentEditIndex = index;
 	const configStr = await window.go.main.App.GetConfig();
