@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"flag"
 	"net/http"
 	"os"
 	"os/signal"
@@ -18,6 +19,9 @@ import (
 )
 
 func main() {
+	// Parse command line flags
+	portFlag := flag.Int("port", 0, "Force specific port (locked, cannot be changed via API)")
+	flag.Parse()
 	dataDir := resolveDataDir()
 	if err := os.MkdirAll(dataDir, 0755); err != nil {
 		logger.Error("Failed to create data dir %s: %v", dataDir, err)
@@ -40,6 +44,13 @@ func main() {
 	if err != nil {
 		logger.Error("Unable to load configuration: %v", err)
 		os.Exit(1)
+	}
+
+	// Handle -port CLI flag (overrides config and locks port)
+	if *portFlag > 0 {
+		cfg.Port = *portFlag
+		cfg.LockPort()
+		logger.Info("Port locked to %d via CLI flag", *portFlag)
 	}
 
 	if cfg.BasicAuthEnabled && cfg.BasicAuthPassword == "" {

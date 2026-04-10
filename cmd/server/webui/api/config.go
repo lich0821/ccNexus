@@ -146,9 +146,15 @@ func (h *Handler) handleConfigPort(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		WriteSuccess(w, map[string]interface{}{
-			"port": h.config.GetPort(),
+			"port":       h.config.GetPort(),
+			"portLocked": h.config.IsPortLocked(),
 		})
 	case http.MethodPut:
+		if h.config.IsPortLocked() {
+			WriteError(w, http.StatusForbidden, "Port is locked by CLI flag and cannot be changed")
+			return
+		}
+
 		var req struct {
 			Port int `json:"port"`
 		}
