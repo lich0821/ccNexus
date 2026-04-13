@@ -160,6 +160,7 @@ type ProxyConfig struct {
 // Config represents the application configuration
 type Config struct {
 	Port                  int             `json:"port"`
+	PortLocked            bool            `json:"-"` // CLI forced port, cannot be changed via API
 	BasicAuthEnabled     bool            `json:"basicAuthEnabled"`
 	BasicAuthUsername     string          `json:"basicAuthUsername"`
 	BasicAuthPassword    string          `json:"basicAuthPassword"`
@@ -318,10 +319,28 @@ func (c *Config) UpdateEndpoints(endpoints []Endpoint) {
 }
 
 // UpdatePort updates the port (thread-safe)
+// If PortLocked is true, the port cannot be changed
 func (c *Config) UpdatePort(port int) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.PortLocked {
+		return
+	}
 	c.Port = port
+}
+
+// LockPort locks the port so it cannot be changed via API
+func (c *Config) LockPort() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.PortLocked = true
+}
+
+// IsPortLocked returns true if the port is locked
+func (c *Config) IsPortLocked() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.PortLocked
 }
 
 // UpdateLogLevel updates the log level (thread-safe)
