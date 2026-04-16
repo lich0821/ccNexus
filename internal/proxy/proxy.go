@@ -48,6 +48,7 @@ type Proxy struct {
 	ctxMu             sync.RWMutex                  // protects context maps
 	onEndpointSuccess func(endpointName string)     // callback when endpoint request succeeds
 	modelsCache       *ModelsCache                  // Cache for /v1/models endpoint
+	resolver          *EndpointResolver             // 端点解析器，用于解析客户端指定的端点
 }
 
 // New creates a new Proxy instance
@@ -81,6 +82,7 @@ func New(cfg *config.Config, statsStorage StatsStorage, sqliteStorage *storage.S
 		endpointCtx:    make(map[string]context.Context),
 		endpointCancel: make(map[string]context.CancelFunc),
 		modelsCache:    NewModelsCache(cfg.ModelsCacheTTL),
+		resolver:       NewEndpointResolverWithFunc(cfg.GetEndpoints),
 	}
 }
 
@@ -335,11 +337,40 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(bodyBytes, &streamReq)
 
+	// 在解析时记录原始模型名称，用于后续处理
+	// originalModelName := strings.TrimSpace(streamReq.Model)
+
 	endpoints := p.getEnabledEndpoints()
 	if len(endpoints) == 0 {
 		logger.Error("No enabled endpoints available")
 		http.Error(w, "No enabled endpoints configured", http.StatusServiceUnavailable)
 		return
+	}
+
+	// 尝试解析客户端指定的端点
+	specifiedEndpoint, modelOverride, resolveErr := p.resolver.ResolveEndpoint(r, bodyBytes)
+	if resolveErr != nil {
+		// 端点指定错误，返回错误响应
+		logger.Warn("端点解析失败: %v", resolveErr)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		errorResp := map[string]interface{}{
+			"error": map[string]interface{}{
+				"type":    "invalid_request_error",
+				"message": resolveErr.Error(),
+			},
+		}
+		if jsonBytes, err := json.Marshal(errorResp); err == nil {
+			w.Write(jsonBytes)
+		}
+		return
+	}
+
+	// 如果指定了端点，使用该端点；否则使用轮询机制
+	var useSpecificEndpoint bool
+	if specifiedEndpoint != nil {
+		useSpecificEndpoint = true
+		logger.Debug("[Resolver] 使用指定端点: %s", specifiedEndpoint.Name)
 	}
 
 	maxRetries := p.computeMaxRetries(endpoints)
@@ -348,7 +379,15 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 	refreshedCredentialAttempts := make(map[int64]bool)
 
 	for retry := 0; retry < maxRetries; retry++ {
-		endpoint := p.getCurrentEndpoint()
+		var endpoint config.Endpoint
+		if useSpecificEndpoint {
+			// 使用指定的端点，不进行轮询
+			endpoint = *specifiedEndpoint
+		} else {
+			// 使用轮询机制
+			endpoint = p.getCurrentEndpoint()
+		}
+
 		if endpoint.Name == "" {
 			http.Error(w, "No enabled endpoints available", http.StatusServiceUnavailable)
 			return
@@ -373,7 +412,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Warn("[%s] Failed to select token pool credential: %v", endpoint.Name, err)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				if endpointAttempts >= 2 {
+				if endpointAttempts >= 2 && !useSpecificEndpoint {
 					p.rotateEndpoint()
 					endpointAttempts = 0
 				}
@@ -383,7 +422,7 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 				logger.Warn("[%s] No usable token in token pool", endpoint.Name)
 				p.stats.RecordError(endpoint.Name)
 				p.markRequestInactive(endpoint.Name)
-				if endpointAttempts >= 2 {
+				if endpointAttempts >= 2 && !useSpecificEndpoint {
 					p.rotateEndpoint()
 					endpointAttempts = 0
 				}
@@ -444,6 +483,12 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 		logger.DebugLog("[%s] Transformer: %s", endpoint.Name, transformerName)
 		logger.DebugLog("[%s] Transformed Request: %s", endpoint.Name, string(transformedBody))
 
+		// 如果有模型覆盖值，应用到转换后的请求体中
+		if modelOverride != "" {
+			transformedBody = overrideModelInPayload(transformedBody, modelOverride)
+			logger.DebugLog("[%s] 应用模型覆盖后的请求: %s", endpoint.Name, string(transformedBody))
+		}
+
 		cleanedBody, err := cleanIncompleteToolCalls(transformedBody)
 		if err != nil {
 			logger.Warn("[%s] Failed to clean tool calls: %v", endpoint.Name, err)
@@ -454,8 +499,13 @@ func (p *Proxy) handleProxy(w http.ResponseWriter, r *http.Request) {
 			transformedBody = overrideModelInPayload(transformedBody, endpoint.Model)
 		}
 
+		// 处理模型名称：优先使用模型覆盖值，然后是请求中的模型，最后是端点配置的模型
 		modelName := strings.TrimSpace(streamReq.Model)
-		if modelName == "" || (authMode == config.AuthModeCodexTokenPool && strings.TrimSpace(endpoint.Model) != "") {
+		if modelOverride != "" {
+			// 使用解析器提供的模型覆盖值
+			modelName = modelOverride
+			logger.Debug("[%s] 使用模型覆盖值: %s", endpoint.Name, modelName)
+		} else if modelName == "" || (authMode == config.AuthModeCodexTokenPool && strings.TrimSpace(endpoint.Model) != "") {
 			modelName = endpoint.Model
 		}
 
