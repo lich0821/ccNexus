@@ -1,9 +1,16 @@
 import { router } from './router.js';
 import { state } from './state.js';
+import { setLanguage, getLanguage, initLanguage, loadTranslations, t } from './utils/i18n.js';
 import { dashboard } from './components/dashboard.js';
 import { endpoints } from './components/endpoints.js';
 import { stats } from './components/stats.js';
 import { testing } from './components/testing.js';
+import zhCN from './i18n/zh-CN.js';
+import en from './i18n/en.js';
+
+// 加载翻译
+loadTranslations({ 'zh-CN': zhCN, 'en': en });
+initLanguage();
 
 // Initialize theme
 function initTheme() {
@@ -19,6 +26,49 @@ function initTheme() {
 
     // Set initial icon
     themeToggle.querySelector('.icon').textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+}
+
+// Update sidebar translations
+function updateSidebarTranslations() {
+    // Update subtitle
+    const subtitle = document.getElementById('sidebar-subtitle');
+    if (subtitle) {
+        subtitle.textContent = t('dashboard.subtitle');
+    }
+
+    // Update navigation menu items
+    document.querySelectorAll('.nav-label').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (key) {
+            el.textContent = t(key);
+        }
+    });
+}
+
+// Initialize language toggle
+function initLanguageToggle() {
+    const langToggle = document.getElementById('lang-toggle');
+    const langLabels = {
+        'zh-CN': '🇨🇳',
+        'en': '🇺🇸'
+    };
+
+    // 设置初始图标
+    langToggle.querySelector('.icon').textContent = langLabels[getLanguage()];
+
+    langToggle.addEventListener('click', () => {
+        const currentLang = getLanguage();
+        const newLang = currentLang === 'zh-CN' ? 'en' : 'zh-CN';
+        setLanguage(newLang);
+        langToggle.querySelector('.icon').textContent = langLabels[newLang];
+        // 更新侧边栏翻译
+        updateSidebarTranslations();
+        // 重新加载当前视图
+        const currentView = state.get('currentView');
+        if (currentView) {
+            router.navigate(currentView);
+        }
+    });
 }
 
 // Initialize real-time updates
@@ -64,6 +114,12 @@ function init() {
 
     // Initialize theme
     initTheme();
+
+    // Initialize language toggle
+    initLanguageToggle();
+
+    // Initialize sidebar translations
+    updateSidebarTranslations();
 
     // Initialize router
     router.init();

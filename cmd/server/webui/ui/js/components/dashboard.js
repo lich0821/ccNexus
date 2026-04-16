@@ -2,31 +2,38 @@ import { api } from '../api.js';
 import { state } from '../state.js';
 import { notifications } from '../utils/notifications.js';
 import { formatNumber, formatTokens } from '../utils/formatters.js';
+import { t } from '../utils/i18n.js';
 
 class Dashboard {
     constructor() {
         this.container = document.getElementById('view-container');
+        // 监听语言切换
+        window.addEventListener('languageChanged', () => {
+            if (state.get('currentView') === 'dashboard') {
+                this.render();
+            }
+        });
     }
 
     async render() {
         this.container.innerHTML = `
             <div class="dashboard">
-                <h1>Dashboard</h1>
+                <h1>${t('dashboard.title')}</h1>
                 <div id="stats-cards" class="grid grid-cols-4 mt-3">
                     <div class="stat-card">
-                        <div class="stat-label">Total Requests</div>
+                        <div class="stat-label">${t('dashboard.totalRequests')}</div>
                         <div class="stat-value" id="stat-requests">-</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Success Rate</div>
+                        <div class="stat-label">${t('dashboard.successRate')}</div>
                         <div class="stat-value" id="stat-success">-</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Input Tokens</div>
+                        <div class="stat-label">${t('dashboard.inputTokens')}</div>
                         <div class="stat-value" id="stat-input-tokens">-</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Output Tokens</div>
+                        <div class="stat-label">${t('dashboard.outputTokens')}</div>
                         <div class="stat-value" id="stat-output-tokens">-</div>
                     </div>
                 </div>
@@ -34,7 +41,7 @@ class Dashboard {
                 <div class="grid grid-cols-2 mt-4">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Active Endpoints</h3>
+                            <h3 class="card-title">${t('dashboard.activeEndpoints')}</h3>
                         </div>
                         <div class="card-body">
                             <div id="endpoints-list"></div>
@@ -43,7 +50,7 @@ class Dashboard {
 
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Recent Activity</h3>
+                            <h3 class="card-title">${t('dashboard.recentActivity')}</h3>
                         </div>
                         <div class="card-body">
                             <canvas id="activity-chart"></canvas>
@@ -91,14 +98,14 @@ class Dashboard {
         const container = document.getElementById('endpoints-list');
 
         if (!endpoints || endpoints.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No endpoints configured</p></div>';
+            container.innerHTML = `<div class="empty-state"><p>${t('dashboard.noEndpoints')}</p></div>`;
             return;
         }
 
         const enabledEndpoints = endpoints.filter(ep => ep.enabled);
 
         if (enabledEndpoints.length === 0) {
-            container.innerHTML = '<div class="empty-state"><p>No enabled endpoints</p></div>';
+            container.innerHTML = `<div class="empty-state"><p>${t('dashboard.noEnabledEndpoints')}</p></div>`;
             return;
         }
 
@@ -107,9 +114,9 @@ class Dashboard {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Type</th>
-                            <th>Status</th>
+                            <th>${t('common.name')}</th>
+                            <th>${t('endpoints.transformer')}</th>
+                            <th>${t('common.status')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -119,7 +126,7 @@ class Dashboard {
                                 <td>${this.escapeHtml(ep.transformer)}</td>
                                 <td>
                                     <span class="status-indicator online"></span>
-                                    <span class="badge badge-success">Active</span>
+                                    <span class="badge badge-success">${t('common.active')}</span>
                                 </td>
                             </tr>
                         `).join('')}

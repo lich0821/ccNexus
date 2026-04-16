@@ -1,28 +1,35 @@
 import { api } from '../api.js';
 import { notifications } from '../utils/notifications.js';
+import { t } from '../utils/i18n.js';
 
 class Testing {
     constructor() {
         this.container = document.getElementById('view-container');
         this.endpoints = [];
+        // 监听语言切换
+        window.addEventListener('languageChanged', () => {
+            if (state.get('currentView') === 'testing') {
+                this.render();
+            }
+        });
     }
 
     async render() {
         this.container.innerHTML = `
             <div class="testing">
-                <h1>Endpoint Testing</h1>
+                <h1>${t('testing.title')}</h1>
 
                 <div class="card mt-3">
                     <div class="card-body">
                         <div class="form-group">
-                            <label class="form-label">Select Endpoint</label>
+                            <label class="form-label">${t('testing.selectEndpoint')}</label>
                             <select class="form-select" id="test-endpoint-select">
-                                <option value="">Loading...</option>
+                                <option value="">${t('common.loading')}</option>
                             </select>
                         </div>
 
                         <div class="form-group">
-                            <button class="btn btn-primary" id="test-btn">Run Test</button>
+                            <button class="btn btn-primary" id="test-btn">${t('testing.runTest')}</button>
                         </div>
 
                         <div id="test-result" class="mt-3" style="display: none;"></div>
@@ -45,7 +52,7 @@ class Testing {
             const enabledEndpoints = this.endpoints.filter(ep => ep.enabled);
 
             if (enabledEndpoints.length === 0) {
-                select.innerHTML = '<option value="">No enabled endpoints</option>';
+                select.innerHTML = `<option value="">${t('testing.noEnabledEndpoints')}</option>`;
                 return;
             }
 
@@ -53,7 +60,7 @@ class Testing {
                 `<option value="${this.escapeHtml(ep.name)}">${this.escapeHtml(ep.name)}</option>`
             ).join('');
         } catch (error) {
-            notifications.error('Failed to load endpoints: ' + error.message);
+            notifications.error(`${t('testing.failedToLoadEndpoints')}: ${error.message}`);
         }
     }
 
@@ -62,7 +69,7 @@ class Testing {
         const endpointName = select.value;
 
         if (!endpointName) {
-            notifications.warning('Please select an endpoint');
+            notifications.warning(t('testing.pleaseSelectEndpoint'));
             return;
         }
 
@@ -77,43 +84,43 @@ class Testing {
                 resultDiv.innerHTML = `
                     <div class="card" style="background-color: var(--bg-secondary);">
                         <div class="mb-2">
-                            <span class="badge badge-success">Success</span>
-                            <span class="text-muted ml-2">Latency: ${result.latency}ms</span>
+                            <span class="badge badge-success">${t('common.success')}</span>
+                            <span class="text-muted ml-2">${t('testing.latency')}: ${result.latency}ms</span>
                         </div>
                         <div>
-                            <strong>Response:</strong>
-                            <div class="code-block mt-1">${this.escapeHtml(result.response || 'No response')}</div>
+                            <strong>${t('testing.response')}:</strong>
+                            <div class="code-block mt-1">${this.escapeHtml(result.response || t('testing.noResponse'))}</div>
                         </div>
                     </div>
                 `;
-                notifications.success('Test completed successfully');
+                notifications.success(t('testing.testCompletedSuccessfully'));
             } else {
                 resultDiv.innerHTML = `
                     <div class="card" style="background-color: var(--bg-secondary);">
                         <div class="mb-2">
-                            <span class="badge badge-danger">Failed</span>
+                            <span class="badge badge-danger">${t('testing.testFailed')}</span>
                         </div>
                         <div>
-                            <strong>Error:</strong>
-                            <div class="code-block mt-1">${this.escapeHtml(result.error || 'Unknown error')}</div>
+                            <strong>${t('testing.error')}:</strong>
+                            <div class="code-block mt-1">${this.escapeHtml(result.error || t('testing.unknownError'))}</div>
                         </div>
                     </div>
                 `;
-                notifications.error('Test failed');
+                notifications.error(t('testing.testFailed'));
             }
         } catch (error) {
             resultDiv.innerHTML = `
                 <div class="card" style="background-color: var(--bg-secondary);">
                     <div class="mb-2">
-                        <span class="badge badge-danger">Error</span>
+                        <span class="badge badge-danger">${t('common.error')}</span>
                     </div>
                     <div>
-                        <strong>Error:</strong>
+                        <strong>${t('testing.error')}:</strong>
                         <div class="code-block mt-1">${this.escapeHtml(error.message)}</div>
                     </div>
                 </div>
             `;
-            notifications.error('Test failed: ' + error.message);
+            notifications.error(`${t('testing.testFailed')}: ${error.message}`);
         }
     }
 

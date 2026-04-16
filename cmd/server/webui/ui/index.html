@@ -13,28 +13,31 @@
         <nav id="sidebar">
             <div class="sidebar-header">
                 <h1>ccNexus</h1>
-                <p class="subtitle">AI Proxy Admin</p>
+                <p class="subtitle" id="sidebar-subtitle">AI Proxy Admin</p>
             </div>
             <ul class="nav-menu">
                 <li><a href="#" data-view="dashboard" class="nav-link active">
                     <span class="icon">📊</span>
-                    <span>Dashboard</span>
+                    <span class="nav-label" data-i18n="common.dashboard">Dashboard</span>
                 </a></li>
                 <li><a href="#" data-view="endpoints" class="nav-link">
                     <span class="icon">🔗</span>
-                    <span>Endpoints</span>
+                    <span class="nav-label" data-i18n="common.endpoints">Endpoints</span>
                 </a></li>
                 <li><a href="#" data-view="stats" class="nav-link">
                     <span class="icon">📈</span>
-                    <span>Statistics</span>
+                    <span class="nav-label" data-i18n="common.statistics">Statistics</span>
                 </a></li>
                 <li><a href="#" data-view="testing" class="nav-link">
                     <span class="icon">🧪</span>
-                    <span>Testing</span>
+                    <span class="nav-label" data-i18n="common.testing">Testing</span>
                 </a></li>
             </ul>
             <div class="sidebar-footer">
-                <button id="theme-toggle" class="btn-icon" title="Toggle theme">
+                <button id="lang-toggle" class="btn-icon" title="切换语言 / Switch Language">
+                    <span class="icon">🌐</span>
+                </button>
+                <button id="theme-toggle" class="btn-icon" title="切换主题 / Toggle theme">
                     <span class="icon">🌙</span>
                 </button>
             </div>
