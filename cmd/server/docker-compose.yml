@@ -8,7 +8,7 @@ services:
     ports:
       - "3021:3000"
     volumes:
-      - /data/ccnexus/:/data
+      - ./ccnexus/:/data
     environment:
       - CCNEXUS_PORT=3000
       - CCNEXUS_DATA_DIR=/data
