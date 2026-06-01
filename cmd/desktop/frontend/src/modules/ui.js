@@ -386,22 +386,22 @@ export function initUI() {
                         <input type="text" id="endpointName" placeholder="${t('modal.namePlaceholder')}">
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('modal.authMode')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('modal.authMode')}</label>
+                            <small class="form-help">${t('modal.authModeHelp')}</small>
+                        </div>
                         <select id="endpointAuthMode" onchange="window.handleAuthModeChange()">
                             <option value="api_key">${t('modal.authModeApiKey')}</option>
                             <option value="token_pool">${t('modal.authModeTokenPool')}</option>
                             <option value="codex_token_pool">${t('modal.authModeCodexTokenPool')}</option>
                         </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('modal.authModeHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('modal.apiUrl')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('modal.apiUrl')}</label>
+                            <small class="form-help" id="endpointUrlHelp">${t('modal.apiUrlHelp')}</small>
+                        </div>
                         <input type="text" id="endpointUrl" placeholder="${t('modal.apiUrlPlaceholder')}">
-                        <p id="endpointUrlHelp" style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('modal.apiUrlHelp')}
-                        </p>
                     </div>
                     <div class="form-group" id="endpointKeyGroup">
                         <label><span class="required">*</span>${t('modal.apiKey')}</label>
@@ -416,19 +416,22 @@ export function initUI() {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('modal.transformer')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('modal.transformer')}</label>
+                            <small class="form-help">${t('modal.transformerHelp')}</small>
+                        </div>
                         <select id="endpointTransformer" onchange="window.handleTransformerChange()">
-                            <option value="claude">Claude (Default)</option>
-                            <option value="openai">OpenAI</option>
-                            <option value="openai2">OpenAI2 (Responses API)</option>
+                            <option value="claude">Claude</option>
+                            <option value="openai">OpenAI Chat</option>
+                            <option value="openai2">OpenAI Responses</option>
                             <option value="gemini">Gemini</option>
                         </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('modal.transformerHelp')}
-                        </p>
                     </div>
                     <div class="form-group" id="modelFieldGroup" style="display: block;">
-                        <label><span class="required" id="modelRequired" style="display: none;">*</span>${t('modal.model')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required" id="modelRequired" style="display: none;">*</span>${t('modal.model')}</label>
+                            <small class="form-help" id="modelHelpText">${t('modal.modelHelp')}</small>
+                        </div>
                         <div class="model-input-wrapper">
                             <div class="model-select-container">
                                 <input type="text" id="endpointModel" placeholder="${t('modal.modelPlaceholder')}" autocomplete="off">
@@ -443,9 +446,6 @@ export function initUI() {
                                 <span id="fetchModelsIcon">${t('modal.fetchModelsBtn')}</span>
                             </button>
                         </div>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;" id="modelHelpText">
-                            ${t('modal.modelHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
                         <label>${t('modal.remark')}</label>
@@ -688,17 +688,20 @@ export function initUI() {
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('settings.language')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('settings.language')}</label>
+                            <small class="form-help">${t('settings.languageHelp')}</small>
+                        </div>
                         <select id="settingsLanguage">
                             <option value="zh-CN">${t('settings.languages.zh-CN')}</option>
                             <option value="en">${t('settings.languages.en')}</option>
                         </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('settings.languageHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('settings.theme')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('settings.theme')}</label>
+                            <small class="form-help">${t('settings.themeHelp')}</small>
+                        </div>
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <select id="settingsTheme" style="flex: 1;">
                                 <option value="light">${t('settings.themes.light')}</option>
@@ -722,9 +725,6 @@ export function initUI() {
                                 </label>
                             </div>
                         </div>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('settings.themeHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
                         <label><span class="required">*</span>${t('settings.claudeNotification')}</label>
@@ -738,25 +738,28 @@ export function initUI() {
                         </p>
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('settings.closeWindowBehavior')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('settings.closeWindowBehavior')}</label>
+                            <small class="form-help">${t('settings.closeWindowBehaviorHelp')}</small>
+                        </div>
                         <select id="settingsCloseWindowBehavior">
                             <option value="quit">${t('settings.closeWindowOptions.quit')}</option>
                             <option value="ask">${t('settings.closeWindowOptions.ask')}</option>
                             <option value="minimize">${t('settings.closeWindowOptions.minimize')}</option>
                         </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('settings.closeWindowBehaviorHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
-                        <label>${t('settings.proxy')}</label>
+                        <div class="form-label-row">
+                            <label>${t('settings.proxy')}</label>
+                            <small class="form-help">${t('settings.proxyHelp')}</small>
+                        </div>
                         <input type="text" id="settingsProxyUrl" placeholder="${t('settings.proxyUrlPlaceholder')}">
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('settings.proxyHelp')}
-                        </p>
                     </div>
                     <div class="form-group">
-                        <label><span class="required">*</span>${t('update.autoCheck')}</label>
+                        <div class="form-label-row">
+                            <label><span class="required">*</span>${t('update.autoCheck')}</label>
+                            <small class="form-help">${t('update.autoCheckHelp')}</small>
+                        </div>
                         <select id="check-interval">
                             <option value="1">${t('update.everyHour')}</option>
                             <option value="24">${t('update.everyDay')}</option>
@@ -764,9 +767,6 @@ export function initUI() {
                             <option value="720">${t('update.everyMonth')}</option>
                             <option value="0">${t('update.noAutoCheck')}</option>
                         </select>
-                        <p style="color: #666; font-size: 12px; margin-top: 5px;">
-                            ${t('update.autoCheckHelp')}
-                        </p>
                     </div>
                 </div>
                 <div class="modal-footer">

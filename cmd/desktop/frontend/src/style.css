@@ -712,6 +712,13 @@ body {
     margin-bottom: 0;
 }
 
+.form-label-row .form-help {
+    margin: 0;
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+}
+
 .cli-type-switcher {
     display: inline-flex;
     border: 1px solid var(--border-color, #ddd);
