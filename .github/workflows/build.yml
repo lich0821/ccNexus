@@ -42,7 +42,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.24.3'
           cache: true
 
       - name: Setup Node.js
@@ -53,7 +53,7 @@ jobs:
       - name: Install npm dependencies
         run: |
           cd cmd/desktop/frontend
-          npm install
+          npm ci
         shell: bash
 
       - name: Cache Wails CLI
@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/go/bin/wails
-          key: ${{ runner.os }}-wails-v2.10.2
+          key: ${{ runner.os }}-wails-v2.11.0
 
       - name: Get version
         id: get_version

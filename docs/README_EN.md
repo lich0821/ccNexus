@@ -6,7 +6,7 @@
 
 [![Build Status](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev/)
 [![Wails](https://img.shields.io/badge/Wails-v2-blue)](https://wails.io/)
 
 [English](README_EN.md) | [简体中文](../README.md)
@@ -82,6 +82,12 @@ wire_api = "responses"  # or "chat"
 ```
 
 `~/.codex/auth.json` can be ignored.
+
+## Runtime Notes
+
+- ccNexus listens on port `3000` by default. Override it with the `-port` CLI flag or `CCNEXUS_PORT`.
+- If Basic Auth is enabled and no password is stored, the app generates a random password on first launch and prints it to logs.
+- For headless deployments, prefer a trusted LAN or put ccNexus behind a reverse proxy with TLS and access control.
 
 ## Get Help
 

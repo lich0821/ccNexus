@@ -3,15 +3,15 @@
 本次调整将 ccNexus 从 Wails 桌面应用改造为纯后端 HTTP 服务，并提供容器化运行方式。核心改动要点：
 
 1. 新增无头入口
-	- 新增 [app/cmd/server/main.go](app/cmd/server/main.go) 作为 headless 入口：仅启动 HTTP 代理（无 GUI），支持优雅退出，读取 `CCNEXUS_DATA_DIR`、`CCNEXUS_DB_PATH`、`CCNEXUS_PORT`、`CCNEXUS_LOG_LEVEL` 环境变量。
+	- 新增 [cmd/server/main.go](../cmd/server/main.go) 作为 headless 入口：仅启动 HTTP 代理（无 GUI），支持优雅退出，读取 `CCNEXUS_DATA_DIR`、`CCNEXUS_DB_PATH`、`CCNEXUS_PORT`、`CCNEXUS_LOG_LEVEL` 环境变量。
 	- 若存储中无任何 endpoint，会自动写入默认示例 endpoint，避免 “no endpoints configured” 直接退出。请尽快替换为真实 API 配置。
 
 2. 镜像与构建
-	- [Dockerfile](../app/Dockerfile) 仅构建后端二进制 `ccnexus-server`，移除前端构建。暴露端口仅 `3000`（HTTP API）。
+	- [Dockerfile](../cmd/server/Dockerfile) 仅构建后端二进制 `ccnexus-server`。暴露端口仅 `3000`（HTTP API）。
 	- 构建阶段执行 `go mod tidy` 以生成 `go.sum`，并启用 CGO 支持 SQLite。
 
 3. 运行与编排
-	- [docker-compose.yml](../app/docker-compose.yml) 仅映射 API 端口（示例 `3021:3000`），挂载数据卷 `/data`，健康检查指向 `/health`。
+	- [docker-compose.yml](../cmd/server/docker-compose.yml) 仅映射 API 端口（示例 `3021:3000`），挂载数据卷 `/data`，健康检查指向 `/health`。
 	- 默认环境：`CCNEXUS_DATA_DIR=/data`，`CCNEXUS_DB_PATH=/data/ccnexus.db`，`CCNEXUS_PORT=3000`。
 
 4. 使用快速指引
@@ -25,15 +25,16 @@
 
 ```
 ccNexus/
-├── app/
-│   ├── cmd/
-│   │   ├── server/
-│   │   │   ├── main.go              # 主程序（不需要修改）
-│   │   │   └── webui_plugin.go      # Web UI 插件接口
-│   │   └── webui/                   # 🔌 Web UI 插件（整个文件夹）
-│   │       ├── webui.go
-│   │       ├── api/
-│   │       └── ui/
+├── cmd/
+│   ├── server/
+│   │   ├── main.go              # headless 主程序
+│   │   ├── Dockerfile
+│   │   ├── docker-compose.yml
+│   │   └── webui_plugin.go      # Web UI 注册入口
+│   └── server/webui/            # Web 管理界面
+│       ├── webui.go
+│       ├── api/
+│       └── ui/
 ```
 ---
 
@@ -144,9 +145,10 @@ curl -X POST http://localhost:3021/api/endpoints \
 
 ### 安全建议
 
-- **生产环境**：建议配置反向代理（如 Nginx）并启用 HTTPS
-- **访问控制**：可通过反向代理添加 HTTP Basic Auth 或其他认证机制
-- **CORS 配置**：当前 CORS 对所有来源开放，生产环境建议限制允许的域名
+- **生产环境**：建议配置反向代理（如 Nginx）并启用 HTTPS。
+- **访问控制**：ccNexus Web API 支持 Basic Auth；反向代理仍可再叠加额外认证。
+- **公开路由**：代理协议路由、`/health` 和 `/stats` 面向客户端调用，部署到公网前请使用防火墙或反向代理限制访问。
+- **CORS 配置**：当前 Web API CORS 对所有来源开放，生产环境建议限制允许的域名。
 - **防火墙**：确保仅允许可信 IP 访问管理端口
 
 ### 故障排除
@@ -175,7 +177,7 @@ curl -X POST http://localhost:3021/api/endpoints \
 
 Web UI 使用原生技术栈，修改非常简单：
 
-1. 编辑 `app/ui/` 目录下的文件（HTML/CSS/JS）
+1. 编辑 `cmd/server/webui/ui/` 目录下的文件（HTML/CSS/JS）
 2. 重新构建 Docker 镜像：`docker compose up -d --build`
 3. 刷新浏览器查看效果
 
@@ -185,9 +187,9 @@ Web UI 使用原生技术栈，修改非常简单：
 
 ## Web UI 插件模式（可插拔）
 
-- **目录结构**：完整插件位于 `app/cmd/webui/`，入口适配在 `app/cmd/server/webui_plugin.go`。
+- **目录结构**：Web UI 位于 `cmd/server/webui/`，入口适配在 `cmd/server/webui_plugin.go`。
 - **直接启用（默认）**：保留目录后 `docker compose up -d --build` 即包含 Web UI。
-- **移除插件**：删除 `app/cmd/webui` 与 `app/cmd/server/webui_plugin.go`，重新构建后只保留代理功能。
+- **移除插件**：删除 `cmd/server/webui` 与 `cmd/server/webui_plugin.go`，重新构建后只保留代理功能。
 - **重新添加**：将备份的 `webui` 目录与 `webui_plugin.go` 复制回原位，再次构建即可。
 ---
 

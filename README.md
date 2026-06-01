@@ -6,7 +6,7 @@
 
 [![构建状态](https://github.com/lich0821/ccNexus/workflows/Build%20and%20Release/badge.svg)](https://github.com/lich0821/ccNexus/actions)
 [![许可证: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go 版本](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev/)
+[![Go 版本](https://img.shields.io/badge/Go-1.24+-00ADD8?logo=go)](https://go.dev/)
 [![Wails](https://img.shields.io/badge/Wails-v2-blue)](https://wails.io/)
 
 [English](docs/README_EN.md) | [简体中文](README.md)
@@ -83,6 +83,12 @@ wire_api = "responses"  # 或 "chat"
 ```
 
 `~/.codex/auth.json` 可以忽略了。
+
+## 运行提示
+
+- `ccNexus` 默认监听 `3000` 端口，可通过 CLI 参数 `-port` 或环境变量 `CCNEXUS_PORT` 覆盖。
+- 如果启用了 Basic Auth，首次启动且未设置密码时会自动生成随机密码并打印到日志。
+- headless 模式下建议仅在可信内网使用，或通过反向代理加 TLS 和访问控制。
 
 ## 获取帮助
 
