@@ -1,5 +1,20 @@
 [
   {
+    "version": "v5.3.0",
+    "date": "2026-06-01",
+    "changes": [
+      "Added developer → system role mapping for better upstream compatibility",
+      "Added endpoint cloning to speed up similar endpoint setup",
+      "Added Basic Auth support for server mode with configurable credentials",
+      "Added /v1/models API with cache support and refresh control",
+      "Added CLI port override support with locked port configuration",
+      "Completed Token Pool desktop localization and set Chinese as the default desktop language",
+      "Unified endpoint model behavior: configured endpoint models override client requests, while empty models now pass through",
+      "Refined desktop forms with clearer transformer naming and inline help text",
+      "Refactored proxy request flow and aligned CI/build baseline with the current Go and Wails toolchain"
+    ]
+  },
+  {
     "version": "v5.2.0",
     "date": "2026-03-11",
     "changes": [

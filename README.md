@@ -19,8 +19,11 @@
 - **API 格式转换**：支持 Claude、OpenAI、Gemini 格式互转
 - **Codex Token Pool**：支持批量导入 `access_token/refresh_token`，自动轮换、自动刷新、失效隔离与状态管理
 - **Token Pool 使用统计**：单条凭证请求/错误/Token 统计，支持快捷查看
+- **模型列表 API**：提供 `/v1/models`，支持缓存与按需刷新
+- **服务端鉴权**：headless/server 模式支持 Basic Auth
 - **实时统计**：事件驱动的零延迟统计更新，支持今日/昨日/本周/本月四周期快速切换
 - **端点筛选**：按类型、可用性、启用状态多选筛选，快速定位端点
+- **端点克隆**：一键复制现有端点配置，快速创建相似端点
 - **WebDAV 同步**：多设备间同步配置和数据
 - **跨平台**：Windows、macOS、Linux
 - **[Docker](docs/README_DOCKER.md)**：纯后端 HTTP 服务，并提供容器化运行
@@ -44,7 +47,10 @@
 
 ### 2. 添加端点
 
-点击「添加端点」，填写 API 地址、密钥、选择转换器（claude/openai/gemini/openai2）。
+点击「添加端点」，填写 API 地址、密钥，选择转换器（Claude / OpenAI Chat / OpenAI Responses / Gemini）。
+
+- 如果端点填写了模型，会覆盖客户端请求里的模型
+- 如果端点不填写模型，则透传客户端原请求模型
 
 如需使用 Codex Token Pool：
 - 认证方式选择 `Codex Token Pool`
@@ -88,6 +94,7 @@ wire_api = "responses"  # 或 "chat"
 
 - `ccNexus` 默认监听 `3000` 端口，可通过 CLI 参数 `-port` 或环境变量 `CCNEXUS_PORT` 覆盖。
 - 如果启用了 Basic Auth，首次启动且未设置密码时会自动生成随机密码并打印到日志。
+- `/v1/models` 默认走缓存；如需强制刷新，可使用启用的 refresh 参数能力。
 - headless 模式下建议仅在可信内网使用，或通过反向代理加 TLS 和访问控制。
 
 ## 获取帮助
