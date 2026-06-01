@@ -6,12 +6,15 @@ const translations = {
     'zh-CN': zhCN
 };
 
-let currentLanguage = 'en';
+const defaultLanguage = 'zh-CN';
+let currentLanguage = defaultLanguage;
 
 export function setLanguage(lang) {
     if (translations[lang]) {
         currentLanguage = lang;
+        return;
     }
+    currentLanguage = defaultLanguage;
 }
 
 export function getLanguage() {
@@ -20,15 +23,28 @@ export function getLanguage() {
 
 export function t(key) {
     const keys = key.split('.');
-    let value = translations[currentLanguage];
+    let value = translations[currentLanguage] || translations[defaultLanguage];
 
     for (const k of keys) {
         if (value && typeof value === 'object') {
             value = value[k];
         } else {
-            return key; // Return key if translation not found
+            value = undefined;
+            break;
         }
     }
 
+    if (value !== undefined && value !== null) {
+        return value;
+    }
+
+    value = translations[defaultLanguage];
+    for (const k of keys) {
+        if (value && typeof value === 'object') {
+            value = value[k];
+        } else {
+            return key;
+        }
+    }
     return value || key;
 }

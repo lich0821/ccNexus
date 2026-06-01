@@ -74,7 +74,7 @@ export async function changeLogLevel() {
         loadLogs();
     } catch (error) {
         console.error('Failed to change log level:', error);
-        alert('Failed to change log level: ' + error);
+        alert(t('logs.changeLevelFailed') + ': ' + error);
     }
 }
 
@@ -85,7 +85,7 @@ export function copyLogs() {
 
     const btn = event.target.closest('button');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '✅ Copied!';
+    btn.innerHTML = `✅ ${t('logs.copied')}`;
     setTimeout(() => {
         btn.innerHTML = originalText;
     }, 1500);
@@ -97,6 +97,6 @@ export async function clearLogs() {
         loadLogs();
     } catch (error) {
         console.error('Failed to clear logs:', error);
-        alert('Failed to clear logs: ' + error);
+        alert(t('logs.clearFailed') + ': ' + error);
     }
 }
