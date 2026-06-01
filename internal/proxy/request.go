@@ -28,8 +28,10 @@ const (
 	codexUserAgent     = "codex_cli_rs/0.101.0 (Mac OS 26.0.1; arm64) Apple_Terminal/464"
 )
 
-// prepareTransformerForClient creates transformer based on client format and endpoint
-func prepareTransformerForClient(clientFormat ClientFormat, endpoint config.Endpoint) (transformer.Transformer, error) {
+// prepareTransformerForClient creates transformer based on client format and endpoint.
+// effectiveModel is the final model that should reach upstream after applying
+// endpoint-level overrides or falling back to the original request model.
+func prepareTransformerForClient(clientFormat ClientFormat, endpoint config.Endpoint, effectiveModel string) (transformer.Transformer, error) {
 	endpointTransformer := endpoint.Transformer
 	if endpointTransformer == "" {
 		endpointTransformer = "claude"
@@ -37,105 +39,70 @@ func prepareTransformerForClient(clientFormat ClientFormat, endpoint config.Endp
 
 	switch clientFormat {
 	case ClientFormatClaude:
-		return prepareCCTransformer(endpoint, endpointTransformer)
+		return prepareCCTransformer(endpoint, endpointTransformer, effectiveModel)
 	case ClientFormatOpenAIChat:
-		return prepareCxChatTransformer(endpoint, endpointTransformer)
+		return prepareCxChatTransformer(endpoint, endpointTransformer, effectiveModel)
 	case ClientFormatOpenAIResponses:
-		return prepareCxRespTransformer(endpoint, endpointTransformer)
+		return prepareCxRespTransformer(endpoint, endpointTransformer, effectiveModel)
 	}
 
 	return nil, fmt.Errorf("unsupported client format: %s", clientFormat)
 }
 
 // prepareCCTransformer creates transformer for Claude Code client
-func prepareCCTransformer(endpoint config.Endpoint, endpointTransformer string) (transformer.Transformer, error) {
+func prepareCCTransformer(endpoint config.Endpoint, endpointTransformer string, effectiveModel string) (transformer.Transformer, error) {
 	switch endpointTransformer {
 	case "claude":
-		if endpoint.Model != "" {
-			logger.Debug("[%s] Using cc_claude with model override: %s", endpoint.Name, endpoint.Model)
-			return cc.NewClaudeTransformerWithModel(endpoint.Model), nil
+		if effectiveModel != "" {
+			logger.Debug("[%s] Using cc_claude with model override: %s", endpoint.Name, effectiveModel)
+			return cc.NewClaudeTransformerWithModel(effectiveModel), nil
 		}
 		return cc.NewClaudeTransformer(), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
-		}
-		return cc.NewOpenAITransformer(endpoint.Model), nil
+		return cc.NewOpenAITransformer(effectiveModel), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
-		}
-		return cc.NewOpenAI2Transformer(endpoint.Model), nil
+		return cc.NewOpenAI2Transformer(effectiveModel), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
-		}
-		return cc.NewGeminiTransformer(endpoint.Model), nil
+		return cc.NewGeminiTransformer(effectiveModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported endpoint transformer: %s", endpointTransformer)
 	}
 }
 
 // prepareCxChatTransformer creates transformer for Codex Chat API client
-func prepareCxChatTransformer(endpoint config.Endpoint, endpointTransformer string) (transformer.Transformer, error) {
+func prepareCxChatTransformer(endpoint config.Endpoint, endpointTransformer string, effectiveModel string) (transformer.Transformer, error) {
 	switch endpointTransformer {
 	case "claude":
-		model := endpoint.Model
-		if model == "" {
-			model = "claude-sonnet-4-20250514"
-		}
-		return chat.NewClaudeTransformer(model), nil
+		return chat.NewClaudeTransformer(effectiveModel), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
-		}
-		return chat.NewOpenAITransformer(endpoint.Model), nil
+		return chat.NewOpenAITransformer(effectiveModel), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
-		}
-		return chat.NewOpenAI2Transformer(endpoint.Model), nil
+		return chat.NewOpenAI2Transformer(effectiveModel), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
-		}
-		return chat.NewGeminiTransformer(endpoint.Model), nil
+		return chat.NewGeminiTransformer(effectiveModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported endpoint transformer for Codex Chat: %s", endpointTransformer)
 	}
 }
 
 // prepareCxRespTransformer creates transformer for Codex Responses API client
-func prepareCxRespTransformer(endpoint config.Endpoint, endpointTransformer string) (transformer.Transformer, error) {
+func prepareCxRespTransformer(endpoint config.Endpoint, endpointTransformer string, effectiveModel string) (transformer.Transformer, error) {
 	switch endpointTransformer {
 	case "claude":
-		model := endpoint.Model
-		if model == "" {
-			model = "claude-sonnet-4-20250514"
-		}
-		return responses.NewClaudeTransformer(model), nil
+		return responses.NewClaudeTransformer(effectiveModel), nil
 	case "openai":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI transformer requires model field")
-		}
-		return responses.NewOpenAITransformer(endpoint.Model), nil
+		return responses.NewOpenAITransformer(effectiveModel), nil
 	case "openai2":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("OpenAI2 transformer requires model field")
-		}
-		return responses.NewOpenAI2Transformer(endpoint.Model), nil
+		return responses.NewOpenAI2Transformer(effectiveModel), nil
 	case "gemini":
-		if endpoint.Model == "" {
-			return nil, fmt.Errorf("Gemini transformer requires model field")
-		}
-		return responses.NewGeminiTransformer(endpoint.Model), nil
+		return responses.NewGeminiTransformer(effectiveModel), nil
 	default:
 		return nil, fmt.Errorf("unsupported endpoint transformer for Codex Responses: %s", endpointTransformer)
 	}
 }
 
 // getTargetPath determines the target API path based on transformer name
-func getTargetPath(originalPath string, endpoint config.Endpoint, transformedBody []byte, transformerName string) string {
+func getTargetPath(originalPath string, endpoint config.Endpoint, transformedBody []byte, transformerName string, modelName string) string {
 	switch transformerName {
 	case "cc_claude", "cx_chat_claude", "cx_resp_claude":
 		return "/v1/messages"
@@ -148,17 +115,21 @@ func getTargetPath(originalPath string, endpoint config.Endpoint, transformedBod
 			Stream bool `json:"stream"`
 		}
 		json.Unmarshal(transformedBody, &geminiReq)
-		if geminiReq.Stream {
-			return fmt.Sprintf("/v1beta/models/%s:streamGenerateContent", endpoint.Model)
+		model := strings.TrimSpace(modelName)
+		if model == "" {
+			model = strings.TrimSpace(endpoint.Model)
 		}
-		return fmt.Sprintf("/v1beta/models/%s:generateContent", endpoint.Model)
+		if geminiReq.Stream {
+			return fmt.Sprintf("/v1beta/models/%s:streamGenerateContent", model)
+		}
+		return fmt.Sprintf("/v1beta/models/%s:generateContent", model)
 	}
 	return originalPath
 }
 
 // buildProxyRequest creates an HTTP request for the target API
-func buildProxyRequest(r *http.Request, endpoint config.Endpoint, apiKey string, transformedBody []byte, transformerName string, credential *storage.EndpointCredential) (*http.Request, error) {
-	targetPath := getTargetPath(r.URL.Path, endpoint, transformedBody, transformerName)
+func buildProxyRequest(r *http.Request, endpoint config.Endpoint, apiKey string, transformedBody []byte, transformerName string, modelName string, credential *storage.EndpointCredential) (*http.Request, error) {
+	targetPath := getTargetPath(r.URL.Path, endpoint, transformedBody, transformerName, modelName)
 	if targetPath == "" {
 		targetPath = r.URL.Path
 	}

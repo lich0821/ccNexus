@@ -55,9 +55,6 @@ func ApplyEndpointAuthModeRules(ep *Endpoint) {
 	if ep.AuthMode == AuthModeCodexTokenPool {
 		ep.APIUrl = CodexTokenPoolAPIURL
 		ep.Transformer = CodexTokenPoolTransformer
-		if strings.TrimSpace(ep.Model) == "" {
-			ep.Model = "gpt-5-codex"
-		}
 		ep.APIKey = ""
 		return
 	}
@@ -159,47 +156,47 @@ type ProxyConfig struct {
 
 // Config represents the application configuration
 type Config struct {
-	Port                  int             `json:"port"`
-	PortLocked            bool            `json:"-"` // CLI forced port, cannot be changed via API
-	BasicAuthEnabled     bool            `json:"basicAuthEnabled"`
-	BasicAuthUsername     string          `json:"basicAuthUsername"`
-	BasicAuthPassword    string          `json:"basicAuthPassword"`
-	Endpoints            []Endpoint      `json:"endpoints"`
-	LogLevel                  int             `json:"logLevel"`                      // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
-	Language                  string          `json:"language"`                      // UI language: en, zh-CN
-	Theme                     string          `json:"theme"`                         // UI theme: light, dark
-	ThemeAuto                 bool            `json:"themeAuto"`                     // Auto switch theme based on time
-	AutoLightTheme            string          `json:"autoLightTheme,omitempty"`      // Theme to use in daytime when auto mode is on
-	AutoDarkTheme             string          `json:"autoDarkTheme,omitempty"`       // Theme to use in nighttime when auto mode is on
-	WindowWidth               int             `json:"windowWidth"`                   // Window width in pixels
-	WindowHeight              int             `json:"windowHeight"`                  // Window height in pixels
-	CloseWindowBehavior       string          `json:"closeWindowBehavior,omitempty"` // "quit", "minimize", "ask"
-	ClaudeNotificationEnabled bool            `json:"claudeNotificationEnabled"`     // Enable Claude Code task completion notification
-	ClaudeNotificationType    string          `json:"claudeNotificationType"`        // Notification type: toast, dialog, disabled
-	ModelsCacheTTL            int             `json:"modelsCacheTTL,omitempty"`      // /v1/models cache TTL in minutes, default 30
+	Port                      int             `json:"port"`
+	PortLocked                bool            `json:"-"` // CLI forced port, cannot be changed via API
+	BasicAuthEnabled          bool            `json:"basicAuthEnabled"`
+	BasicAuthUsername         string          `json:"basicAuthUsername"`
+	BasicAuthPassword         string          `json:"basicAuthPassword"`
+	Endpoints                 []Endpoint      `json:"endpoints"`
+	LogLevel                  int             `json:"logLevel"`                            // 0=DEBUG, 1=INFO, 2=WARN, 3=ERROR
+	Language                  string          `json:"language"`                            // UI language: en, zh-CN
+	Theme                     string          `json:"theme"`                               // UI theme: light, dark
+	ThemeAuto                 bool            `json:"themeAuto"`                           // Auto switch theme based on time
+	AutoLightTheme            string          `json:"autoLightTheme,omitempty"`            // Theme to use in daytime when auto mode is on
+	AutoDarkTheme             string          `json:"autoDarkTheme,omitempty"`             // Theme to use in nighttime when auto mode is on
+	WindowWidth               int             `json:"windowWidth"`                         // Window width in pixels
+	WindowHeight              int             `json:"windowHeight"`                        // Window height in pixels
+	CloseWindowBehavior       string          `json:"closeWindowBehavior,omitempty"`       // "quit", "minimize", "ask"
+	ClaudeNotificationEnabled bool            `json:"claudeNotificationEnabled"`           // Enable Claude Code task completion notification
+	ClaudeNotificationType    string          `json:"claudeNotificationType"`              // Notification type: toast, dialog, disabled
+	ModelsCacheTTL            int             `json:"modelsCacheTTL,omitempty"`            // /v1/models cache TTL in minutes, default 30
 	ModelsCacheRefreshEnabled bool            `json:"modelsCacheRefreshEnabled,omitempty"` // Enable ?refresh=true parameter, default false
-	WebDAV                    *WebDAVConfig   `json:"webdav,omitempty"`              // WebDAV synchronization config
-	Backup                    *BackupConfig   `json:"backup,omitempty"`              // Backup/sync configuration
-	Update                    *UpdateConfig   `json:"update,omitempty"`              // Update configuration
-	Terminal                  *TerminalConfig `json:"terminal,omitempty"`            // Terminal launcher config
-	Proxy                     *ProxyConfig    `json:"proxy,omitempty"`               // HTTP proxy config
-	CodexProxy                *ProxyConfig    `json:"codexProxy,omitempty"`          // Codex dedicated proxy config
+	WebDAV                    *WebDAVConfig   `json:"webdav,omitempty"`                    // WebDAV synchronization config
+	Backup                    *BackupConfig   `json:"backup,omitempty"`                    // Backup/sync configuration
+	Update                    *UpdateConfig   `json:"update,omitempty"`                    // Update configuration
+	Terminal                  *TerminalConfig `json:"terminal,omitempty"`                  // Terminal launcher config
+	Proxy                     *ProxyConfig    `json:"proxy,omitempty"`                     // HTTP proxy config
+	CodexProxy                *ProxyConfig    `json:"codexProxy,omitempty"`                // Codex dedicated proxy config
 	mu                        sync.RWMutex
 }
 
 // DefaultConfig returns a default configuration
 func DefaultConfig() *Config {
 	return &Config{
-		Port:               3000,
-		BasicAuthEnabled:   true,
-		BasicAuthUsername:  "admin",
-		BasicAuthPassword: "",
-		LogLevel:          1,       // Default to INFO level
-		Language:     "zh-CN", // Default to Chinese
-		WindowWidth:  1024,    // Default window width
-		WindowHeight: 768,     // Default window height
-		ModelsCacheTTL:              30,    // Default 30 minutes
-		ModelsCacheRefreshEnabled:  false, // Default disabled
+		Port:                      3000,
+		BasicAuthEnabled:          true,
+		BasicAuthUsername:         "admin",
+		BasicAuthPassword:         "",
+		LogLevel:                  1,       // Default to INFO level
+		Language:                  "zh-CN", // Default to Chinese
+		WindowWidth:               1024,    // Default window width
+		WindowHeight:              768,     // Default window height
+		ModelsCacheTTL:            30,      // Default 30 minutes
+		ModelsCacheRefreshEnabled: false,   // Default disabled
 		Endpoints: []Endpoint{
 			{
 				Name:        "Claude Official",
@@ -243,15 +240,6 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("endpoint %d: apiKey is required", i+1)
 		}
 
-		// Non-Claude transformers require model field
-		if c.Endpoints[i].Transformer != "claude" && c.Endpoints[i].Model == "" {
-			return fmt.Errorf(
-				"endpoint %d (%s): model is required for transformer '%s'",
-				i+1,
-				c.Endpoints[i].Name,
-				c.Endpoints[i].Transformer,
-			)
-		}
 	}
 
 	return nil

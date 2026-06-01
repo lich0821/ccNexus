@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/lich0821/ccNexus/internal/config"
+	"github.com/lich0821/ccNexus/internal/transformer/convert"
 )
 
 func TestEnsureCodexResponsesPayload(t *testing.T) {
@@ -65,6 +66,107 @@ func TestOverrideModelInPayload(t *testing.T) {
 	}
 	if payload["model"] != "gpt-5.2-codex" {
 		t.Fatalf("expected model override to gpt-5.2-codex, got %#v", payload["model"])
+	}
+}
+
+func TestOpenAI2EndpointsShouldOverrideClientModel(t *testing.T) {
+	endpoint := config.Endpoint{
+		Name:        "Responses",
+		APIUrl:      "https://api.example.com",
+		AuthMode:    config.AuthModeAPIKey,
+		Transformer: "openai2",
+		Model:       "gpt-5.4",
+	}
+
+	transformer, err := prepareTransformerForClient(ClientFormatOpenAIResponses, endpoint, endpoint.Model)
+	if err != nil {
+		t.Fatalf("prepare transformer failed: %v", err)
+	}
+
+	body := []byte(`{"model":"glm-5.1","input":"hello"}`)
+	transformed, err := transformer.TransformRequest(body)
+	if err != nil {
+		t.Fatalf("transform request failed: %v", err)
+	}
+
+	overridden := overrideModelInPayload(transformed, endpoint.Model)
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(overridden, &payload); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if payload["model"] != "gpt-5.4" {
+		t.Fatalf("expected endpoint model override to gpt-5.4, got %#v", payload["model"])
+	}
+}
+
+func TestPrepareTransformerAllowsEmptyEndpointModel(t *testing.T) {
+	endpoint := config.Endpoint{
+		Name:        "Chat",
+		APIUrl:      "https://api.example.com",
+		AuthMode:    config.AuthModeAPIKey,
+		Transformer: "openai",
+	}
+
+	transformer, err := prepareTransformerForClient(ClientFormatOpenAIChat, endpoint, "glm-5.1")
+	if err != nil {
+		t.Fatalf("prepare transformer failed: %v", err)
+	}
+
+	transformed, err := transformer.TransformRequest([]byte(`{"model":"glm-5.1","messages":[{"role":"user","content":"hello"}]}`))
+	if err != nil {
+		t.Fatalf("transform request failed: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(transformed, &payload); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if payload["model"] != "glm-5.1" {
+		t.Fatalf("expected passthrough model glm-5.1, got %#v", payload["model"])
+	}
+}
+
+func TestResolveAttemptModelNamePrefersEndpointModel(t *testing.T) {
+	reqCtx := &proxyRequestContext{
+		requestModel:  "glm-5.1",
+		modelOverride: "gpt-4.1",
+	}
+	endpoint := config.Endpoint{Name: "Primary", Model: "gpt-5.4"}
+
+	got := resolveAttemptModelName(reqCtx, endpoint)
+	if got != "gpt-5.4" {
+		t.Fatalf("expected endpoint model to win, got %q", got)
+	}
+}
+
+func TestResolveAttemptModelNameFallsBackToRequestOverride(t *testing.T) {
+	reqCtx := &proxyRequestContext{
+		requestModel:  "glm-5.1",
+		modelOverride: "gpt-4.1",
+	}
+	endpoint := config.Endpoint{Name: "Primary"}
+
+	got := resolveAttemptModelName(reqCtx, endpoint)
+	if got != "gpt-4.1" {
+		t.Fatalf("expected model override fallback, got %q", got)
+	}
+}
+
+func TestClaudeToOpenAIUsesRequestModelWhenEndpointModelEmpty(t *testing.T) {
+	body := []byte(`{"model":"glm-5.1","messages":[{"role":"user","content":"hello"}]}`)
+
+	out, err := convert.OpenAIReqToClaude(body, "glm-5.1")
+	if err != nil {
+		t.Fatalf("transform failed: %v", err)
+	}
+
+	var payload map[string]interface{}
+	if err := json.Unmarshal(out, &payload); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if payload["model"] != "glm-5.1" {
+		t.Fatalf("expected request model passthrough, got %#v", payload["model"])
 	}
 }
 

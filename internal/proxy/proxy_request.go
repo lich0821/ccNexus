@@ -179,7 +179,8 @@ func (p *Proxy) prepareEndpointAttempt(reqCtx *proxyRequestContext, attempt *end
 		return result
 	}
 
-	trans, err := prepareTransformerForClient(reqCtx.clientFormat, attempt.endpoint)
+	attempt.modelName = resolveAttemptModelName(reqCtx, attempt.endpoint)
+	trans, err := prepareTransformerForClient(reqCtx.clientFormat, attempt.endpoint, attempt.modelName)
 	if err != nil {
 		logger.Error("[%s] %v", attempt.endpoint.Name, err)
 		p.stats.RecordError(attempt.endpoint.Name)
@@ -208,14 +209,13 @@ func (p *Proxy) prepareEndpointAttempt(reqCtx *proxyRequestContext, attempt *end
 		logger.Warn("[%s] Failed to clean tool calls: %v", attempt.endpoint.Name, err)
 		cleanedBody = transformedBody
 	}
-	if config.NormalizeAuthMode(attempt.endpoint.AuthMode) == config.AuthModeCodexTokenPool {
-		cleanedBody = overrideModelInPayload(cleanedBody, attempt.endpoint.Model)
+	if shouldOverridePayloadModel(attempt.transformerName) && attempt.modelName != "" {
+		cleanedBody = overrideModelInPayload(cleanedBody, attempt.modelName)
 	}
 	attempt.transformedBody = cleanedBody
-	attempt.modelName = resolveAttemptModelName(reqCtx, attempt)
 	attempt.thinkingEnabled = detectThinkingEnabled(attempt.transformerName, attempt.transformedBody)
 
-	proxyReq, err := buildProxyRequest(reqCtx.httpRequest, attempt.endpoint, attempt.apiKey, attempt.transformedBody, attempt.transformerName, attempt.selectedCredential)
+	proxyReq, err := buildProxyRequest(reqCtx.httpRequest, attempt.endpoint, attempt.apiKey, attempt.transformedBody, attempt.transformerName, attempt.modelName, attempt.selectedCredential)
 	if err != nil {
 		logger.Error("[%s] Failed to create request: %v", attempt.endpoint.Name, err)
 		p.stats.RecordError(attempt.endpoint.Name)
@@ -444,15 +444,21 @@ func (p *Proxy) tryRefreshAfterAuthFailure(reqCtx *proxyRequestContext, attempt 
 	return false
 }
 
-func resolveAttemptModelName(reqCtx *proxyRequestContext, attempt *endpointAttempt) string {
+func resolveAttemptModelName(reqCtx *proxyRequestContext, endpoint config.Endpoint) string {
+	if strings.TrimSpace(endpoint.Model) != "" {
+		logger.Debug("[%s] 使用端点模型: %s", endpoint.Name, endpoint.Model)
+		return strings.TrimSpace(endpoint.Model)
+	}
 	if reqCtx.modelOverride != "" {
-		logger.Debug("[%s] 使用模型覆盖值: %s", attempt.endpoint.Name, reqCtx.modelOverride)
+		logger.Debug("[%s] 使用模型覆盖值: %s", endpoint.Name, reqCtx.modelOverride)
 		return reqCtx.modelOverride
 	}
-	if reqCtx.requestModel == "" || (attempt.authMode == config.AuthModeCodexTokenPool && strings.TrimSpace(attempt.endpoint.Model) != "") {
-		return attempt.endpoint.Model
-	}
 	return reqCtx.requestModel
+}
+
+func shouldOverridePayloadModel(transformerName string) bool {
+	return strings.Contains(transformerName, "claude") ||
+		strings.Contains(transformerName, "openai")
 }
 
 func detectThinkingEnabled(transformerName string, transformedBody []byte) bool {
