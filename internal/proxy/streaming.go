@@ -23,6 +23,17 @@ var (
 	errEndpointSwitched   = errors.New("endpoint switched")
 )
 
+const (
+	initialSSEBufferSize = 128 * 1024
+	maxSSETokenSize      = 16 * 1024 * 1024
+)
+
+func newSSEScanner(reader io.Reader) *bufio.Scanner {
+	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(make([]byte, 0, initialSSEBufferSize), maxSSETokenSize)
+	return scanner
+}
+
 // handleStreamingResponse processes streaming SSE responses
 func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Response, endpoint config.Endpoint, trans transformer.Transformer, transformerName string, thinkingEnabled bool, modelName string, bodyBytes []byte, credentialID int64) (int, int, string, error) {
 	defer resp.Body.Close()
@@ -72,10 +83,7 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 		}
 	}
 
-	scanner := bufio.NewScanner(reader)
-	// Increase buffer sizes to handle large SSE events (e.g., large file reads in tool calls)
-	buf := make([]byte, 0, 128*1024) // 128KB initial buffer (was 64KB)
-	scanner.Buffer(buf, 2*1024*1024) // 2MB max buffer (was 1MB)
+	scanner := newSSEScanner(reader)
 
 	var inputTokens, outputTokens int
 	var buffer bytes.Buffer
@@ -218,9 +226,7 @@ func (p *Proxy) handleStreamingAsNonStreaming(w http.ResponseWriter, resp *http.
 	}
 	defer resp.Body.Close()
 
-	scanner := bufio.NewScanner(reader)
-	buf := make([]byte, 0, 128*1024)
-	scanner.Buffer(buf, 2*1024*1024)
+	scanner := newSSEScanner(reader)
 
 	var completedPayload []byte
 	var lastJSONPayload []byte
@@ -329,7 +335,7 @@ func (p *Proxy) transformStreamEvent(eventData []byte, trans transformer.Transfo
 
 // extractTokensFromEvent extracts token counts from SSE event
 func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputTokens *int) {
-	scanner := bufio.NewScanner(bytes.NewReader(eventData))
+	scanner := newSSEScanner(bytes.NewReader(eventData))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data:") {
@@ -393,7 +399,7 @@ func (p *Proxy) extractTokensFromEvent(eventData []byte, inputTokens, outputToke
 // extractTextFromEvent extracts text content from transformed event
 // Enhanced to support both delta.text and content_block_delta formats
 func (p *Proxy) extractTextFromEvent(transformedEvent []byte, outputText *strings.Builder) {
-	scanner := bufio.NewScanner(bytes.NewReader(transformedEvent))
+	scanner := newSSEScanner(bytes.NewReader(transformedEvent))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data:") {
@@ -454,7 +460,7 @@ func (p *Proxy) isMessageStopEvent(eventData []byte) bool {
 }
 
 func hasStreamEventType(eventData []byte, want string) bool {
-	scanner := bufio.NewScanner(bytes.NewReader(eventData))
+	scanner := newSSEScanner(bytes.NewReader(eventData))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data:") {

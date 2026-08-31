@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -566,7 +565,7 @@ func parseRateLimitHeaderKey(lower string) (limitID, window, field string, ok bo
 }
 
 func parseCodexRateLimitsFromEvent(eventData []byte) *storage.CodexRateLimitsData {
-	scanner := bufio.NewScanner(bytes.NewReader(eventData))
+	scanner := newSSEScanner(bytes.NewReader(eventData))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if !strings.HasPrefix(line, "data:") {

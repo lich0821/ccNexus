@@ -128,6 +128,44 @@ func TestHandleStreamingResponseRequiresResponsesCompletion(t *testing.T) {
 	}
 }
 
+func TestHandleStreamingResponseAllowsLargeSSEEvent(t *testing.T) {
+	endpoint := config.Endpoint{
+		Name:        "OpenAIResponses",
+		APIUrl:      "https://example.com",
+		APIKey:      "x",
+		AuthMode:    config.AuthModeAPIKey,
+		Enabled:     true,
+		Transformer: "openai2",
+		Model:       "gpt-image-2",
+	}
+	payload := strings.Repeat("a", 3*1024*1024)
+	completed := `data: {"type":"response.completed","response":{"output":"` + payload + `"}}` + "\n\n"
+	resp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
+		Body:       io.NopCloser(strings.NewReader(completed)),
+	}
+	rec := httptest.NewRecorder()
+
+	_, _, _, err := (&Proxy{}).handleStreamingResponse(
+		rec,
+		resp,
+		endpoint,
+		responses.NewOpenAI2Transformer(endpoint.Model),
+		"cx_resp_openai2",
+		false,
+		endpoint.Model,
+		[]byte(`{}`),
+		0,
+	)
+	if err != nil {
+		t.Fatalf("large SSE event failed: %v", err)
+	}
+	if rec.Body.String() != completed {
+		t.Fatalf("large SSE event was not forwarded unchanged")
+	}
+}
+
 func TestHandleStreamingResponseAllowsNonCurrentSpecifiedEndpoint(t *testing.T) {
 	endpointA := config.Endpoint{
 		Name: "A", APIUrl: "https://a.example", APIKey: "key-a", AuthMode: config.AuthModeAPIKey,
