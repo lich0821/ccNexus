@@ -54,9 +54,10 @@ func New(cfg *config.Config, statsStorage StatsStorage, sqliteStorage *storage.S
 	stats := NewStats(statsStorage, deviceID)
 
 	// Create a reusable HTTP client with connection pool
-	// Enhanced configuration for large SSE streaming and HTTP/2 support
+	// Enhanced configuration for large SSE streaming and HTTP/2 support.
+	// No total Timeout: it would cut off healthy long-running streams. Stalled
+	// upstreams are aborted by upstreamIdleTimeout in sendRequest instead.
 	httpClient := &http.Client{
-		Timeout: 300 * time.Second,
 		Transport: &http.Transport{
 			MaxIdleConns:           100,
 			MaxIdleConnsPerHost:    10,

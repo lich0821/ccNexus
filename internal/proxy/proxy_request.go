@@ -55,6 +55,12 @@ const (
 )
 
 func (p *Proxy) handleProxyRequest(w http.ResponseWriter, r *http.Request) {
+	// Proxied responses (e.g. long extended-thinking streams) can legitimately outlive
+	// the server's WriteTimeout, so lift the write deadline for this route only.
+	if err := http.NewResponseController(w).SetWriteDeadline(time.Time{}); err != nil {
+		logger.Debug("Failed to clear write deadline for proxied request: %v", err)
+	}
+
 	reqCtx, err := p.newProxyRequestContext(w, r)
 	if err != nil {
 		return

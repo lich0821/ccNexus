@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path"
@@ -334,10 +336,24 @@ func overrideModelInPayload(payload []byte, model string) []byte {
 	return updated
 }
 
+// upstreamIdleTimeout aborts an upstream request that makes no progress (no response
+// headers or body data) for this long. Unlike a total timeout, it never cuts off a
+// healthy stream that keeps sending data, however long it runs.
+const upstreamIdleTimeout = 10 * time.Minute
+
+var errUpstreamIdleTimeout = errors.New("upstream idle timeout")
+
 // sendRequest sends the HTTP request and returns the response
 func sendRequest(ctx context.Context, proxyReq *http.Request, httpClient *http.Client, cfg *config.Config) (*http.Response, error) {
+	return sendRequestWithIdleTimeout(ctx, proxyReq, httpClient, cfg, upstreamIdleTimeout)
+}
+
+func sendRequestWithIdleTimeout(ctx context.Context, proxyReq *http.Request, httpClient *http.Client, cfg *config.Config, idleTimeout time.Duration) (*http.Response, error) {
+	ctx, cancel := context.WithCancelCause(ctx)
+	idleTimer := time.AfterFunc(idleTimeout, func() { cancel(errUpstreamIdleTimeout) })
 	proxyReq = proxyReq.WithContext(ctx)
 
+	client := httpClient
 	proxyURL := resolveProxyURLForRequest(cfg, proxyReq.URL)
 	// Apply proxy if configured
 	if strings.TrimSpace(proxyURL) != "" {
@@ -354,10 +370,50 @@ func sendRequest(ctx context.Context, proxyReq *http.Request, httpClient *http.C
 			clientWithProxy.Transport = transport
 		}
 
-		return clientWithProxy.Do(proxyReq)
+		client = clientWithProxy
 	}
 
-	return httpClient.Do(proxyReq)
+	resp, err := client.Do(proxyReq)
+	if err != nil {
+		idleTimer.Stop()
+		if errors.Is(context.Cause(ctx), errUpstreamIdleTimeout) {
+			err = fmt.Errorf("%w: no response within %s: %v", errUpstreamIdleTimeout, idleTimeout, err)
+		}
+		cancel(nil)
+		return nil, err
+	}
+
+	idleTimer.Reset(idleTimeout)
+	resp.Body = &idleTimeoutBody{ReadCloser: resp.Body, ctx: ctx, cancel: cancel, timer: idleTimer, timeout: idleTimeout}
+	return resp, nil
+}
+
+// idleTimeoutBody re-arms the idle timer whenever upstream data arrives, and
+// releases the request context when the body is closed.
+type idleTimeoutBody struct {
+	io.ReadCloser
+	ctx     context.Context
+	cancel  context.CancelCauseFunc
+	timer   *time.Timer
+	timeout time.Duration
+}
+
+func (b *idleTimeoutBody) Read(p []byte) (int, error) {
+	n, err := b.ReadCloser.Read(p)
+	if n > 0 {
+		b.timer.Reset(b.timeout)
+	}
+	if err != nil && err != io.EOF && errors.Is(context.Cause(b.ctx), errUpstreamIdleTimeout) {
+		err = fmt.Errorf("%w: no data received for %s: %v", errUpstreamIdleTimeout, b.timeout, err)
+	}
+	return n, err
+}
+
+func (b *idleTimeoutBody) Close() error {
+	b.timer.Stop()
+	err := b.ReadCloser.Close()
+	b.cancel(nil)
+	return err
 }
 
 func resolveProxyURLForRequest(cfg *config.Config, targetURL *url.URL) string {

@@ -53,6 +53,10 @@ func (t *ClaudeTransformer) TransformResponseWithContext(resp []byte, isStreamin
 	}
 
 	scanner := bufio.NewScanner(bytes.NewReader(resp))
+	// A line can never be longer than the whole event, so size the buffer to fit it.
+	// The default 64KB limit silently dropped large lines such as the signature_delta
+	// of long extended-thinking blocks.
+	scanner.Buffer(make([]byte, 0, len(resp)+1), len(resp)+1)
 	var result bytes.Buffer
 
 	for scanner.Scan() {
@@ -103,6 +107,10 @@ func (t *ClaudeTransformer) TransformResponseWithContext(resp []byte, isStreamin
 
 		result.WriteString(line)
 		result.WriteString("\n")
+	}
+	if err := scanner.Err(); err != nil {
+		// Never forward a partially scanned event; pass the original through untouched.
+		return resp, nil
 	}
 
 	return result.Bytes(), nil
