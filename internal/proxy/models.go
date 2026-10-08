@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 	"github.com/lich0821/ccNexus/internal/config"
 	"github.com/lich0821/ccNexus/internal/logger"
 )
+
+const modelsRequestTimeout = 300 * time.Second
 
 // ModelInfo represents a single model information
 type ModelInfo struct {
@@ -122,8 +125,11 @@ func (p *Proxy) fetchModelsFromEndpoint(ep config.Endpoint) ([]ModelInfo, error)
 	// Set User-Agent
 	req.Header.Set("User-Agent", "ccNexus/1.0")
 
-	// Execute request
-	resp, err := p.httpClient.Do(req)
+	// Execute request. The shared client has no total timeout (it serves long
+	// streams), so keep this short request bounded.
+	ctx, cancel := context.WithTimeout(context.Background(), modelsRequestTimeout)
+	defer cancel()
+	resp, err := p.httpClient.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch models: %s", redactEndpointMessage(err.Error(), ep))
 	}
