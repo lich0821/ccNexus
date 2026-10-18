@@ -488,7 +488,7 @@ func (e *EndpointService) TestEndpoint(index int) string {
 	case "gemini":
 		model := endpoint.Model
 		if model == "" {
-			model = "gemini-pro"
+			model = "gemini-3.8-flash"
 		}
 		apiPath = "/v1beta/models/" + model + ":generateContent"
 		requestBody, err = json.Marshal(map[string]interface{}{
@@ -1063,7 +1063,7 @@ func (e *EndpointService) testMinimalRequest(apiUrl, apiKey, transformer, model 
 		}
 	case "gemini":
 		if model == "" {
-			model = "gemini-2.0-flash"
+			model = "gemini-3.8-flash"
 		}
 		reqURL = fmt.Sprintf("%s/v1beta/models/%s:generateContent?key=%s", apiUrl, model, apiKey)
 		body, _ = json.Marshal(map[string]interface{}{

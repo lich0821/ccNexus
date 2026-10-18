@@ -179,7 +179,7 @@ func (p *Proxy) getDefaultModels(ep config.Endpoint) []ModelInfo {
 		if ep.Model != "" {
 			modelID = ep.Model
 		} else {
-			modelID = "claude-sonnet-4-20250514" // Default Claude model
+			modelID = "claude-sonnet-4-5-20250929" // Default Claude model
 		}
 		ownedBy = "anthropic"
 
