@@ -8,7 +8,7 @@ import (
 
 func TestDefaultModelsClaudeFallbackIsSupportedModel(t *testing.T) {
 	models := (&Proxy{}).getDefaultModels(config.Endpoint{Name: "claude", Transformer: "claude"})
-	if len(models) != 1 || models[0].ID != "claude-sonnet-4-5-20250929" {
-		t.Fatalf("models=%+v, want claude-sonnet-4-5-20250929", models)
+	if len(models) != 1 || models[0].ID != "claude-sonnet-4-6" {
+		t.Fatalf("models=%+v, want claude-sonnet-4-6", models)
 	}
 }
