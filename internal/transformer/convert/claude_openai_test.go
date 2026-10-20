@@ -483,3 +483,47 @@ func TestOpenAIStreamToClaudeDoneWithToolCallAndNoFinishReasonReportsToolUse(t *
 
 	assertContains(t, events, `"stop_reason":"tool_use"`, "Expected stop_reason tool_use when the stream ends after a tool call")
 }
+
+func TestClaudeRespToOpenAIMaxTokensReportsLength(t *testing.T) {
+	claudeResp := `{"id":"msg_1","type":"message","role":"assistant","model":"claude-sonnet-4-5","content":[{"type":"text","text":"Once upon a"}],"stop_reason":"max_tokens","usage":{"input_tokens":5,"output_tokens":3}}`
+
+	out, err := ClaudeRespToOpenAI([]byte(claudeResp), "gpt-4o")
+	if err != nil {
+		t.Fatalf("ClaudeRespToOpenAI failed: %v", err)
+	}
+
+	assertContains(t, string(out), `"finish_reason":"length"`, "Expected finish_reason length for a Claude max_tokens stop")
+}
+
+func TestClaudeStreamToOpenAIMaxTokensReportsLength(t *testing.T) {
+	ctx := transformer.NewStreamContext()
+	out, err := ClaudeStreamToOpenAI([]byte("event: message_delta\ndata: {\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"max_tokens\"}}\n\n"), ctx, "gpt-4o")
+	if err != nil {
+		t.Fatalf("ClaudeStreamToOpenAI failed: %v", err)
+	}
+
+	assertContains(t, string(out), `"finish_reason":"length"`, "Expected finish_reason length for a Claude max_tokens stop")
+}
+
+func TestOpenAIRespToClaudeLengthReportsMaxTokens(t *testing.T) {
+	openaiResp := `{"id":"chatcmpl-1","object":"chat.completion","model":"gpt-4o","choices":[{"index":0,"message":{"role":"assistant","content":"Once upon a"},"finish_reason":"length"}],"usage":{"prompt_tokens":5,"completion_tokens":3,"total_tokens":8}}`
+
+	out, err := OpenAIRespToClaude([]byte(openaiResp))
+	if err != nil {
+		t.Fatalf("OpenAIRespToClaude failed: %v", err)
+	}
+
+	assertContains(t, string(out), `"stop_reason":"max_tokens"`, "Expected stop_reason max_tokens for an OpenAI length finish")
+}
+
+func TestOpenAIStreamToClaudeLengthReportsMaxTokens(t *testing.T) {
+	events := streamToClaude(t, []string{
+		`data: {"id":"1","choices":[{"index":0,"delta":{"role":"assistant","content":"Once upon a"},"finish_reason":"length"}]}`,
+		`data: [DONE]`,
+	})
+
+	assertContains(t, events, `"stop_reason":"max_tokens"`, "Expected stop_reason max_tokens for an OpenAI length finish")
+	if strings.Contains(events, `"stop_reason":"end_turn"`) {
+		t.Error("stop_reason end_turn must not be sent when the reply was cut off by the token limit")
+	}
+}
