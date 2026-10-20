@@ -442,7 +442,7 @@ func (e *EndpointService) TestEndpoint(index int) string {
 		apiPath = "/v1/messages"
 		model := endpoint.Model
 		if model == "" {
-			model = "claude-sonnet-4-5-20250929"
+			model = "claude-sonnet-5-5"
 		}
 		requestBody, err = json.Marshal(map[string]interface{}{
 			"model":      model,
@@ -456,7 +456,7 @@ func (e *EndpointService) TestEndpoint(index int) string {
 		apiPath = "/v1/chat/completions"
 		model := endpoint.Model
 		if model == "" {
-			model = "gpt-4-turbo"
+			model = "gpt-4.1-mini"
 		}
 		requestBody, err = json.Marshal(map[string]interface{}{
 			"model":      model,
@@ -926,7 +926,7 @@ func (e *EndpointService) testTokenCountAPI(apiUrl, apiKey string) (int, error) 
 	url := fmt.Sprintf("%s/v1/messages/count_tokens", apiUrl)
 
 	body, _ := json.Marshal(map[string]interface{}{
-		"model": "claude-sonnet-4-5-20250929",
+		"model": "claude-sonnet-5-5",
 		"messages": []map[string]string{
 			{"role": "user", "content": "Hi"},
 		},
@@ -1013,7 +1013,7 @@ func (e *EndpointService) testMinimalRequest(apiUrl, apiKey, transformer, model 
 	case "claude":
 		apiPath = "/v1/messages"
 		if model == "" {
-			model = "claude-sonnet-4-5-20250929"
+			model = "claude-sonnet-5-5"
 		}
 		body, _ = json.Marshal(map[string]interface{}{
 			"model":      model,
@@ -1023,7 +1023,7 @@ func (e *EndpointService) testMinimalRequest(apiUrl, apiKey, transformer, model 
 	case "openai":
 		apiPath = "/v1/chat/completions"
 		if model == "" {
-			model = "gpt-4-turbo"
+			model = "gpt-4.1-mini"
 		}
 		body, _ = json.Marshal(map[string]interface{}{
 			"model":      model,
@@ -1036,7 +1036,7 @@ func (e *EndpointService) testMinimalRequest(apiUrl, apiKey, transformer, model 
 			model = "gpt-5-codex"
 		}
 		if model == "" {
-			model = "gpt-4-turbo"
+			model = "gpt-5.6-sol"
 		}
 		// For Codex backend, build probe payload through the same OpenAI->Responses
 		// conversion path used by runtime proxy requests, to avoid test/runtime drift.
