@@ -222,8 +222,11 @@ func ClaudeRespToGemini(claudeResp []byte) ([]byte, error) {
 	}
 
 	finishReason := "STOP"
-	if resp.StopReason == "tool_use" {
+	switch resp.StopReason {
+	case "tool_use":
 		finishReason = "TOOL_CODE"
+	case "max_tokens":
+		finishReason = "MAX_TOKENS"
 	}
 
 	geminiResp := map[string]interface{}{
@@ -278,6 +281,9 @@ func GeminiRespToClaude(geminiResp []byte) ([]byte, error) {
 				})
 				stopReason = "tool_use"
 			}
+		}
+		if candidate.FinishReason == "MAX_TOKENS" {
+			stopReason = "max_tokens"
 		}
 	}
 
@@ -434,6 +440,9 @@ func GeminiStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 		stopReason := "end_turn"
 		if hasFunctionCall || candidate.FinishReason == "TOOL_CODE" {
 			stopReason = "tool_use"
+		}
+		if candidate.FinishReason == "MAX_TOKENS" {
+			stopReason = "max_tokens"
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
 			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
