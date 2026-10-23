@@ -435,3 +435,51 @@ func TestClaudeReqToOpenAIThinkingOnly(t *testing.T) {
 		}
 	}
 }
+
+func streamToClaude(t *testing.T, chunks []string) string {
+	t.Helper()
+	ctx := transformer.NewStreamContext()
+	ctx.ModelName = "claude-3-sonnet-20240229"
+	var all []string
+	for _, chunk := range chunks {
+		events, err := OpenAIStreamToClaude([]byte(chunk), ctx)
+		if err != nil {
+			t.Fatalf("OpenAIStreamToClaude failed: %v", err)
+		}
+		if events != nil {
+			all = append(all, string(events))
+		}
+	}
+	return strings.Join(all, "")
+}
+
+// Gemini's OpenAI-compatible endpoint ends tool calls with finish_reason "stop".
+func TestOpenAIStreamToClaudeStopWithToolCallReportsToolUse(t *testing.T) {
+	events := streamToClaude(t, []string{
+		`data: {"id":"1","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"id":"call_1","type":"function","function":{"name":"get_weather","arguments":"{\"city\":\"Paris\"}"}}]},"finish_reason":"stop"}]}`,
+		`data: [DONE]`,
+	})
+
+	assertContains(t, events, `"stop_reason":"tool_use"`, "Expected stop_reason tool_use for a tool call finished with \"stop\"")
+	if strings.Contains(events, `"stop_reason":"end_turn"`) {
+		t.Error("stop_reason end_turn must not be sent when the message has a tool_use block")
+	}
+}
+
+func TestOpenAIStreamToClaudeStopWithoutToolCallReportsEndTurn(t *testing.T) {
+	events := streamToClaude(t, []string{
+		`data: {"id":"1","choices":[{"index":0,"delta":{"role":"assistant","content":"Hello!"},"finish_reason":"stop"}]}`,
+		`data: [DONE]`,
+	})
+
+	assertContains(t, events, `"stop_reason":"end_turn"`, "Expected stop_reason end_turn for a plain text reply")
+}
+
+func TestOpenAIStreamToClaudeDoneWithToolCallAndNoFinishReasonReportsToolUse(t *testing.T) {
+	events := streamToClaude(t, []string{
+		`data: {"id":"1","choices":[{"index":0,"delta":{"role":"assistant","tool_calls":[{"id":"call_1","type":"function","function":{"name":"get_weather","arguments":"{}"}}]}}]}`,
+		`data: [DONE]`,
+	})
+
+	assertContains(t, events, `"stop_reason":"tool_use"`, "Expected stop_reason tool_use when the stream ends after a tool call")
+}

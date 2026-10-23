@@ -449,6 +449,7 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			var result []byte
 			emitText, emitThinking := makeThinkEmitters(ctx, &result)
 			flushThinkTaggedStream(ctx, emitText, emitThinking)
+			hadToolCall := ctx.ToolBlockStarted
 			// Close any open content blocks before message_stop
 			if ctx.ThinkingBlockStarted {
 				result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
@@ -464,8 +465,12 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			}
 			// Send message_delta with stop_reason if not sent
 			if !ctx.FinishReasonSent {
+				stopReason := "end_turn"
+				if hadToolCall {
+					stopReason = "tool_use"
+				}
 				result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
-					"delta": map[string]interface{}{"stop_reason": "end_turn", "stop_sequence": nil},
+					"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
 					"usage": map[string]interface{}{"output_tokens": 0},
 				})...)
 			}
@@ -611,6 +616,7 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 
 	// Finish
 	if choice.FinishReason != nil {
+		hadToolCall := ctx.ToolBlockStarted
 		if ctx.ThinkingBlockStarted {
 			result = append(result, buildClaudeEvent("content_block_stop", map[string]interface{}{"index": ctx.ThinkingIndex})...)
 			ctx.ThinkingBlockStarted = false
@@ -624,7 +630,8 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			ctx.ToolBlockStarted = false
 		}
 		stopReason := "end_turn"
-		if *choice.FinishReason == "tool_calls" {
+		// Some OpenAI-compatible providers (Gemini) end tool calls with "stop".
+		if *choice.FinishReason == "tool_calls" || (*choice.FinishReason == "stop" && hadToolCall) {
 			stopReason = "tool_use"
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
