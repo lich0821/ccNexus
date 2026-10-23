@@ -150,6 +150,9 @@ func GeminiRespToOpenAI(geminiResp []byte, model string) ([]byte, error) {
 				finishReason = "tool_calls"
 			}
 		}
+		if candidate.FinishReason == "MAX_TOKENS" {
+			finishReason = "length"
+		}
 	}
 
 	message := map[string]interface{}{"role": "assistant", "content": textContent}
@@ -235,6 +238,9 @@ func GeminiStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 		finishReason := "stop"
 		if hasToolCall || candidate.FinishReason == "TOOL_CODE" {
 			finishReason = "tool_calls"
+		}
+		if candidate.FinishReason == "MAX_TOKENS" {
+			finishReason = "length"
 		}
 		usage := currentOpenAIUsage(ctx)
 		chunk, _ := buildOpenAIChunkWithUsage("gemini-chunk", model, "", nil, finishReason, usage)
