@@ -431,7 +431,7 @@ func (c *Config) UpdateBasicAuth(enabled bool, username, password string) {
 func (c *Config) UpdateEndpoints(endpoints []Endpoint) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.Endpoints = endpoints
+	c.Endpoints = cloneEndpoints(endpoints)
 }
 
 // UpdatePort updates the port (thread-safe)
@@ -569,35 +569,35 @@ func (c *Config) UpdateAutoDarkTheme(theme string) {
 	c.AutoDarkTheme = theme
 }
 
-// GetWebDAV returns the WebDAV configuration (thread-safe)
+// GetWebDAV returns a copy of the WebDAV configuration (thread-safe)
 func (c *Config) GetWebDAV() *WebDAVConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.WebDAV
+	return cloneWebDAVConfig(c.WebDAV)
 }
 
 // UpdateWebDAV updates the WebDAV configuration (thread-safe)
 func (c *Config) UpdateWebDAV(webdav *WebDAVConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.WebDAV = webdav
+	c.WebDAV = cloneWebDAVConfig(webdav)
 }
 
-// GetBackup returns the backup configuration (thread-safe)
+// GetBackup returns a copy of the backup configuration (thread-safe)
 func (c *Config) GetBackup() *BackupConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.Backup
+	return cloneBackupConfig(c.Backup)
 }
 
 // UpdateBackup updates the backup configuration (thread-safe)
 func (c *Config) UpdateBackup(backup *BackupConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.Backup = backup
+	c.Backup = cloneBackupConfig(backup)
 }
 
-// GetUpdate returns the Update configuration (thread-safe)
+// GetUpdate returns a copy of the Update configuration (thread-safe)
 func (c *Config) GetUpdate() *UpdateConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -607,17 +607,17 @@ func (c *Config) GetUpdate() *UpdateConfig {
 			CheckInterval: 24,
 		}
 	}
-	return c.Update
+	return cloneUpdateConfig(c.Update)
 }
 
 // UpdateUpdate updates the Update configuration (thread-safe)
 func (c *Config) UpdateUpdate(update *UpdateConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.Update = update
+	c.Update = cloneUpdateConfig(update)
 }
 
-// GetTerminal returns the Terminal configuration (thread-safe)
+// GetTerminal returns a copy of the Terminal configuration (thread-safe)
 func (c *Config) GetTerminal() *TerminalConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -628,42 +628,42 @@ func (c *Config) GetTerminal() *TerminalConfig {
 			ClaudeCommand:    "",
 		}
 	}
-	return c.Terminal
+	return cloneTerminalConfig(c.Terminal)
 }
 
 // UpdateTerminal updates the Terminal configuration (thread-safe)
 func (c *Config) UpdateTerminal(terminal *TerminalConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.Terminal = terminal
+	c.Terminal = cloneTerminalConfig(terminal)
 }
 
-// GetProxy returns the Proxy configuration (thread-safe)
+// GetProxy returns a copy of the Proxy configuration (thread-safe)
 func (c *Config) GetProxy() *ProxyConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.Proxy
+	return cloneProxyConfig(c.Proxy)
 }
 
 // UpdateProxy updates the Proxy configuration (thread-safe)
 func (c *Config) UpdateProxy(proxy *ProxyConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.Proxy = proxy
+	c.Proxy = cloneProxyConfig(proxy)
 }
 
-// GetCodexProxy returns the Codex dedicated proxy configuration (thread-safe)
+// GetCodexProxy returns a copy of the Codex dedicated proxy configuration (thread-safe)
 func (c *Config) GetCodexProxy() *ProxyConfig {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	return c.CodexProxy
+	return cloneProxyConfig(c.CodexProxy)
 }
 
 // UpdateCodexProxy updates the Codex dedicated proxy configuration (thread-safe)
 func (c *Config) UpdateCodexProxy(proxy *ProxyConfig) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	c.CodexProxy = proxy
+	c.CodexProxy = cloneProxyConfig(proxy)
 }
 
 // GetClaudeNotification returns the Claude notification settings (thread-safe)
