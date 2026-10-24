@@ -114,8 +114,7 @@ func (p *Proxy) newProxyRequestContext(w http.ResponseWriter, r *http.Request) (
 
 	clientFormat := detectClientFormat(r.URL.Path)
 	logger.DebugLog("=== Proxy Request ===")
-	logger.DebugLog("Method: %s, Path: %s, ClientFormat: %s", r.Method, r.URL.Path, clientFormat)
-	logger.DebugLog("Request Body: %s", string(bodyBytes))
+	logger.DebugLog("Method: %s, Path: %s, ClientFormat: %s, BodyBytes: %d", r.Method, r.URL.Path, clientFormat, len(bodyBytes))
 
 	var streamReq struct {
 		Model  string `json:"model"`
@@ -207,13 +206,13 @@ func (p *Proxy) prepareEndpointAttempt(reqCtx *proxyRequestContext, attempt *end
 	}
 
 	logger.DebugLog("[%s] Transformer: %s", attempt.endpoint.Name, attempt.transformerName)
-	logger.DebugLog("[%s] Transformed Request: %s", attempt.endpoint.Name, string(transformedBody))
+	logger.DebugLog("[%s] Transformed Request: %d bytes", attempt.endpoint.Name, len(transformedBody))
 
 	cleanedBody := transformedBody
 	if reqCtx.clientFormat != ClientFormatOpenAIImages {
 		if reqCtx.modelOverride != "" {
 			cleanedBody = overrideModelInPayload(cleanedBody, reqCtx.modelOverride)
-			logger.DebugLog("[%s] 应用模型覆盖后的请求: %s", attempt.endpoint.Name, string(cleanedBody))
+			logger.DebugLog("[%s] Applied model override to request body (%d bytes)", attempt.endpoint.Name, len(cleanedBody))
 		}
 
 		cleanedBody, err = cleanIncompleteToolCalls(cleanedBody)

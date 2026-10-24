@@ -552,7 +552,7 @@ class Endpoints {
                             </div>
                             <div class="form-group" id="api-key-group">
                                 <label class="form-label" for="endpoint-api-key">${t('endpoints.apiKey')} <span id="api-key-required">*</span></label>
-                                <input type="text" class="form-input" id="endpoint-api-key" name="apiKey" value="${endpoint ? escapeHtml(endpoint.apiKey || '') : ''}" placeholder="${t('endpoints.apiKeyPlaceholder')}" autocomplete="off">
+                                <input type="text" class="form-input" id="endpoint-api-key" name="apiKey" value="" placeholder="${hasApiKey ? t('endpoints.apiKeyPlaceholderConfigured') : t('endpoints.apiKeyPlaceholder')}" autocomplete="off">
                                 ${apiKeyHint}
                                 ${(isEdit || isClone) ? `<span class="secret-status ${hasApiKey ? 'is-configured' : ''}">${hasApiKey ? t('endpoints.apiKeyConfigured') : t('endpoints.apiKeyMissing')}</span>` : ''}
                                 <div class="form-error" id="api-key-error" role="alert"></div>

@@ -94,6 +94,7 @@ export default {
         codexTokenPoolModeHint: 'The Codex URL and Responses transformer are managed automatically.',
         modelPlaceholder: 'gpt-4, gemini-pro, etc.',
         apiKeyPlaceholder: 'sk-...',
+        apiKeyPlaceholderConfigured: 'Leave blank to keep the saved key',
         apiUrlPlaceholder: 'https://api.example.com',
         keepExistingKey: 'Leave blank to keep the saved key',
         selectModel: 'Select Model',

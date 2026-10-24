@@ -94,6 +94,7 @@ export default {
         codexTokenPoolModeHint: 'Codex 地址和 Responses 转换器由系统自动管理。',
         modelPlaceholder: 'gpt-4、gemini-pro 等',
         apiKeyPlaceholder: 'sk-...',
+        apiKeyPlaceholderConfigured: '留空可保留已保存的密钥',
         apiUrlPlaceholder: 'https://api.example.com',
         keepExistingKey: '留空可保留已保存的密钥',
         selectModel: '选择模型',

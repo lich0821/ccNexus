@@ -116,7 +116,7 @@ func (l *Logger) Log(level LogLevel, format string, args ...interface{}) {
 		return
 	}
 
-	message := fmt.Sprintf(format, args...)
+	message := RedactSensitive(fmt.Sprintf(format, args...))
 	entry := LogEntry{
 		Timestamp: time.Now(),
 		Level:     level,
@@ -215,7 +215,7 @@ func (l *Logger) DebugLog(format string, args ...interface{}) {
 		return
 	}
 
-	message := fmt.Sprintf(format, args...)
+	message := RedactSensitive(fmt.Sprintf(format, args...))
 	timestamp := time.Now().Format("2006-01-02 15:04:05.000")
 	fmt.Fprintf(l.debugFile, "[%s] %s\n", timestamp, message)
 }

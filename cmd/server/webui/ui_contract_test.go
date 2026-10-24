@@ -103,15 +103,20 @@ func TestEndpointAuthModesDriveFieldsAndCapabilities(t *testing.T) {
 	)
 }
 
-func TestEndpointAPIKeyIsPrefilledInPlaintext(t *testing.T) {
+func TestEndpointAPIKeyIsNotPrefilledInPlaintext(t *testing.T) {
 	content := readUIAsset(t, "ui/js/components/endpoints.js")
 	for _, value := range []string{
 		`type="text" class="form-input" id="endpoint-api-key"`,
-		`value="${endpoint ? escapeHtml(endpoint.apiKey || '') : ''}"`,
+		`value=""`,
+		`hasApiKey ? t('endpoints.apiKeyPlaceholderConfigured') : t('endpoints.apiKeyPlaceholder')`,
+		`t('endpoints.keepExistingKey')`,
 	} {
 		if !strings.Contains(content, value) {
 			t.Errorf("endpoints.js must contain %q", value)
 		}
+	}
+	if strings.Contains(content, "endpoint.apiKey") {
+		t.Error("endpoints.js must not prefill or read endpoint.apiKey from API responses")
 	}
 }
 

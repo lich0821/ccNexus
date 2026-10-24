@@ -19,7 +19,6 @@ type endpointResponse struct {
 	ID          int64     `json:"id"`
 	Name        string    `json:"name"`
 	APIUrl      string    `json:"apiUrl"`
-	APIKey      string    `json:"apiKey"`
 	HasAPIKey   bool      `json:"hasApiKey"`
 	AuthMode    string    `json:"authMode"`
 	Enabled     bool      `json:"enabled"`
@@ -60,7 +59,6 @@ func newEndpointResponse(endpoint storage.Endpoint) endpointResponse {
 		ID:          endpoint.ID,
 		Name:        endpoint.Name,
 		APIUrl:      proxy.RedactURLSecrets(endpoint.APIUrl),
-		APIKey:      endpoint.APIKey,
 		HasAPIKey:   strings.TrimSpace(endpoint.APIKey) != "",
 		AuthMode:    config.NormalizeAuthMode(endpoint.AuthMode),
 		Enabled:     endpoint.Enabled,

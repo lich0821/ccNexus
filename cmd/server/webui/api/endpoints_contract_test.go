@@ -38,7 +38,7 @@ func saveEndpointForTest(t *testing.T, h *Handler, endpoint storage.Endpoint) {
 	}
 }
 
-func TestListEndpointsReturnsAPIKeyInPlaintext(t *testing.T) {
+func TestListEndpointsDoesNotReturnAPIKeyInPlaintext(t *testing.T) {
 	h := newEndpointTestHandler(t)
 	saveEndpointForTest(t, h, storage.Endpoint{
 		Name:        "saved",
@@ -63,8 +63,8 @@ func TestListEndpointsReturnsAPIKeyInPlaintext(t *testing.T) {
 		t.Fatalf("expected one endpoint, got %d", len(response.Data.Endpoints))
 	}
 	endpoint := response.Data.Endpoints[0]
-	if apiKey, _ := endpoint["apiKey"].(string); apiKey != "top-secret" {
-		t.Fatalf("expected plaintext apiKey, got %q: %s", apiKey, rec.Body.String())
+	if _, ok := endpoint["apiKey"]; ok || strings.Contains(rec.Body.String(), "top-secret") {
+		t.Fatalf("response leaked plaintext apiKey: %s", rec.Body.String())
 	}
 	if hasAPIKey, _ := endpoint["hasApiKey"].(bool); !hasAPIKey {
 		t.Fatalf("expected hasApiKey=true: %s", rec.Body.String())
