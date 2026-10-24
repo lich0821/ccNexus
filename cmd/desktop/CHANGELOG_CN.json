@@ -1,5 +1,22 @@
 [
   {
+    "version": "v5.4.0",
+    "date": "2026-10-24",
+    "changes": [
+      "重构并增强服务器 WebUI 管理体验，优化端点管理、端点测试、统计展示等交互，并补强 API 契约测试",
+      "正确代理 OpenAI 图片生成与图片编辑请求",
+      "提升流式传输稳定性：支持更大的 SSE 事件，保留长时间 extended thinking 流，并避免健康长响应被超时截断",
+      "修复 OpenAI 兼容流在工具调用以 finish_reason stop 或 [DONE] 结束时的 tool_use 结束状态报告",
+      "修复 Claude、OpenAI、OpenAI Responses 与 Gemini 转换器之间的截断状态传递，让客户端能正确识别 max_tokens / length / MAX_TOKENS 截断",
+      "替换已退役的 Claude、Gemini 与 OpenAI 默认/探测模型，避免端点测试或模型回退使用不可用模型",
+      "增强敏感信息保护：API 响应与日志中统一脱敏 API Key、Token、Cookie、Authorization 头、查询参数密钥和凭证信息",
+      "服务器 WebUI API 不再返回明文端点 API Key，改为返回密钥存在性元数据",
+      "提升配置访问安全性：为可变配置 getter 增加防御性拷贝，避免外部意外修改内部状态",
+      "移除赞助/打赏相关界面与非必要远程内容拉取，包括远程公告、远程节日配置和远程二维码加载，同时保留自动更新与远程版本检查能力",
+      "补充可复现 Go 模块记录，并新增 CI 质量门禁，覆盖测试、vet、模块校验和前端构建"
+    ]
+  },
+  {
     "version": "v5.3.0",
     "date": "2026-06-01",
     "changes": [

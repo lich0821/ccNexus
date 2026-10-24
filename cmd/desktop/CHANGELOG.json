@@ -1,5 +1,22 @@
 [
   {
+    "version": "v5.4.0",
+    "date": "2026-10-24",
+    "changes": [
+      "Improved server WebUI reliability and management experience with refined endpoint, testing, and statistics interactions plus stronger API contracts",
+      "Correctly proxy OpenAI image generation and image editing requests",
+      "Improved streaming reliability by allowing large SSE events, preserving long extended-thinking streams, and avoiding timeout truncation for healthy long responses",
+      "Fixed tool-use finish reporting when OpenAI-compatible streams end tool calls with finish_reason stop or [DONE]",
+      "Correctly propagate truncation finish reasons across Claude, OpenAI, OpenAI Responses, and Gemini converters so clients know when output was cut by token limits",
+      "Replaced retired Claude, Gemini, and OpenAI default/probe models with current defaults",
+      "Hardened sensitive data protection by redacting API keys, tokens, cookies, authorization headers, query secrets, and credentials from API responses and logs",
+      "Stopped returning plaintext endpoint API keys from server WebUI API responses and added explicit key presence metadata",
+      "Improved configuration safety with defensive copies for mutable config accessors",
+      "Removed sponsor/donation UI and non-essential remote content fetching, including remote broadcast, festival configuration, and QR image loading, while preserving automatic update checks",
+      "Added reproducible Go module tracking and CI quality gates for tests, vet, module verification, and frontend builds"
+    ]
+  },
+  {
     "version": "v5.3.0",
     "date": "2026-06-01",
     "changes": [
