@@ -78,20 +78,12 @@ export function DownloadUpdate(arg1, arg2) {
   return window['go']['main']['App']['DownloadUpdate'](arg1, arg2);
 }
 
-export function FetchBroadcast(arg1) {
-  return window['go']['main']['App']['FetchBroadcast'](arg1);
-}
-
 export function FetchCodexRateLimits(arg1) {
   return window['go']['main']['App']['FetchCodexRateLimits'](arg1);
 }
 
 export function FetchCodexRateLimitsForCredential(arg1, arg2) {
   return window['go']['main']['App']['FetchCodexRateLimitsForCredential'](arg1, arg2);
-}
-
-export function FetchImageAsBase64(arg1) {
-  return window['go']['main']['App']['FetchImageAsBase64'](arg1);
 }
 
 export function FetchModels(arg1, arg2, arg3) {

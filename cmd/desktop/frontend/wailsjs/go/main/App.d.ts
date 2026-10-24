@@ -39,13 +39,9 @@ export function DetectWebDAVConflict(arg1:string):Promise<string>;
 
 export function DownloadUpdate(arg1:string,arg2:string):Promise<void>;
 
-export function FetchBroadcast(arg1:string):Promise<string>;
-
 export function FetchCodexRateLimits(arg1:number):Promise<string>;
 
 export function FetchCodexRateLimitsForCredential(arg1:number,arg2:number):Promise<string>;
-
-export function FetchImageAsBase64(arg1:string):Promise<string>;
 
 export function FetchModels(arg1:string,arg2:string,arg3:string):Promise<string>;
 

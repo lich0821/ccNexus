@@ -6,13 +6,10 @@ export function initUI() {
 
     const app = document.getElementById('app');
     app.innerHTML = `
-        <!-- 页面右上角斜拉横幅 -->
-        <div class="ribbon-banner hidden" onclick="window.showSponsorModal()" title="${t('sponsor.ribbonTip')}">${t('sponsor.ribbon')}</div>
-
         <div class="header">
             <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                 <div>
-                    <h1>🚀 ${t('app.title')}<span id="broadcast-banner" class="broadcast-banner hidden"></span></h1>
+                    <h1>🚀 ${t('app.title')}</h1>
                     <p>${t('header.title')}<span id="festivalToggle" class="festival-toggle hidden" onclick="window.toggleFestivalEffect(); event.stopPropagation();" title="${t('festival.toggle') || '切换氛围效果'}"><span class="festival-toggle-name" id="festivalToggleName"></span><span class="festival-toggle-switch" id="festivalToggleSwitch"></span></span></p>
                 </div>
                 <div style="display: flex; gap: 15px; align-items: center;">
@@ -819,19 +816,6 @@ export function initUI() {
                 <div class="modal-footer">
                     <button class="btn btn-secondary" onclick="window.closeAutoThemeConfigModal()">${t('settings.cancel')}</button>
                     <button class="btn btn-primary" onclick="window.saveAutoThemeConfig()">${t('settings.save')}</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sponsor Modal -->
-        <div id="sponsorModal" class="modal">
-            <div class="modal-content sponsor-modal-content">
-                <div class="modal-header">
-                    <h2>❤️ ${t('sponsor.title')}</h2>
-                    <button class="modal-close" onclick="window.closeSponsorModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="sponsor-grid"></div>
                 </div>
             </div>
         </div>
