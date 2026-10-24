@@ -53,17 +53,17 @@ jobs:
       - name: Verify Go modules
         run: go mod verify
 
-      - name: Run Go tests
-        run: go test ./... -count=1
-
-      - name: Run Go vet
-        run: go vet ./...
-
       - name: Build frontend
         run: |
           cd cmd/desktop/frontend
           npm run build
         shell: bash
+
+      - name: Run Go tests
+        run: go test ./... -count=1
+
+      - name: Run Go vet
+        run: go vet ./...
 
   build:
     needs: quality
