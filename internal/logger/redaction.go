@@ -9,12 +9,14 @@ import (
 const redactedSecret = "[REDACTED]"
 
 var (
-	sensitiveKeyPattern  = `(?:api[-_]?key|authorization|password|passwd|secret|token|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|secret[-_]?key|client[-_]?secret|backup[-_]?s3[-_]?secretKey|backup[-_]?s3[-_]?sessionToken|webdav[-_]?password)`
-	urlPattern           = regexp.MustCompile(`https?://[^\s"'<>]+`)
-	jsonStringPattern    = regexp.MustCompile(`(?i)("` + sensitiveKeyPattern + `"\s*:\s*")([^"\\]*(?:\\.[^"\\]*)*)(")`)
-	jsonBarePattern      = regexp.MustCompile(`(?i)("` + sensitiveKeyPattern + `"\s*:\s*)([^",}\]\s]+)`)
-	keyValuePattern      = regexp.MustCompile(`(?i)(\b` + sensitiveKeyPattern + `\b\s*[=:]\s*)([^&\s,;]+)`)
-	authorizationPattern = regexp.MustCompile(`(?i)(\bauthorization\b\s*[:=]\s*)(bearer|basic)?\s*([^\s,;]+)`)
+	sensitiveKeyPattern     = `(?:[A-Za-z0-9_.-]*(?:api[-_]?key|access[-_]?token|refresh[-_]?token|id[-_]?token|session[-_]?token|secret[-_]?key|client[-_]?secret|backup[-_]?s3[-_]?(?:secret[-_]?key|secretKey|session[-_]?token|sessionToken)|webdav[-_]?password)[A-Za-z0-9_.-]*|password|passwd|secret|token|cookie|set[-_]?cookie)`
+	jsonSensitiveKeyPattern = `(?:` + sensitiveKeyPattern + `|authorization)`
+	urlPattern              = regexp.MustCompile(`https?://[^\s"'<>]+`)
+	jsonStringPattern       = regexp.MustCompile(`(?i)("` + jsonSensitiveKeyPattern + `"\s*:\s*")([^"\\]*(?:\\.[^"\\]*)*)(")`)
+	jsonBarePattern         = regexp.MustCompile(`(?i)("` + jsonSensitiveKeyPattern + `"\s*:\s*)([^",}\]\s]+)`)
+	keyValuePattern         = regexp.MustCompile(`(?i)(\b` + sensitiveKeyPattern + `\b\s*[=:]\s*)("[^"\\]*(?:\\.[^"\\]*)*"|'[^'\\]*(?:\\.[^'\\]*)*'|[^&\s,;]+)`)
+	apiTokenPattern         = regexp.MustCompile(`\b(?:sk-[A-Za-z0-9_-]{8,}|sk-ant-[A-Za-z0-9_-]{8,}|AIza[0-9A-Za-z_-]{20,}|gh[pousr]_[0-9A-Za-z_]{20,})\b`)
+	authorizationPattern    = regexp.MustCompile(`(?i)(\bauthorization\b\s*[:=]\s*)(bearer|basic)?\s*([^\s,;]+)`)
 )
 
 // RedactSensitive removes common credential material from log messages before
@@ -31,6 +33,7 @@ func RedactSensitive(message string) string {
 	redacted = jsonStringPattern.ReplaceAllString(redacted, `${1}`+redactedSecret+`${3}`)
 	redacted = jsonBarePattern.ReplaceAllString(redacted, `${1}`+redactedSecret)
 	redacted = keyValuePattern.ReplaceAllString(redacted, `${1}`+redactedSecret)
+	redacted = apiTokenPattern.ReplaceAllString(redacted, redactedSecret)
 	return redacted
 }
 
