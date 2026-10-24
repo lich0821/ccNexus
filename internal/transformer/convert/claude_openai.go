@@ -303,10 +303,7 @@ func ClaudeRespToOpenAI(claudeResp []byte, model string) ([]byte, error) {
 		message["tool_calls"] = toolCalls
 	}
 
-	finishReason := "stop"
-	if resp.StopReason == "tool_use" {
-		finishReason = "tool_calls"
-	}
+	finishReason := claudeStopReasonToOpenAI(resp.StopReason)
 
 	openaiResp := map[string]interface{}{
 		"id":      resp.ID,
@@ -348,6 +345,9 @@ func OpenAIRespToClaude(openaiResp []byte) ([]byte, error) {
 				"input": args,
 			})
 			stopReason = "tool_use"
+		}
+		if choice.FinishReason == "length" {
+			stopReason = "max_tokens"
 		}
 	}
 
@@ -426,10 +426,7 @@ func ClaudeStreamToOpenAI(event []byte, ctx *transformer.StreamContext, model st
 	case "message_delta":
 		if delta, ok := data["delta"].(map[string]interface{}); ok {
 			stopReason, _ := delta["stop_reason"].(string)
-			finish := "stop"
-			if stopReason == "tool_use" {
-				finish = "tool_calls"
-			}
+			finish := claudeStopReasonToOpenAI(stopReason)
 			return buildOpenAIChunk(ctx.MessageID, model, "", nil, finish)
 		}
 		return nil, nil
@@ -633,6 +630,8 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 		// Some OpenAI-compatible providers (Gemini) end tool calls with "stop".
 		if *choice.FinishReason == "tool_calls" || (*choice.FinishReason == "stop" && hadToolCall) {
 			stopReason = "tool_use"
+		} else if *choice.FinishReason == "length" {
+			stopReason = "max_tokens"
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
 			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},
@@ -645,6 +644,18 @@ func OpenAIStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 }
 
 // Helper functions
+
+// claudeStopReasonToOpenAI maps a Claude stop_reason to an OpenAI finish_reason.
+func claudeStopReasonToOpenAI(stopReason string) string {
+	switch stopReason {
+	case "tool_use":
+		return "tool_calls"
+	case "max_tokens":
+		return "length"
+	default:
+		return "stop"
+	}
+}
 
 func convertClaudeContentToOpenAI(content []interface{}) (interface{}, []transformer.OpenAIToolCall) {
 	var textParts []string
