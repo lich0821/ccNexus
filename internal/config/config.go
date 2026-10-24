@@ -214,6 +214,127 @@ func DefaultConfig() *Config {
 	}
 }
 
+// ReplaceFrom replaces the configuration values without copying synchronization primitives.
+func (c *Config) ReplaceFrom(src *Config) {
+	if c == nil || src == nil || c == src {
+		return
+	}
+
+	src.mu.RLock()
+	port := src.Port
+	portLocked := src.PortLocked
+	basicAuthEnabled := src.BasicAuthEnabled
+	basicAuthUsername := src.BasicAuthUsername
+	basicAuthPassword := src.BasicAuthPassword
+	endpoints := cloneEndpoints(src.Endpoints)
+	logLevel := src.LogLevel
+	language := src.Language
+	theme := src.Theme
+	themeAuto := src.ThemeAuto
+	autoLightTheme := src.AutoLightTheme
+	autoDarkTheme := src.AutoDarkTheme
+	windowWidth := src.WindowWidth
+	windowHeight := src.WindowHeight
+	closeWindowBehavior := src.CloseWindowBehavior
+	claudeNotificationEnabled := src.ClaudeNotificationEnabled
+	claudeNotificationType := src.ClaudeNotificationType
+	modelsCacheTTL := src.ModelsCacheTTL
+	modelsCacheRefreshEnabled := src.ModelsCacheRefreshEnabled
+	webdav := cloneWebDAVConfig(src.WebDAV)
+	backup := cloneBackupConfig(src.Backup)
+	update := cloneUpdateConfig(src.Update)
+	terminal := cloneTerminalConfig(src.Terminal)
+	proxy := cloneProxyConfig(src.Proxy)
+	codexProxy := cloneProxyConfig(src.CodexProxy)
+	src.mu.RUnlock()
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Port = port
+	c.PortLocked = portLocked
+	c.BasicAuthEnabled = basicAuthEnabled
+	c.BasicAuthUsername = basicAuthUsername
+	c.BasicAuthPassword = basicAuthPassword
+	c.Endpoints = endpoints
+	c.LogLevel = logLevel
+	c.Language = language
+	c.Theme = theme
+	c.ThemeAuto = themeAuto
+	c.AutoLightTheme = autoLightTheme
+	c.AutoDarkTheme = autoDarkTheme
+	c.WindowWidth = windowWidth
+	c.WindowHeight = windowHeight
+	c.CloseWindowBehavior = closeWindowBehavior
+	c.ClaudeNotificationEnabled = claudeNotificationEnabled
+	c.ClaudeNotificationType = claudeNotificationType
+	c.ModelsCacheTTL = modelsCacheTTL
+	c.ModelsCacheRefreshEnabled = modelsCacheRefreshEnabled
+	c.WebDAV = webdav
+	c.Backup = backup
+	c.Update = update
+	c.Terminal = terminal
+	c.Proxy = proxy
+	c.CodexProxy = codexProxy
+}
+
+func cloneEndpoints(endpoints []Endpoint) []Endpoint {
+	if endpoints == nil {
+		return nil
+	}
+	cloned := make([]Endpoint, len(endpoints))
+	copy(cloned, endpoints)
+	return cloned
+}
+
+func cloneWebDAVConfig(webdav *WebDAVConfig) *WebDAVConfig {
+	if webdav == nil {
+		return nil
+	}
+	cloned := *webdav
+	return &cloned
+}
+
+func cloneBackupConfig(backup *BackupConfig) *BackupConfig {
+	if backup == nil {
+		return nil
+	}
+	cloned := &BackupConfig{Provider: backup.Provider}
+	if backup.Local != nil {
+		local := *backup.Local
+		cloned.Local = &local
+	}
+	if backup.S3 != nil {
+		s3 := *backup.S3
+		cloned.S3 = &s3
+	}
+	return cloned
+}
+
+func cloneUpdateConfig(update *UpdateConfig) *UpdateConfig {
+	if update == nil {
+		return nil
+	}
+	cloned := *update
+	return &cloned
+}
+
+func cloneTerminalConfig(terminal *TerminalConfig) *TerminalConfig {
+	if terminal == nil {
+		return nil
+	}
+	cloned := *terminal
+	cloned.ProjectDirs = append([]string(nil), terminal.ProjectDirs...)
+	return &cloned
+}
+
+func cloneProxyConfig(proxy *ProxyConfig) *ProxyConfig {
+	if proxy == nil {
+		return nil
+	}
+	cloned := *proxy
+	return &cloned
+}
+
 // Validate checks if the configuration is valid
 func (c *Config) Validate() error {
 	c.mu.Lock()

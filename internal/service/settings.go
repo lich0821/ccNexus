@@ -51,7 +51,7 @@ func (s *SettingsService) UpdateConfig(configJSON string, proxy interface{ Updat
 		}
 	}
 
-	*s.config = newConfig
+	s.config.ReplaceFrom(&newConfig)
 	return nil
 }
 

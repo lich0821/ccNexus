@@ -186,7 +186,7 @@ func (w *WebDAVService) RestoreFromWebDAV(filename, choice string, reloadConfig 
 		return fmt.Errorf("load_config_failed")
 	}
 
-	*w.config = *newConfig
+	w.config.ReplaceFrom(newConfig)
 
 	if err := reloadConfig(newConfig); err != nil {
 		return fmt.Errorf("update_proxy_config_failed")

@@ -277,7 +277,7 @@ func (b *BackupService) restoreFromS3(filename, choice string, reloadConfig func
 		return fmt.Errorf("load_config_failed")
 	}
 
-	*b.config = *newConfig
+	b.config.ReplaceFrom(newConfig)
 	if err := reloadConfig(newConfig); err != nil {
 		logger.Error("Failed to reload config: %v", err)
 		return fmt.Errorf("update_proxy_config_failed")

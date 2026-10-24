@@ -10,10 +10,63 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.3'
+          cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: cmd/desktop/frontend/package-lock.json
+
+      - name: Install npm dependencies
+        run: |
+          cd cmd/desktop/frontend
+          npm ci
+        shell: bash
+
+      - name: Install Linux test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev pkg-config
+          for pcdir in $(pkg-config --variable pc_path pkg-config | tr ':' ' '); do
+            if [ -f "$pcdir/webkit2gtk-4.1.pc" ]; then
+              sudo ln -sf "$pcdir/webkit2gtk-4.1.pc" "$pcdir/webkit2gtk-4.0.pc"
+            fi
+          done
+        shell: bash
+
+      - name: Verify Go modules
+        run: go mod verify
+
+      - name: Run Go tests
+        run: go test ./... -count=1
+
+      - name: Run Go vet
+        run: go vet ./...
+
+      - name: Build frontend
+        run: |
+          cd cmd/desktop/frontend
+          npm run build
+        shell: bash
+
   build:
+    needs: quality
     strategy:
       matrix:
         include:
@@ -182,6 +235,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code

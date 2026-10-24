@@ -157,7 +157,7 @@ func (b *BackupService) restoreFromLocal(filename, choice string, reloadConfig f
 		logger.Error("Failed to load config from storage: %v", err)
 		return fmt.Errorf("load_config_failed")
 	}
-	*b.config = *newConfig
+	b.config.ReplaceFrom(newConfig)
 
 	if err := reloadConfig(newConfig); err != nil {
 		logger.Error("Failed to reload config: %v", err)

@@ -28,7 +28,6 @@ dist/
 *.dylib
 *.test
 *.out
-go.sum
 
 # Config
 config.json
