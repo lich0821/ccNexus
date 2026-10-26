@@ -53,8 +53,17 @@ func ClaudeReqToGemini(claudeReq []byte, model string) ([]byte, error) {
 	if req.MaxTokens > 0 {
 		genConfig["maxOutputTokens"] = req.MaxTokens
 	}
-	if req.Temperature > 0 {
-		genConfig["temperature"] = req.Temperature
+	if req.Temperature != nil {
+		genConfig["temperature"] = *req.Temperature
+	}
+	if req.TopP != nil {
+		genConfig["topP"] = *req.TopP
+	}
+	if req.TopK != nil {
+		genConfig["topK"] = *req.TopK
+	}
+	if len(req.StopSequences) > 0 {
+		genConfig["stopSequences"] = req.StopSequences
 	}
 	if len(genConfig) > 0 {
 		geminiReq["generationConfig"] = genConfig
