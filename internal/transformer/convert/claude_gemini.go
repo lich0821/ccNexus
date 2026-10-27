@@ -73,13 +73,41 @@ func ClaudeReqToGemini(claudeReq []byte, model string) ([]byte, error) {
 		geminiReq["tools"] = []map[string]interface{}{{"functionDeclarations": funcDecls}}
 		// Add toolConfig to enable function calling
 		geminiReq["toolConfig"] = map[string]interface{}{
-			"functionCallingConfig": map[string]interface{}{
-				"mode": "AUTO",
-			},
+			"functionCallingConfig": claudeToolChoiceToGeminiConfig(req.ToolChoice),
 		}
 	}
 
 	return json.Marshal(geminiReq)
+}
+
+// claudeToolChoiceToGeminiConfig maps a Claude tool_choice to a Gemini
+// functionCallingConfig. A missing or unknown choice stays AUTO.
+func claudeToolChoiceToGeminiConfig(toolChoice interface{}) map[string]interface{} {
+	config := map[string]interface{}{"mode": "AUTO"}
+
+	var choiceType string
+	var name string
+	switch tc := toolChoice.(type) {
+	case map[string]interface{}:
+		choiceType, _ = tc["type"].(string)
+		name, _ = tc["name"].(string)
+	case string:
+		choiceType = tc
+	}
+
+	switch choiceType {
+	case "any", "required":
+		config["mode"] = "ANY"
+	case "tool":
+		config["mode"] = "ANY"
+		if name != "" {
+			config["allowedFunctionNames"] = []string{name}
+		}
+	case "none":
+		config["mode"] = "NONE"
+	}
+
+	return config
 }
 
 // GeminiReqToClaude converts Gemini request to Claude request
