@@ -23,9 +23,11 @@ func OpenAIReqToGemini(openaiReq []byte, model string) ([]byte, error) {
 	toolCallIDToName := make(map[string]string) // Map tool_call_id to function name
 
 	for _, msg := range req.Messages {
-		if msg.Role == "system" {
-			if content, ok := msg.Content.(string); ok {
-				systemInstruction += content + "\n"
+		// Gemini only takes user and model turns in contents; instructions (OpenAI's
+		// "developer" role included, with a string or a list of text parts) go to systemInstruction.
+		if msg.Role == "system" || msg.Role == "developer" {
+			if text := extractSystemText(msg.Content); text != "" {
+				systemInstruction += text + "\n"
 			}
 			continue
 		}
