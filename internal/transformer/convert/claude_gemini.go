@@ -5,8 +5,16 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/lich0821/ccNexus/internal/transformer"
 )
+
+// newGeminiToolUseID returns a unique id for a tool_use block built from a Gemini
+// functionCall. Gemini does not send call ids, and an id derived from the function
+// name alone collides when the model calls the same tool twice in one turn.
+func newGeminiToolUseID() string {
+	return "call_" + uuid.NewString()
+}
 
 // ClaudeReqToGemini converts Claude request to Gemini request
 func ClaudeReqToGemini(claudeReq []byte, model string) ([]byte, error) {
@@ -284,7 +292,7 @@ func GeminiRespToClaude(geminiResp []byte) ([]byte, error) {
 			if part.FunctionCall != nil {
 				content = append(content, map[string]interface{}{
 					"type":  "tool_use",
-					"id":    fmt.Sprintf("call_%s", part.FunctionCall.Name),
+					"id":    newGeminiToolUseID(),
 					"name":  part.FunctionCall.Name,
 					"input": part.FunctionCall.Args,
 				})
@@ -428,7 +436,7 @@ func GeminiStreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte,
 			result = append(result, buildClaudeEvent("content_block_start", map[string]interface{}{
 				"index": ctx.ContentIndex,
 				"content_block": map[string]interface{}{
-					"type": "tool_use", "id": fmt.Sprintf("call_%s", part.FunctionCall.Name), "name": part.FunctionCall.Name,
+					"type": "tool_use", "id": newGeminiToolUseID(), "name": part.FunctionCall.Name,
 				},
 			})...)
 			args, _ := json.Marshal(part.FunctionCall.Args)
