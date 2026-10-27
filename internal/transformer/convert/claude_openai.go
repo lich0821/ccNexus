@@ -116,9 +116,9 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 	if req.MaxTokens > 0 {
 		openaiReq.MaxCompletionTokens = req.MaxTokens
 	}
-	if req.Temperature > 0 {
-		openaiReq.Temperature = &req.Temperature
-	}
+	openaiReq.Temperature = req.Temperature
+	openaiReq.TopP = req.TopP
+	openaiReq.Stop = req.StopSequences
 
 	// Convert tools
 	if len(req.Tools) > 0 {

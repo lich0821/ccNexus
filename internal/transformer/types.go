@@ -38,6 +38,8 @@ type OpenAIRequest struct {
 	MaxTokens           int             `json:"max_tokens,omitempty"` // Legacy field
 	MaxCompletionTokens int             `json:"max_completion_tokens,omitempty"`
 	Temperature         *float64        `json:"temperature,omitempty"`
+	TopP                *float64        `json:"top_p,omitempty"`
+	Stop                []string        `json:"stop,omitempty"`
 	Stream              bool            `json:"stream,omitempty"`
 	StreamOptions       *StreamOptions  `json:"stream_options,omitempty"`
 	EnableThinking      bool            `json:"enable_thinking,omitempty"` // For models that support reasoning/thinking
@@ -106,15 +108,20 @@ type ClaudeMessage struct {
 
 // ClaudeRequest represents a Claude API request
 type ClaudeRequest struct {
-	Model       string          `json:"model"`
-	Messages    []ClaudeMessage `json:"messages"`
-	MaxTokens   int             `json:"max_tokens,omitempty"`
-	Temperature float64         `json:"temperature,omitempty"`
-	Stream      bool            `json:"stream,omitempty"`
-	System      interface{}     `json:"system,omitempty"`   // Can be string or array of system messages
-	Thinking    interface{}     `json:"thinking,omitempty"` // Claude's thinking/extended thinking parameter
-	Tools       []ClaudeTool    `json:"tools,omitempty"`
-	ToolChoice  interface{}     `json:"tool_choice,omitempty"`
+	Model     string          `json:"model"`
+	Messages  []ClaudeMessage `json:"messages"`
+	MaxTokens int             `json:"max_tokens,omitempty"`
+	// Sampling parameters are pointers so that an explicit 0 (temperature 0 is the
+	// deterministic setting) can be told apart from a parameter the client did not send.
+	Temperature   *float64     `json:"temperature,omitempty"`
+	TopP          *float64     `json:"top_p,omitempty"`
+	TopK          *int         `json:"top_k,omitempty"`
+	StopSequences []string     `json:"stop_sequences,omitempty"`
+	Stream        bool         `json:"stream,omitempty"`
+	System        interface{}  `json:"system,omitempty"`   // Can be string or array of system messages
+	Thinking      interface{}  `json:"thinking,omitempty"` // Claude's thinking/extended thinking parameter
+	Tools         []ClaudeTool `json:"tools,omitempty"`
+	ToolChoice    interface{}  `json:"tool_choice,omitempty"`
 }
 
 // ClaudeTool represents a tool definition in Claude format
