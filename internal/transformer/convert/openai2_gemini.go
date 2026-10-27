@@ -139,6 +139,7 @@ func GeminiRespToOpenAI2(geminiResp []byte) ([]byte, error) {
 	if usage != nil {
 		openai2Resp["usage"] = usage
 	}
+	markResponsesTruncated(openai2Resp, len(resp.Candidates) > 0 && resp.Candidates[0].FinishReason == "MAX_TOKENS")
 
 	return json.Marshal(openai2Resp)
 }
@@ -255,13 +256,12 @@ func GeminiStreamToOpenAI2(event []byte, ctx *transformer.StreamContext) ([]byte
 		if resp.UsageMetadata != nil && resp.UsageMetadata.TotalTokenCount > 0 {
 			totalTokens = resp.UsageMetadata.TotalTokenCount
 		}
-		writeEvent(map[string]interface{}{
-			"type": "response.completed",
-			"response": map[string]interface{}{
-				"id": ctx.MessageID, "object": "response", "status": "completed",
-				"usage": map[string]interface{}{"input_tokens": ctx.InputTokens, "output_tokens": ctx.OutputTokens, "total_tokens": totalTokens},
-			},
-		})
+		response := map[string]interface{}{
+			"id": ctx.MessageID, "object": "response", "status": "completed",
+			"usage": map[string]interface{}{"input_tokens": ctx.InputTokens, "output_tokens": ctx.OutputTokens, "total_tokens": totalTokens},
+		}
+		eventType := markResponsesTruncated(response, candidate.FinishReason == "MAX_TOKENS")
+		writeEvent(map[string]interface{}{"type": eventType, "response": response})
 		result.WriteString("data: [DONE]\n\n")
 	}
 

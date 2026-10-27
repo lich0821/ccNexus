@@ -79,6 +79,24 @@ func buildOpenAIChunkWithUsage(id, model, content string, toolCalls []map[string
 	return []byte(fmt.Sprintf("data: %s\n\n", data)), nil
 }
 
+// markResponsesTruncated flags a Responses API result that was cut off by the output
+// token limit: status "incomplete" with incomplete_details.reason "max_output_tokens".
+// It returns the matching stream event type.
+func markResponsesTruncated(response map[string]interface{}, truncated bool) string {
+	if !truncated {
+		return "response.completed"
+	}
+	response["status"] = "incomplete"
+	response["incomplete_details"] = map[string]interface{}{"reason": "max_output_tokens"}
+	return "response.incomplete"
+}
+
+// responsesTruncated reports whether a Responses API result stopped on the output token limit.
+func responsesTruncated(resp *transformer.OpenAI2Response) bool {
+	return resp != nil && resp.Status == "incomplete" &&
+		resp.IncompleteDetails != nil && resp.IncompleteDetails.Reason == "max_output_tokens"
+}
+
 // syncGeminiUsageMetadata stores Gemini usage metadata in stream context for later usage emission.
 func syncGeminiUsageMetadata(resp *transformer.GeminiResponse, ctx *transformer.StreamContext) {
 	if resp == nil || resp.UsageMetadata == nil || ctx == nil {

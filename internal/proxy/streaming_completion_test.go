@@ -47,6 +47,7 @@ func waitForSwitchTestSignal(t *testing.T, signal <-chan struct{}, name string) 
 
 func TestHandleStreamingResponseRequiresResponsesCompletion(t *testing.T) {
 	const completed = `data: {"type":"response.completed","response":{"usage":{"input_tokens":1,"output_tokens":1}}}`
+	const incomplete = `data: {"type":"response.incomplete","response":{"status":"incomplete","incomplete_details":{"reason":"max_output_tokens"},"usage":{"input_tokens":1,"output_tokens":1}}}`
 	doneText := "data:" + " [DONE]"
 	embeddedDone := `data: {"type":"response.output_text.delta","delta":"` + doneText + ` is documentation"}` + "\n\n"
 
@@ -85,6 +86,11 @@ func TestHandleStreamingResponseRequiresResponsesCompletion(t *testing.T) {
 			name:     "completion with trailing blank line",
 			upstream: completed + "\n\n",
 			wantBody: completed + "\n\n",
+		},
+		{
+			name:     "truncated response ends with response.incomplete",
+			upstream: incomplete + "\n\n",
+			wantBody: incomplete + "\n\n",
 		},
 		{
 			name:     "completion marker inside JSON delta",

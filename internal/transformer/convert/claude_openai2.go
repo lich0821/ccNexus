@@ -229,6 +229,7 @@ func ClaudeRespToOpenAI2(claudeResp []byte) ([]byte, error) {
 			"total_tokens":  resp.Usage.InputTokens + resp.Usage.OutputTokens,
 		},
 	}
+	markResponsesTruncated(openai2Resp, resp.StopReason == "max_tokens")
 
 	return json.Marshal(openai2Resp)
 }
@@ -266,6 +267,10 @@ func OpenAI2RespToClaude(openai2Resp []byte) ([]byte, error) {
 			})
 			stopReason = "tool_use"
 		}
+	}
+
+	if responsesTruncated(&resp) {
+		stopReason = "max_tokens"
 	}
 
 	claudeResp := map[string]interface{}{
@@ -527,6 +532,11 @@ func ClaudeStreamToOpenAI2(event []byte, ctx *transformer.StreamContext) ([]byte
 		}
 
 	case "message_delta":
+		if delta, ok := data["delta"].(map[string]interface{}); ok {
+			if reason, ok := delta["stop_reason"].(string); ok && reason != "" {
+				ctx.StopReason = reason
+			}
+		}
 		if usage, ok := data["usage"].(map[string]interface{}); ok {
 			if out, ok := usage["output_tokens"].(float64); ok {
 				ctx.OutputTokens = int(out)
@@ -537,16 +547,15 @@ func ClaudeStreamToOpenAI2(event []byte, ctx *transformer.StreamContext) ([]byte
 		flushThinkTaggedStream(ctx, emitText, emitThinking)
 		finishThinking()
 		finishText()
-		writeEvent(map[string]interface{}{
-			"type": "response.completed",
-			"response": map[string]interface{}{
-				"id": ctx.MessageID, "object": "response", "status": "completed",
-				"usage": map[string]interface{}{
-					"input_tokens": ctx.InputTokens, "output_tokens": ctx.OutputTokens,
-					"total_tokens": ctx.InputTokens + ctx.OutputTokens,
-				},
+		response := map[string]interface{}{
+			"id": ctx.MessageID, "object": "response", "status": "completed",
+			"usage": map[string]interface{}{
+				"input_tokens": ctx.InputTokens, "output_tokens": ctx.OutputTokens,
+				"total_tokens": ctx.InputTokens + ctx.OutputTokens,
 			},
-		})
+		}
+		eventType := markResponsesTruncated(response, ctx.StopReason == "max_tokens")
+		writeEvent(map[string]interface{}{"type": eventType, "response": response})
 		result.WriteString("data: [DONE]\n\n")
 	}
 
@@ -681,7 +690,7 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 			ctx.ContentIndex++
 		}
 
-	case "response.completed":
+	case "response.completed", "response.incomplete":
 		if evt.Response != nil {
 			if evt.Response.Usage.InputTokens > 0 {
 				ctx.InputTokens = evt.Response.Usage.InputTokens
@@ -703,6 +712,9 @@ func OpenAI2StreamToClaude(event []byte, ctx *transformer.StreamContext) ([]byte
 		stopReason := "end_turn"
 		if ctx.ToolIndex > 0 || ctx.CurrentToolID != "" {
 			stopReason = "tool_use"
+		}
+		if responsesTruncated(evt.Response) {
+			stopReason = "max_tokens"
 		}
 		result = append(result, buildClaudeEvent("message_delta", map[string]interface{}{
 			"delta": map[string]interface{}{"stop_reason": stopReason, "stop_sequence": nil},

@@ -130,7 +130,8 @@ func (p *Proxy) handleStreamingResponse(w http.ResponseWriter, resp *http.Respon
 		if writeErr != nil {
 			return fmt.Errorf("%w: %v", errClientDisconnected, writeErr)
 		}
-		if hasStreamEventType(transformedEvent, "response.completed") {
+		if hasStreamEventType(transformedEvent, "response.completed") ||
+			hasStreamEventType(transformedEvent, "response.incomplete") {
 			responseCompleted = true
 		}
 		flusher.Flush()
@@ -246,7 +247,8 @@ func (p *Proxy) handleStreamingAsNonStreaming(w http.ResponseWriter, resp *http.
 		if err := json.Unmarshal([]byte(jsonData), &event); err != nil {
 			continue
 		}
-		if eventType, _ := event["type"].(string); eventType != "response.completed" {
+		// A response cut off by the output token limit ends with response.incomplete.
+		if eventType, _ := event["type"].(string); eventType != "response.completed" && eventType != "response.incomplete" {
 			continue
 		}
 

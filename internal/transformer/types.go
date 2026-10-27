@@ -213,6 +213,7 @@ type StreamContext struct {
 	// Claude -> Responses streaming fields
 	NextOutputIndex int
 	OutputText      string
+	StopReason      string // Claude stop_reason from message_delta
 }
 
 // NewStreamContext creates a new stream context with default values
@@ -394,9 +395,13 @@ type OpenAI2OutputItem struct {
 
 // OpenAI2Response represents an OpenAI Responses API response
 type OpenAI2Response struct {
-	ID     string              `json:"id"`
-	Object string              `json:"object"` // "response"
-	Status string              `json:"status"` // "completed", "failed", etc.
+	ID     string `json:"id"`
+	Object string `json:"object"` // "response"
+	Status string `json:"status"` // "completed", "failed", etc.
+	// IncompleteDetails explains an "incomplete" status, e.g. reason "max_output_tokens".
+	IncompleteDetails *struct {
+		Reason string `json:"reason"`
+	} `json:"incomplete_details,omitempty"`
 	Output []OpenAI2OutputItem `json:"output"`
 	Usage  struct {
 		InputTokens  int `json:"input_tokens"`
