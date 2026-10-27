@@ -176,7 +176,7 @@ func GeminiRespToOpenAI(geminiResp []byte, model string) ([]byte, error) {
 	if resp.UsageMetadata != nil {
 		usage = map[string]interface{}{
 			"prompt_tokens":     resp.UsageMetadata.PromptTokenCount,
-			"completion_tokens": resp.UsageMetadata.CandidatesTokenCount,
+			"completion_tokens": geminiOutputTokens(&resp),
 			"total_tokens":      resp.UsageMetadata.TotalTokenCount,
 		}
 	}

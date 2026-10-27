@@ -87,9 +87,18 @@ func syncGeminiUsageMetadata(resp *transformer.GeminiResponse, ctx *transformer.
 	if resp.UsageMetadata.PromptTokenCount > 0 {
 		ctx.InputTokens = resp.UsageMetadata.PromptTokenCount
 	}
-	if resp.UsageMetadata.CandidatesTokenCount > 0 {
-		ctx.OutputTokens = resp.UsageMetadata.CandidatesTokenCount
+	if output := geminiOutputTokens(resp); output > 0 {
+		ctx.OutputTokens = output
 	}
+}
+
+// geminiOutputTokens returns the billed output tokens: Gemini reports reasoning
+// tokens in thoughtsTokenCount, outside candidatesTokenCount.
+func geminiOutputTokens(resp *transformer.GeminiResponse) int {
+	if resp == nil || resp.UsageMetadata == nil {
+		return 0
+	}
+	return resp.UsageMetadata.CandidatesTokenCount + resp.UsageMetadata.ThoughtsTokenCount
 }
 
 func currentOpenAIUsage(ctx *transformer.StreamContext) map[string]interface{} {
