@@ -140,3 +140,25 @@ func extractSystemText(system interface{}) string {
 	}
 	return ""
 }
+
+// claudeImageURL returns the URL an OpenAI-style image part needs for a Claude image block:
+// a data URL for a base64 source, the URL itself for a url source, "" for anything else.
+func claudeImageURL(block map[string]interface{}) string {
+	source, ok := block["source"].(map[string]interface{})
+	if !ok {
+		return ""
+	}
+	switch source["type"] {
+	case "base64":
+		mediaType, _ := source["media_type"].(string)
+		data, _ := source["data"].(string)
+		if mediaType == "" || data == "" {
+			return ""
+		}
+		return "data:" + mediaType + ";base64," + data
+	case "url":
+		url, _ := source["url"].(string)
+		return url
+	}
+	return ""
+}
