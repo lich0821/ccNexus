@@ -35,9 +35,11 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 		case []interface{}:
 			// Check for tool_result blocks
 			var textParts []string
+			var contentParts []interface{} // text and image parts in order, used when the message has images
 			var toolCalls []transformer.OpenAIToolCall
 			var toolResults []transformer.OpenAIMessage
 			hasThinking := false
+			hasImage := false
 
 			for _, block := range content {
 				m, ok := block.(map[string]interface{})
@@ -48,6 +50,15 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 				case "text":
 					if text, ok := m["text"].(string); ok {
 						textParts = append(textParts, text)
+						contentParts = append(contentParts, map[string]interface{}{"type": "text", "text": text})
+					}
+				case "image":
+					if url := claudeImageURL(m); url != "" && msg.Role == "user" {
+						hasImage = true
+						contentParts = append(contentParts, map[string]interface{}{
+							"type":      "image_url",
+							"image_url": map[string]interface{}{"url": url},
+						})
 					}
 				case "thinking":
 					// Skip thinking blocks - they are Claude's internal reasoning
@@ -86,9 +97,12 @@ func ClaudeReqToOpenAI(claudeReq []byte, model string) ([]byte, error) {
 			}
 
 			// Add main message if has text or tool_calls
-			if len(textParts) > 0 || len(toolCalls) > 0 {
+			if len(textParts) > 0 || len(toolCalls) > 0 || hasImage {
 				openaiMsg := transformer.OpenAIMessage{Role: msg.Role}
-				if len(textParts) > 0 {
+				if hasImage {
+					// Images need the content-parts form; plain text keeps the string form.
+					openaiMsg.Content = contentParts
+				} else if len(textParts) > 0 {
 					openaiMsg.Content = strings.Join(textParts, "")
 				}
 				if len(toolCalls) > 0 {

@@ -748,6 +748,10 @@ func convertClaudeMessageToOpenAI2Items(content []interface{}, role string) []ma
 		case "text":
 			text, _ := m["text"].(string)
 			messageParts = append(messageParts, map[string]interface{}{"type": textType, "text": text})
+		case "image":
+			if url := claudeImageURL(m); url != "" && role == "user" {
+				messageParts = append(messageParts, map[string]interface{}{"type": "input_image", "image_url": url})
+			}
 		case "thinking":
 			// Skip thinking blocks - they are Claude's internal reasoning
 			continue
