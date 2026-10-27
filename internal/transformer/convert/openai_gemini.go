@@ -21,6 +21,7 @@ func OpenAIReqToGemini(openaiReq []byte, model string) ([]byte, error) {
 	var contents []map[string]interface{}
 	var systemInstruction string
 	toolCallIDToName := make(map[string]string) // Map tool_call_id to function name
+	lastWasToolResult := false
 
 	for _, msg := range req.Messages {
 		if msg.Role == "system" {
@@ -67,7 +68,16 @@ func OpenAIReqToGemini(openaiReq []byte, model string) ([]byte, error) {
 				},
 			}
 			role = "user"
+
+			// Gemini wants the results of one parallel function call turn together in a single
+			// content, so a tool result right after another one joins that content.
+			if lastWasToolResult {
+				last := contents[len(contents)-1]
+				last["parts"] = append(last["parts"].([]map[string]interface{}), parts...)
+				continue
+			}
 		}
+		lastWasToolResult = msg.Role == "tool"
 
 		contents = append(contents, map[string]interface{}{"role": role, "parts": parts})
 	}
