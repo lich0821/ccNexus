@@ -290,7 +290,7 @@ func GeminiRespToClaude(geminiResp []byte) ([]byte, error) {
 	var inputTokens, outputTokens int
 	if resp.UsageMetadata != nil {
 		inputTokens = resp.UsageMetadata.PromptTokenCount
-		outputTokens = resp.UsageMetadata.CandidatesTokenCount
+		outputTokens = geminiOutputTokens(&resp)
 	}
 
 	claudeResp := map[string]interface{}{
