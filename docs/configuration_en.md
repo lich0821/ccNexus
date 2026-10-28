@@ -13,6 +13,8 @@
 
 ## Endpoint Configuration
 
+API URLs may include a versioned base path, such as `https://open.bigmodel.cn/api/coding/paas/v4`. ccNexus appends `/chat/completions` without adding another `/v1`. Root URLs still use `/v1/chat/completions`.
+
 ### Transformer Types
 
 | Transformer | Description |
