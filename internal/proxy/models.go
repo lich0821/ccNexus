@@ -83,11 +83,7 @@ func (p *Proxy) fetchModelsFromEndpoint(ep config.Endpoint) ([]ModelInfo, error)
 	case "openai", "openai2":
 		// OpenAI compatible endpoints
 		baseURL := strings.TrimSuffix(ep.APIUrl, "/")
-		if strings.Contains(baseURL, "/v1") {
-			modelsURL = baseURL + "/models"
-		} else {
-			modelsURL = baseURL + "/v1/models"
-		}
+		modelsURL = baseURL + config.NormalizeAPIPathForBaseURL(baseURL, "/v1/models")
 		req, err = http.NewRequest("GET", modelsURL, nil)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create request: %s", redactEndpointMessage(err.Error(), ep))
