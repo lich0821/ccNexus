@@ -13,6 +13,8 @@
 
 ## 端点配置
 
+API URL 可以包含版本路径，例如 `https://open.bigmodel.cn/api/coding/paas/v4`。ccNexus 会追加 `/chat/completions`，不会重复拼接 `/v1`；只填写根地址时仍使用 `/v1/chat/completions`。
+
 ### 转换器类型
 
 | 转换器 | 说明 |

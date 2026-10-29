@@ -260,28 +260,7 @@ func isCodexProviderType(providerType string) bool {
 
 // normalizeTargetPathForBaseURL adjusts target paths for endpoint base URL compatibility.
 func normalizeTargetPathForBaseURL(baseURL, targetPath string) string {
-	parsed, err := url.Parse(strings.TrimSpace(baseURL))
-	if err != nil || parsed == nil {
-		return targetPath
-	}
-
-	cleanPath := path.Clean(strings.TrimSpace(parsed.Path))
-	if strings.HasSuffix(cleanPath, "/v1") && isOpenAIImagesPath(targetPath) {
-		return strings.TrimPrefix(strings.TrimSpace(targetPath), "/v1")
-	}
-	isCodexBackend := strings.HasSuffix(cleanPath, "/backend-api/codex")
-	if !isCodexBackend {
-		return targetPath
-	}
-
-	switch strings.TrimSpace(targetPath) {
-	case "/v1/responses":
-		return "/responses"
-	case "/v1/responses/compact":
-		return "/responses/compact"
-	default:
-		return targetPath
-	}
+	return config.NormalizeAPIPathForBaseURL(baseURL, targetPath)
 }
 
 func isCodexBackendBaseURL(baseURL string) bool {

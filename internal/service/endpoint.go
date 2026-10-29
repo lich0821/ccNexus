@@ -1212,24 +1212,7 @@ func ensureCodexResponsesProbePayload(payload []byte) []byte {
 }
 
 func normalizeEndpointPathForBaseURL(baseURL, apiPath string) string {
-	parsed, err := url.Parse(strings.TrimSpace(baseURL))
-	if err != nil || parsed == nil {
-		return apiPath
-	}
-
-	cleanPath := path.Clean(strings.TrimSpace(parsed.Path))
-	if !strings.HasSuffix(cleanPath, "/backend-api/codex") {
-		return apiPath
-	}
-
-	switch strings.TrimSpace(apiPath) {
-	case "/v1/responses":
-		return "/responses"
-	case "/v1/responses/compact":
-		return "/responses/compact"
-	default:
-		return apiPath
-	}
+	return config.NormalizeAPIPathForBaseURL(baseURL, apiPath)
 }
 
 func isCodexProviderType(providerType string) bool {
