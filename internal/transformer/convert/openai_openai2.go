@@ -29,6 +29,28 @@ func OpenAIReqToOpenAI2(openaiReq []byte, model string) ([]byte, error) {
 			continue
 		}
 
+		if msg.Role == "tool" {
+			var output strings.Builder
+			switch content := msg.Content.(type) {
+			case string:
+				output.WriteString(content)
+			case []interface{}:
+				for _, part := range content {
+					if textPart, ok := part.(map[string]interface{}); ok && textPart["type"] == "text" {
+						if text, ok := textPart["text"].(string); ok {
+							output.WriteString(text)
+						}
+					}
+				}
+			}
+			input = append(input, map[string]interface{}{
+				"type":    "function_call_output",
+				"call_id": msg.ToolCallID,
+				"output":  output.String(),
+			})
+			continue
+		}
+
 		item := map[string]interface{}{"type": "message", "role": msg.Role}
 		var contentParts []map[string]interface{}
 
@@ -38,10 +60,25 @@ func OpenAIReqToOpenAI2(openaiReq []byte, model string) ([]byte, error) {
 			if msg.Role == "assistant" {
 				textType = "output_text"
 			}
-			contentParts = append(contentParts, map[string]interface{}{"type": textType, "text": content})
+			if content != "" || len(msg.ToolCalls) == 0 {
+				contentParts = append(contentParts, map[string]interface{}{"type": textType, "text": content})
+			}
 		}
-		item["content"] = contentParts
-		input = append(input, item)
+		if len(contentParts) > 0 || len(msg.ToolCalls) == 0 {
+			item["content"] = contentParts
+			input = append(input, item)
+		}
+		for _, tc := range msg.ToolCalls {
+			if tc.Type != "function" {
+				continue
+			}
+			input = append(input, map[string]interface{}{
+				"type":      "function_call",
+				"call_id":   tc.ID,
+				"name":      tc.Function.Name,
+				"arguments": tc.Function.Arguments,
+			})
+		}
 	}
 	openai2Req["input"] = input
 	// TODO: max_output_tokens is standard OpenAI Responses API param but some
